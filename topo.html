@@ -147,6 +147,7 @@ canvas.orbit{cursor:grab}
     <div class="actions">
       <button class="btn" id="reseed">new existing</button>
       <button class="btn" id="reset">reset grading</button>
+      <button class="btn" id="wipe">delete all</button>
       <button class="btn" id="png">save png</button>
       <button class="btn" id="stl">export stl</button>
       <button class="btn primary wide" id="laser">export laser svg (cardboard stack)</button>
@@ -540,6 +541,7 @@ document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetch
 document.getElementById('laser').onclick = () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); };
 document.getElementById('reseed').onclick = () => { S.world = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
 document.getElementById('reset').onclick = () => { resetGrading(); toast('grading reset to existing'); };
+document.getElementById('wipe').onclick = () => { base.fill(0); S.world = null; S.sec = null; worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
 document.getElementById('png').onclick = () => {
   const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height; const o = out.getContext('2d');
   o.fillStyle = PAPER; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0);
@@ -707,7 +709,11 @@ async function fetchWorld(known) {
     try { await loadTerrarium(lat, lon); } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); }
     S.world = { lat, lon, name }; resetGrading(); const [lo, hi] = range(base);
     worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide`); toast('real terrain loaded');
-  } catch (e) { worldStatus(String(e.message || e) + (location.protocol === 'file:' || location.hostname.includes('claude') ? '. elevation fetch needs the deployed site or a local server' : '')); }
+  } catch (e) {
+    const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message));
+    const msg = blocked ? 'network blocked on this page. open the live site: shopnerd.github.io/coyote-mountain/topo.html' : String(e.message || e);
+    worldStatus(msg); toast(blocked ? 'terrain fetch blocked here. use the live site' : msg);
+  }
   fetching = false; btn.disabled = false; btn.textContent = 'fetch real terrain';
 }
 
