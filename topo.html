@@ -328,7 +328,7 @@ function drawModel() {
   const scale = zoom * Math.min(S.w, S.h) / (S.siteW * 1.25), ox = S.w / 2, oy = S.h / 2 + 10;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
-    return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, Z * cp - y1 * sp]; };
+    return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
   const step = 2, items = [], iv = interval();
   const lx = -.5, ly = -.4, lz = .77;  // light from upper left
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
@@ -390,13 +390,13 @@ function drawStepped() {
   const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
   const scale = zoom * Math.min(S.w, S.h) / (S.siteW * 1.25), ox = S.w / 2, oy = S.h / 2 + 10;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
-    const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, Z * cp - y1 * sp]; };
+    const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
   const layers = steppedLayers();
   // base slab under everything
   const corners = [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]];
   const risers = (loop, zb, zt, tone) => { const quads = [];
     for (let q = 0; q < loop.length; q++) { const a = loop[q], b = loop[(q + 1) % loop.length]; const dx = b[0] - a[0], dy = b[1] - a[1];
-      const nX = dy, nY = -dx, ny1 = nX * sy + nY * cy; if (ny1 >= 0) continue;   // back-facing
+      const nX = dy, nY = -dx, ny1 = nX * sy + nY * cy; if (ny1 <= 0) continue;   // back-facing
       const P = [proj(a[0], a[1], zt), proj(b[0], b[1], zt), proj(b[0], b[1], zb), proj(a[0], a[1], zb)];
       quads.push({ d: (P[0][2] + P[1][2]) / 2, P }); }
     quads.sort((u, v) => u.d - v.d); ctx.fillStyle = tone; ctx.strokeStyle = tone; ctx.lineWidth = .6;
