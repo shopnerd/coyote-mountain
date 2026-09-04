@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coyote Mountain Studio</title>
+<style>
+:root{
+  --page:#d0d0cc; --panel:#e8e8e4; --paper:#f0f0ec; --hover:#e2e2dc;
+  --ink:#2a2a28; --ink2:#6a6a66; --ink3:#a0a09a; --line:#c8c8c2;
+  --accent:#C96B3A; --accent2:#a85830;
+  --font:'SF Mono','Cascadia Mono',Consolas,'Liberation Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--page);color:var(--ink);font:12px/1.5 var(--font);overflow:hidden;
+  -webkit-font-smoothing:antialiased;overscroll-behavior:none}
+#app{display:grid;grid-template-rows:38px 1fr;grid-template-columns:220px 1fr;height:100dvh}
+header{grid-column:1/-1;height:38px;background:var(--panel);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;padding:0 12px}
+header .logo{font-weight:600}
+header .logo b{color:var(--accent);font-weight:600}
+header .hint{color:var(--ink3);font-size:10px;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column}
+.sec{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);padding:10px 12px 4px;
+  display:flex;align-items:baseline;gap:8px}
+.sec::after{content:"";flex:1;border-top:1px solid var(--line);transform:translateY(-3px)}
+.tools{display:flex;flex-direction:column}
+.tool{display:flex;align-items:center;gap:8px;min-height:36px;padding:6px 12px;border:0;background:none;
+  color:var(--ink2);font:inherit;text-align:left;cursor:pointer;width:100%;border-left:2px solid transparent}
+.tool:hover{background:var(--hover);color:var(--ink)}
+.tool.on{color:var(--ink);border-left-color:var(--accent);background:var(--hover)}
+.tool .tag{margin-left:auto;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink3)}
+.tool.on .tag{color:var(--accent)}
+.desc{padding:4px 12px 8px;color:var(--ink3);font-size:10.5px;line-height:1.5}
+.params{padding:0 12px 8px;display:flex;flex-direction:column;gap:8px}
+.p{display:flex;flex-direction:column;gap:3px}
+.p label{display:flex;justify-content:space-between;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.p label output{color:var(--ink);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line)}
+input[type=range]::-moz-range-track{height:2px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--paper);
+  border:1px solid var(--ink2);margin-top:-7px}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--paper);border:1px solid var(--ink2)}
+input[type=range]:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+input[type=range]:active::-webkit-slider-thumb{border-color:var(--accent);background:var(--accent)}
+input[type=text]{width:100%;padding:7px 8px;border:1px solid var(--line);background:var(--paper);border-radius:3px;
+  font:inherit;color:var(--ink)}
+input[type=text]:focus{outline:none;border-color:var(--accent)}
+.swatches{display:flex;gap:6px}
+.sw{width:28px;height:28px;border-radius:3px;border:1px solid var(--line);cursor:pointer;padding:0;background:var(--c)}
+.sw.on{outline:2px solid var(--accent);outline-offset:1px}
+.actions{margin-top:auto;padding:10px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-top:1px solid var(--line)}
+.btn{min-height:36px;padding:6px 8px;border:1px solid var(--line);background:transparent;color:var(--ink2);border-radius:3px;
+  font:inherit;font-size:11px;cursor:pointer;line-height:1}
+.btn:hover{background:var(--paper);color:var(--ink)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent2)}
+.btn:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+main{position:relative;background:var(--paper);overflow:hidden}
+main::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(42,42,40,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,40,.06) 1px,transparent 1px);
+  background-size:24px 24px}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:#efeee8;
+  padding:6px 14px;border-radius:20px;font-size:11px;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.show{opacity:1}
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:38px 1fr 42vh}
+  aside{border-right:0;border-top:1px solid var(--line);grid-row:3}
+  main{grid-row:2}
+  header .hint{display:none}
+  .tools{flex-direction:row;overflow-x:auto;padding:0 6px}
+  .tool{width:auto;flex:0 0 auto;border-left:0;border-bottom:2px solid transparent;padding:6px 10px}
+  .tool.on{border-bottom-color:var(--accent)}
+  .tool .tag{display:none}
+  .actions{grid-template-columns:repeat(4,1fr)}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="logo">coyote_mountain<b>_studio</b></span>
+    <span class="hint">drag on paper · tap for ripples · space play/pause · r reseed · c clear · s save</span>
+  </header>
+  <aside>
+    <div class="sec">tools</div>
+    <div class="tools" id="tools"></div>
+    <div class="desc" id="desc"></div>
+    <div class="sec">params</div>
+    <div class="params" id="params"></div>
+    <div class="sec">ink</div>
+    <div class="params"><div class="swatches" id="swatches"></div></div>
+    <div class="actions">
+      <button class="btn" id="play">pause</button>
+      <button class="btn" id="seed">reseed</button>
+      <button class="btn" id="clear">clear</button>
+      <button class="btn primary" id="save">save png</button>
+    </div>
+  </aside>
+  <main>
+    <canvas id="c"></canvas>
+    <div class="toast" id="toast"></div>
+  </main>
+</div>
+<script>
+(() => {
+'use strict';
+const TAU = Math.PI * 2;
+const inks = { ink: '#2a2a28', ember: '#C96B3A', slate: '#6a6a66' };
+
+/* seeded randomness + value noise */
+let seed = 1;
+function rng() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+function hash(x, y, s) { const v = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return v - Math.floor(v); }
+function noise(x, y, s) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi;
+  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash(xi, yi, s), b = hash(xi + 1, yi, s), c = hash(xi, yi + 1, s), d = hash(xi + 1, yi + 1, s);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function fbm(x, y, s) { return (noise(x, y, s) * .5 + noise(x * 2.1, y * 2.1, s + 1) * .3 + noise(x * 4.3, y * 4.3, s + 2) * .2); }
+
+/* tool registry: each tool is one object. add a tool = add an object. */
+const tools = [
+  { id: 'contour', tag: 'geometry',
+    desc: 'topographic iso-lines pulled from noise. drift animates the field.',
+    params: [
+      { k: 'cell', label: 'cell', min: 6, max: 20, step: 1, v: 9 },
+      { k: 'levels', label: 'levels', min: 3, max: 24, step: 1, v: 12 },
+      { k: 'scale', label: 'scale', min: 1, max: 8, step: .1, v: 3 },
+      { k: 'drift', label: 'drift', min: 0, max: 1, step: .01, v: .15 },
+      { k: 'weight', label: 'weight', min: .5, max: 3, step: .1, v: 1 } ],
+    frame(ctx, S, t) {
+      const { w, h, p } = S, cell = p.cell, sc = p.scale, z = t * p.drift * .1;
+      const nx = Math.ceil(w / cell) + 1, ny = Math.ceil(h / cell) + 1, f = new Float32Array(nx * ny);
+      for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++)
+        f[j * nx + i] = fbm(i * cell / w * sc + z, j * cell / h * sc * (h / w) + z * .7, S.seed);
+      ctx.lineWidth = p.weight; ctx.strokeStyle = S.ink; ctx.beginPath();
+      for (let l = 1; l <= p.levels; l++) {
+        const lv = l / (p.levels + 1);
+        for (let j = 0; j < ny - 1; j++) for (let i = 0; i < nx - 1; i++) {
+          const a = f[j * nx + i] - lv, b = f[j * nx + i + 1] - lv, c = f[(j + 1) * nx + i + 1] - lv, d = f[(j + 1) * nx + i] - lv;
+          const x = i * cell, y = j * cell, pts = [];
+          if ((a < 0) !== (b < 0)) pts.push([x + cell * a / (a - b), y]);
+          if ((b < 0) !== (c < 0)) pts.push([x + cell, y + cell * b / (b - c)]);
+          if ((c < 0) !== (d < 0)) pts.push([x + cell * (1 - c / (c - d)), y + cell]);
+          if ((d < 0) !== (a < 0)) pts.push([x, y + cell * (1 - d / (d - a))]);
+          for (let k = 0; k + 1 < pts.length; k += 2) { ctx.moveTo(pts[k][0], pts[k][1]); ctx.lineTo(pts[k + 1][0], pts[k + 1][1]); }
+        }
+      }
+      ctx.stroke();
+    } },
+
+  { id: 'lattice', tag: 'kinetic',
+    desc: 'a field of marks that turn toward the pointer and breathe on their own.',
+    params: [
+      { k: 'gap', label: 'spacing', min: 14, max: 64, step: 1, v: 28 },
+      { k: 'size', label: 'size', min: .1, max: 1, step: .01, v: .5 },
+      { k: 'reach', label: 'reach', min: 40, max: 600, step: 10, v: 220 },
+      { k: 'breath', label: 'breath', min: 0, max: 2, step: .05, v: .6 } ],
+    frame(ctx, S, t) {
+      const { w, h, p, ptr } = S, g = p.gap; ctx.strokeStyle = S.ink; ctx.lineWidth = 1; ctx.beginPath();
+      const ox = (w % g) / 2, oy = (h % g) / 2;
+      for (let y = oy; y < h; y += g) for (let x = ox; x < w; x += g) {
+        const dx = ptr.x - x, dy = ptr.y - y, d = Math.hypot(dx, dy), pull = Math.max(0, 1 - d / p.reach);
+        const ang = ptr.on ? Math.atan2(dy, dx) * pull + noise(x * .01, y * .01 + t * .2, S.seed) * TAU * (1 - pull)
+                           : noise(x * .01, y * .01 + t * .2, S.seed) * TAU;
+        const s = g * p.size * (.6 + .4 * Math.sin(t * p.breath + (x + y) * .02) + pull * .8);
+        ctx.moveTo(x - Math.cos(ang) * s / 2, y - Math.sin(ang) * s / 2);
+        ctx.lineTo(x + Math.cos(ang) * s / 2, y + Math.sin(ang) * s / 2);
+      }
+      ctx.stroke();
+    } },
+
+  { id: 'orbit', tag: 'kinetic',
+    desc: 'nested polygons counter-rotating. drag to move the center.',
+    params: [
+      { k: 'rings', label: 'rings', min: 2, max: 24, step: 1, v: 9 },
+      { k: 'sides', label: 'sides', min: 3, max: 12, step: 1, v: 5 },
+      { k: 'speed', label: 'speed', min: 0, max: 2, step: .01, v: .4 },
+      { k: 'spread', label: 'spread', min: .2, max: 1, step: .01, v: .8 } ],
+    setup(S) { S.cx = S.w / 2; S.cy = S.h / 2; },
+    pointer(S, e) { if (e.down) { S.cx = e.x; S.cy = e.y; } },
+    frame(ctx, S, t) {
+      const { p } = S, R = Math.min(S.w, S.h) * .45 * p.spread; ctx.strokeStyle = S.ink; ctx.lineWidth = 1;
+      let prev = null;
+      for (let i = 1; i <= p.rings; i++) {
+        const r = R * i / p.rings, rot = t * p.speed * (i % 2 ? 1 : -1) / Math.sqrt(i), pts = [];
+        for (let k = 0; k < p.sides; k++) { const a = rot + k / p.sides * TAU; pts.push([S.cx + Math.cos(a) * r, S.cy + Math.sin(a) * r]); }
+        ctx.beginPath(); pts.forEach((q, k) => k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.stroke();
+        if (prev) { ctx.globalAlpha = .35; ctx.beginPath(); pts.forEach((q, k) => { ctx.moveTo(q[0], q[1]); ctx.lineTo(prev[k][0], prev[k][1]); }); ctx.stroke(); ctx.globalAlpha = 1; }
+        prev = pts;
+      }
+    } },
+
+  { id: 'ripple', tag: 'kinetic',
+    desc: 'tap anywhere. each tap sends polygon rings outward that fade as they grow.',
+    params: [
+      { k: 'sides', label: 'sides', min: 3, max: 16, step: 1, v: 6 },
+      { k: 'speed', label: 'speed', min: 20, max: 400, step: 5, v: 120 },
+      { k: 'count', label: 'rings', min: 1, max: 12, step: 1, v: 5 },
+      { k: 'life', label: 'life s', min: 1, max: 8, step: .1, v: 3.5 } ],
+    setup(S) { S.taps = []; },
+    pointer(S, e) { if (e.type === 'down') S.taps.push({ x: e.x, y: e.y, t0: S.t, a: rng() * TAU }); },
+    frame(ctx, S, t) {
+      const { p } = S; S.taps = S.taps.filter(q => t - q.t0 < p.life);
+      if (!S.taps.length && !S.hinted) { ctx.fillStyle = S.ink; ctx.globalAlpha = .35; ctx.font = '11px ' + getComputedStyle(document.body).fontFamily; ctx.textAlign = 'center'; ctx.fillText('tap the paper', S.w / 2, S.h / 2); ctx.globalAlpha = 1; }
+      ctx.strokeStyle = S.ink;
+      for (const q of S.taps) {
+        const age = t - q.t0, fade = 1 - age / p.life;
+        for (let k = 0; k < p.count; k++) {
+          const r = age * p.speed - k * 22; if (r <= 0) continue;
+          ctx.globalAlpha = fade * (1 - k / (p.count + 1)); ctx.lineWidth = 1 + fade;
+          ctx.beginPath();
+          for (let i = 0; i < p.sides; i++) { const a = q.a + age * .3 + i / p.sides * TAU; const x = q.x + Math.cos(a) * r, y = q.y + Math.sin(a) * r; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+          ctx.closePath(); ctx.stroke();
+        }
+      }
+      ctx.globalAlpha = 1;
+    } },
+
+  { id: 'strands', tag: 'sketch', persist: true,
+    desc: 'drag to sow lines. each follows a hidden flow field. strokes stay until you clear.',
+    params: [
+      { k: 'len', label: 'length', min: 20, max: 400, step: 5, v: 140 },
+      { k: 'turn', label: 'turn', min: .5, max: 6, step: .1, v: 2 },
+      { k: 'scale', label: 'field', min: 1, max: 10, step: .1, v: 3 },
+      { k: 'spray', label: 'spray', min: 0, max: 40, step: 1, v: 12 } ],
+    pointer(S, e, ctx) {
+      if (!e.down) return; const { p } = S;
+      for (let n = 0; n < 2; n++) {
+        let x = e.x + (rng() - .5) * p.spray * 2, y = e.y + (rng() - .5) * p.spray * 2;
+        ctx.strokeStyle = S.ink; ctx.globalAlpha = .55; ctx.lineWidth = .8; ctx.beginPath(); ctx.moveTo(x, y);
+        for (let i = 0; i < p.len; i += 3) {
+          const a = fbm(x / S.w * p.scale, y / S.h * p.scale, S.seed) * TAU * p.turn;
+          x += Math.cos(a) * 3; y += Math.sin(a) * 3; ctx.lineTo(x, y);
+        }
+        ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    },
+    frame() {} },
+
+  { id: 'moire', tag: 'kinetic',
+    desc: 'two line screens, one turning. interference does the drawing.',
+    params: [
+      { k: 'pitch', label: 'pitch', min: 3, max: 24, step: .5, v: 7 },
+      { k: 'speed', label: 'speed', min: 0, max: 1, step: .005, v: .06 },
+      { k: 'weight', label: 'weight', min: .5, max: 3, step: .1, v: 1 } ],
+    frame(ctx, S, t) {
+      const { w, h, p } = S, D = Math.hypot(w, h); ctx.strokeStyle = S.ink; ctx.lineWidth = p.weight;
+      const screen = (ang) => { ctx.save(); ctx.translate(w / 2, h / 2); ctx.rotate(ang); ctx.beginPath();
+        for (let x = -D / 2; x < D / 2; x += p.pitch) { ctx.moveTo(x, -D / 2); ctx.lineTo(x, D / 2); } ctx.stroke(); ctx.restore(); };
+      screen(0); screen(t * p.speed);
+    } },
+
+  { id: 'wordmark', tag: 'type',
+    desc: 'a word set in motion. letters drift on noise. sketch a logotype idea fast.',
+    params: [
+      { k: 'text', label: 'word', type: 'text', v: 'coyote' },
+      { k: 'size', label: 'size', min: 40, max: 400, step: 2, v: 160 },
+      { k: 'track', label: 'tracking', min: -.2, max: .6, step: .01, v: .04 },
+      { k: 'wobble', label: 'wobble', min: 0, max: 60, step: 1, v: 14 },
+      { k: 'rate', label: 'rate', min: 0, max: 2, step: .01, v: .5 } ],
+    frame(ctx, S, t) {
+      const { p, w, h } = S, txt = String(p.text || ' '), fs = Math.min(p.size, w / Math.max(1, txt.length) * 1.6);
+      ctx.font = `600 ${fs}px ${getComputedStyle(document.body).fontFamily}`; ctx.fillStyle = S.ink; ctx.textBaseline = 'middle';
+      const widths = [...txt].map(ch => ctx.measureText(ch).width), total = widths.reduce((a, b) => a + b, 0) + fs * p.track * (txt.length - 1);
+      let x = (w - total) / 2;
+      [...txt].forEach((ch, i) => {
+        const dy = (noise(i * .7, t * p.rate, S.seed) - .5) * 2 * p.wobble, rot = (noise(i * .7 + 9, t * p.rate, S.seed) - .5) * p.wobble * .01;
+        ctx.save(); ctx.translate(x + widths[i] / 2, h / 2 + dy); ctx.rotate(rot); ctx.fillText(ch, -widths[i] / 2, 0); ctx.restore();
+        x += widths[i] + fs * p.track;
+      });
+    } },
+];
+
+/* state + shell */
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const S = { w: 0, h: 0, dpr: 1, p: {}, ptr: { x: -1e4, y: -1e4, on: false, down: false }, ink: inks.ink, seed: 1, t: 0, playing: true };
+let tool = tools[0], raf = 0, last = performance.now();
+
+function resize() {
+  const r = cv.parentElement.getBoundingClientRect(); S.dpr = Math.min(2, devicePixelRatio || 1);
+  S.w = r.width; S.h = r.height; cv.width = r.width * S.dpr; cv.height = r.height * S.dpr;
+  ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0); if (tool.setup) tool.setup(S); clearPaper();
+}
+function clearPaper() { ctx.clearRect(0, 0, S.w, S.h); }
+function loop(now) {
+  const dt = Math.min(.1, (now - last) / 1000); last = now; if (S.playing) S.t += dt;
+  if (!tool.persist) { clearPaper(); tool.frame(ctx, S, S.t, dt); }
+  raf = requestAnimationFrame(loop);
+}
+function selectTool(t) {
+  tool = t; S.p = {}; t.params.forEach(q => S.p[q.k] = q.v); S.hinted = false;
+  if (t.setup) t.setup(S); clearPaper(); renderTools(); renderParams();
+  document.getElementById('desc').textContent = t.desc;
+}
+function renderTools() {
+  const el = document.getElementById('tools'); el.innerHTML = '';
+  tools.forEach(t => { const b = document.createElement('button'); b.className = 'tool' + (t === tool ? ' on' : '');
+    b.innerHTML = `<span>${t.id}</span><span class="tag">${t.tag}</span>`; b.onclick = () => selectTool(t); el.appendChild(b); });
+}
+function renderParams() {
+  const el = document.getElementById('params'); el.innerHTML = '';
+  tool.params.forEach(q => {
+    const d = document.createElement('div'); d.className = 'p';
+    if (q.type === 'text') {
+      d.innerHTML = `<label>${q.label}</label><input type="text" maxlength="24" value="${q.v}">`;
+      d.querySelector('input').oninput = e => { S.p[q.k] = e.target.value; };
+    } else {
+      d.innerHTML = `<label>${q.label}<output>${q.v}</output></label><input type="range" min="${q.min}" max="${q.max}" step="${q.step}" value="${q.v}">`;
+      const inp = d.querySelector('input'), out = d.querySelector('output');
+      inp.oninput = e => { S.p[q.k] = +e.target.value; out.textContent = e.target.value;};
+    }
+    el.appendChild(d);
+  });
+}
+function renderSwatches() {
+  const el = document.getElementById('swatches');
+  Object.entries(inks).forEach(([k, c]) => { const b = document.createElement('button'); b.className = 'sw' + (S.ink === c ? ' on' : '');
+    b.style.setProperty('--c', c); b.title = k; b.setAttribute('aria-label', 'ink ' + k);
+    b.onclick = () => { S.ink = c; renderSwatches(); }; el.appendChild(b); });
+  while (el.children.length > Object.keys(inks).length) el.removeChild(el.firstChild);
+}
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1400); }
+
+/* pointer: one path for mouse, pen, and touch */
+function pt(e) { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); const q = pt(e); Object.assign(S.ptr, q, { on: true, down: true }); S.hinted = true; tool.pointer && tool.pointer(S, { ...q, type: 'down', down: true }, ctx); });
+cv.addEventListener('pointermove', e => { const q = pt(e); Object.assign(S.ptr, q, { on: true }); tool.pointer && tool.pointer(S, { ...q, type: 'move', down: S.ptr.down }, ctx); });
+cv.addEventListener('pointerup', e => { S.ptr.down = false; tool.pointer && tool.pointer(S, { ...pt(e), type: 'up', down: false }, ctx); });
+cv.addEventListener('pointerleave', () => { S.ptr.on = false; S.ptr.down = false; });
+
+/* actions */
+const playBtn = document.getElementById('play');
+function togglePlay() { S.playing = !S.playing; playBtn.textContent = S.playing ? 'pause' : 'play'; }
+function reseed() { S.seed = Math.floor(Math.random() * 1e6); seed = S.seed; if (tool.setup) tool.setup(S); clearPaper(); toast('seed ' + S.seed); }
+function clearAll() { if (tool.setup) tool.setup(S); clearPaper(); toast('cleared'); }
+function save() {
+  const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height; const o = out.getContext('2d');
+  o.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#f0f0ec'; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0);
+  const a = document.createElement('a'); a.download = `coyote-${tool.id}-${S.seed}.png`; a.href = out.toDataURL('image/png'); a.click(); toast('saved ' + a.download);
+}
+playBtn.onclick = togglePlay; document.getElementById('seed').onclick = reseed;
+document.getElementById('clear').onclick = clearAll; document.getElementById('save').onclick = save;
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT' && e.target.type === 'text') return;
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); } else if (e.key === 'r') reseed(); else if (e.key === 'c') clearAll(); else if (e.key === 's') save(); });
+addEventListener('resize', resize);
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) { S.playing = false; playBtn.textContent = 'play'; }
+
+renderSwatches(); selectTool(tools[0]); resize(); raf = requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

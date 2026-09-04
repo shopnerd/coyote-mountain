@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coyote Mountain Topo</title>
+<style>
+:root{
+  --page:#d0d0cc; --panel:#e8e8e4; --paper:#f0f0ec; --hover:#e2e2dc;
+  --ink:#2a2a28; --ink2:#6a6a66; --ink3:#a0a09a; --line:#c8c8c2;
+  --accent:#C96B3A; --accent2:#a85830;
+  --font:'SF Mono','Cascadia Mono',Consolas,'Liberation Mono',Menlo,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--page);color:var(--ink);font:12px/1.5 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+#app{display:grid;grid-template-rows:38px 1fr;grid-template-columns:232px 1fr;height:100dvh}
+header{grid-column:1/-1;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 12px}
+header .logo{font-weight:600}
+header .logo b{color:var(--accent);font-weight:600}
+header a{color:var(--ink3);text-decoration:none;font-size:10px}
+header a:hover{color:var(--ink)}
+header .read{margin-left:auto;color:var(--ink2);font-size:10.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+header .read b{color:var(--ink);font-weight:600}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column}
+.sec{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);padding:10px 12px 4px;display:flex;align-items:baseline;gap:8px}
+.sec::after{content:"";flex:1;border-top:1px solid var(--line);transform:translateY(-3px)}
+.seg{display:flex;padding:0 12px;gap:0}
+.seg button{flex:1;min-height:34px;border:1px solid var(--line);background:transparent;color:var(--ink2);font:inherit;font-size:11px;cursor:pointer;margin-left:-1px}
+.seg button:first-child{border-radius:3px 0 0 3px;margin-left:0}
+.seg button:last-child{border-radius:0 3px 3px 0}
+.seg button:hover{background:var(--paper);color:var(--ink)}
+.seg button.on{background:var(--accent);border-color:var(--accent);color:#fff;position:relative;z-index:1}
+.seg.wrap{flex-wrap:wrap;gap:4px}
+.seg.wrap button{flex:1 1 40%;border-radius:3px;margin:0}
+.desc{padding:6px 12px 4px;color:var(--ink3);font-size:10.5px;line-height:1.5}
+.params{padding:2px 12px 6px;display:flex;flex-direction:column;gap:6px}
+.p{display:flex;flex-direction:column;gap:2px}
+.p label{display:flex;justify-content:space-between;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.p label output{color:var(--ink);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line)}
+input[type=range]::-moz-range-track{height:2px;background:var(--line)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--paper);border:1px solid var(--ink2);margin-top:-7px}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--paper);border:1px solid var(--ink2)}
+input[type=range]:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+input[type=range]:active::-webkit-slider-thumb{border-color:var(--accent);background:var(--accent)}
+input[type=text],select{width:100%;min-height:34px;padding:6px 8px;border:1px solid var(--line);background:var(--paper);border-radius:3px;font:inherit;color:var(--ink)}
+input[type=text]:focus,select:focus{outline:none;border-color:var(--accent)}
+input[type=text]::placeholder{color:var(--ink3)}
+.btn.wide{grid-column:1/-1}
+.btn:disabled{opacity:.6;cursor:wait}
+.stats{padding:4px 12px 8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:6px 8px}
+.stat span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.stat b{font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}
+.stat.cut b{color:var(--accent)}
+.actions{margin-top:auto;padding:10px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-top:1px solid var(--line)}
+.btn{min-height:36px;padding:6px 8px;border:1px solid var(--line);background:transparent;color:var(--ink2);border-radius:3px;font:inherit;font-size:11px;cursor:pointer;line-height:1}
+.btn:hover{background:var(--paper);color:var(--ink)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent2)}
+.btn:focus-visible,.seg button:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+main{position:relative;background:var(--paper);overflow:hidden}
+main::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(42,42,40,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,40,.06) 1px,transparent 1px);background-size:24px 24px}
+canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+canvas.orbit{cursor:grab}
+.toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:#efeee8;padding:6px 14px;border-radius:20px;font-size:11px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+@media (max-width:760px){
+  #app{grid-template-columns:1fr;grid-template-rows:38px 1fr 44vh}
+  aside{border-right:0;border-top:1px solid var(--line);grid-row:3}
+  main{grid-row:2}
+  header .read{font-size:9.5px}
+  header a{display:none}
+  .actions{grid-template-columns:repeat(4,1fr)}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <span class="logo">coyote_mountain<b>_topo</b></span>
+    <a href="index.html">studio</a>
+    <span class="read" id="read">keys 1 plan · 2 model · 3 section</span>
+  </header>
+  <aside>
+    <div class="sec">view</div>
+    <div class="seg" id="modes">
+      <button data-m="plan" class="on">plan</button><button data-m="model">model</button><button data-m="section">section</button>
+    </div>
+    <div class="desc" id="desc"></div>
+    <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped stack</button></div>
+
+    <div id="brushSec">
+      <div class="sec">brush</div>
+      <div class="seg wrap" id="brushes">
+        <button data-b="raise" class="on">raise</button><button data-b="lower">lower</button>
+        <button data-b="smooth">smooth</button><button data-b="flatten">flatten</button>
+        <button data-b="section" style="flex-basis:100%">draw section line a to b</button>
+      </div>
+      <div class="params">
+        <div class="p"><label>radius<output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="20" step=".5" value="4"></div>
+        <div class="p"><label>strength<output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
+      </div>
+    </div>
+
+    <div class="sec">world</div>
+    <div class="params">
+      <div class="p"><label>place or lat, lng</label><input type="text" id="place" placeholder="Griffith Observatory" autocomplete="off"></div>
+      <button class="btn" id="fetch">fetch real terrain</button>
+      <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data at the site width below.</div>
+    </div>
+
+    <div class="sec">site</div>
+    <div class="params">
+      <div class="p"><label>units</label><select id="unit"><option value="m">metric · m, m³, mm</option><option value="ft">imperial · ft, yd³, in</option></select></div>
+      <div class="p"><label>site width<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="1000" step="5" value="60"></div>
+      <div class="p"><label>existing relief<output id="o_relief">2.0 m</output></label><input type="range" id="relief" min="0" max="10" step=".5" value="2"></div>
+      <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="4" step="1" value="2"></div>
+      <div class="p"><label>hachures<output id="o_hach">60</output></label><input type="range" id="hach" min="0" max="100" step="5" value="60"></div>
+      <div class="p"><label>vertical exaggeration<output id="o_ve">1.5 x</output></label><input type="range" id="ve" min="1" max="5" step=".25" value="1.5"></div>
+    </div>
+
+    <div class="sec">grading</div>
+    <div class="stats">
+      <div class="stat cut"><span>cut</span><b id="cut">0 m³</b></div>
+      <div class="stat"><span>fill</span><b id="fill">0 m³</b></div>
+    </div>
+
+    <div class="sec">fabricate</div>
+    <div class="params">
+      <div class="p"><label>model width<output id="o_mm">150 mm</output></label><input type="range" id="mm" min="50" max="600" step="10" value="150"></div>
+      <div class="p"><label>cardboard<output id="o_thick">3.0 mm</output></label><input type="range" id="thick" min="1" max="12" step=".5" value="3"></div>
+      <div class="p"><label>sheet</label><select id="sheet">
+        <option value="300x450">300 × 450 mm</option>
+        <option value="495x279">495 × 279 mm (glowforge)</option>
+        <option value="600x400">600 × 400 mm</option>
+        <option value="812x457">812 × 457 mm (32 × 18 in)</option>
+        <option value="1220x610">1220 × 610 mm (48 × 24 in)</option>
+      </select></div>
+      <div class="p"><label>hollow layers<output id="o_ledge">ledge 12 mm</output></label><input type="range" id="ledge" min="0" max="40" step="1" value="12"></div>
+      <div class="desc" id="layersInfo" style="padding:0"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn" id="reseed">new existing</button>
+      <button class="btn" id="reset">reset grading</button>
+      <button class="btn" id="png">save png</button>
+      <button class="btn" id="stl">export stl</button>
+      <button class="btn primary wide" id="laser">export laser svg (cardboard stack)</button>
+    </div>
+  </aside>
+  <main>
+    <canvas id="c"></canvas>
+    <div class="toast" id="toast"></div>
+  </main>
+</div>
+<script>
+(() => {
+'use strict';
+const TAU = Math.PI * 2;
+const INK = '#2a2a28', INK2 = '#6a6a66', INK3 = '#a0a09a', ACC = '#C96B3A', PAPER = '#f0f0ec';
+const TONES = ['#ebeae4', '#dedcd4', '#cfcdc4', '#bdbbb1'];
+const INTERVALS = [0.1, 0.25, 0.5, 1, 2];
+const FT = 3.28084, INTERVALS_FT = [0.25, 0.5, 1, 2, 5].map(f => f / FT);
+const isFt = () => S.unit === 'ft', tz = t => t.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+const fL = (m, d = 1) => isFt() ? tz((m * FT).toFixed(d)) + ' ft' : tz(m.toFixed(d)) + ' m';
+const fA = m2 => isFt() ? Math.round(m2 * FT * FT).toLocaleString() + ' ft²' : tz(m2.toFixed(1)) + ' m²';
+const fV = m3 => isFt() ? Math.round(m3 * 1.30795).toLocaleString() + ' yd³' : Math.round(m3).toLocaleString() + ' m³';
+const fS = mm => isFt() ? tz((mm / 25.4).toFixed(2)) + ' in' : tz(mm.toFixed(1)) + ' mm';
+
+/* ---------- noise ---------- */
+function hash(x, y, s) { const v = Math.sin(x * 127.1 + y * 311.7 + s * 74.7) * 43758.5453; return v - Math.floor(v); }
+function noise(x, y, s) {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash(xi, yi, s), b = hash(xi + 1, yi, s), c = hash(xi, yi + 1, s), d = hash(xi + 1, yi + 1, s);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+const fbm = (x, y, s) => noise(x, y, s) * .55 + noise(x * 2.1, y * 2.1, s + 1) * .3 + noise(x * 4.3, y * 4.3, s + 2) * .15;
+
+/* ---------- terrain ---------- */
+const W = 150, H = 100;                 // grid nodes; site aspect 3:2
+const base = new Float32Array(W * H);   // existing grade, m
+const z = new Float32Array(W * H);      // proposed grade, m
+const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 60, ve: 1.5, mm: 150,
+  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', ledge: 12, modelStyle: 'smooth', terrainVer: 0, cam: { yaw: -.7, pitch: .95, zoom: 1 }, dirty: true, w: 0, h: 0, ptr: null };
+const cs = () => S.siteW / (W - 1);     // cell size, m
+const idx = (i, j) => j * W + i;
+
+function buildExisting() {
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const x = i / W * 2.2, y = j / W * 2.2;
+    base[idx(i, j)] = (fbm(x, y, S.seed) - .5) * 2 * S.relief + (i / W) * S.relief * .6;
+  }
+}
+function resetGrading() { z.set(base); S.terrainVer++; S.dirty = true; updateStats(); }
+function sample(arr, fx, fy) {          // bilinear, grid coords
+  const i = Math.max(0, Math.min(W - 2, Math.floor(fx))), j = Math.max(0, Math.min(H - 2, Math.floor(fy)));
+  const u = Math.max(0, Math.min(1, fx - i)), v = Math.max(0, Math.min(1, fy - j));
+  const a = arr[idx(i, j)], b = arr[idx(i + 1, j)], c = arr[idx(i, j + 1)], d = arr[idx(i + 1, j + 1)];
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function grad(fx, fy) {                 // m per m
+  const e = 1, s = cs();
+  return [(sample(z, fx + e, fy) - sample(z, fx - e, fy)) / (2 * e * s), (sample(z, fx, fy + e) - sample(z, fx, fy - e)) / (2 * e * s)];
+}
+function dab(gx, gy, kind, z0) {
+  S.terrainVer++;
+  const R = S.radius / cs(), k = S.strength / 100, sig = R / 2;
+  const i0 = Math.max(0, Math.floor(gx - R)), i1 = Math.min(W - 1, Math.ceil(gx + R)), j0 = Math.max(0, Math.floor(gy - R)), j1 = Math.min(H - 1, Math.ceil(gy + R));
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    const d2 = (i - gx) ** 2 + (j - gy) ** 2; if (d2 > R * R) continue;
+    const wgt = Math.exp(-d2 / (2 * sig * sig)), n = idx(i, j);
+    if (kind === 'raise') z[n] += .06 * k * wgt * S.radius * .5;
+    else if (kind === 'lower') z[n] -= .06 * k * wgt * S.radius * .5;
+    else if (kind === 'flatten') z[n] += (z0 - z[n]) * .25 * k * wgt;
+    else if (kind === 'smooth') {
+      const l = z[idx(Math.max(0, i - 1), j)], r = z[idx(Math.min(W - 1, i + 1), j)], u = z[idx(i, Math.max(0, j - 1))], dn = z[idx(i, Math.min(H - 1, j + 1))];
+      z[n] += ((l + r + u + dn) / 4 - z[n]) * .5 * k * wgt;
+    }
+  }
+}
+function strokeLine(a, b, kind, z0) {   // grid coords
+  const d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d / 1.5));
+  for (let s = 1; s <= n; s++) dab(a[0] + (b[0] - a[0]) * s / n, a[1] + (b[1] - a[1]) * s / n, kind, z0);
+}
+function updateStats() {
+  let cut = 0, fill = 0; const A = cs() * cs();
+  for (let n = 0; n < W * H; n++) { const d = (z[n] - base[n]) * A; if (d > 0) fill += d; else cut -= d; }
+  document.getElementById('cut').textContent = fV(cut);
+  document.getElementById('fill').textContent = fV(fill);
+  layersInfo();
+}
+
+/* ---------- marching squares over any 2x2 patch ---------- */
+function isoSegs(a, b, c, d, lv, out) {  // corners tl,tr,br,bl (values); pushes [u,v,u,v] in unit square
+  a -= lv; b -= lv; c -= lv; d -= lv; const p = [];
+  if ((a < 0) !== (b < 0)) p.push([a / (a - b), 0]);
+  if ((b < 0) !== (c < 0)) p.push([1, b / (b - c)]);
+  if ((c < 0) !== (d < 0)) p.push([1 - c / (c - d), 1]);
+  if ((d < 0) !== (a < 0)) p.push([0, 1 - d / (d - a)]);
+  for (let k = 0; k + 1 < p.length; k += 2) out.push(p[k][0], p[k][1], p[k + 1][0], p[k + 1][1]);
+}
+function range(arr) { let lo = 1e9, hi = -1e9; for (let n = 0; n < arr.length; n++) { if (arr[n] < lo) lo = arr[n]; if (arr[n] > hi) hi = arr[n]; } return [lo, hi]; }
+const interval = () => (isFt() ? INTERVALS_FT : INTERVALS)[S.ivl];
+const isIndex = lv => Math.abs(Math.round(lv / interval()) % 5) === 0;
+
+/* ---------- canvas + sheet ---------- */
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let dpr = 1, sheet = { x: 0, y: 0, w: 1, h: 1 };
+function resize() {
+  const r = cv.parentElement.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
+  S.w = r.width; S.h = r.height; cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const m = 36, aw = S.w - 2 * m, ah = S.h - 2 * m - 20, k = Math.min(aw / (W - 1), ah / (H - 1));
+  sheet = { x: (S.w - k * (W - 1)) / 2, y: (S.h - 20 - k * (H - 1)) / 2, w: k * (W - 1), h: k * (H - 1), k };
+  S.dirty = true;
+}
+const toSheet = (gx, gy) => [sheet.x + gx * sheet.k, sheet.y + gy * sheet.k];
+const toGrid = (px, py) => [(px - sheet.x) / sheet.k, (py - sheet.y) / sheet.k];
+function font(px, weight) { return `${weight || 400} ${px}px ${getComputedStyle(document.body).fontFamily}`; }
+
+/* ---------- plan ---------- */
+function drawPlan() {
+  ctx.clearRect(0, 0, S.w, S.h);
+  const k = sheet.k, [lo, hi] = range(z), iv = interval();
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
+  // hachures: strands that run downslope, length by steepness
+  if (S.hach > 0) {
+    const step = Math.max(2, Math.round(8 - S.hach / 20)), maxLen = 10;
+    ctx.strokeStyle = INK; ctx.lineWidth = .6; ctx.globalAlpha = .45; ctx.beginPath();
+    for (let j = 1; j < H - 1; j += step) for (let i = 1; i < W - 1; i += step) {
+      let x = i + (hash(i, j, 3) - .5) * step, y = j + (hash(j, i, 5) - .5) * step;
+      const g0 = grad(x, y), s0 = Math.hypot(g0[0], g0[1]); if (s0 < .04) continue;
+      const len = Math.min(maxLen, 2 + s0 * 14); let p = toSheet(x, y); ctx.moveTo(p[0], p[1]);
+      for (let t = 0; t < len; t++) {
+        const g = grad(x, y), s = Math.hypot(g[0], g[1]); if (s < .02) break;
+        x -= g[0] / s; y -= g[1] / s; if (x < 0 || y < 0 || x > W - 1 || y > H - 1) break;
+        p = toSheet(x, y); ctx.lineTo(p[0], p[1]);
+      }
+    }
+    ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  // contours
+  const segs = [], segsIdx = [];
+  for (let lv = Math.ceil(lo / iv) * iv; lv <= hi; lv += iv) {
+    const out = isIndex(lv) ? segsIdx : segs;
+    for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) {
+      const a = z[idx(i, j)], b = z[idx(i + 1, j)], c = z[idx(i + 1, j + 1)], d = z[idx(i, j + 1)];
+      const mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d); if (lv < mn || lv > mx) continue;
+      const tmp = []; isoSegs(a, b, c, d, lv, tmp);
+      for (let q = 0; q < tmp.length; q += 4) out.push(sheet.x + (i + tmp[q]) * k, sheet.y + (j + tmp[q + 1]) * k, sheet.x + (i + tmp[q + 2]) * k, sheet.y + (j + tmp[q + 3]) * k);
+    }
+  }
+  const strokeSegs = (arr, wdt, alpha) => { ctx.lineWidth = wdt; ctx.globalAlpha = alpha; ctx.beginPath(); for (let q = 0; q < arr.length; q += 4) { ctx.moveTo(arr[q], arr[q + 1]); ctx.lineTo(arr[q + 2], arr[q + 3]); } ctx.stroke(); ctx.globalAlpha = 1; };
+  ctx.strokeStyle = INK; strokeSegs(segs, .7, .8); strokeSegs(segsIdx, 1.4, 1);
+  // sheet frame, north, scale bar
+  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
+  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillText(`site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}`, sheet.x, sheet.y + sheet.h + 6);
+  const uf = isFt() ? FT : 1, barD = niceBar(S.siteW * uf / 5), bar = barD / uf, bw = bar / cs() * k, bx = sheet.x + sheet.w - bw, by = sheet.y + sheet.h + 10;
+  ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.stroke();
+  ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, bx + bw, by + 4);
+  ctx.textAlign = 'center'; ctx.fillText('N', sheet.x + sheet.w - 12, sheet.y + 8);
+  ctx.beginPath(); ctx.moveTo(sheet.x + sheet.w - 12, sheet.y + 34); ctx.lineTo(sheet.x + sheet.w - 12, sheet.y + 22); ctx.stroke();
+  // section line
+  if (S.sec) drawSectionLine();
+  // brush cursor
+  if (S.ptr && S.mode === 'plan' && S.brush !== 'section') {
+    const p = toSheet(S.ptr[0], S.ptr[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.arc(p[0], p[1], S.radius / cs() * k, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+  }
+}
+function niceBar(v) { const p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p; return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * p; }
+function drawSectionLine() {
+  const a = toSheet(S.sec[0][0], S.sec[0][1]), b = toSheet(S.sec[1][0], S.sec[1][1]);
+  ctx.strokeStyle = ACC; ctx.lineWidth = 1.2; ctx.setLineDash([8, 4]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = ACC; ctx.font = font(11, 600); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const [p, l] of [[a, 'A'], [b, 'B']]) { ctx.beginPath(); ctx.arc(p[0], p[1], 9, 0, TAU); ctx.fillStyle = PAPER; ctx.fill(); ctx.strokeStyle = ACC; ctx.stroke(); ctx.fillStyle = ACC; ctx.fillText(l, p[0], p[1] + .5); }
+}
+
+/* ---------- model (orthographic orbit, painter's sort) ---------- */
+function drawModel() {
+  ctx.clearRect(0, 0, S.w, S.h);
+  const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
+  const scale = zoom * Math.min(S.w, S.h) / (S.siteW * 1.25), ox = S.w / 2, oy = S.h / 2 + 10;
+  const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
+    const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
+    return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, Z * cp - y1 * sp]; };
+  const step = 2, items = [], iv = interval();
+  const lx = -.5, ly = -.4, lz = .77;  // light from upper left
+  for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
+    const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
+    const za = z[idx(i, j)], zb = z[idx(i2, j)], zc = z[idx(i2, j2)], zd = z[idx(i, j2)];
+    const P = [proj(i, j, za), proj(i2, j, zb), proj(i2, j2, zc), proj(i, j2, zd)];
+    const nx = -(zb - za) * S.ve / (step * s), ny = -(zd - za) * S.ve / (step * s); const nl = Math.hypot(nx, ny, 1);
+    const light = (nx * lx + ny * ly + lz) / nl, tone = TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
+    const lines = [];
+    const mn = Math.min(za, zb, zc, zd), mx = Math.max(za, zb, zc, zd);
+    for (let lv = Math.ceil(mn / iv) * iv; lv <= mx; lv += iv) {
+      const tmp = []; isoSegs(za, zb, zc, zd, lv, tmp);
+      for (let q = 0; q < tmp.length; q += 4) lines.push([proj(i + tmp[q] * step, j + tmp[q + 1] * step, lv), proj(i + tmp[q + 2] * step, j + tmp[q + 3] * step, lv), isIndex(lv)]);
+    }
+    items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines });
+  }
+  // walls of the base slab: one polygon per side, drawn far to near before the surface
+  const walls = [];
+  const side = (nodes) => { const top = nodes.map(([i, j]) => proj(i, j, z[idx(i, j)])), bot = nodes.map(([i, j]) => proj(i, j, baseZ));
+    walls.push({ d: top.reduce((a, p) => a + p[2], 0) / top.length, P: top.concat(bot.reverse()) }); };
+  const north = [], south = [], west = [], east = [];
+  for (let i = 0; i < W; i += step) { north.push([Math.min(i, W - 1), 0]); south.push([Math.min(i, W - 1), H - 1]); }
+  for (let j = 0; j < H; j += step) { west.push([0, Math.min(j, H - 1)]); east.push([W - 1, Math.min(j, H - 1)]); }
+  if (north[north.length - 1][0] !== W - 1) { north.push([W - 1, 0]); south.push([W - 1, H - 1]); }
+  if (west[west.length - 1][1] !== H - 1) { west.push([0, H - 1]); east.push([W - 1, H - 1]); }
+  side(north); side(south); side(west); side(east);
+  walls.sort((a, b) => a.d - b.d);
+  ctx.lineJoin = 'round';
+  for (const wl of walls) { ctx.fillStyle = TONES[3]; ctx.strokeStyle = TONES[3]; ctx.lineWidth = .8; ctx.beginPath();
+    wl.P.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  items.sort((a, b) => a.d - b.d);
+  for (const it of items) {
+    ctx.fillStyle = it.tone; ctx.strokeStyle = it.tone; ctx.lineWidth = .8; ctx.beginPath();
+    it.P.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.stroke();
+    if (it.lines.length) { ctx.strokeStyle = INK; for (const [a, b, ix] of it.lines) { ctx.lineWidth = ix ? 1.2 : .6; ctx.globalAlpha = ix ? .9 : .7; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } ctx.globalAlpha = 1; }
+  }
+  // base outline
+  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.beginPath();
+  [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText(`model · ${S.ve}x vertical · drag to orbit · pinch or wheel to zoom`, 14, S.h - 10);
+}
+
+/* ---------- stepped model: the cardboard stack before you cut it ---------- */
+let stepCache = { key: '', layers: [] };
+function steppedLayers() {
+  const { lo, dz, n } = layerPlan(), key = [S.terrainVer, lo, dz, n].join('|');
+  if (stepCache.key === key) return stepCache.layers;
+  const layers = [];
+  for (let i = 0; i <= n; i++) {
+    const loops = layerLoops(lo + i * dz).map(l => { let A = 0; for (let q = 0; q < l.length; q++) { const a = l[q], b = l[(q + 1) % l.length]; A += a[0] * b[1] - b[0] * a[1]; } return A < 0 ? l.slice().reverse() : l; });
+    layers.push({ level: lo + i * dz, top: lo + (i + 1) * dz, loops });
+  }
+  stepCache = { key, layers }; return layers;
+}
+function drawStepped() {
+  ctx.clearRect(0, 0, S.w, S.h);
+  const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
+  const scale = zoom * Math.min(S.w, S.h) / (S.siteW * 1.25), ox = S.w / 2, oy = S.h / 2 + 10;
+  const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
+    const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, Z * cp - y1 * sp]; };
+  const layers = steppedLayers();
+  // base slab under everything
+  const corners = [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]];
+  const risers = (loop, zb, zt, tone) => { const quads = [];
+    for (let q = 0; q < loop.length; q++) { const a = loop[q], b = loop[(q + 1) % loop.length]; const dx = b[0] - a[0], dy = b[1] - a[1];
+      const nX = dy, nY = -dx, ny1 = nX * sy + nY * cy; if (ny1 >= 0) continue;   // back-facing
+      const P = [proj(a[0], a[1], zt), proj(b[0], b[1], zt), proj(b[0], b[1], zb), proj(a[0], a[1], zb)];
+      quads.push({ d: (P[0][2] + P[1][2]) / 2, P }); }
+    quads.sort((u, v) => u.d - v.d); ctx.fillStyle = tone; ctx.strokeStyle = tone; ctx.lineWidth = .6;
+    for (const qd of quads) { ctx.beginPath(); qd.P.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.stroke(); } };
+  ctx.lineJoin = 'round';
+  risers(corners, baseZ, lo, TONES[3]);
+  for (const L of layers) {
+    for (const loop of L.loops) risers(loop, L.level, L.top, TONES[2]);
+    ctx.beginPath();
+    for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }), ctx.closePath();
+    ctx.fillStyle = TONES[0]; ctx.fill('evenodd'); ctx.strokeStyle = INK; ctx.lineWidth = .7; ctx.globalAlpha = .8; ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.beginPath();
+  corners.forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.stroke();
+  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · drag to orbit`, 14, S.h - 10);
+}
+
+/* ---------- section ---------- */
+function sectionProfile(n) {
+  const [a, b] = S.sec, L = Math.hypot(b[0] - a[0], b[1] - a[1]) * cs(), prop = [], ex = [];
+  for (let q = 0; q <= n; q++) { const t = q / n, gx = a[0] + (b[0] - a[0]) * t, gy = a[1] + (b[1] - a[1]) * t; prop.push(sample(z, gx, gy)); ex.push(sample(base, gx, gy)); }
+  return { L, prop, ex };
+}
+function drawSection() {
+  ctx.clearRect(0, 0, S.w, S.h);
+  ctx.fillStyle = INK2; ctx.font = font(11); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (!S.sec) { ctx.fillText('no section yet. in plan, pick "draw section line a to b" and drag across the sheet.', S.w / 2, S.h / 2); return; }
+  const n = 240, { L, prop, ex } = sectionProfile(n), iv = interval();
+  const lo = Math.min(...prop, ...ex), hi = Math.max(...prop, ...ex);
+  const mL = 64, mR = 30, mB = 60, pw = S.w - mL - mR;
+  let pxm = pw / L, ph = (hi - lo) * pxm * S.ve, vs = S.ve;
+  if (ph > S.h - 50 - mB) { vs = (S.h - 50 - mB) / ((hi - lo) * pxm); ph = S.h - 50 - mB; }
+  const mT = Math.max(50, (S.h - ph - mB) / 2);
+  const ground = mT + ph + 6, X = q => mL + q / n * pw, Y = v => ground - (v - lo) * pxm * vs;
+  // earth below proposed: hatch
+  ctx.save(); ctx.beginPath(); ctx.moveTo(X(0), ground + 30); prop.forEach((v, q) => ctx.lineTo(X(q), Y(v))); ctx.lineTo(X(n), ground + 30); ctx.closePath(); ctx.clip();
+  ctx.strokeStyle = INK; ctx.globalAlpha = .28; ctx.lineWidth = .6; ctx.beginPath();
+  for (let x = mL - 400; x < S.w; x += 9) { ctx.moveTo(x, mT - 20); ctx.lineTo(x + 400, ground + 60); } ctx.stroke(); ctx.restore(); ctx.globalAlpha = 1;
+  // cut and fill bands between existing and proposed
+  let cutA = 0, fillA = 0; const dx = L / n;
+  for (let q = 0; q < n; q++) {
+    const d0 = prop[q] - ex[q], d1 = prop[q + 1] - ex[q + 1]; const area = (d0 + d1) / 2 * dx; if (area > 0) fillA += area; else cutA -= area;
+    ctx.beginPath(); ctx.moveTo(X(q), Y(ex[q])); ctx.lineTo(X(q + 1), Y(ex[q + 1])); ctx.lineTo(X(q + 1), Y(prop[q + 1])); ctx.lineTo(X(q), Y(prop[q])); ctx.closePath();
+    ctx.fillStyle = area > 0 ? 'rgba(201,107,58,.28)' : 'rgba(42,42,40,.16)'; ctx.fill();
+  }
+  // existing dashed, proposed solid
+  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.setLineDash([5, 4]); ctx.beginPath(); ex.forEach((v, q) => q ? ctx.lineTo(X(q), Y(v)) : ctx.moveTo(X(q), Y(v))); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.beginPath(); prop.forEach((v, q) => q ? ctx.lineTo(X(q), Y(v)) : ctx.moveTo(X(q), Y(v))); ctx.stroke();
+  // datum axis with elevation ticks
+  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(mL, Y(lo) + 2); ctx.lineTo(mL, Y(hi) - 8); ctx.stroke();
+  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  for (let v = Math.ceil(lo / iv) * iv; v <= hi; v += iv) { ctx.beginPath(); ctx.moveTo(mL - 4, Y(v)); ctx.lineTo(mL, Y(v)); ctx.stroke(); if (isIndex(v) || (hi - lo) / iv < 8) ctx.fillText(fL(v, 2), mL - 7, Y(v)); }
+  // labels
+  ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillStyle = ACC; ctx.font = font(13, 600);
+  ctx.fillText('A', X(0), mT - 34); ctx.fillText('B', X(n), mT - 34);
+  ctx.fillStyle = INK2; ctx.font = font(10);
+  const uf = isFt() ? FT : 1, barD = niceBar(L * uf / 5), bar = barD / uf; ctx.textAlign = 'left';
+  ctx.fillText(`section A–B · length ${fL(L, 1)} · vertical ${vs.toFixed(2)}x`, mL, ground + 36);
+  ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(S.w - mR - bar * pxm, ground + 40); ctx.lineTo(S.w - mR, ground + 40); ctx.stroke();
+  ctx.textAlign = 'right'; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, S.w - mR, ground + 44);
+  // legend
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; const ly = mT - 14;
+  ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(mL, ly); ctx.lineTo(mL + 22, ly); ctx.stroke(); ctx.fillStyle = INK2; ctx.fillText('proposed', mL + 28, ly);
+  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(mL + 100, ly); ctx.lineTo(mL + 122, ly); ctx.stroke(); ctx.setLineDash([]); ctx.fillText('existing', mL + 128, ly);
+  ctx.fillStyle = 'rgba(201,107,58,.28)'; ctx.fillRect(mL + 196, ly - 5, 22, 10); ctx.fillStyle = INK2; ctx.fillText(`fill ${fA(fillA)}`, mL + 224, ly);
+  ctx.fillStyle = 'rgba(42,42,40,.16)'; ctx.fillRect(mL + 330, ly - 5, 22, 10); ctx.fillStyle = INK2; ctx.fillText(`cut ${fA(cutA)}`, mL + 358, ly);
+}
+
+/* ---------- loop ---------- */
+function frame() {
+  if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel()); else drawSection(); }
+  requestAnimationFrame(frame);
+}
+
+/* ---------- pointer ---------- */
+let drag = null, pinch = null; const pts = new Map();
+const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId); const p = pt(e); pts.set(e.pointerId, p);
+  if (pts.size === 2) { const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom }; drag = null; return; }
+  if (S.mode === 'model') { drag = { p, kind: 'orbit' }; return; }
+  if (S.mode !== 'plan') return;
+  const g = toGrid(p[0], p[1]);
+  if (S.brush === 'section') { S.sec = [g, g]; drag = { g, kind: 'section' }; S.dirty = true; return; }
+  drag = { g, kind: 'brush', z0: sample(z, g[0], g[1]) }; dab(g[0], g[1], S.brush, drag.z0); S.dirty = true;
+});
+cv.addEventListener('pointermove', e => {
+  const p = pt(e); if (pts.has(e.pointerId)) pts.set(e.pointerId, p);
+  if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); S.cam.zoom = Math.max(.4, Math.min(4, pinch.z * d / pinch.d)); S.dirty = true; return; }
+  if (S.mode === 'plan') { const g = toGrid(p[0], p[1]); S.ptr = g; readout(g); S.dirty = true; }
+  if (!drag) return;
+  if (drag.kind === 'orbit') { S.cam.yaw += (p[0] - drag.p[0]) * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch + (p[1] - drag.p[1]) * .006)); drag.p = p; S.dirty = true; }
+  else if (drag.kind === 'section') { S.sec[1] = toGrid(p[0], p[1]); S.dirty = true; }
+  else { const g = toGrid(p[0], p[1]); strokeLine(drag.g, g, S.brush, drag.z0); drag.g = g; S.dirty = true; }
+});
+function endPointer(e) {
+  pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
+  if (drag && drag.kind === 'brush') updateStats();
+  if (drag && drag.kind === 'section') { const [a, b] = S.sec; if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 3) S.sec = null; else { setMode('section'); toast('section cut. back to plan to redraw it'); } }
+  drag = null; S.dirty = true;
+}
+cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
+cv.addEventListener('pointerleave', () => { S.ptr = null; S.dirty = true; document.getElementById('read').textContent = 'keys 1 plan · 2 model · 3 section'; });
+cv.addEventListener('wheel', e => { if (S.mode !== 'model') return; e.preventDefault(); S.cam.zoom = Math.max(.4, Math.min(4, S.cam.zoom * (e.deltaY < 0 ? 1.1 : .9))); S.dirty = true; }, { passive: false });
+function readout(g) {
+  const el = document.getElementById('read');
+  if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) { el.textContent = 'outside the site'; return; }
+  const zp = sample(z, g[0], g[1]), ze = sample(base, g[0], g[1]), gr = grad(g[0], g[1]), sl = Math.hypot(gr[0], gr[1]) * 100;
+  el.innerHTML = `x ${fL(g[0] * cs(), 1)} · y ${fL(g[1] * cs(), 1)} &nbsp; spot <b>${zp >= 0 && !S.world ? '+' : ''}${fL(zp, 2)}</b> &nbsp; existing ${fL(ze, 2)} &nbsp; slope ${sl.toFixed(0)}%`;
+}
+
+/* ---------- rail ---------- */
+const DESC = { plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'orthographic model of the proposed grade. drag to orbit.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
+function setMode(m) {
+  S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
+  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = m === 'plan' ? '' : 'none';
+  cv.classList.toggle('orbit', m === 'model'); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; S.dirty = true;
+}
+document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
+document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.brush = b.dataset.b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
+const relabels = [];
+const bind = (id, fmt, fn) => { const el = document.getElementById(id), out = document.getElementById('o_' + id);
+  const apply = () => { const v = +el.value; out.textContent = fmt(v); fn(v); S.dirty = true; }; el.oninput = apply; relabels.push(() => { out.textContent = fmt(+el.value); }); apply(); };
+bind('radius', v => fL(v, 1), v => S.radius = v);
+bind('strength', v => v, v => S.strength = v);
+bind('siteW', v => fL(v, 0), v => { S.siteW = v; updateStats(); });
+document.getElementById('siteW').onchange = () => { if (S.world) fetchWorld(S.world); };
+bind('relief', v => fL(v, 1), v => { S.relief = v; if (S.world) { toast('real terrain loaded. new existing returns to noise'); return; } buildExisting(); resetGrading(); });
+bind('interval', v => fL((isFt() ? INTERVALS_FT : INTERVALS)[v], 2), v => S.ivl = v);
+bind('hach', v => v, v => S.hach = v);
+bind('ve', v => v.toFixed(2).replace(/\.?0+$/, '') + ' x', v => { S.ve = v; layersInfo(); });
+bind('mm', v => fS(v), v => { S.mm = v; layersInfo(); });
+bind('thick', v => fS(v), v => { S.thick = v; layersInfo(); });
+bind('ledge', v => v === 0 ? 'off (solid)' : 'ledge ' + fS(v), v => S.ledge = v);
+document.getElementById('modelStyle').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.modelStyle = b.dataset.s; document.querySelectorAll('#modelStyle button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
+document.getElementById('unit').onchange = e => { S.unit = e.target.value; relabels.forEach(f => f()); updateStats(); S.dirty = true; if (S.mode === 'plan' && S.ptr) readout(S.ptr); };
+document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
+document.getElementById('fetch').onclick = () => fetchWorld();
+document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetchWorld(); };
+document.getElementById('laser').onclick = () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); };
+document.getElementById('reseed').onclick = () => { S.world = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
+document.getElementById('reset').onclick = () => { resetGrading(); toast('grading reset to existing'); };
+document.getElementById('png').onclick = () => {
+  const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height; const o = out.getContext('2d');
+  o.fillStyle = PAPER; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0);
+  dl(out.toDataURL('image/png'), `coyote-topo-${S.mode}.png`);
+};
+document.getElementById('stl').onclick = () => { const blob = new Blob([stl()], { type: 'model/stl' }); dl(URL.createObjectURL(blob), `coyote-topo-${S.mm}mm.stl`); };
+function dl(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; a.click(); toast('saved ' + name); }
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1600); }
+
+/* ---------- binary stl: surface + walls + bottom, in mm ---------- */
+function stl() {
+  const k = S.mm / S.siteW, [lo] = range(z), baseT = 3, s = cs() * k;
+  const X = i => i * s, Y = j => (H - 1 - j) * s, Z = n => (z[n] - lo) * S.ve * k + baseT;
+  const tris = [];
+  const T = (a, b, c) => tris.push(a, b, c);
+  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) {
+    const a = [X(i), Y(j), Z(idx(i, j))], b = [X(i + 1), Y(j), Z(idx(i + 1, j))], c = [X(i + 1), Y(j + 1), Z(idx(i + 1, j + 1))], d = [X(i), Y(j + 1), Z(idx(i, j + 1))];
+    T(a, c, b); T(a, d, c);
+  }
+  const wallQuad = (p, q) => { const p0 = [p[0], p[1], 0], q0 = [q[0], q[1], 0]; T(p, q, q0); T(p, q0, p0); };
+  for (let i = 0; i < W - 1; i++) { wallQuad([X(i + 1), Y(0), Z(idx(i + 1, 0))], [X(i), Y(0), Z(idx(i, 0))]); wallQuad([X(i), Y(H - 1), Z(idx(i, H - 1))], [X(i + 1), Y(H - 1), Z(idx(i + 1, H - 1))]); }
+  for (let j = 0; j < H - 1; j++) { wallQuad([X(0), Y(j), Z(idx(0, j))], [X(0), Y(j + 1), Z(idx(0, j + 1))]); wallQuad([X(W - 1), Y(j + 1), Z(idx(W - 1, j + 1))], [X(W - 1), Y(j), Z(idx(W - 1, j))]); }
+  T([0, Y(0), 0], [X(W - 1), Y(0), 0], [X(W - 1), Y(H - 1), 0]); T([0, Y(0), 0], [X(W - 1), Y(H - 1), 0], [0, Y(H - 1), 0]);
+  const n = tris.length / 3, buf = new ArrayBuffer(84 + n * 50), dv = new DataView(buf); let o = 80; dv.setUint32(o, n, true); o += 4;
+  for (let t = 0; t < tris.length; t += 3) {
+    const [a, b, c] = [tris[t], tris[t + 1], tris[t + 2]];
+    const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2];
+    let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const l = Math.hypot(nx, ny, nz) || 1;
+    for (const v of [nx / l, ny / l, nz / l, ...a, ...b, ...c]) { dv.setFloat32(o, v, true); o += 4; }
+    dv.setUint16(o, 0, true); o += 2;
+  }
+  return buf;
+}
+
+/* ---------- laser: contour stack out of cardboard ---------- */
+function layerLoops(level, field = z) {   // closed loops (grid coords) around everything at or above level
+  const PW = W + 2, PH = H + 2, F = new Float32Array(PW * PH).fill(level - 1);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) F[(j + 1) * PW + i + 1] = field[idx(i, j)];
+  const segs = [];
+  for (let j = 0; j < PH - 1; j++) for (let i = 0; i < PW - 1; i++) {
+    const a = F[j * PW + i], b = F[j * PW + i + 1], c = F[(j + 1) * PW + i + 1], d = F[(j + 1) * PW + i];
+    if (level < Math.min(a, b, c, d) || level > Math.max(a, b, c, d)) continue;
+    const tmp = []; isoSegs(a, b, c, d, level, tmp);
+    for (let q = 0; q < tmp.length; q += 4) segs.push([i + tmp[q], j + tmp[q + 1], i + tmp[q + 2], j + tmp[q + 3]]);
+  }
+  const key = (x, y) => Math.round(x * 1000) + ',' + Math.round(y * 1000), map = new Map();
+  segs.forEach((sg, n) => { for (const kk of [key(sg[0], sg[1]), key(sg[2], sg[3])]) { if (!map.has(kk)) map.set(kk, []); map.get(kk).push(n); } });
+  const used = new Uint8Array(segs.length), loops = [];
+  for (let n = 0; n < segs.length; n++) {
+    if (used[n]) continue; const loop = []; let cur = n, px = segs[n][0], py = segs[n][1];
+    for (let guard = 0; guard < segs.length + 1; guard++) {
+      used[cur] = 1; const sg = segs[cur], atStart = key(sg[0], sg[1]) === key(px, py);
+      const nx = atStart ? sg[2] : sg[0], ny = atStart ? sg[3] : sg[1]; loop.push([nx - 1, ny - 1]);
+      const cands = (map.get(key(nx, ny)) || []).filter(m => !used[m]); if (!cands.length) break; cur = cands[0]; px = nx; py = ny;
+    }
+    if (loop.length > 2) loops.push(loop);
+  }
+  return loops;
+}
+function insetLoops(level, ledgeCells) {   // loops of the region at/above level, shrunk inward by ledgeCells (chamfer distance)
+  const D = new Float32Array(W * H), BIG = 1e4;
+  for (let n = 0; n < W * H; n++) D[n] = z[n] >= level ? BIG : 0;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); if (!D[n]) continue;
+    let d = (i === 0 || j === 0 || i === W - 1 || j === H - 1) ? 0.5 : BIG;
+    if (i > 0) d = Math.min(d, D[n - 1] + 1); if (j > 0) d = Math.min(d, D[n - W] + 1);
+    if (i > 0 && j > 0) d = Math.min(d, D[n - W - 1] + 1.414); if (i < W - 1 && j > 0) d = Math.min(d, D[n - W + 1] + 1.414); D[n] = d; }
+  for (let j = H - 1; j >= 0; j--) for (let i = W - 1; i >= 0; i--) { const n = idx(i, j); if (!D[n]) continue; let d = D[n];
+    if (i < W - 1) d = Math.min(d, D[n + 1] + 1); if (j < H - 1) d = Math.min(d, D[n + W] + 1);
+    if (i < W - 1 && j < H - 1) d = Math.min(d, D[n + W + 1] + 1.414); if (i > 0 && j < H - 1) d = Math.min(d, D[n + W - 1] + 1.414); D[n] = d; }
+  return layerLoops(ledgeCells, D).filter(l => l.length > 8);
+}
+function layerPlan() {
+  const k = S.mm / S.siteW, [lo, hi] = range(z), dz = S.thick / (k * S.ve), n = Math.floor((hi - lo) / dz + 1e-9);
+  return { k, lo, hi, dz, n, gu: cs() * k };
+}
+function layersInfo() {
+  const { dz, n } = layerPlan(), el = document.getElementById('layersInfo');
+  el.textContent = `${n + 1} layers · ${fL(dz, 2)} of grade per sheet · stack ${fS((n + 1) * S.thick)} tall`;
+  el.style.color = n + 1 > 80 ? 'var(--accent)' : '';
+}
+function laserSVG() {
+  const { lo, dz, n, gu } = layerPlan(), [sw, sh] = S.sheet, margin = 10, gap = 6;
+  const modelW = (W - 1) * gu, modelH = (H - 1) * gu;
+  if (modelW > sw - 2 * margin || modelH > sh - 2 * margin) { toast(`model ${modelW.toFixed(0)} × ${modelH.toFixed(0)} mm does not fit the sheet`); return null; }
+  if (n + 1 > 200) { toast('over 200 layers. thicker cardboard or a smaller model'); return null; }
+  const layers = [];
+  for (let i = 0; i <= n; i++) {
+    const loops = layerLoops(lo + i * dz); if (!loops.length) continue;
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const l of loops) for (const [x, y] of l) { if (x < x0) x0 = x; if (y < y0) y0 = y; if (x > x1) x1 = x; if (y > y1) y1 = y; }
+    layers.push({ i, level: lo + i * dz, loops, holes: [], bb: [x0 * gu, y0 * gu, x1 * gu, y1 * gu] });
+  }
+  if (S.ledge > 0) for (let q = 0; q + 1 < layers.length; q++) layers[q].holes = insetLoops(layers[q + 1].level, S.ledge / gu);
+  const path = (loops, ox, oy) => loops.map(l => 'M' + l.map(([x, y]) => (x * gu + ox).toFixed(2) + ',' + (y * gu + oy).toFixed(2)).join('L') + 'Z').join('');
+  let x = margin, y = margin, rowH = 0, sheetN = 0, body = '', sheetBody = '';
+  const flush = () => { if (sheetBody) body += `<g id="sheet-${sheetN + 1}" transform="translate(0,${(sheetN * (sh + 20)).toFixed(1)})"><rect x="0" y="0" width="${sw}" height="${sh}" fill="none" stroke="#999999" stroke-width="0.2" stroke-dasharray="4 3"/><text x="4" y="-4" font-size="5" font-family="monospace" fill="#999999">sheet ${sheetN + 1} · ${sw} × ${sh} mm · cardboard ${S.thick} mm</text>${sheetBody}</g>`; sheetBody = ''; };
+  for (let q = 0; q < layers.length; q++) {
+    const L = layers[q], bw = L.bb[2] - L.bb[0], bh = L.bb[3] - L.bb[1];
+    if (x + bw > sw - margin) { x = margin; y += rowH + gap; rowH = 0; }
+    if (y + bh > sh - margin) { flush(); sheetN++; x = margin; y = margin; rowH = 0; }
+    const ox = x - L.bb[0], oy = y - L.bb[1], next = layers[q + 1];
+    sheetBody += `<g id="layer-${L.i + 1}">` +
+      (next ? `<path d="${path(next.loops, ox, oy)}" fill="none" stroke="#0000ff" stroke-width="0.1"/>` : '') +
+      `<text x="${(x + 3).toFixed(1)}" y="${(y + 7).toFixed(1)}" font-size="4" font-family="monospace" fill="#0000ff">${L.i + 1} / ${layers.length} · ${fL(L.level, 2)}</text>` +
+      `<path d="${path(L.loops, ox, oy)}${path(L.holes, ox, oy)}" fill="none" stroke="#ff0000" stroke-width="0.1" fill-rule="evenodd"/></g>`;
+    x += bw + gap; rowH = Math.max(rowH, bh);
+  }
+  flush(); const sheets = sheetN + 1, totalH = sheets * (sh + 20) - 20;
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${sw}mm" height="${totalH}mm" viewBox="0 0 ${sw} ${totalH}">\n<!-- coyote mountain topo · ${layers.length} layers of ${S.thick} mm cardboard · red = cut (outer edge + hollow interior leaving a ${S.ledge} mm ledge), blue = engrave (layer number, elevation, outline of the layer above for alignment) · model ${modelW.toFixed(0)} x ${modelH.toFixed(0)} mm -->\n${body}\n</svg>`;
+  toast(`${layers.length} layers on ${sheets} sheet${sheets > 1 ? 's' : ''}`);
+  return { svg, layers: layers.length };
+}
+
+/* ---------- world: real elevation for any place ---------- */
+function worldStatus(msg) { document.getElementById('worldStatus').textContent = msg; }
+const D2R = Math.PI / 180;
+function nodeLatLon(i, j, lat, lon) { const dx = (i - (W - 1) / 2) * cs(), dy = ((H - 1) / 2 - j) * cs(); return [lat + dy / 111320, lon + dx / (111320 * Math.cos(lat * D2R))]; }
+function loadImage(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => rej(new Error('tile blocked')); im.src = url; }); }
+async function loadTerrarium(lat, lon) {
+  const Zm = Math.max(2, Math.min(15, Math.ceil(Math.log2(156543.03 * Math.cos(lat * D2R) / cs())))), n = 2 ** Zm;
+  const px = (la, lo) => [(lo + 180) / 360 * n * 256, (1 - Math.log(Math.tan(la * D2R) + 1 / Math.cos(la * D2R)) / Math.PI) / 2 * n * 256];
+  const P = new Float64Array(W * H * 2); let tx0 = 1e12, ty0 = 1e12, tx1 = -1, ty1 = -1;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const [la, lo] = nodeLatLon(i, j, lat, lon), q = px(la, lo); P[idx(i, j) * 2] = q[0]; P[idx(i, j) * 2 + 1] = q[1];
+    tx0 = Math.min(tx0, Math.floor(q[0] / 256)); ty0 = Math.min(ty0, Math.floor(q[1] / 256)); tx1 = Math.max(tx1, Math.floor((q[0] + 1) / 256)); ty1 = Math.max(ty1, Math.floor((q[1] + 1) / 256)); }
+  const cols = tx1 - tx0 + 1, count = cols * (ty1 - ty0 + 1); if (count > 36) throw new Error('site too wide for tiles');
+  worldStatus(`fetching ${count} elevation tile${count > 1 ? 's' : ''} at zoom ${Zm}…`);
+  const tiles = new Map(), oc = document.createElement('canvas'); oc.width = oc.height = 256; const o = oc.getContext('2d', { willReadFrequently: true });
+  await Promise.all(Array.from({ length: count }, (_, q) => { const tx = tx0 + q % cols, ty = ty0 + Math.floor(q / cols);
+    return loadImage(`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${Zm}/${tx}/${ty}.png`).then(im => { o.clearRect(0, 0, 256, 256); o.drawImage(im, 0, 0); tiles.set(tx + '/' + ty, o.getImageData(0, 0, 256, 256).data); }); }));
+  const at = (x, y) => { const tx = Math.floor(x / 256), ty = Math.floor(y / 256), d = tiles.get(tx + '/' + ty); if (!d) return 0;
+    const q = ((y - ty * 256) * 256 + (x - tx * 256)) * 4; return d[q] * 256 + d[q + 1] + d[q + 2] / 256 - 32768; };
+  for (let m = 0; m < W * H; m++) { const x = P[m * 2], y = P[m * 2 + 1], x0 = Math.floor(x), y0 = Math.floor(y), u = x - x0, v = y - y0;
+    base[m] = at(x0, y0) * (1 - u) * (1 - v) + at(x0 + 1, y0) * u * (1 - v) + at(x0, y0 + 1) * (1 - u) * v + at(x0 + 1, y0 + 1) * u * v; }
+}
+async function loadOpenTopo(lat, lon) {
+  const GW = 40, GH = 27, pts = []; for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) pts.push(nodeLatLon(i / (GW - 1) * (W - 1), j / (GH - 1) * (H - 1), lat, lon));
+  const coarse = new Float32Array(GW * GH);
+  for (let q = 0; q < pts.length; q += 100) {
+    worldStatus(`opentopodata ${Math.round(q / pts.length * 100)}%…`);
+    const r = await fetch('https://api.opentopodata.org/v1/mapzen?locations=' + pts.slice(q, q + 100).map(p => p[0].toFixed(6) + ',' + p[1].toFixed(6)).join('|'));
+    const j = await r.json(); if (!j.results) throw new Error('elevation service refused'); j.results.forEach((res, m) => coarse[q + m] = res.elevation || 0);
+    if (q + 100 < pts.length) await new Promise(res => setTimeout(res, 1100));
+  }
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const fx = i / (W - 1) * (GW - 1), fy = j / (H - 1) * (GH - 1), i0 = Math.min(GW - 2, Math.floor(fx)), j0 = Math.min(GH - 2, Math.floor(fy)), u = fx - i0, v = fy - j0;
+    const g = (a, b) => coarse[b * GW + a]; base[idx(i, j)] = g(i0, j0) * (1 - u) * (1 - v) + g(i0 + 1, j0) * u * (1 - v) + g(i0, j0 + 1) * (1 - u) * v + g(i0 + 1, j0 + 1) * u * v; }
+}
+let fetching = false;
+async function fetchWorld(known) {
+  if (fetching) return; const btn = document.getElementById('fetch');
+  let lat, lon, name;
+  if (known) ({ lat, lon, name } = known);
+  else {
+    const q = document.getElementById('place').value.trim(); if (!q) { worldStatus('type a place name or "lat, lng" first.'); return; }
+    const m = q.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if (m) { lat = +m[1]; lon = +m[2]; name = `${lat.toFixed(4)}, ${lon.toFixed(4)}`; }
+  }
+  fetching = true; btn.disabled = true; btn.textContent = 'fetching…';
+  try {
+    if (lat === undefined) {
+      worldStatus('finding the place…');
+      const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(document.getElementById('place').value.trim()));
+      const j = await r.json(); if (!j.length) throw new Error('no place found. try "lat, lng"');
+      lat = +j[0].lat; lon = +j[0].lon; name = j[0].display_name.split(',').slice(0, 2).join(',');
+    }
+    try { await loadTerrarium(lat, lon); } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); }
+    S.world = { lat, lon, name }; resetGrading(); const [lo, hi] = range(base);
+    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide`); toast('real terrain loaded');
+  } catch (e) { worldStatus(String(e.message || e) + (location.protocol === 'file:' || location.hostname.includes('claude') ? '. elevation fetch needs the deployed site or a local server' : '')); }
+  fetching = false; btn.disabled = false; btn.textContent = 'fetch real terrain';
+}
+
+/* ---------- start: existing grade plus a sketched berm and swale so the sheet is not empty ---------- */
+buildExisting(); resetGrading();
+(function seedSketch() {
+  S.radius = 6; S.strength = 60;
+  const berm = [[30, 70], [45, 60], [62, 52], [80, 50], [98, 55]]; for (let q = 0; q + 1 < berm.length; q++) strokeLine(berm[q], berm[q + 1], 'raise', 0);
+  S.radius = 4; S.strength = 45;
+  const swale = [[40, 30], [60, 34], [85, 30], [110, 22]]; for (let q = 0; q + 1 < swale.length; q++) strokeLine(swale[q], swale[q + 1], 'lower', 0);
+  S.radius = +document.getElementById('radius').value; S.strength = +document.getElementById('strength').value;
+  S.sec = [[20, 85], [120, 15]];
+})();
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; const m = { '1': 'plan', '2': 'model', '3': 'section' }[e.key]; if (m) setMode(m); if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); });
+updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
