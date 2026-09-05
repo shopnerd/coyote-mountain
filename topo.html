@@ -860,7 +860,7 @@ function modelFrame() {                   // the model rendered once, reused whi
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
 }
-let plowCache = { key: '' }, rainStats = { done: 0, creek: 0 };
+let plowCache = { key: '' }, rainStats = { done: 0, creek: 0, run: 0 };
 function plowField() {                    // furrow direction for every cell in the plowed band beside the keyline
   if (!S.keyPt) return null; const an = analyze(), key = [an.key, S.keyPt[0], S.keyPt[1], S.plowV, sheet.k].join('|'); if (plowCache.key === key) return plowCache;
   const { poly } = keylineFor(S.keyPt[0], S.keyPt[1]); if (!poly || poly.length < 4) return (plowCache = { key, mask: null });
@@ -876,13 +876,14 @@ function plowField() {                    // furrow direction for every cell in 
 function stepRain() {
   const d = depressions(), dropVol = d.A * .025, pf = S.an.plow ? plowField() : null, chan = analyze().chan;
   for (let q = 0; q < 5 && drops.length < 1400; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0, trail: [] });
-  const finish = dr => { rainStats.done++; if (dr.creek) rainStats.creek++; };
+  const finish = dr => { rainStats.done++; };
   const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); finish(dr); drops.splice(q, 1); }; const db = damBasinGet();
   for (let q = drops.length - 1; q >= 0; q--) { const dr = drops[q]; dr.age++; dr.trail.push([dr.x, dr.y]); if (dr.trail.length > 14) dr.trail.shift();
     const n = idx(Math.round(dr.x), Math.round(dr.y)), c = d.comp[n];
     if (db && db.cells.length && db.mask[n] && sample(z, dr.x, dr.y) <= db.level + .002) { absorb(db, dr, q); continue; }   // caught behind the dam
     if (c >= 0 && sample(z, dr.x, dr.y) <= d.comps[c].level + .002) { absorb(d.comps[c], dr, q); continue; }   // ran into a pool
-    if (chan[n]) dr.creek = true;
+    if (chan[n] && !dr.creek) { dr.creek = true; rainStats.creek++; rainStats.run += (dr.run || 0) * cs(); }
+    const px0 = dr.x, py0 = dr.y;
     const g = grad(dr.x, dr.y), sl = Math.hypot(g[0], g[1]);
     if (pf && pf.mask && pf.mask[n] && sl > .004) {   // in the plowed band: run along the furrow toward the drier ridge, only gently downhill
       let vx = pf.tx[n], vy = pf.ty[n]; const ai = Math.max(0, Math.min(W - 1, Math.round(dr.x + vx * 4))), aj = Math.max(0, Math.min(H - 1, Math.round(dr.y + vy * 4))), bi = Math.max(0, Math.min(W - 1, Math.round(dr.x - vx * 4))), bj = Math.max(0, Math.min(H - 1, Math.round(dr.y - vy * 4)));
@@ -891,6 +892,7 @@ function stepRain() {
     else if (sl > .004) { const sp = Math.min(.6, .12 + sl * 1.2); dr.x -= g[0] / sl * sp; dr.y -= g[1] / sl * sp; }
     else { const i = Math.round(dr.x), j = Math.round(dr.y); let best = -1, bz = z[idx(i, j)] - 1e-4; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const v = z[idx(ii, jj)]; if (v < bz) { bz = v; best = idx(ii, jj); } }
       if (best < 0) { if (db && db.mask[n]) absorb(db, dr, q); else if (c >= 0) absorb(d.comps[c], dr, q); else { finish(dr); drops.splice(q, 1); } continue; } dr.x += (best % W - dr.x) * .25; dr.y += (((best / W) | 0) - dr.y) * .25; }
+    dr.run = (dr.run || 0) + Math.hypot(dr.x - px0, dr.y - py0);
     if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 1800) { finish(dr); drops.splice(q, 1); continue; }
     if (db && db.mask[n] && !db.mask[idx(Math.round(dr.x), Math.round(dr.y))]) absorb(db, dr, q);   // tried to cross the dam wall: held behind it
   }
@@ -918,8 +920,8 @@ function drawRain() {
   const proj = inModel ? camera().proj : (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; };
   const { pooled, db } = drawRainOverlay(ctx, proj, S.w, S.h, inModel);
   ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-  const creek = rainStats.done ? Math.round(rainStats.creek / rainStats.done * 100) : 0;
-  haloText(ctx, `rain${S.rainPaused ? ' paused' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · ${creek}% of rain reached a creek${S.an.plow ? ' with keyline plowing' : ''} · r stops · p pauses`, S.w - 14, inModel ? S.h - 26 : S.h - 44, INK2);
+  const run = rainStats.creek ? rainStats.run / rainStats.creek : 0;
+  haloText(ctx, `rain${S.rainPaused ? ' paused' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · water runs ${fL(run, 0)} across the land before reaching a creek${S.an.plow ? ' (keyline plowing on)' : ''} · r stops · p pauses`, S.w - 14, inModel ? S.h - 26 : S.h - 44, INK2);
 }
 
 /* ---------- section ---------- */
@@ -1162,11 +1164,11 @@ document.getElementById('home').onclick = () => goHome(false);
 document.getElementById('undo').onclick = undo;
 function setRainPause(p) { S.rainPaused = p; document.getElementById('rainPause').classList.toggle('on', p); document.getElementById('rainPause').textContent = p ? 'paused · resume' : 'pause'; S.dirty = true; }
 document.getElementById('rainPause').onclick = () => setRainPause(!S.rainPaused);
-function setRain(on) { S.rain = on; setRainPause(false); document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling · stop (r)' : 'rain animation (r)'; if (on) { drops.length = 0; dep.key = ''; damBasin.key = ''; rainStats = { done: 0, creek: 0 }; } S.dirty = true; }
+function setRain(on) { S.rain = on; setRainPause(false); document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling · stop (r)' : 'rain animation (r)'; if (on) { drops.length = 0; dep.key = ''; damBasin.key = ''; rainStats = { done: 0, creek: 0, run: 0 }; } S.dirty = true; }
 document.getElementById('rainBtn').onclick = () => setRain(!S.rain);
 document.getElementById('tapRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tapMode = b.dataset.t; document.querySelectorAll('#tapRow button').forEach(x => x.classList.toggle('on', x === b)); };
 document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]);
-  if (b.dataset.a === 'plow') rainStats = { done: 0, creek: 0 };
+  if (b.dataset.a === 'plow') { rainStats = { done: 0, creek: 0, run: 0 }; for (const dr of drops) { dr.creek = false; dr.run = 0; } }
   if (b.dataset.a === 'sun') { S.colorMode = S.an.sun ? 'sun' : (S.aerial ? 'aerial' : 'paper'); document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === S.colorMode)); }
   showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none'; S.dirty = true; };
 function showSun() { document.getElementById('sunSec').style.display = ((S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun')) ? '' : 'none'; }
