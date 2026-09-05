@@ -218,7 +218,8 @@ const ASPECT = ['#9db3c6', '#a3bfae', '#d7a98d', '#b6afdc', '#9db3c6'];   // N, 
 function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   const shade = .78 + .22 * light;
   if (mode === 'aerial') { const ae = S.world ? aerialImage() : null; if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
-    const x = Math.max(0, Math.min(ae.rw - 1, Math.round(gi * 3))), y = Math.max(0, Math.min(ae.rh - 1, Math.round(gj * 3))), q = (y * ae.rw + x) * 4; return rgb([ae.data[q], ae.data[q + 1], ae.data[q + 2]], .85 + .2 * light); }
+    const cx = Math.round(gi * 3), cy = Math.round(gj * 3); let r = 0, g = 0, b = 0, n = 0; for (let y = cy - 3; y < cy + 3; y++) for (let x = cx - 3; x < cx + 3; x++) { if (x < 0 || y < 0 || x >= ae.rw || y >= ae.rh) continue; const q = (y * ae.rw + x) * 4; if (!ae.data[q + 3]) continue; r += ae.data[q]; g += ae.data[q + 1]; b += ae.data[q + 2]; n++; }
+    return n ? rgb([r / n, g / n, b / n], .85 + .2 * light) : TONES[1]; }
   if (mode === 'elevation') return rgb(ramp(ELEV, (zavg - lo) / Math.max(1e-6, hi - lo)), shade);
   const sl = Math.hypot(gx, gy);
   if (mode === 'slope') return rgb(ramp(SLOPE, sl / .6), shade);
@@ -405,7 +406,9 @@ function drawPlan() {
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   const fy = Math.min(sheet.y + sheet.h + 6, S.h - 32), fx = Math.max(sheet.x, 8);
-  ctx.fillText(`site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : (S.aerial && S.world ? ' · ' + (aerialCache.status || 'loading photo') : '')}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x (0 resets)' : ''}`, fx, fy);
+  const foot = `site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : (S.aerial && S.world ? ' · ' + (aerialCache.status || 'loading photo') : '')}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x (0 resets)' : ''}`;
+  if (aerialOn || PV.zoom > 1) { ctx.fillStyle = 'rgba(240,240,236,.88)'; ctx.fillRect(fx - 4, fy - 2, ctx.measureText(foot).width + 8, 15); ctx.fillStyle = INK2; }
+  ctx.fillText(foot, fx, fy);
   const uf = isFt() ? FT : 1, barD = niceBar(S.siteW * uf / 5), bar = barD / uf, bw = bar / cs() * k, bx = Math.min(sheet.x + sheet.w, S.w - 16) - bw, by = fy + 4;
   ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.stroke();
   ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, bx + bw, by + 4);
@@ -794,7 +797,9 @@ function drawAnalysis() {
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   const fy = Math.min(sheet.y + sheet.h + 6, S.h - 32), fx = Math.max(sheet.x, 8);
   if (sunNote) ctx.fillText(sunNote, fx, fy + 14);
-  ctx.fillText(`${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : ''}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`, fx, fy);
+  const foot2 = `${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : ''}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`;
+  if (aerialOn || PV.zoom > 1) { ctx.fillStyle = 'rgba(240,240,236,.88)'; ctx.fillRect(fx - 4, fy - 2, ctx.measureText(foot2).width + 8, 15); ctx.fillStyle = INK2; }
+  ctx.fillText(foot2, fx, fy);
 }
 
 /* ---------- section ---------- */
