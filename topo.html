@@ -448,7 +448,7 @@ function sectionProfile(n) {
   for (let q = 0; q <= n; q++) { const t = q / n, gx = a[0] + (b[0] - a[0]) * t, gy = a[1] + (b[1] - a[1]) * t; prop.push(sample(z, gx, gy)); ex.push(sample(base, gx, gy)); }
   return { L, prop, ex };
 }
-function drawSection(c = ctx, w = w, h = h, mini = false) {
+function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {
   c.clearRect(0, 0, w, h);
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'center'; c.textBaseline = 'middle';
   if (!S.sec) { c.fillText('no section yet. in plan, pick "draw section line a to b" and drag across the sheet.', w / 2, h / 2); return; }
