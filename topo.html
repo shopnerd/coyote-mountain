@@ -273,7 +273,7 @@ function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [
         const d = (k + .5) * L / n, m = at(d), a = at(d - tw / 2), b = at(d + tw / 2);
         if (placed.some(q => Math.hypot(m[0] - q[0], m[1] - q[1]) < spacing * .45)) continue; placed.push(m);
         let ang = rotate ? Math.atan2(b[1] - a[1], b[0] - a[0]) : 0; if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
-        c.save(); c.translate(m[0], m[1]); c.rotate(ang); c.fillStyle = PAPER; c.fillRect(-tw / 2, -6.5, tw, 13); c.fillStyle = INK; c.fillText(txt, 0, .5); c.restore();
+        c.save(); c.translate(m[0], m[1]); c.rotate(ang); c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, 0, .5); c.fillStyle = INK; c.fillText(txt, 0, .5); c.restore();
       }
     }
   }
@@ -282,7 +282,7 @@ function spotLabels(c, toXY) {   // high and low points of the proposed grade
   let mi = 0, ma = 0; for (let n = 1; n < W * H; n++) { if (z[n] > z[ma]) ma = n; if (z[n] < z[mi]) mi = n; }
   c.font = font(9.5, 600); c.textAlign = 'left'; c.textBaseline = 'middle';
   for (const [n, glyph] of [[ma, '▲'], [mi, '▼']]) { const p = toXY(n % W, Math.floor(n / W), z[n]); const txt = glyph + ' ' + fL(z[n], 2); const tw = c.measureText(txt).width + 6;
-    c.fillStyle = ACC; c.beginPath(); c.arc(p[0], p[1], 2.5, 0, TAU); c.fill(); c.fillStyle = PAPER; c.fillRect(p[0] + 5, p[1] - 6, tw, 12); c.fillStyle = ACC; c.fillText(txt, p[0] + 8, p[1] + .5); }
+    c.fillStyle = ACC; c.beginPath(); c.arc(p[0], p[1], 2.5, 0, TAU); c.fill(); c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, p[0] + 8, p[1] + .5); c.fillStyle = ACC; c.fillText(txt, p[0] + 8, p[1] + .5); }
 }
 const INTERVALS = [0.1, 0.25, 0.5, 1, 2, 5, 10];
 const FT = 3.28084, INTERVALS_FT = [0.25, 0.5, 1, 2, 5, 10, 20].map(f => f / FT);
