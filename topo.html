@@ -353,6 +353,9 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     }
     items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines });
   }
+  // base outline first, so the model covers it
+  c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
+  [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
   // walls of the base slab: one polygon per side, drawn far to near before the surface
   const walls = [];
   const side = (nodes) => { const top = nodes.map(([i, j]) => proj(i, j, z[idx(i, j)])), bot = nodes.map(([i, j]) => proj(i, j, baseZ));
@@ -365,7 +368,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   side(north); side(south); side(west); side(east);
   walls.sort((a, b) => a.d - b.d);
   c.lineJoin = 'round';
-  for (const wl of walls) { c.fillStyle = TONES[3]; c.strokeStyle = TONES[3]; c.lineWidth = .8; c.beginPath();
+  for (const wl of walls) { c.fillStyle = TONES[3]; c.strokeStyle = INK2; c.lineWidth = .7; c.beginPath();
     wl.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
   items.sort((a, b) => a.d - b.d);
   for (const it of items) {
@@ -373,9 +376,6 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     it.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke();
     if (it.lines.length) { c.strokeStyle = INK; for (const [a, b, ix] of it.lines) { c.lineWidth = ix ? 1.2 : .6; c.globalAlpha = ix ? .9 : .7; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.globalAlpha = 1; }
   }
-  // base outline
-  c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
-  [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (mini) return; c.fillText(`model · ${S.ve}x vertical · drag to orbit · pinch or wheel to zoom`, 14, h - 10);
 }
@@ -410,6 +410,8 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     quads.sort((u, v) => u.d - v.d); c.fillStyle = tone; c.strokeStyle = tone; c.lineWidth = .6;
     for (const qd of quads) { c.beginPath(); qd.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); } };
   c.lineJoin = 'round';
+  c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
+  corners.forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
   risers(corners, baseZ, lo, TONES[3]);
   for (const L of layers) {
     for (const loop of L.loops) risers(loop, L.level, L.top, TONES[2]);
@@ -417,8 +419,6 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
-  c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
-  corners.forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · drag to orbit`, 14, h - 10);
 }
