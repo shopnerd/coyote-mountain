@@ -96,6 +96,7 @@ canvas.orbit{cursor:grab}
     </div>
     <div class="desc" id="desc"></div>
     <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped stack</button></div>
+    <div class="seg" id="dragRow" style="display:none;margin-bottom:6px"><button id="flipDrag" title="reverse the orbit drag direction">flip drag direction</button></div>
 
     <div id="brushSec">
       <div class="sec">brush</div>
@@ -192,7 +193,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 60, ve: 1.5, mm: 150,
-  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, cam: { yaw: -.7, pitch: .95, zoom: 1 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, cam: { yaw: -.7, pitch: .95, zoom: 1 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -480,7 +481,7 @@ function frame() {
 }
 
 /* ---------- pointer ---------- */
-function orbit(dx, dy) { S.cam.yaw -= dx * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch + dy * .006)); S.dirty = true; }
+function orbit(dx, dy) { const f = S.flipDrag ? -1 : 1; S.cam.yaw -= f * dx * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch - f * dy * .006)); S.dirty = true; }
 const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw = 0, ph = 0, pdrag = null;
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 function drawPip() {
@@ -559,7 +560,7 @@ const DESC = { plan: 'sketch grade with the brush. contours and hachures redraw 
 function setMode(m) {
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = m === 'plan' ? '' : 'none';
-  cv.classList.toggle('orbit', m === 'model'); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = m === 'model'; S.dirty = true;
+  cv.classList.toggle('orbit', m === 'model'); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = m === 'model'; document.getElementById('dragRow').style.display = m === 'model' ? '' : 'none'; S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
 document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.brush = b.dataset.b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
@@ -582,6 +583,10 @@ document.getElementById('unit').onchange = e => { S.unit = e.target.value; relab
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
 document.getElementById('undo').onclick = undo;
+const flipBtn = document.getElementById('flipDrag');
+const showFlip = () => { flipBtn.classList.toggle('on', S.flipDrag); flipBtn.textContent = S.flipDrag ? 'drag direction flipped' : 'flip drag direction'; };
+try { S.flipDrag = localStorage.getItem('flipDrag') === '1'; } catch (_) {} showFlip();
+flipBtn.onclick = () => { S.flipDrag = !S.flipDrag; try { localStorage.setItem('flipDrag', S.flipDrag ? '1' : '0'); } catch (_) {} showFlip(); toast(S.flipDrag ? 'drag flipped' : 'drag natural'); };
 document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetchWorld(); };
 document.getElementById('laser').onclick = () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); };
 document.getElementById('reseed').onclick = () => { snapshot(); S.world = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
