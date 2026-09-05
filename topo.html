@@ -109,7 +109,7 @@ canvas.orbit{cursor:grab}
       </div>
     <div class="desc" id="sculptLbl" style="display:none;padding-bottom:2px">left drag or one finger</div>
     <div class="seg" id="sculptRow" style="display:none;margin-bottom:6px"><button data-k="sculpt" class="on">sculpt</button><button data-k="orbit">orbit</button></div>
-    <div class="seg" id="rainRow" style="display:none;margin-bottom:6px"><button id="rainBtn" title="animated raindrops running downhill and pooling">rain (r)</button></div>
+    <div class="seg" id="rainRow" style="display:none;margin-bottom:6px"><button id="rainBtn" title="animated raindrops running downhill and pooling" style="flex:2">rain (r)</button><button id="rainPause" title="freeze the drops and pools (p)">pause</button></div>
     <div class="seg" id="dragRow" style="display:none;margin-bottom:6px"><button id="flipDrag" title="reverse the orbit drag direction">flip drag direction</button></div>
 
     <div id="brushSec">
@@ -308,7 +308,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -859,7 +859,7 @@ function drawRain() {
     for (const dr of drops) { const t = dr.trail, L = t.length; if (L < 2) continue; for (let q = 1; q < L; q++) { const age = L - 1 - q; if (Math.min(5, Math.floor(age / 2)) !== 5 - bucket) continue; const a = proj(t[q - 1][0], t[q - 1][1], sample(z, t[q - 1][0], t[q - 1][1]) + .05), b = proj(t[q][0], t[q][1], sample(z, t[q][0], t[q][1]) + .05); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); } }
     ctx.stroke(); }
   ctx.globalAlpha = 1; ctx.lineCap = 'butt'; ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-  ctx.fillText(`rain · ${drops.length} drops running · ${fV(pooled)} pooled · r stops`, S.w - 14, S.h - 26);
+  ctx.fillText(`rain${S.rainPaused ? ' paused' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled · r stops · p pauses`, S.w - 14, S.h - 26);
 }
 
 /* ---------- section ---------- */
@@ -920,7 +920,7 @@ function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {
 /* ---------- loop ---------- */
 function frame(now) {
   tickSun(now || performance.now());
-  if (S.mode === 'model' && S.rain) { stepRain(); drawRain(); if (S.dirty) { S.dirty = false; drawPip(); } }
+  if (S.mode === 'model' && S.rain) { if (!S.rainPaused) stepRain(); drawRain(); if (S.dirty) { S.dirty = false; drawPip(); } }
   else if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel()); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); }
   requestAnimationFrame(frame);
 }
@@ -1078,7 +1078,9 @@ function goHome(quiet) { document.getElementById('place').value = HOME.lat + ', 
   S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); }
 document.getElementById('home').onclick = () => goHome(false);
 document.getElementById('undo').onclick = undo;
-function setRain(on) { S.rain = on; document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling (r stops)' : 'rain (r)'; if (on) { drops.length = 0; dep.key = ''; } S.dirty = true; }
+function setRainPause(p) { S.rainPaused = p; document.getElementById('rainPause').classList.toggle('on', p); document.getElementById('rainPause').textContent = p ? 'paused · resume' : 'pause'; S.dirty = true; }
+document.getElementById('rainPause').onclick = () => setRainPause(!S.rainPaused);
+function setRain(on) { S.rain = on; setRainPause(false); document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling (r stops)' : 'rain (r)'; if (on) { drops.length = 0; dep.key = ''; } S.dirty = true; }
 document.getElementById('rainBtn').onclick = () => setRain(!S.rain);
 document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]); showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none'; S.dirty = true; };
 function showSun() { document.getElementById('sunSec').style.display = ((S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun')) ? '' : 'none'; }
@@ -1086,7 +1088,7 @@ document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 bind('month', v => MONTHS[v - 1], v => S.month = v);
 function setSunPlay(kind) { S.sunPlay = S.sunPlay === kind ? null : kind; S.sunClock = 0; document.getElementById('playDay').classList.toggle('on', S.sunPlay === 'day'); document.getElementById('playYear').classList.toggle('on', S.sunPlay === 'year');
-  document.getElementById('playDay').textContent = S.sunPlay === 'day' ? 'playing · stop' : 'play the day'; document.getElementById('playYear').textContent = S.sunPlay === 'year' ? 'playing · stop' : 'play the year';
+  document.getElementById('playDay').textContent = S.sunPlay === 'day' ? 'playing · pause' : 'play the day'; document.getElementById('playYear').textContent = S.sunPlay === 'year' ? 'playing · pause' : 'play the year'; if (S.sunPlay) S.sunHeld = null;
   if (S.sunPlay && S.sunMode !== 'hour') document.querySelector('#sunSec .seg button[data-s="hour"]').click(); }
 document.getElementById('playDay').onclick = () => setSunPlay('day'); document.getElementById('playYear').onclick = () => setSunPlay('year');
 function tickSun(now) {
@@ -1362,7 +1364,8 @@ buildExisting(); resetGrading();
   document.getElementById('radius').dispatchEvent(new Event('input')); S.strength = +document.getElementById('strength').value;
   S.sec = [[20, 85], [120, 15]];
 })();
-addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section', '4': 'analysis' }[e.key]; if (m) setMode(m); if (e.key === '0') { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } } if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); if (e.key === 'r' && S.mode === 'model') setRain(!S.rain); });
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section', '4': 'analysis' }[e.key]; if (m) setMode(m); if (e.key === '0') { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } } if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); if (e.key === 'r' && S.mode === 'model') setRain(!S.rain);
+  if (e.key === 'p') { if (S.mode === 'model' && S.rain) setRainPause(!S.rainPaused); if (S.sunPlay) { S.sunHeld = S.sunPlay; setSunPlay(S.sunPlay); } else if (S.sunHeld) { const k = S.sunHeld; S.sunHeld = null; setSunPlay(k); } } });
 updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 if (!restoreSession()) goHome(true);
 })();
