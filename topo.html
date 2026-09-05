@@ -151,6 +151,8 @@ canvas.orbit{cursor:grab}
       <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
       <button class="btn" id="fetch">fetch real terrain</button>
+      <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no aerial</button><button data-ae="1">aerial photo under plan</button></div>
+      <div class="p" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
       <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
     </div>
 
@@ -295,7 +297,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 60, ve: 1.5, mm: 150,
-  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, rainV: 35, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, rainV: 35, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -376,6 +378,7 @@ function drawPlan() {
   ctx.clearRect(0, 0, S.w, S.h);
   const k = sheet.k, [lo, hi] = range(z), iv = interval();
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
+  const aerialOn = drawAerial();
   // hachures: strands that run downslope, length by steepness
   if (S.hach > 0) {
     const step = Math.max(2, Math.round(8 - S.hach / 20)), maxLen = 10;
@@ -396,7 +399,7 @@ function drawPlan() {
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillText(`site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}`, sheet.x, sheet.y + sheet.h + 6);
+  ctx.fillText(`site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : (S.aerial && S.world ? ' · ' + (aerialCache.status || 'loading photo') : '')}`, sheet.x, sheet.y + sheet.h + 6);
   const uf = isFt() ? FT : 1, barD = niceBar(S.siteW * uf / 5), bar = barD / uf, bw = bar / cs() * k, bx = sheet.x + sheet.w - bw, by = sheet.y + sheet.h + 10;
   ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.stroke();
   ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, bx + bw, by + 4);
@@ -712,6 +715,7 @@ function floodSim(an, rainM) {           // fill every depression with the rain 
 function drawAnalysis() {
   ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = analyze(), { down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order } = an;
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
+  const aerialOn = drawAerial();
   const cellXY = n => toSheet(n % W, (n / W) | 0);
   let sunNote = '';
   if (S.an.sun) { const su = sunImage(); sunNote = su.note; ctx.imageSmoothingEnabled = false; ctx.drawImage(su.canvas, sheet.x - k / 2, sheet.y - k / 2, W * k, H * k); ctx.imageSmoothingEnabled = true; }
@@ -782,7 +786,7 @@ function drawAnalysis() {
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   if (sunNote) ctx.fillText(sunNote, sheet.x, sheet.y + sheet.h + 20);
-  ctx.fillText(`${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges`, sheet.x, sheet.y + sheet.h + 6);
+  ctx.fillText(`${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : ''}`, sheet.x, sheet.y + sheet.h + 6);
 }
 
 /* ---------- section ---------- */
@@ -976,6 +980,9 @@ document.getElementById('siteW').onchange = () => { if (S.world) fetchWorld(S.wo
 const setSiteW = v => { const el = document.getElementById('siteW'); el.value = Math.max(+el.min, Math.min(+el.max, Math.round(v / 10) * 10)); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); };
 document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
 bind('rot', v => v + '°', v => S.rot = v);
+bind('aop', v => v + '%', v => S.aop = v / 100);
+document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.aerial = b.dataset.ae === '1'; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
+  if (S.aerial && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
 document.getElementById('rot').onchange = () => { if (S.world) fetchWorld(S.world); };
 document.getElementById('dblW').onclick = () => setSiteW(S.siteW * 2);
 bind('relief', v => fL(v, 1), v => { S.relief = v; if (S.world) { toast('real terrain loaded. new existing returns to noise'); return; } buildExisting(); resetGrading(); });
@@ -1129,6 +1136,35 @@ function laserSVG() {
   const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${sw}mm" height="${totalH}mm" viewBox="0 0 ${sw} ${totalH}">\n<!-- coyote mountain topo · ${layers.length} layers of ${S.thick} mm cardboard · red = cut (outer edge + hollow interior leaving a ${S.ledge} mm ledge), blue = engrave (layer number, elevation, outline of the layer above for alignment) · model ${modelW.toFixed(0)} x ${modelH.toFixed(0)} mm -->\n${body}\n</svg>`;
   toast(`${layers.length} layers on ${sheets} sheet${sheets > 1 ? 's' : ''}`);
   return { svg, layers: layers.length };
+}
+
+/* ---------- aerial photo, resampled into the (possibly rotated) site frame ---------- */
+let aerialCache = { key: '', status: '' };
+function aerialImage() {
+  if (!S.world) return null; const key = [S.world.lat, S.world.lon, S.siteW, S.rot].join('|');
+  if (aerialCache.key === key) return aerialCache;
+  aerialCache = { key, status: 'loading', canvas: null }; buildAerial(key).catch(e => { aerialCache.status = 'aerial unavailable: ' + (e.message || e); S.dirty = true; }); return aerialCache;
+}
+async function buildAerial(key) {
+  const { lat, lon } = S.world, RW = 3 * (W - 1), RH = 3 * (H - 1);           // 3 photo pixels per grid cell
+  const Zm = Math.max(3, Math.min(18, Math.ceil(Math.log2(156543.03 * Math.cos(lat * D2R) / (cs() / 3))))), n = 2 ** Zm;
+  const px = (la, lo) => [(lo + 180) / 360 * n * 256, (1 - Math.log(Math.tan(la * D2R) + 1 / Math.cos(la * D2R)) / Math.PI) / 2 * n * 256];
+  const P = new Float64Array(RW * RH * 2); let tx0 = 1e12, ty0 = 1e12, tx1 = -1, ty1 = -1;
+  for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const [la, lo] = nodeLatLon(x / 3, y / 3, lat, lon), q = px(la, lo), m = (y * RW + x) * 2; P[m] = q[0]; P[m + 1] = q[1];
+    tx0 = Math.min(tx0, Math.floor(q[0] / 256)); ty0 = Math.min(ty0, Math.floor(q[1] / 256)); tx1 = Math.max(tx1, Math.floor(q[0] / 256)); ty1 = Math.max(ty1, Math.floor(q[1] / 256)); }
+  const cols = tx1 - tx0 + 1, count = cols * (ty1 - ty0 + 1); if (count > 64) throw new Error('site too large for photo tiles');
+  const tiles = new Map(), oc = document.createElement('canvas'); oc.width = oc.height = 256; const o = oc.getContext('2d', { willReadFrequently: true });
+  await Promise.all(Array.from({ length: count }, (_, q) => { const tx = tx0 + q % cols, ty = ty0 + Math.floor(q / cols);
+    return loadImage(`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${Zm}/${ty}/${tx}`).then(im => { o.drawImage(im, 0, 0); tiles.set(tx + '/' + ty, o.getImageData(0, 0, 256, 256).data); }).catch(() => {}); }));
+  if (aerialCache.key !== key) return;
+  const out = document.createElement('canvas'); out.width = RW; out.height = RH; const oc2 = out.getContext('2d'), img = oc2.createImageData(RW, RH), d = img.data;
+  for (let m = 0; m < RW * RH; m++) { const x = P[m * 2], y = P[m * 2 + 1], tx = Math.floor(x / 256), ty = Math.floor(y / 256), t = tiles.get(tx + '/' + ty); if (!t) { d[m * 4 + 3] = 0; continue; }
+    const q = ((Math.floor(y) - ty * 256) * 256 + (Math.floor(x) - tx * 256)) * 4; d[m * 4] = t[q]; d[m * 4 + 1] = t[q + 1]; d[m * 4 + 2] = t[q + 2]; d[m * 4 + 3] = 255; }
+  oc2.putImageData(img, 0, 0); aerialCache.canvas = out; aerialCache.status = 'ready'; S.dirty = true;
+}
+function drawAerial() {
+  if (!S.aerial || !S.world) return false; const ae = aerialImage(); if (!ae || !ae.canvas) return false;
+  ctx.save(); ctx.globalAlpha = S.aop; ctx.imageSmoothingEnabled = true; ctx.drawImage(ae.canvas, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); return true;
 }
 
 /* ---------- world: real elevation for any place ---------- */
