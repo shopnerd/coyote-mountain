@@ -607,7 +607,7 @@ function readout(g) {
 }
 
 /* ---------- rail ---------- */
-const DESC = { plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'rhino-style: right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
+const DESC = { plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
 function setMode(m) {
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; S.pick = null;
