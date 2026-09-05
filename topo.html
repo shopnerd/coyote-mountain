@@ -98,7 +98,15 @@ canvas.orbit{cursor:grab}
     <div class="desc" id="desc"></div>
     <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped stack</button></div>
     <div class="desc" id="colorLbl" style="display:none;padding-bottom:2px">surface color</div>
-    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="aerial" style="flex-basis:100%">aerial photo</button></div>
+    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="aerial">aerial photo</button><button data-c="sun">sun</button></div>
+    <div id="sunSec" style="display:none">
+        <div class="seg" style="margin-top:6px"><button data-s="hour" class="on">shadows at an hour</button><button data-s="hours">sun hours per day</button></div>
+        <div class="params" style="padding-top:6px">
+          <div class="p"><label>month<output id="o_month">jun</output></label><input type="range" id="month" min="1" max="12" step="1" value="6"></div>
+          <div class="p"><label>hour<output id="o_hour">3 pm</output></label><input type="range" id="hour" min="5" max="20" step=".5" value="15"></div>
+          <div class="seg" style="padding:0"><button id="playDay" title="sweep the hour from dawn to dusk">play the day</button><button id="playYear" title="sweep the months at this hour">play the year</button></div>
+        </div>
+      </div>
     <div class="desc" id="sculptLbl" style="display:none;padding-bottom:2px">left drag or one finger</div>
     <div class="seg" id="sculptRow" style="display:none;margin-bottom:6px"><button data-k="sculpt" class="on">sculpt</button><button data-k="orbit">orbit</button></div>
     <div class="seg" id="rainRow" style="display:none;margin-bottom:6px"><button id="rainBtn" title="animated raindrops running downhill and pooling">rain (r)</button></div>
@@ -129,14 +137,7 @@ canvas.orbit{cursor:grab}
       <div class="params" id="floodSec" style="display:none;padding-top:6px">
         <div class="p" title="rain falling on the whole site in one storm, no infiltration"><label>storm rain<output id="o_rain">25 mm</output></label><input type="range" id="rain" min="1" max="100" step="1" value="35"></div>
       </div>
-      <div id="sunSec" style="display:none">
-        <div class="seg" style="margin-top:6px"><button data-s="hour" class="on">shadows at an hour</button><button data-s="hours">sun hours per day</button></div>
-        <div class="params" style="padding-top:6px">
-          <div class="p"><label>month<output id="o_month">jun</output></label><input type="range" id="month" min="1" max="12" step="1" value="6"></div>
-          <div class="p"><label>hour<output id="o_hour">3 pm</output></label><input type="range" id="hour" min="5" max="20" step=".5" value="15"></div>
-          <div class="seg" style="padding:0"><button id="playDay" title="sweep the hour from dawn to dusk">play the day</button><button id="playYear" title="sweep the months at this hour">play the year</button></div>
-        </div>
-      </div>
+
       <div class="params">
         <div class="p" title="how much upstream ground it takes to count as a stream"><label>stream threshold<output id="o_thr">1 ha</output></label><input type="range" id="thr" min="1" max="100" step="1" value="35"></div>
         <div class="p"><label>plow spacing<output id="o_plow">3.5 m</output></label><input type="range" id="plow" min="1" max="100" step="1" value="25"></div>
@@ -222,6 +223,8 @@ const ELEV = ['#a9bfa5', '#e6dcbb', '#c9a58f', '#8f6a55'], SLOPE = ['#ebeae4', '
 const ASPECT = ['#9db3c6', '#a3bfae', '#d7a98d', '#b6afdc', '#9db3c6'];   // N, E, S, W, N (muted)
 function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   const shade = .78 + .22 * light;
+  if (mode === 'sun') { const su = sunImage(); const i0 = Math.max(0, Math.min(W - 1, Math.floor(gi))), j0 = Math.max(0, Math.min(H - 1, Math.floor(gj))), i1 = Math.min(W - 1, i0 + 1), j1 = Math.min(H - 1, j0 + 1);
+    let r = 0, g = 0, b = 0; for (const n of [idx(i0, j0), idx(i1, j0), idx(i0, j1), idx(i1, j1)]) { r += su.data[n * 4]; g += su.data[n * 4 + 1]; b += su.data[n * 4 + 2]; } return rgb([r / 4, g / 4, b / 4], .9 + .1 * light); }
   if (mode === 'aerial') { const ae = S.world ? aerialImage() : null; if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
     const cx = Math.round(gi * 3), cy = Math.round(gj * 3); let r = 0, g = 0, b = 0, n = 0; for (let y = cy - 3; y < cy + 3; y++) for (let x = cx - 3; x < cx + 3; x++) { if (x < 0 || y < 0 || x >= ae.rw || y >= ae.rh) continue; const q = (y * ae.rw + x) * 4; if (!ae.data[q + 3]) continue; r += ae.data[q]; g += ae.data[q + 1]; b += ae.data[q + 2]; n++; }
     return n ? rgb([r / n, g / n, b / n], .85 + .2 * light) : TONES[1]; }
@@ -505,7 +508,8 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const it of items) if (it.d >= dmed) for (const [a, b, ix, lv] of it.lines) if (ix) { if (!groups.has(lv)) groups.set(lv, []); groups.get(lv).push([a[0], a[1], b[0], b[1]]); }
     contourLabels(c, groups, 200, true); spotLabels(c, (i, j, zz) => proj(i, j, zz));
   }
-  if (!mini && mode !== 'paper' && mode !== 'aerial') drawLegend(c, w, h, mode, lo, hi);
+  if (!mini && mode !== 'paper' && mode !== 'aerial' && mode !== 'sun') drawLegend(c, w, h, mode, lo, hi);
+  if (!mini && mode === 'sun') { c.fillStyle = INK2; c.font = font(9.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(sunCache.note || '', w - 14, h - 10); }
   if (!mini && mode === 'aerial') { c.fillStyle = INK2; c.font = font(9.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(S.world ? (aerialCache.canvas ? 'imagery Esri, Maxar, Earthstar Geographics' : (aerialCache.status || 'loading photo')) : 'fetch real terrain to get a photo', w - 14, h - 10); }
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
@@ -690,7 +694,7 @@ function sunImage() {
     for (let n = 0; n < N; n++) { const c = ramp(['#9fb0bf', '#eeeadf', '#e6b57a'], mx ? hrs[n] / mx : 0); d[n * 4] = c[0]; d[n * 4 + 1] = c[1]; d[n * 4 + 2] = c[2]; d[n * 4 + 3] = 255; }
     note = `direct sun per day in ${MONTHS[S.month - 1]} · 0 to ${mx.toFixed(1)} h · lat ${lat.toFixed(1)}`; sunCache.max = mx;
   }
-  o.putImageData(img, 0, 0); sunCache = { key, canvas: off, note, max: sunCache.max }; return sunCache;
+  o.putImageData(img, 0, 0); sunCache = { key, canvas: off, data: d, note, max: sunCache.max }; return sunCache;
 }
 function contourPolys(lv) {              // all sheet-space polylines of one contour level
   const k = sheet.k, segs = [];
@@ -808,28 +812,54 @@ function drawAnalysis() {
 }
 
 /* ---------- rain: drops run downhill over a cached picture of the model ---------- */
-const drops = [], rests = new Uint16Array(W * H); let modelShot = { key: '', canvas: null };
+const drops = []; let modelShot = { key: '', canvas: null }, dep = { key: '' };
+function depressions() {                  // hollows of the ground, each with a capacity and a current water volume
+  const an = analyze(); if (dep.key === an.key) return dep;
+  const N = W * H, filled = an.filled, comp = new Int32Array(N).fill(-1), comps = [];
+  for (let n0 = 0; n0 < N; n0++) { if (comp[n0] >= 0 || filled[n0] - z[n0] < .01) continue; const id = comps.length, cells = [n0]; comp[n0] = id; const stack = [n0];
+    while (stack.length) { const n = stack.pop(), ci = n % W, cj = (n / W) | 0; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = ci + di, jj = cj + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (comp[m] < 0 && filled[m] - z[m] >= .01) { comp[m] = id; cells.push(m); stack.push(m); } } }
+    cells.sort((a, b) => z[a] - z[b]); let spill = -Infinity, cap = 0; for (const n of cells) { spill = Math.max(spill, filled[n]); cap += (filled[n] - z[n]) * an.A; }
+    comps.push({ cells, spill, cap, vol: 0, level: z[cells[0]] }); }
+  dep = { key: an.key, comp, comps, A: an.A }; return dep;
+}
+function poolLevel(cp, A) {
+  if (cp.vol <= 0) return z[cp.cells[0]]; if (cp.vol >= cp.cap) return cp.spill;
+  let lo = z[cp.cells[0]], hi = cp.spill; for (let it = 0; it < 22; it++) { const mid = (lo + hi) / 2; let v = 0; for (const n of cp.cells) { if (z[n] >= mid) break; v += (mid - z[n]) * A; } if (v < cp.vol) lo = mid; else hi = mid; }
+  return (lo + hi) / 2;
+}
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 2, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
 }
 function stepRain() {
-  const N = W * H; for (let q = 0; q < 12 && drops.length < 1800; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0 });
-  for (let q = drops.length - 1; q >= 0; q--) { const d = drops[q]; d.age++;
-    const g = grad(d.x, d.y), sl = Math.hypot(g[0], g[1]);
-    if (sl > .004) { const sp = Math.min(1.2, .25 + sl * 2.5); d.x -= g[0] / sl * sp; d.y -= g[1] / sl * sp; }
-    else { const i = Math.round(d.x), j = Math.round(d.y); let best = -1, bz = z[idx(i, j)] - 1e-4; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const v = z[idx(ii, jj)]; if (v < bz) { bz = v; best = idx(ii, jj); } }
-      if (best < 0) { rests[idx(i, j)] = Math.min(65535, rests[idx(i, j)] + 1); drops.splice(q, 1); continue; } d.x += (best % W - d.x) * .5; d.y += (((best / W) | 0) - d.y) * .5; }
-    if (d.x < 0 || d.y < 0 || d.x > W - 1 || d.y > H - 1 || d.age > 900) drops.splice(q, 1); }
+  const d = depressions(), dropVol = d.A * .012;
+  for (let q = 0; q < 10 && drops.length < 1400; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0, trail: [] });
+  const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); drops.splice(q, 1); };
+  for (let q = drops.length - 1; q >= 0; q--) { const dr = drops[q]; dr.age++; dr.trail.push([dr.x, dr.y]); if (dr.trail.length > 14) dr.trail.shift();
+    const n = idx(Math.round(dr.x), Math.round(dr.y)), c = d.comp[n];
+    if (c >= 0 && sample(z, dr.x, dr.y) <= d.comps[c].level + .002) { absorb(d.comps[c], dr, q); continue; }   // ran into a pool
+    const g = grad(dr.x, dr.y), sl = Math.hypot(g[0], g[1]);
+    if (sl > .004) { const sp = Math.min(1.2, .25 + sl * 2.5); dr.x -= g[0] / sl * sp; dr.y -= g[1] / sl * sp; }
+    else { const i = Math.round(dr.x), j = Math.round(dr.y); let best = -1, bz = z[idx(i, j)] - 1e-4; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const v = z[idx(ii, jj)]; if (v < bz) { bz = v; best = idx(ii, jj); } }
+      if (best < 0) { if (c >= 0) absorb(d.comps[c], dr, q); else drops.splice(q, 1); continue; } dr.x += (best % W - dr.x) * .5; dr.y += (((best / W) | 0) - dr.y) * .5; }
+    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 900) drops.splice(q, 1); }
 }
 function drawRain() {
-  ctx.clearRect(0, 0, S.w, S.h); ctx.drawImage(modelFrame(), 0, 0, S.w, S.h); const { proj } = camera();
-  ctx.fillStyle = WATER; let pooled = 0;
-  for (let n = 0; n < W * H; n++) { const c = rests[n]; if (!c) continue; pooled += c; const p = proj(n % W, (n / W) | 0, z[n] + .02); const r = Math.min(7, 1.5 + Math.sqrt(c) * .6); ctx.globalAlpha = Math.min(.9, .35 + c * .04); ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, TAU); ctx.fill(); }
-  ctx.globalAlpha = .85; for (const d of drops) { const p = proj(d.x, d.y, sample(z, d.x, d.y) + .05); ctx.beginPath(); ctx.arc(p[0], p[1], 1.6, 0, TAU); ctx.fill(); }
-  ctx.globalAlpha = 1; ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(`rain · ${drops.length} drops moving · ${pooled} pooled · r stops`, S.w - 14, S.h - 26);
+  ctx.clearRect(0, 0, S.w, S.h); ctx.drawImage(modelFrame(), 0, 0, S.w, S.h); const { proj } = camera(), d = depressions();
+  // pools: a flat water surface at each hollow's current level
+  ctx.fillStyle = WATER; ctx.globalAlpha = .55; let pooled = 0;
+  for (const cp of d.comps) { if (cp.vol <= 0) continue; pooled += cp.vol; const L = cp.level; ctx.beginPath();
+    for (const n of cp.cells) { if (z[n] >= L) break; const i = n % W, j = (n / W) | 0; const a = proj(i - .5, j - .5, L), b = proj(i + .5, j - .5, L), c2 = proj(i + .5, j + .5, L), e = proj(i - .5, j + .5, L); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c2[0], c2[1]); ctx.lineTo(e[0], e[1]); ctx.closePath(); }
+    ctx.fill(); }
+  // traces: fine lines fading behind each drop, batched by age
+  ctx.strokeStyle = WATER; ctx.lineWidth = .8; ctx.lineCap = 'round';
+  for (let bucket = 0; bucket < 6; bucket++) { ctx.globalAlpha = .12 + .13 * bucket; ctx.beginPath();
+    for (const dr of drops) { const t = dr.trail, L = t.length; if (L < 2) continue; for (let q = 1; q < L; q++) { const age = L - 1 - q; if (Math.min(5, Math.floor(age / 2)) !== 5 - bucket) continue; const a = proj(t[q - 1][0], t[q - 1][1], sample(z, t[q - 1][0], t[q - 1][1]) + .05), b = proj(t[q][0], t[q][1], sample(z, t[q][0], t[q][1]) + .05); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); } }
+    ctx.stroke(); }
+  ctx.globalAlpha = 1; ctx.lineCap = 'butt'; ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.fillText(`rain · ${drops.length} drops running · ${fV(pooled)} pooled · r stops`, S.w - 14, S.h - 26);
 }
 
 /* ---------- section ---------- */
@@ -1010,7 +1040,7 @@ function readout(g) {
 const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints and the keyline.', plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
 function setMode(m) {
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
-  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; S.pick = null;
+  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null;
   cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; document.getElementById('dragRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('rainRow').style.display = m === 'model' ? '' : 'none'; if (m !== 'model' && S.rain) setRain(false); S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
@@ -1048,9 +1078,10 @@ function goHome(quiet) { document.getElementById('place').value = HOME.lat + ', 
   S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); }
 document.getElementById('home').onclick = () => goHome(false);
 document.getElementById('undo').onclick = undo;
-function setRain(on) { S.rain = on; document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling (r stops)' : 'rain (r)'; if (on) { drops.length = 0; rests.fill(0); } S.dirty = true; }
+function setRain(on) { S.rain = on; document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling (r stops)' : 'rain (r)'; if (on) { drops.length = 0; dep.key = ''; } S.dirty = true; }
 document.getElementById('rainBtn').onclick = () => setRain(!S.rain);
-document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]); document.getElementById('sunSec').style.display = S.an.sun ? '' : 'none'; document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none'; S.dirty = true; };
+document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]); showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none'; S.dirty = true; };
+function showSun() { document.getElementById('sunSec').style.display = ((S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun')) ? '' : 'none'; }
 document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sunMode = b.dataset.s; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 bind('month', v => MONTHS[v - 1], v => S.month = v);
@@ -1059,7 +1090,7 @@ function setSunPlay(kind) { S.sunPlay = S.sunPlay === kind ? null : kind; S.sunC
   if (S.sunPlay && S.sunMode !== 'hour') document.querySelector('#sunSec .seg button[data-s="hour"]').click(); }
 document.getElementById('playDay').onclick = () => setSunPlay('day'); document.getElementById('playYear').onclick = () => setSunPlay('year');
 function tickSun(now) {
-  if (!S.sunPlay || S.mode !== 'analysis' || !S.an.sun) return; if (now - S.sunClock < 110) return; S.sunClock = now;
+  if (!S.sunPlay) return; const active = (S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun'); if (!active) return; if (now - S.sunClock < 110) return; S.sunClock = now;
   if (S.sunPlay === 'day') { const el = document.getElementById('hour'); let v = +el.value + .5; if (v > 20) v = 5; el.value = v; el.dispatchEvent(new Event('input')); }
   else { const el = document.getElementById('month'); let v = +el.value + 1; if (v > 12) v = 1; el.value = v; el.dispatchEvent(new Event('input')); }
 }
@@ -1074,7 +1105,7 @@ bind('swale', v => fL(swaleDrop(v), 2), v => S.swaleV = v);
 bind('dam', v => fL(v, 1), v => S.damH = v);
 const rainMM = v => 2 + 198 * (v / 100) ** 2;
 bind('rain', v => isFt() ? tz((rainMM(v) / 25.4).toFixed(2)) + ' in' : Math.round(rainMM(v)) + ' mm', v => S.rainV = v);
-document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
+document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); showSun(); S.dirty = true; };
 document.getElementById('labelRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.labels = b.dataset.l === '1'; document.querySelectorAll('#labelRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 document.getElementById('sculptRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sculpt = b.dataset.k === 'sculpt'; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.pick = null; S.dirty = true; toast(S.sculpt ? 'left drag sculpts · right drag orbits · middle drag pans' : 'left drag orbits'); };
 const flipBtn = document.getElementById('flipDrag');
@@ -1309,7 +1340,7 @@ function loadProject(pr) {
   for (const id of SLIDERS) { if (id === 'relief') continue; const el = document.getElementById(id); if (el.oninput) el.oninput({ target: el }); }
   document.getElementById('o_relief').textContent = fL(+document.getElementById('relief').value, 1); S.relief = +document.getElementById('relief').value;
   document.getElementById('place').value = pr.place || ''; document.getElementById('sheet').value = (S.sheet || [300, 450]).join('x');
-  document.querySelectorAll('#anaLayers button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); document.getElementById('sunSec').style.display = S.an.sun ? '' : 'none'; document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none';
+  document.querySelectorAll('#anaLayers button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none';
   document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode)); document.querySelectorAll('#modelStyle button').forEach(b => b.classList.toggle('on', b.dataset.s === S.modelStyle));
   document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === S.aerial)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
   relabels.forEach(f => f()); worldStatus(S.world ? `${S.world.name} · site ${fL(S.siteW, 0)} wide (from file)` : 'noise terrain.'); S.terrainVer++; updateStats(); S.dirty = true;
