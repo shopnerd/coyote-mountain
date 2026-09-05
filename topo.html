@@ -193,7 +193,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 60, ve: 1.5, mm: 150,
-  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, cam: { yaw: -.7, pitch: .95, zoom: 1 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -333,7 +333,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
-  const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2, oy = h / 2 + 10;
+  const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
     return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
@@ -396,7 +396,7 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
-  const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2, oy = h / 2 + 10;
+  const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
   const layers = steppedLayers();
@@ -481,18 +481,23 @@ function frame() {
 }
 
 /* ---------- pointer ---------- */
+function zoomAt(pan, mx, my, f, w, h, mul) {   // keep the point under (mx,my) fixed while zooming
+  const z0 = S.cam.zoom, z1 = Math.max(.4, Math.min(6, z0 * f)), fr = z1 / z0;
+  const ox = w / 2 + pan.x, oy = h / 2 + 10 + pan.y; pan.x += (mx - ox) * (1 - fr); pan.y += (my - oy) * (1 - fr); S.cam.zoom = z1; S.dirty = true;
+}
 function orbit(dx, dy) { const f = S.flipDrag ? -1 : 1; S.cam.yaw -= f * dx * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch - f * dy * .006)); S.dirty = true; }
 const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw = 0, ph = 0, pdrag = null;
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 function drawPip() {
   if (!pw) sizePip(); pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
-  const zoom0 = S.cam.zoom; S.cam.zoom = zoom0 * S.pipZoom; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0;
+  const zoom0 = S.cam.zoom, pan0 = S.cam.pan; S.cam.zoom = zoom0 * S.pipZoom; S.cam.pan = S.pipPan; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0; S.cam.pan = pan0;
   pctx.fillStyle = 'rgba(240,240,236,.85)'; pctx.fillRect(0, ph - 18, pw, 18);
   pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · wheel or pinch to zoom · double-tap to open', 22, ph - 5);
   pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.moveTo(2, ph - 12); pctx.lineTo(12, ph - 2); pctx.moveTo(2, ph - 6); pctx.lineTo(6, ph - 2); pctx.stroke();
 }
 const ppts = new Map(); let ppinch = null;
-const pipZoomTo = v => { S.pipZoom = Math.max(.5, Math.min(6, v)); S.dirty = true; };
+const pipZoomAt = (v, cx, cy) => { const r = pip.getBoundingClientRect(), z1 = Math.max(.5, Math.min(8, v)), fr = z1 / S.pipZoom, mx = cx - r.left, my = cy - r.top;
+  const ox = pw / 2 + S.pipPan.x, oy = ph / 2 + 10 + S.pipPan.y; S.pipPan.x += (mx - ox) * (1 - fr); S.pipPan.y += (my - oy) * (1 - fr); S.pipZoom = z1; S.dirty = true; };
 let presize = null; const GRIP = 22;
 const inGrip = e => { const r = pip.getBoundingClientRect(); return e.clientX - r.left < GRIP && r.bottom - e.clientY < GRIP; };
 function setPipSize(w, h) { const m = cv.parentElement.getBoundingClientRect(); w = Math.max(160, Math.min(m.width * .8, w)); h = Math.max(110, Math.min(m.height * .8, h));
@@ -506,11 +511,11 @@ pip.addEventListener('pointermove', e => {
   if (presize) { setPipSize(presize.w + (presize.x - e.clientX), presize.h + (e.clientY - presize.y)); return; }
   if (!pdrag && !ppinch) pip.classList.toggle('rs', inGrip(e));
   if (ppts.has(e.pointerId)) ppts.set(e.pointerId, [e.clientX, e.clientY]);
-  if (ppinch && ppts.size === 2) { const a = [...ppts.values()]; pipZoomTo(ppinch.z * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / ppinch.d); return; }
+  if (ppinch && ppts.size === 2) { const a = [...ppts.values()]; pipZoomAt(ppinch.z * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / ppinch.d, (a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2); return; }
   if (!pdrag) return; orbit(e.clientX - pdrag[0], e.clientY - pdrag[1]); pdrag = [e.clientX, e.clientY]; });
 const pipEnd = e => { presize = null; ppts.delete(e.pointerId); if (ppts.size < 2) ppinch = null; pdrag = null; };
 pip.addEventListener('pointerup', pipEnd); pip.addEventListener('pointercancel', pipEnd);
-pip.addEventListener('wheel', e => { e.preventDefault(); pipZoomTo(S.pipZoom * (e.deltaY < 0 ? 1.1 : .9)); }, { passive: false });
+pip.addEventListener('wheel', e => { e.preventDefault(); pipZoomAt(S.pipZoom * (e.deltaY < 0 ? 1.1 : .9), e.clientX, e.clientY); }, { passive: false });
 pip.addEventListener('dblclick', () => setMode('model'));
 
 /* ---------- undo ---------- */
@@ -532,7 +537,7 @@ cv.addEventListener('pointerdown', e => {
 });
 cv.addEventListener('pointermove', e => {
   const p = pt(e); if (pts.has(e.pointerId)) pts.set(e.pointerId, p);
-  if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); S.cam.zoom = Math.max(.4, Math.min(4, pinch.z * d / pinch.d)); S.dirty = true; return; }
+  if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); const target = pinch.z * d / pinch.d; zoomAt(S.cam.pan, (a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2, target / S.cam.zoom, S.w, S.h); return; }
   if (S.mode === 'plan') { const g = toGrid(p[0], p[1]); S.ptr = g; readout(g); S.dirty = true; }
   if (!drag) return;
   if (drag.kind === 'orbit') { orbit(p[0] - drag.p[0], p[1] - drag.p[1]); drag.p = p; }
@@ -547,7 +552,8 @@ function endPointer(e) {
 }
 cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
 cv.addEventListener('pointerleave', () => { S.ptr = null; S.dirty = true; document.getElementById('read').textContent = 'keys 1 plan · 2 model · 3 section'; });
-cv.addEventListener('wheel', e => { if (S.mode !== 'model') return; e.preventDefault(); S.cam.zoom = Math.max(.4, Math.min(4, S.cam.zoom * (e.deltaY < 0 ? 1.1 : .9))); S.dirty = true; }, { passive: false });
+cv.addEventListener('wheel', e => { if (S.mode !== 'model') return; e.preventDefault(); const q = pt(e); zoomAt(S.cam.pan, q[0], q[1], e.deltaY < 0 ? 1.1 : .9, S.w, S.h); }, { passive: false });
+cv.addEventListener('dblclick', () => { if (S.mode !== 'model') return; S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; toast('view reset'); });
 function readout(g) {
   const el = document.getElementById('read');
   if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) { el.textContent = 'outside the site'; return; }
