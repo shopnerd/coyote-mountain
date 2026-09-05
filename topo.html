@@ -87,7 +87,7 @@ canvas.orbit{cursor:grab}
   <header>
     <span class="logo">coyote_mountain<b>_topo</b></span>
     <a href="index.html">studio</a>
-    <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis</span>
+    <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis · 0 reset zoom · wheel zooms, middle-drag pans</span>
   </header>
   <aside>
     <div class="sec">view</div>
@@ -98,7 +98,7 @@ canvas.orbit{cursor:grab}
     <div class="desc" id="desc"></div>
     <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped stack</button></div>
     <div class="desc" id="colorLbl" style="display:none;padding-bottom:2px">surface color</div>
-    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button></div>
+    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="aerial" style="flex-basis:100%">aerial photo</button></div>
     <div class="desc" id="sculptLbl" style="display:none;padding-bottom:2px">left drag or one finger</div>
     <div class="seg" id="sculptRow" style="display:none;margin-bottom:6px"><button data-k="sculpt" class="on">sculpt</button><button data-k="orbit">orbit</button></div>
     <div class="seg" id="dragRow" style="display:none;margin-bottom:6px"><button id="flipDrag" title="reverse the orbit drag direction">flip drag direction</button></div>
@@ -215,8 +215,10 @@ const ramp = (stops, t) => { t = Math.max(0, Math.min(1, t)) * (stops.length - 1
 const rgb = (c, k = 1) => `rgb(${Math.round(c[0] * k)},${Math.round(c[1] * k)},${Math.round(c[2] * k)})`;
 const ELEV = ['#a9bfa5', '#e6dcbb', '#c9a58f', '#8f6a55'], SLOPE = ['#ebeae4', '#e2c3a8', '#C96B3A', '#6b2f14'];
 const ASPECT = ['#9db3c6', '#a3bfae', '#d7a98d', '#b6afdc', '#9db3c6'];   // N, E, S, W, N (muted)
-function surfaceColor(mode, zavg, gx, gy, light, lo, hi) {
+function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   const shade = .78 + .22 * light;
+  if (mode === 'aerial') { const ae = S.world ? aerialImage() : null; if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
+    const x = Math.max(0, Math.min(ae.rw - 1, Math.round(gi * 3))), y = Math.max(0, Math.min(ae.rh - 1, Math.round(gj * 3))), q = (y * ae.rw + x) * 4; return rgb([ae.data[q], ae.data[q + 1], ae.data[q + 2]], .85 + .2 * light); }
   if (mode === 'elevation') return rgb(ramp(ELEV, (zavg - lo) / Math.max(1e-6, hi - lo)), shade);
   const sl = Math.hypot(gx, gy);
   if (mode === 'slope') return rgb(ramp(SLOPE, sl / .6), shade);
@@ -361,14 +363,17 @@ const isIndex = lv => Math.abs(Math.round(lv / interval()) % 5) === 0;
 
 /* ---------- canvas + sheet ---------- */
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-let dpr = 1, sheet = { x: 0, y: 0, w: 1, h: 1 };
+let dpr = 1, sheet = { x: 0, y: 0, w: 1, h: 1 }, sheetBase = { x: 0, y: 0, w: 1, h: 1, k: 1 }; const PV = { zoom: 1, pan: { x: 0, y: 0 } };
 function resize() {
   const r = cv.parentElement.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
   S.w = r.width; S.h = r.height; cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const m = 36, aw = S.w - 2 * m, ah = S.h - 2 * m - 20, k = Math.min(aw / (W - 1), ah / (H - 1));
-  sheet = { x: (S.w - k * (W - 1)) / 2, y: (S.h - 20 - k * (H - 1)) / 2, w: k * (W - 1), h: k * (H - 1), k };
+  sheetBase = { x: (S.w - k * (W - 1)) / 2, y: (S.h - 20 - k * (H - 1)) / 2, w: k * (W - 1), h: k * (H - 1), k }; applyPlanView();
   sizePip(); S.dirty = true;
 }
+function applyPlanView() { const z = PV.zoom, b = sheetBase; sheet = { k: b.k * z, w: b.w * z, h: b.h * z, x: b.x + (b.w - b.w * z) / 2 + PV.pan.x, y: b.y + (b.h - b.h * z) / 2 + PV.pan.y }; }
+function planZoomAt(mx, my, f) { const g = toGrid(mx, my); PV.zoom = Math.max(1, Math.min(12, PV.zoom * f)); applyPlanView(); const p = toSheet(g[0], g[1]); PV.pan.x += mx - p[0]; PV.pan.y += my - p[1]; applyPlanView(); S.dirty = true; }
+function planReset() { PV.zoom = 1; PV.pan.x = PV.pan.y = 0; applyPlanView(); S.dirty = true; }
 const toSheet = (gx, gy) => [sheet.x + gx * sheet.k, sheet.y + gy * sheet.k];
 const toGrid = (px, py) => [(px - sheet.x) / sheet.k, (py - sheet.y) / sheet.k];
 function font(px, weight) { return `${weight || 400} ${px}px ${getComputedStyle(document.body).fontFamily}`; }
@@ -399,8 +404,9 @@ function drawPlan() {
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  ctx.fillText(`site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : (S.aerial && S.world ? ' · ' + (aerialCache.status || 'loading photo') : '')}`, sheet.x, sheet.y + sheet.h + 6);
-  const uf = isFt() ? FT : 1, barD = niceBar(S.siteW * uf / 5), bar = barD / uf, bw = bar / cs() * k, bx = sheet.x + sheet.w - bw, by = sheet.y + sheet.h + 10;
+  const fy = Math.min(sheet.y + sheet.h + 6, S.h - 32), fx = Math.max(sheet.x, 8);
+  ctx.fillText(`site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : (S.aerial && S.world ? ' · ' + (aerialCache.status || 'loading photo') : '')}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x (0 resets)' : ''}`, fx, fy);
+  const uf = isFt() ? FT : 1, barD = niceBar(S.siteW * uf / 5), bar = barD / uf, bw = bar / cs() * k, bx = Math.min(sheet.x + sheet.w, S.w - 16) - bw, by = fy + 4;
   ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.stroke();
   ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, bx + bw, by + 4);
   ctx.save(); ctx.translate(sheet.x + 22, sheet.y + 26); ctx.rotate(-S.rot * D2R); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('N', 0, -9);
@@ -454,7 +460,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const P = [proj(i, j, za), proj(i2, j, zb), proj(i2, j2, zc), proj(i, j2, zd)];
     const nx = -(zb - za) * S.ve / (step * s), ny = -(zd - za) * S.ve / (step * s); const nl = Math.hypot(nx, ny, 1);
     const light = (nx * lx + ny * ly + lz) / nl, gx = (zb - za) / (step * s), gy = (zd - za) / (step * s);
-    const tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi);
+    const tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2);
     const lines = [];
     const mn = Math.min(za, zb, zc, zd), mx = Math.max(za, zb, zc, zd);
     for (let lv = Math.ceil(mn / iv) * iv; lv <= mx; lv += iv) {
@@ -491,7 +497,8 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const it of items) if (it.d >= dmed) for (const [a, b, ix, lv] of it.lines) if (ix) { if (!groups.has(lv)) groups.set(lv, []); groups.get(lv).push([a[0], a[1], b[0], b[1]]); }
     contourLabels(c, groups, 200, true); spotLabels(c, (i, j, zz) => proj(i, j, zz));
   }
-  if (!mini && mode !== 'paper') drawLegend(c, w, h, mode, lo, hi);
+  if (!mini && mode !== 'paper' && mode !== 'aerial') drawLegend(c, w, h, mode, lo, hi);
+  if (!mini && mode === 'aerial') { c.fillStyle = INK2; c.font = font(9.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(S.world ? (aerialCache.canvas ? 'imagery Esri, Maxar, Earthstar Geographics' : (aerialCache.status || 'loading photo')) : 'fetch real terrain to get a photo', w - 14, h - 10); }
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
   if (mini) return; c.fillText(`model · ${S.ve}x vertical · right drag orbit · middle or shift drag pan · ctrl+right drag zoom · wheel zoom · double-click reset`, 14, h - 10);
@@ -785,8 +792,9 @@ function drawAnalysis() {
     ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.strokeRect(x, y, 120, 8); ctx.fillStyle = INK2; ctx.font = font(9.5); ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillText('0 h', x, y + 11); ctx.textAlign = 'right'; ctx.fillText((sunCache.max || 0).toFixed(0) + ' h sun', x + 120, y + 11); }
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-  if (sunNote) ctx.fillText(sunNote, sheet.x, sheet.y + sheet.h + 20);
-  ctx.fillText(`${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : ''}`, sheet.x, sheet.y + sheet.h + 6);
+  const fy = Math.min(sheet.y + sheet.h + 6, S.h - 32), fx = Math.max(sheet.x, 8);
+  if (sunNote) ctx.fillText(sunNote, fx, fy + 14);
+  ctx.fillText(`${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : ''}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`, fx, fy);
 }
 
 /* ---------- section ---------- */
@@ -909,7 +917,7 @@ let drag = null, pinch = null; const pts = new Map();
 const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 cv.addEventListener('pointerdown', e => {
   cv.setPointerCapture(e.pointerId); const p = pt(e); pts.set(e.pointerId, p);
-  if (pts.size === 2) { const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
+  if (pts.size === 2) { const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, pz: PV.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
   if (S.mode === 'model') {
     const btn = e.button;
     if (btn === 1 || e.shiftKey) { drag = { p, kind: 'pan' }; return; }
@@ -917,6 +925,7 @@ cv.addEventListener('pointerdown', e => {
     if (btn === 2) { drag = { p, kind: 'orbit' }; return; }
     if (S.sculpt) { const g = pick(p[0], p[1]); if (!g) return; snapshot(); const kind = S.brush === 'section' ? 'raise' : S.brush; drag = { g, kind: 'sculpt', brush: kind, z0: z[idx(g[0], g[1])] }; dab(g[0], g[1], kind, drag.z0); S.pick = g; S.dirty = true; return; }
     drag = { p, kind: 'orbit' }; return; }
+  if ((S.mode === 'plan' || S.mode === 'analysis') && (e.button === 1 || e.shiftKey)) { drag = { p, kind: 'planpan' }; return; }
   if (S.mode === 'analysis') { const g = toGrid(p[0], p[1]); if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) return;
     const an = analyze(); let best = null, bd = 14 * 14; for (const kp of an.keypoints) { const q = toSheet(kp.i, kp.j); const d = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2; if (d < bd) { bd = d; best = kp; } }
     S.keyPt = best ? [best.i, best.j] : g; S.keyAuto = false; S.dirty = true; toast(best ? 'keypoint selected' : 'custom keyline point'); return; }
@@ -928,13 +937,14 @@ cv.addEventListener('pointerdown', e => {
 });
 cv.addEventListener('pointermove', e => {
   const p = pt(e); if (pts.has(e.pointerId)) pts.set(e.pointerId, p);
-  if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); const target = pinch.z * d / pinch.d, mid = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2]; if (S.mode === 'model') { S.cam.pan.x += mid[0] - pinch.mid[0]; S.cam.pan.y += mid[1] - pinch.mid[1]; zoomAt(S.cam.pan, mid[0], mid[1], target / S.cam.zoom, S.w, S.h); } pinch.mid = mid; return; }
+  if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); const target = pinch.z * d / pinch.d, mid = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2]; if (S.mode === 'plan' || S.mode === 'analysis') { PV.pan.x += mid[0] - pinch.mid[0]; PV.pan.y += mid[1] - pinch.mid[1]; applyPlanView(); planZoomAt(mid[0], mid[1], (pinch.pz || 1) * d / pinch.d / PV.zoom); } else if (S.mode === 'model') { S.cam.pan.x += mid[0] - pinch.mid[0]; S.cam.pan.y += mid[1] - pinch.mid[1]; zoomAt(S.cam.pan, mid[0], mid[1], target / S.cam.zoom, S.w, S.h); } pinch.mid = mid; return; }
   if (S.mode === 'plan') { const g = toGrid(p[0], p[1]); S.ptr = g; readout(g); S.dirty = true; }
   if (S.mode === 'analysis') readout(toGrid(p[0], p[1]));
   if (S.mode === 'model' && S.sculpt && !drag) { const g = pick(p[0], p[1]); if ((g && !S.pick) || (!g && S.pick) || (g && S.pick && (g[0] !== S.pick[0] || g[1] !== S.pick[1]))) { S.pick = g; S.dirty = true; } if (g) readout(g); }
   if (!drag) return;
   if (drag.kind === 'orbit') { orbit(p[0] - drag.p[0], p[1] - drag.p[1]); drag.p = p; }
   else if (drag.kind === 'pan') { S.cam.pan.x += p[0] - drag.p[0]; S.cam.pan.y += p[1] - drag.p[1]; drag.p = p; S.dirty = true; }
+  else if (drag.kind === 'planpan') { PV.pan.x += p[0] - drag.p[0]; PV.pan.y += p[1] - drag.p[1]; applyPlanView(); drag.p = p; S.dirty = true; }
   else if (drag.kind === 'zoom') { zoomAt(S.cam.pan, drag.at[0], drag.at[1], Math.exp((drag.p[1] - p[1]) * .006), S.w, S.h); drag.p = p; }
   else if (drag.kind === 'sculpt') { const g = pick(p[0], p[1]); if (!g) return; strokeLine(drag.g, g, drag.brush, drag.z0); drag.g = g; S.pick = g; S.dirty = true; }
   else if (drag.kind === 'section') { S.sec[1] = toGrid(p[0], p[1]); S.dirty = true; }
@@ -948,7 +958,7 @@ function endPointer(e) {
 }
 cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
 cv.addEventListener('pointerleave', () => { S.ptr = null; S.dirty = true; document.getElementById('read').textContent = 'keys 1 plan · 2 model · 3 section'; });
-cv.addEventListener('wheel', e => { if (S.mode !== 'model') return; e.preventDefault(); const q = pt(e); zoomAt(S.cam.pan, q[0], q[1], e.deltaY < 0 ? 1.1 : .9, S.w, S.h); }, { passive: false });
+cv.addEventListener('wheel', e => { const q = pt(e); if (S.mode === 'model') { e.preventDefault(); zoomAt(S.cam.pan, q[0], q[1], e.deltaY < 0 ? 1.1 : .9, S.w, S.h); } else if (S.mode === 'plan' || S.mode === 'analysis') { e.preventDefault(); planZoomAt(q[0], q[1], e.deltaY < 0 ? 1.15 : 1 / 1.15); } }, { passive: false });
 cv.addEventListener('contextmenu', e => e.preventDefault()); pip.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); }); pip.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
 cv.addEventListener('dblclick', () => { if (S.mode !== 'model') return; S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; toast('view reset'); });
@@ -1160,7 +1170,7 @@ async function buildAerial(key) {
   const out = document.createElement('canvas'); out.width = RW; out.height = RH; const oc2 = out.getContext('2d'), img = oc2.createImageData(RW, RH), d = img.data;
   for (let m = 0; m < RW * RH; m++) { const x = P[m * 2], y = P[m * 2 + 1], tx = Math.floor(x / 256), ty = Math.floor(y / 256), t = tiles.get(tx + '/' + ty); if (!t) { d[m * 4 + 3] = 0; continue; }
     const q = ((Math.floor(y) - ty * 256) * 256 + (Math.floor(x) - tx * 256)) * 4; d[m * 4] = t[q]; d[m * 4 + 1] = t[q + 1]; d[m * 4 + 2] = t[q + 2]; d[m * 4 + 3] = 255; }
-  oc2.putImageData(img, 0, 0); aerialCache.canvas = out; aerialCache.status = 'ready'; S.dirty = true;
+  oc2.putImageData(img, 0, 0); aerialCache.canvas = out; aerialCache.data = d; aerialCache.rw = RW; aerialCache.rh = RH; aerialCache.status = 'ready'; S.dirty = true;
 }
 function drawAerial() {
   if (!S.aerial || !S.world) return false; const ae = aerialImage(); if (!ae || !ae.canvas) return false;
@@ -1241,7 +1251,7 @@ buildExisting(); resetGrading();
   document.getElementById('radius').dispatchEvent(new Event('input')); S.strength = +document.getElementById('strength').value;
   S.sec = [[20, 85], [120, 15]];
 })();
-addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section', '4': 'analysis' }[e.key]; if (m) setMode(m); if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); });
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section', '4': 'analysis' }[e.key]; if (m) setMode(m); if (e.key === '0') { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } } if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); });
 updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 })();
 </script>
