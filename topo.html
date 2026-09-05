@@ -377,7 +377,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     if (it.lines.length) { c.strokeStyle = INK; for (const [a, b, ix] of it.lines) { c.lineWidth = ix ? 1.2 : .6; c.globalAlpha = ix ? .9 : .7; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.globalAlpha = 1; }
   }
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
-  if (mini) return; c.fillText(`model · ${S.ve}x vertical · drag to orbit · pinch or wheel to zoom`, 14, h - 10);
+  if (mini) return; c.fillText(`model · ${S.ve}x vertical · drag to orbit · right-drag, shift-drag or two fingers to pan · wheel or pinch to zoom · double-click to reset`, 14, h - 10);
 }
 
 /* ---------- stepped model: the cardboard stack before you cut it ---------- */
@@ -420,7 +420,7 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
-  if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · drag to orbit`, 14, h - 10);
+  if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · drag to orbit · right-drag or two fingers to pan · double-click to reset`, 14, h - 10);
 }
 
 /* ---------- section ---------- */
@@ -492,7 +492,8 @@ function drawPip() {
   if (!pw) sizePip(); pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
   const zoom0 = S.cam.zoom, pan0 = S.cam.pan; S.cam.zoom = zoom0 * S.pipZoom; S.cam.pan = S.pipPan; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0; S.cam.pan = pan0;
   pctx.fillStyle = 'rgba(240,240,236,.85)'; pctx.fillRect(0, ph - 18, pw, 18);
-  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · wheel or pinch to zoom · double-tap to open', 22, ph - 5);
+  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag orbit · right-drag or two fingers pan · wheel or pinch zoom · double-tap open', 22, ph - 5);
+  pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.arc(12, 12, 5, 0, 6.2832); pctx.moveTo(4, 12); pctx.lineTo(20, 12); pctx.moveTo(12, 4); pctx.lineTo(12, 20); pctx.stroke();
   pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.moveTo(2, ph - 12); pctx.lineTo(12, ph - 2); pctx.moveTo(2, ph - 6); pctx.lineTo(6, ph - 2); pctx.stroke();
 }
 const ppts = new Map(); let ppinch = null;
@@ -501,22 +502,27 @@ const pipZoomAt = (v, cx, cy) => { const r = pip.getBoundingClientRect(), z1 = M
 let presize = null; const GRIP = 22;
 const inGrip = e => { const r = pip.getBoundingClientRect(); return e.clientX - r.left < GRIP && r.bottom - e.clientY < GRIP; };
 function setPipSize(w, h) { const m = cv.parentElement.getBoundingClientRect(); w = Math.max(160, Math.min(m.width * .8, w)); h = Math.max(110, Math.min(m.height * .8, h));
+  if (pw) { S.pipPan.x *= w / pw; S.pipPan.y *= h / ph; }
   pip.style.width = w + 'px'; pip.style.height = h + 'px'; sizePip(); S.dirty = true; try { localStorage.setItem('pipSize', w + 'x' + h); } catch (_) {} }
 try { const v = localStorage.getItem('pipSize'); if (v) { const [w, h] = v.split('x').map(Number); if (w && h) { pip.style.width = w + 'px'; pip.style.height = h + 'px'; } } } catch (_) {}
 pip.addEventListener('pointerdown', e => { pip.setPointerCapture(e.pointerId);
   if (inGrip(e) && ppts.size === 0) { const r = pip.getBoundingClientRect(); presize = { x: e.clientX, y: e.clientY, w: r.width, h: r.height }; return; }
-  ppts.set(e.pointerId, [e.clientX, e.clientY]); pdrag = [e.clientX, e.clientY];
-  if (ppts.size === 2) { const a = [...ppts.values()]; ppinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.pipZoom }; pdrag = null; } });
+  ppts.set(e.pointerId, [e.clientX, e.clientY]); pdrag = [e.clientX, e.clientY]; pdrag.pan = e.button === 2 || e.shiftKey; pdrag.moved = false; pdrag.target = inTarget(e);
+  if (ppts.size === 2) { const a = [...ppts.values()]; ppinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.pipZoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; pdrag = null; } });
 pip.addEventListener('pointermove', e => {
   if (presize) { setPipSize(presize.w + (presize.x - e.clientX), presize.h + (e.clientY - presize.y)); return; }
   if (!pdrag && !ppinch) pip.classList.toggle('rs', inGrip(e));
   if (ppts.has(e.pointerId)) ppts.set(e.pointerId, [e.clientX, e.clientY]);
-  if (ppinch && ppts.size === 2) { const a = [...ppts.values()]; pipZoomAt(ppinch.z * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / ppinch.d, (a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2); return; }
-  if (!pdrag) return; orbit(e.clientX - pdrag[0], e.clientY - pdrag[1]); pdrag = [e.clientX, e.clientY]; });
-const pipEnd = e => { presize = null; ppts.delete(e.pointerId); if (ppts.size < 2) ppinch = null; pdrag = null; };
+  if (ppinch && ppts.size === 2) { const a = [...ppts.values()], mid = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2]; S.pipPan.x += mid[0] - ppinch.mid[0]; S.pipPan.y += mid[1] - ppinch.mid[1]; ppinch.mid = mid; pipZoomAt(ppinch.z * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / ppinch.d, mid[0], mid[1]); return; }
+  if (!pdrag) return; const dx = e.clientX - pdrag[0], dy = e.clientY - pdrag[1]; if (dx || dy) pdrag.moved = true;
+  if (pdrag.pan) { S.pipPan.x += dx; S.pipPan.y += dy; S.dirty = true; } else orbit(dx, dy);
+  const keep = pdrag; pdrag = [e.clientX, e.clientY]; pdrag.pan = keep.pan; pdrag.moved = keep.moved; pdrag.target = keep.target; });
+const pipEnd = e => { if (pdrag && pdrag.target && !pdrag.moved) pipRecenter(); presize = null; ppts.delete(e.pointerId); if (ppts.size < 2) ppinch = null; pdrag = null; };
 pip.addEventListener('pointerup', pipEnd); pip.addEventListener('pointercancel', pipEnd);
 pip.addEventListener('wheel', e => { e.preventDefault(); pipZoomAt(S.pipZoom * (e.deltaY < 0 ? 1.1 : .9), e.clientX, e.clientY); }, { passive: false });
-pip.addEventListener('dblclick', () => setMode('model'));
+function pipRecenter() { S.pipPan.x = S.pipPan.y = 0; S.pipZoom = 1.55; S.dirty = true; toast('preview recentered'); }
+const inTarget = e => { const r = pip.getBoundingClientRect(); return e.clientX - r.left < 24 && e.clientY - r.top < 24; };
+pip.addEventListener('dblclick', e => { if (!inTarget(e)) setMode('model'); });
 
 /* ---------- undo ---------- */
 const undoStack = [];
@@ -527,8 +533,8 @@ let drag = null, pinch = null; const pts = new Map();
 const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 cv.addEventListener('pointerdown', e => {
   cv.setPointerCapture(e.pointerId); const p = pt(e); pts.set(e.pointerId, p);
-  if (pts.size === 2) { const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom }; drag = null; return; }
-  if (S.mode === 'model') { drag = { p, kind: 'orbit' }; return; }
+  if (pts.size === 2) { const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
+  if (S.mode === 'model') { drag = { p, kind: (e.button === 2 || e.shiftKey) ? 'pan' : 'orbit' }; return; }
   if (S.mode !== 'plan') return;
   const g = toGrid(p[0], p[1]);
   snapshot();
@@ -537,10 +543,11 @@ cv.addEventListener('pointerdown', e => {
 });
 cv.addEventListener('pointermove', e => {
   const p = pt(e); if (pts.has(e.pointerId)) pts.set(e.pointerId, p);
-  if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); const target = pinch.z * d / pinch.d; zoomAt(S.cam.pan, (a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2, target / S.cam.zoom, S.w, S.h); return; }
+  if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); const target = pinch.z * d / pinch.d, mid = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2]; if (S.mode === 'model') { S.cam.pan.x += mid[0] - pinch.mid[0]; S.cam.pan.y += mid[1] - pinch.mid[1]; zoomAt(S.cam.pan, mid[0], mid[1], target / S.cam.zoom, S.w, S.h); } pinch.mid = mid; return; }
   if (S.mode === 'plan') { const g = toGrid(p[0], p[1]); S.ptr = g; readout(g); S.dirty = true; }
   if (!drag) return;
   if (drag.kind === 'orbit') { orbit(p[0] - drag.p[0], p[1] - drag.p[1]); drag.p = p; }
+  else if (drag.kind === 'pan') { S.cam.pan.x += p[0] - drag.p[0]; S.cam.pan.y += p[1] - drag.p[1]; drag.p = p; S.dirty = true; }
   else if (drag.kind === 'section') { S.sec[1] = toGrid(p[0], p[1]); S.dirty = true; }
   else { const g = toGrid(p[0], p[1]); strokeLine(drag.g, g, S.brush, drag.z0); drag.g = g; S.dirty = true; }
 });
@@ -553,6 +560,7 @@ function endPointer(e) {
 cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
 cv.addEventListener('pointerleave', () => { S.ptr = null; S.dirty = true; document.getElementById('read').textContent = 'keys 1 plan · 2 model · 3 section'; });
 cv.addEventListener('wheel', e => { if (S.mode !== 'model') return; e.preventDefault(); const q = pt(e); zoomAt(S.cam.pan, q[0], q[1], e.deltaY < 0 ? 1.1 : .9, S.w, S.h); }, { passive: false });
+cv.addEventListener('contextmenu', e => e.preventDefault()); pip.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('dblclick', () => { if (S.mode !== 'model') return; S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; toast('view reset'); });
 function readout(g) {
   const el = document.getElementById('read');
