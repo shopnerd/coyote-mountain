@@ -1388,6 +1388,7 @@ function loadProject(pr) {
   document.querySelectorAll('#anaLayers button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none';
   document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode)); document.querySelectorAll('#modelStyle button').forEach(b => b.classList.toggle('on', b.dataset.s === S.modelStyle));
   document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === S.aerial)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
+  if (S.aerial && S.colorMode === 'paper') S.colorMode = 'aerial'; if (!S.aerial && S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
   relabels.forEach(f => f()); worldStatus(S.world ? `${S.world.name} · site ${fL(S.siteW, 0)} wide (from file)` : 'noise terrain.'); S.terrainVer++; updateStats(); S.dirty = true;
 }
 function saveProject() { const pr = snapshotProject(), name = `coyote-topo-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 30)}.json`; dl(URL.createObjectURL(new Blob([JSON.stringify(pr)], { type: 'application/json' })), name); }
