@@ -278,6 +278,7 @@ function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [
     }
   }
 }
+function haloText(c, txt, x, y, color) { c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, x, y); c.fillStyle = color; c.fillText(txt, x, y); }
 function spotLabels(c, toXY) {   // high and low points of the proposed grade
   let mi = 0, ma = 0; for (let n = 1; n < W * H; n++) { if (z[n] > z[ma]) ma = n; if (z[n] < z[mi]) mi = n; }
   c.font = font(9.5, 600); c.textAlign = 'left'; c.textBaseline = 'middle';
@@ -761,9 +762,9 @@ function drawAnalysis() {
     ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   ctx.font = font(9.5, 600); ctx.textBaseline = 'middle';
   if (S.an.catch) for (const o of outlets) { if (o.cells < 40) continue; const c = toSheet(o.ci / o.cells, o.cj / o.cells), txt = fBig(o.cells * A), tw = ctx.measureText(txt).width + 8;
-    ctx.fillStyle = 'rgba(240,240,236,.85)'; ctx.fillRect(c[0] - tw / 2, c[1] - 7, tw, 14); ctx.fillStyle = INK2; ctx.textAlign = 'center'; ctx.fillText(txt, c[0], c[1] + .5); }
+    ctx.textAlign = 'center'; haloText(ctx, txt, c[0], c[1] + .5, INK2); }
   if (S.an.flow) for (const o of ponds) { const p = toSheet(o.ci, o.cj); ctx.fillStyle = WATER; ctx.globalAlpha = .9; ctx.beginPath(); ctx.arc(p[0], p[1], 5, 0, TAU); ctx.fill(); ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], 2, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
-    ctx.fillStyle = WATER; ctx.textAlign = 'left'; ctx.fillText(`pond · ${fBig(o.cells * A)} · ${fL(o.depth, 1)} deep`, p[0] + 9, p[1] + .5); }
+    ctx.textAlign = 'left'; haloText(ctx, `pond · ${fBig(o.cells * A)} · ${fL(o.depth, 1)} deep`, p[0] + 9, p[1] + .5, WATER); }
   if (S.an.keyline && S.keyPt) { const { lv, poly } = keylineFor(S.keyPt[0], S.keyPt[1]);
     if (poly && poly.length > 3) { ctx.save(); ctx.beginPath(); ctx.rect(sheet.x, sheet.y, sheet.w, sheet.h); ctx.clip();
       const kLab = label[idx(Math.max(0, Math.min(W - 1, Math.round(S.keyPt[0]))), Math.max(0, Math.min(H - 1, Math.round(S.keyPt[1]))))];
@@ -771,7 +772,7 @@ function drawAnalysis() {
       ctx.strokeStyle = ACC; ctx.lineWidth = .7; ctx.globalAlpha = .5;
       for (let m = 1; m <= nLines; m++) for (const sg of [1, -1]) { const q = offsetPoly(base, sg * m * dpx); for (const part of clipToLabel(q, kLab, label)) { ctx.beginPath(); part.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); } }
       ctx.globalAlpha = 1; ctx.lineWidth = 2; for (const part of clipToLabel(poly, kLab, label)) { ctx.beginPath(); part.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); } ctx.restore();
-      const mid = poly[Math.floor(poly.length / 2)], txt = 'keyline ' + fL(lv, 2), tw = ctx.measureText(txt).width + 8; ctx.fillStyle = PAPER; ctx.fillRect(mid[0] - tw / 2, mid[1] - 7, tw, 14); ctx.fillStyle = ACC; ctx.textAlign = 'center'; ctx.fillText(txt, mid[0], mid[1] + .5); } }
+      const mid = poly[Math.floor(poly.length / 2)], txt = 'keyline ' + fL(lv, 2); ctx.textAlign = 'center'; haloText(ctx, txt, mid[0], mid[1] + .5, ACC); } }
   if (S.an.swales && S.keyPt) { const zk = sample(z, S.keyPt[0], S.keyPt[1]), drop = swaleDrop(S.swaleV), [lo, hi] = range(z);
     const kLab = label[idx(Math.round(S.keyPt[0]), Math.round(S.keyPt[1]))];
     ctx.font = font(9, 600); for (let n = -8; n <= 8; n++) { const lv = zk + n * drop; if (lv <= lo || lv >= hi) continue;
@@ -782,7 +783,7 @@ function drawAnalysis() {
         const side = sample(z, g1[0], g1[1]) < sample(z, g2[0], g2[1]) ? 1 : -1;   // berm goes on the downhill side
         for (const part of parts) { ctx.strokeStyle = WATER; ctx.lineWidth = 1.3; ctx.setLineDash([6, 3]); ctx.beginPath(); part.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.setLineDash([]);
           const berm = offsetPoly(part, side * 3.5); ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.globalAlpha = .6; ctx.beginPath(); berm.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.globalAlpha = 1; }
-        const big = parts.reduce((a, b) => b.length > a.length ? b : a, parts[0]); if (big.length > 40) { const mm = big[Math.floor(big.length / 2)], txt = 'swale ' + fL(lv, 1), tw = ctx.measureText(txt).width + 6; ctx.fillStyle = PAPER; ctx.fillRect(mm[0] - tw / 2, mm[1] - 6, tw, 12); ctx.fillStyle = WATER; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, mm[0], mm[1] + .5); } } } }
+        const big = parts.reduce((a, b) => b.length > a.length ? b : a, parts[0]); if (big.length > 40) { const mm = big[Math.floor(big.length / 2)], txt = 'swale ' + fL(lv, 1); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; haloText(ctx, txt, mm[0], mm[1] + .5, WATER); } } } }
   if (S.an.dam && S.keyPt) { const pool = damPool(an, S.keyPt[0], S.keyPt[1], S.damH), k2 = sheet.k;
     if (pool.cells.length) { ctx.fillStyle = WATER; ctx.globalAlpha = .35; for (const n of pool.cells) { const p = cellXY(n); ctx.fillRect(p[0] - k2 / 2, p[1] - k2 / 2, k2 + .5, k2 + .5); } ctx.globalAlpha = 1; }
     const p = toSheet(S.keyPt[0], S.keyPt[1]), dn = down[pool.kn]; let fx = 0, fy = 1; if (dn >= 0) { const q = cellXY(dn); fx = q[0] - p[0]; fy = q[1] - p[1]; const L = Math.hypot(fx, fy) || 1; fx /= L; fy /= L; }
@@ -791,13 +792,13 @@ function drawAnalysis() {
     ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke(); ctx.lineCap = 'butt';
     ctx.font = font(9.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     const txt = `dam site · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`, tw = ctx.measureText(txt).width + 8; let lx = p[0] + fy * half + 8; const ly = p[1] - fx * half - 14; if (lx + tw > sheet.x + sheet.w) lx = p[0] - fy * half - tw - 4;
-    ctx.fillStyle = PAPER; ctx.fillRect(lx - 4, ly - 7, tw, 14); ctx.fillStyle = INK; ctx.fillText(txt, lx, ly + .5); }
+    haloText(ctx, txt, lx, ly + .5, INK); }
   if (flood) { ctx.font = font(9.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     for (const pl of flood.pools.slice(0, 10)) { const p = toSheet(pl.ci, pl.cj); const txt = `pool · ${fBig(pl.area)} · ${fL(pl.depth, 1)} deep · ${pl.overflow > 0 ? 'full, overflowing ' + fV(pl.overflow) : Math.round(pl.full * 100) + '% full'}`, tw = ctx.measureText(txt).width + 8;
-      let lx = p[0] + 8; if (lx + tw > sheet.x + sheet.w) lx = p[0] - tw - 8; ctx.fillStyle = 'rgba(240,240,236,.9)'; ctx.fillRect(lx - 4, p[1] - 7, tw, 14); ctx.fillStyle = '#3f6488'; ctx.fillText(txt, lx, p[1] + .5); } }
+      let lx = p[0] + 8; if (lx + tw > sheet.x + sheet.w) lx = p[0] - tw - 8; haloText(ctx, txt, lx, p[1] + .5, '#3f6488'); } }
   if (S.an.keys) for (const kp of keypoints) { const p = toSheet(kp.i, kp.j), sel = S.keyPt && S.keyPt[0] === kp.i && S.keyPt[1] === kp.j;
     ctx.strokeStyle = ACC; ctx.lineWidth = sel ? 2 : 1.2; ctx.fillStyle = sel ? ACC : PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], sel ? 6 : 4.5, 0, TAU); ctx.fill(); ctx.stroke();
-    ctx.fillStyle = ACC; ctx.textAlign = 'left'; ctx.fillText('keypoint ' + fL(kp.z, 1), p[0] + 10, p[1] + .5); }
+    ctx.textAlign = 'left'; haloText(ctx, 'keypoint ' + fL(kp.z, 1), p[0] + 10, p[1] + .5, ACC); }
   if (S.keyPt && !keypoints.some(kp => kp.i === S.keyPt[0] && kp.j === S.keyPt[1])) { const p = toSheet(S.keyPt[0], S.keyPt[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(p[0] - 5, p[1]); ctx.lineTo(p[0] + 5, p[1]); ctx.moveTo(p[0], p[1] - 5); ctx.lineTo(p[0], p[1] + 5); ctx.stroke(); }
   if (S.an.sun && S.sunMode === 'hours') { const x = sheet.x + sheet.w - 130, y = sheet.y + 10; for (let q = 0; q < 120; q++) { ctx.fillStyle = rgb(ramp(['#9fb0bf', '#eeeadf', '#e6b57a'], q / 119)); ctx.fillRect(x + q, y, 1.5, 8); }
     ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.strokeRect(x, y, 120, 8); ctx.fillStyle = INK2; ctx.font = font(9.5); ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillText('0 h', x, y + 11); ctx.textAlign = 'right'; ctx.fillText((sunCache.max || 0).toFixed(0) + ' h sun', x + 120, y + 11); }
@@ -834,16 +835,16 @@ function modelFrame() {                   // the model rendered once, reused whi
 }
 function stepRain() {
   const d = depressions(), dropVol = d.A * .012;
-  for (let q = 0; q < 10 && drops.length < 1400; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0, trail: [] });
+  for (let q = 0; q < 5 && drops.length < 1400; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0, trail: [] });
   const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); drops.splice(q, 1); };
   for (let q = drops.length - 1; q >= 0; q--) { const dr = drops[q]; dr.age++; dr.trail.push([dr.x, dr.y]); if (dr.trail.length > 14) dr.trail.shift();
     const n = idx(Math.round(dr.x), Math.round(dr.y)), c = d.comp[n];
     if (c >= 0 && sample(z, dr.x, dr.y) <= d.comps[c].level + .002) { absorb(d.comps[c], dr, q); continue; }   // ran into a pool
     const g = grad(dr.x, dr.y), sl = Math.hypot(g[0], g[1]);
-    if (sl > .004) { const sp = Math.min(1.2, .25 + sl * 2.5); dr.x -= g[0] / sl * sp; dr.y -= g[1] / sl * sp; }
+    if (sl > .004) { const sp = Math.min(.6, .12 + sl * 1.2); dr.x -= g[0] / sl * sp; dr.y -= g[1] / sl * sp; }
     else { const i = Math.round(dr.x), j = Math.round(dr.y); let best = -1, bz = z[idx(i, j)] - 1e-4; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const v = z[idx(ii, jj)]; if (v < bz) { bz = v; best = idx(ii, jj); } }
-      if (best < 0) { if (c >= 0) absorb(d.comps[c], dr, q); else drops.splice(q, 1); continue; } dr.x += (best % W - dr.x) * .5; dr.y += (((best / W) | 0) - dr.y) * .5; }
-    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 900) drops.splice(q, 1); }
+      if (best < 0) { if (c >= 0) absorb(d.comps[c], dr, q); else drops.splice(q, 1); continue; } dr.x += (best % W - dr.x) * .25; dr.y += (((best / W) | 0) - dr.y) * .25; }
+    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 1800) drops.splice(q, 1); }
 }
 function drawRain() {
   ctx.clearRect(0, 0, S.w, S.h); ctx.drawImage(modelFrame(), 0, 0, S.w, S.h); const { proj } = camera(), d = depressions();
@@ -1089,9 +1090,10 @@ bind('month', v => MONTHS[v - 1], v => S.month = v);
 function setSunPlay(kind) { S.sunPlay = S.sunPlay === kind ? null : kind; S.sunClock = 0; document.getElementById('playDay').classList.toggle('on', S.sunPlay === 'day'); document.getElementById('playYear').classList.toggle('on', S.sunPlay === 'year');
   document.getElementById('playDay').textContent = S.sunPlay === 'day' ? 'playing · pause' : 'play the day'; document.getElementById('playYear').textContent = S.sunPlay === 'year' ? 'playing · pause' : 'play the year'; if (S.sunPlay) S.sunHeld = null;
   if (S.sunPlay && S.sunMode !== 'hour') document.querySelector('#sunSec .seg button[data-s="hour"]').click(); }
+for (const id of ['hour', 'month']) document.getElementById(id).addEventListener('pointerdown', () => { if (S.sunPlay) { const k = S.sunPlay; setSunPlay(k); S.sunHeld = k; } });
 document.getElementById('playDay').onclick = () => setSunPlay('day'); document.getElementById('playYear').onclick = () => setSunPlay('year');
 function tickSun(now) {
-  if (!S.sunPlay) return; const active = (S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun'); if (!active) return; if (now - S.sunClock < 110) return; S.sunClock = now;
+  if (!S.sunPlay) return; const active = (S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun'); if (!active) return; if (now - S.sunClock < 260) return; S.sunClock = now;
   if (S.sunPlay === 'day') { const el = document.getElementById('hour'); let v = +el.value + .5; if (v > 20) v = 5; el.value = v; el.dispatchEvent(new Event('input')); }
   else { const el = document.getElementById('month'); let v = +el.value + 1; if (v > 12) v = 1; el.value = v; el.dispatchEvent(new Event('input')); }
 }
