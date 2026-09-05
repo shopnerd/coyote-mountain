@@ -135,7 +135,9 @@ canvas.orbit{cursor:grab}
         <button data-a="keyline" class="on" style="flex-basis:100%">keyline + plow lines</button>
         <button data-a="swales">swales on contour</button><button data-a="dam" class="on">dam site</button>
         <button data-a="flood">flood pooling</button><button data-a="sun">sun study</button>
+        <button data-a="plow" style="flex-basis:100%" title="rain follows the plow furrows: water drifts from the valley toward the ridges">keyline plowing effect on rain</button>
       </div>
+      <div class="seg" id="tapRow" style="margin-top:6px"><button data-t="key" class="on">tap sets keyline</button><button data-t="dam">tap places dam</button></div>
       <div class="seg" style="margin-top:6px"><button id="rainBtn" title="animated raindrops running downhill and pooling, here and on the model (r)" style="flex:2">rain animation (r)</button><button id="rainPause" title="freeze the drops and pools (p)">pause</button></div>
       <div class="params" id="floodSec" style="display:none;padding-top:6px">
         <div class="p" title="rain falling on the whole site in one storm, no infiltration"><label>storm rain<output id="o_rain">25 mm</output></label><input type="range" id="rain" min="1" max="100" step="1" value="35"></div>
@@ -147,7 +149,7 @@ canvas.orbit{cursor:grab}
         <div class="p" title="vertical drop between swales"><label>swale drop<output id="o_swale">0.5 m</output></label><input type="range" id="swale" min="1" max="100" step="1" value="30"></div>
         <div class="p" title="wall height of a dam at the keypoint"><label>dam height<output id="o_dam">2 m</output></label><input type="range" id="dam" min="0.5" max="12" step=".5" value="2"></div>
       </div>
-      <div class="desc" id="anaDesc">swales are ditches dug on contour that hold water where it lands; here they step down from the keyline by the swale drop. flood pooling drops one storm's rain on every cell, runs it downhill and fills each hollow with what reaches it, brimming and overflowing when full (no soak-in, so it is a worst case). the dam site sits at the keypoint; the tool floods the ground upstream to the dam height. sun study shades the ground for the site's latitude with real cast shadows; sun hours sums a whole day. keyline design: a valley's steep upper slope eases at the keypoint, the best small-dam site. the keyline is the contour through it. plowing parallel to the keyline, within that valley's catchment, drifts runoff from the wet valley toward the dry ridges. tap any spot on the sheet to set your own keyline; tap a keypoint to use it.</div>
+      <div class="desc" id="anaDesc">tap a keypoint or any spot to set the keyline. switch to "tap places dam" to put the dam anywhere.</div>
     </div>
 
     <div class="sec">world</div>
@@ -166,6 +168,7 @@ canvas.orbit{cursor:grab}
     <div class="params">
       <div class="p"><label>units</label><select id="unit"><option value="ft">imperial · ft, yd³, in</option><option value="m">metric · m, m³, mm</option></select></div>
       <div class="p" title="how much the starting ground rises and falls before you sketch anything"><label>existing ground relief<output id="o_relief">2.0 m</output></label><input type="range" id="relief" min="0" max="10" step=".5" value="2"></div>
+      <div class="seg" style="padding:0"><button id="reseed" title="fresh rolling ground from noise">new existing ground</button><button id="reset" title="drop your grading, keep the ground">reset grading</button></div>
       <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="6" step="1" value="2"></div>
       <div class="p"><label>hachures<output id="o_hach">15</output></label><input type="range" id="hach" min="0" max="100" step="5" value="15"></div>
       <div class="seg" id="labelRow"><button data-l="1" class="on">elevation labels</button><button data-l="0">no labels</button></div>
@@ -194,10 +197,8 @@ canvas.orbit{cursor:grab}
     </div>
 
     <div class="actions">
-      <button class="btn" id="reseed">new existing</button>
-      <button class="btn" id="reset">reset grading</button>
-      <button class="btn" id="wipe">delete all</button>
       <button class="btn" id="undo">undo</button>
+      <button class="btn" id="wipe">delete all</button>
       <button class="btn" id="saveProj">save project</button>
       <button class="btn" id="openProj">open project</button>
       <input type="file" id="openFile" accept=".json,application/json" style="display:none">
@@ -312,7 +313,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -507,7 +508,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     it.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke();
     if (it.lines.length) { c.strokeStyle = INK; for (const [a, b, ix] of it.lines) { c.lineWidth = ix ? 1.2 : .6; c.globalAlpha = ix ? .9 : .7; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.globalAlpha = 1; }
   }
-  if (S.an.dam && S.keyPt && !mini) drawDam3D(c, proj);
+  if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   if (S.labels && !mini) {
     const groups = new Map(), dmed = items.length ? items[Math.floor(items.length * .45)].d : 0;
     for (const it of items) if (it.d >= dmed) for (const [a, b, ix, lv] of it.lines) if (ix) { if (!groups.has(lv)) groups.set(lv, []); groups.get(lv).push([a[0], a[1], b[0], b[1]]); }
@@ -537,7 +538,7 @@ function pick(px, py) {
 }
 
 function drawDam3D(c, proj) {             // the dam wall and the pond it holds, on the model
-  const an = analyze(), pool = damPool(an, S.keyPt[0], S.keyPt[1], S.damH), L = pool.crest;
+  const an = analyze(), dp = damAt(), pool = damPool(an, dp[0], dp[1], S.damH), L = pool.crest;
   if (pool.cells.length && !S.rain) { c.fillStyle = WATER; c.globalAlpha = .55; c.beginPath();
     for (const n of pool.cells) { const i = n % W, j = (n / W) | 0; const a = proj(i - .5, j - .5, L), b = proj(i + .5, j - .5, L), d = proj(i + .5, j + .5, L), e = proj(i - .5, j + .5, L); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(d[0], d[1]); c.lineTo(e[0], e[1]); c.closePath(); }
     c.fill(); c.globalAlpha = 1; }
@@ -589,7 +590,7 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
-  if (S.an.dam && S.keyPt && !mini) drawDam3D(c, proj);
+  if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
   if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
@@ -650,7 +651,7 @@ function analyze() {
     if (bi < 0 || bs < .03) continue; const kn = path[bi]; keypoints.push({ i: kn % W, j: (kn / W) | 0, n: kn, z: z[kn], acc: acc[kn], slope: bs });
   }
   keypoints.sort((a, b) => b.acc - a.acc); keypoints.splice(12);
-  ana = { key, down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order, filled };
+  ana = { key, down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order, filled, chan };
   if (S.keyAuto || !S.keyPt) S.keyPt = keypoints.length ? [keypoints[0].i, keypoints[0].j] : null;
   return ana;
 }
@@ -723,6 +724,7 @@ function contourPolys(lv) {              // all sheet-space polylines of one con
     for (let q = 0; q < tmp.length; q += 4) segs.push([sheet.x + (i + tmp[q]) * k, sheet.y + (j + tmp[q + 1]) * k, sheet.x + (i + tmp[q + 2]) * k, sheet.y + (j + tmp[q + 3]) * k]); }
   return linkSegs(segs);
 }
+const damAt = () => S.damPt || S.keyPt;
 function damPool(an, gi, gj, hgt) {      // cells upstream of the dam node that sit below the wall crest
   const { down, order } = an, N = W * H, kn = idx(Math.round(gi), Math.round(gj)), zk = z[kn], crest = zk + hgt, up = new Uint8Array(N); up[kn] = 1;
   for (let q = N - 1; q >= 0; q--) { const n = order[q]; if (n !== kn && down[n] >= 0 && up[down[n]]) up[n] = 1; }
@@ -804,9 +806,9 @@ function drawAnalysis() {
         for (const part of parts) { ctx.strokeStyle = WATER; ctx.lineWidth = 1.3; ctx.setLineDash([6, 3]); ctx.beginPath(); part.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.setLineDash([]);
           const berm = offsetPoly(part, side * 3.5); ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.globalAlpha = .6; ctx.beginPath(); berm.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.globalAlpha = 1; }
         const big = parts.reduce((a, b) => b.length > a.length ? b : a, parts[0]); if (big.length > 40) { const mm = big[Math.floor(big.length / 2)], txt = 'swale ' + fL(lv, 1); ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; haloText(ctx, txt, mm[0], mm[1] + .5, WATER); } } } }
-  if (S.an.dam && S.keyPt) { const pool = damPool(an, S.keyPt[0], S.keyPt[1], S.damH), k2 = sheet.k;
+  if (S.an.dam && damAt()) { const dp = damAt(), pool = damPool(an, dp[0], dp[1], S.damH), k2 = sheet.k;
     if (pool.cells.length && !S.rain) { ctx.fillStyle = WATER; ctx.globalAlpha = .35; for (const n of pool.cells) { const p = cellXY(n); ctx.fillRect(p[0] - k2 / 2, p[1] - k2 / 2, k2 + .5, k2 + .5); } ctx.globalAlpha = 1; }
-    const p = toSheet(S.keyPt[0], S.keyPt[1]), dn = down[pool.kn]; let fx = 0, fy = 1; if (dn >= 0) { const q = cellXY(dn); fx = q[0] - p[0]; fy = q[1] - p[1]; const L = Math.hypot(fx, fy) || 1; fx /= L; fy /= L; }
+    const p = toSheet(dp[0], dp[1]), dn = down[pool.kn]; let fx = 0, fy = 1; if (dn >= 0) { const q = cellXY(dn); fx = q[0] - p[0]; fy = q[1] - p[1]; const L = Math.hypot(fx, fy) || 1; fx /= L; fy /= L; }
     const half = Math.max(12, Math.min(40, Math.sqrt(pool.cells.length) * k2 * .5));
     ctx.strokeStyle = ACC; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke();
     ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke(); ctx.lineCap = 'butt';
@@ -834,8 +836,8 @@ function drawAnalysis() {
 /* ---------- rain: drops run downhill over a cached picture of the model ---------- */
 const drops = []; let modelShot = { key: '', canvas: null }, dep = { key: '' }, damBasin = { key: '' };
 function damBasinGet() {                  // the ground behind the dam, as a basin the rain can fill
-  if (!S.an.dam || !S.keyPt) return null; const an = analyze(), key = [an.key, S.keyPt[0], S.keyPt[1], S.damH].join('|'); if (damBasin.key === key) return damBasin;
-  const pool = damPool(an, S.keyPt[0], S.keyPt[1], S.damH), cells = pool.cells.slice().sort((a, b) => z[a] - z[b]), mask = new Uint8Array(W * H); for (const n of cells) mask[n] = 1;
+  if (!S.an.dam || !damAt()) return null; const dp = damAt(), an = analyze(), key = [an.key, dp[0], dp[1], S.damH].join('|'); if (damBasin.key === key) return damBasin;
+  const pool = damPool(an, dp[0], dp[1], S.damH), cells = pool.cells.slice().sort((a, b) => z[a] - z[b]), mask = new Uint8Array(W * H); for (const n of cells) mask[n] = 1;
   damBasin = { key, cells, mask, spill: pool.crest, cap: pool.vol, vol: 0, level: cells.length ? z[cells[0]] : pool.crest }; return damBasin;
 }
 function depressions() {                  // hollows of the ground, each with a capacity and a current water volume
@@ -853,53 +855,71 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), S.rain].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
 }
+let plowCache = { key: '' }, rainStats = { done: 0, creek: 0 };
+function plowField() {                    // furrow direction for every cell in the plowed band beside the keyline
+  if (!S.keyPt) return null; const an = analyze(), key = [an.key, S.keyPt[0], S.keyPt[1], S.plowV, sheet.k].join('|'); if (plowCache.key === key) return plowCache;
+  const { poly } = keylineFor(S.keyPt[0], S.keyPt[1]); if (!poly || poly.length < 4) return (plowCache = { key, mask: null });
+  const dpx = Math.max(2.5, plowFor(S.plowV) / cs() * sheet.k), band = Math.min(40, Math.floor(160 / dpx) + 4) * dpx / sheet.k;   // same band the plan draws, in cells
+  const base = smoothPoly(poly, Math.max(dpx, 8)).map(pt => toGrid(pt[0], pt[1])), N = W * H, mask = new Uint8Array(N), tx = new Float32Array(N), ty = new Float32Array(N);
+  const kLab = an.label[idx(Math.max(0, Math.min(W - 1, Math.round(S.keyPt[0]))), Math.max(0, Math.min(H - 1, Math.round(S.keyPt[1]))))];
+  const step = Math.max(1, Math.floor(base.length / 200)), pts = base.filter((_, q) => q % step === 0);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); if (kLab >= 0 && an.label[n] !== kLab) continue; let bd = 1e9, bq = -1;
+    for (let q = 0; q < pts.length; q++) { const dx = pts[q][0] - i, dy = pts[q][1] - j, d2 = dx * dx + dy * dy; if (d2 < bd) { bd = d2; bq = q; } }
+    if (bq < 0 || Math.sqrt(bd) > band) continue; const a = pts[Math.max(0, bq - 1)], b = pts[Math.min(pts.length - 1, bq + 1)]; let vx = b[0] - a[0], vy = b[1] - a[1]; const L = Math.hypot(vx, vy) || 1; mask[n] = 1; tx[n] = vx / L; ty[n] = vy / L; }
+  return (plowCache = { key, mask, tx, ty, acc: an.acc });
+}
 function stepRain() {
-  const d = depressions(), dropVol = d.A * .025;
+  const d = depressions(), dropVol = d.A * .025, pf = S.an.plow ? plowField() : null, chan = analyze().chan;
   for (let q = 0; q < 5 && drops.length < 1400; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0, trail: [] });
-  const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); drops.splice(q, 1); }; const db = damBasinGet();
+  const finish = dr => { rainStats.done++; if (dr.creek) rainStats.creek++; };
+  const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); finish(dr); drops.splice(q, 1); }; const db = damBasinGet();
   for (let q = drops.length - 1; q >= 0; q--) { const dr = drops[q]; dr.age++; dr.trail.push([dr.x, dr.y]); if (dr.trail.length > 14) dr.trail.shift();
     const n = idx(Math.round(dr.x), Math.round(dr.y)), c = d.comp[n];
     if (db && db.cells.length && db.mask[n] && sample(z, dr.x, dr.y) <= db.level + .002) { absorb(db, dr, q); continue; }   // caught behind the dam
     if (c >= 0 && sample(z, dr.x, dr.y) <= d.comps[c].level + .002) { absorb(d.comps[c], dr, q); continue; }   // ran into a pool
+    if (chan[n]) dr.creek = true;
     const g = grad(dr.x, dr.y), sl = Math.hypot(g[0], g[1]);
-    if (sl > .004) { const sp = Math.min(.6, .12 + sl * 1.2); dr.x -= g[0] / sl * sp; dr.y -= g[1] / sl * sp; }
+    if (pf && pf.mask && pf.mask[n] && sl > .004) {   // in the plowed band: run along the furrow toward the drier ridge, only gently downhill
+      let vx = pf.tx[n], vy = pf.ty[n]; const ai = Math.max(0, Math.min(W - 1, Math.round(dr.x + vx * 4))), aj = Math.max(0, Math.min(H - 1, Math.round(dr.y + vy * 4))), bi = Math.max(0, Math.min(W - 1, Math.round(dr.x - vx * 4))), bj = Math.max(0, Math.min(H - 1, Math.round(dr.y - vy * 4)));
+      if (pf.acc[idx(ai, aj)] > pf.acc[idx(bi, bj)]) { vx = -vx; vy = -vy; }
+      dr.x += vx * .4 - g[0] / sl * .1; dr.y += vy * .4 - g[1] / sl * .1; }
+    else if (sl > .004) { const sp = Math.min(.6, .12 + sl * 1.2); dr.x -= g[0] / sl * sp; dr.y -= g[1] / sl * sp; }
     else { const i = Math.round(dr.x), j = Math.round(dr.y); let best = -1, bz = z[idx(i, j)] - 1e-4; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const v = z[idx(ii, jj)]; if (v < bz) { bz = v; best = idx(ii, jj); } }
-      if (best < 0) { if (db && db.mask[n]) absorb(db, dr, q); else if (c >= 0) absorb(d.comps[c], dr, q); else drops.splice(q, 1); continue; } dr.x += (best % W - dr.x) * .25; dr.y += (((best / W) | 0) - dr.y) * .25; }
-    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 1800) { drops.splice(q, 1); continue; }
+      if (best < 0) { if (db && db.mask[n]) absorb(db, dr, q); else if (c >= 0) absorb(d.comps[c], dr, q); else { finish(dr); drops.splice(q, 1); } continue; } dr.x += (best % W - dr.x) * .25; dr.y += (((best / W) | 0) - dr.y) * .25; }
+    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 1800) { finish(dr); drops.splice(q, 1); continue; }
     if (db && db.mask[n] && !db.mask[idx(Math.round(dr.x), Math.round(dr.y))]) absorb(db, dr, q);   // tried to cross the dam wall: held behind it
   }
 }
 let sheetShot = { key: '', canvas: null };
 function analysisFrame() {                // the analysis sheet rendered once, reused while the rain moves
-  const key = [S.terrainVer, JSON.stringify(S.an), S.thrV, S.plowV, S.swaleV, S.damH, S.rainV, S.month, S.hour, S.sunMode, JSON.stringify(S.keyPt), S.unit, S.labels, S.aerial, S.aop, aerialCache.status, sheet.x, sheet.y, sheet.k, S.w, S.h, S.rain].join('|');
+  const key = [S.terrainVer, JSON.stringify(S.an), S.thrV, S.plowV, S.swaleV, S.damH, S.rainV, S.month, S.hour, S.sunMode, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.unit, S.labels, S.aerial, S.aop, aerialCache.status, sheet.x, sheet.y, sheet.k, S.w, S.h, S.rain].join('|');
   if (sheetShot.key !== key) { drawAnalysis(); const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); sheetShot = { key, canvas: off }; }
   return sheetShot.canvas;
+}
+function drawRainOverlay(c, proj, w, h, inModel) {   // pools, dam pond and traces over an already-drawn picture
+  const d = depressions(); c.fillStyle = WATER; c.globalAlpha = .55; let pooled = 0;
+  const quad = (n, L) => { const i = n % W, j = (n / W) | 0; const a = proj(i - .5, j - .5, L), b = proj(i + .5, j - .5, L), c2 = proj(i + .5, j + .5, L), e = proj(i - .5, j + .5, L); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(c2[0], c2[1]); c.lineTo(e[0], e[1]); c.closePath(); };
+  for (const cp of d.comps) { if (cp.vol <= 0) continue; pooled += cp.vol; c.beginPath(); for (const n of cp.cells) { if (z[n] >= cp.level) break; quad(n, cp.level); } c.fill(); }
+  const db = damBasinGet(); if (db && db.vol > 0) { pooled += db.vol; c.beginPath(); for (const n of db.cells) { if (z[n] >= db.level) break; quad(n, db.level); } c.fill(); }
+  c.strokeStyle = WATER; c.lineWidth = inModel ? .8 : .7; c.lineCap = 'round';
+  for (let bucket = 0; bucket < 6; bucket++) { c.globalAlpha = .12 + .13 * bucket; c.beginPath();
+    for (const dr of drops) { const t = dr.trail, L = t.length; if (L < 2) continue; for (let q = 1; q < L; q++) { const age = L - 1 - q; if (Math.min(5, Math.floor(age / 2)) !== 5 - bucket) continue; const a = proj(t[q - 1][0], t[q - 1][1], sample(z, t[q - 1][0], t[q - 1][1]) + .05), b = proj(t[q][0], t[q][1], sample(z, t[q][0], t[q][1]) + .05); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); } }
+    c.stroke(); }
+  c.globalAlpha = 1; c.lineCap = 'butt'; return { pooled, db };
 }
 function drawRain() {
   const inModel = S.mode === 'model';
   ctx.clearRect(0, 0, S.w, S.h); ctx.drawImage(inModel ? modelFrame() : analysisFrame(), 0, 0, S.w, S.h);
-  const proj = inModel ? camera().proj : (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; }, d = depressions();
-  // pools: a flat water surface at each hollow's current level
-  ctx.fillStyle = WATER; ctx.globalAlpha = .55; let pooled = 0;
-  for (const cp of d.comps) { if (cp.vol <= 0) continue; pooled += cp.vol; const L = cp.level; ctx.beginPath();
-    for (const n of cp.cells) { if (z[n] >= L) break; const i = n % W, j = (n / W) | 0; const a = proj(i - .5, j - .5, L), b = proj(i + .5, j - .5, L), c2 = proj(i + .5, j + .5, L), e = proj(i - .5, j + .5, L); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c2[0], c2[1]); ctx.lineTo(e[0], e[1]); ctx.closePath(); }
-    ctx.fill(); }
-  const db = damBasinGet();
-  if (db && db.vol > 0) { const L = db.level; pooled += db.vol; ctx.beginPath();
-    for (const n of db.cells) { if (z[n] >= L) break; const i = n % W, j = (n / W) | 0; const a = proj(i - .5, j - .5, L), b = proj(i + .5, j - .5, L), c2 = proj(i + .5, j + .5, L), e = proj(i - .5, j + .5, L); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c2[0], c2[1]); ctx.lineTo(e[0], e[1]); ctx.closePath(); }
-    ctx.fill(); }
-  // traces: fine lines fading behind each drop, batched by age
-  ctx.strokeStyle = WATER; ctx.lineWidth = .8; ctx.lineCap = 'round';
-  for (let bucket = 0; bucket < 6; bucket++) { ctx.globalAlpha = .12 + .13 * bucket; ctx.beginPath();
-    for (const dr of drops) { const t = dr.trail, L = t.length; if (L < 2) continue; for (let q = 1; q < L; q++) { const age = L - 1 - q; if (Math.min(5, Math.floor(age / 2)) !== 5 - bucket) continue; const a = proj(t[q - 1][0], t[q - 1][1], sample(z, t[q - 1][0], t[q - 1][1]) + .05), b = proj(t[q][0], t[q][1], sample(z, t[q][0], t[q][1]) + .05); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); } }
-    ctx.stroke(); }
-  ctx.globalAlpha = 1; ctx.lineCap = 'butt'; ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
-  haloText(ctx, `rain${S.rainPaused ? ' paused' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · r stops · p pauses`, S.w - 14, inModel ? S.h - 26 : S.h - 44, INK2);
+  const proj = inModel ? camera().proj : (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; };
+  const { pooled, db } = drawRainOverlay(ctx, proj, S.w, S.h, inModel);
+  ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  const creek = rainStats.done ? Math.round(rainStats.creek / rainStats.done * 100) : 0;
+  haloText(ctx, `rain${S.rainPaused ? ' paused' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · ${creek}% of rain reached a creek${S.an.plow ? ' with keyline plowing' : ''} · r stops · p pauses`, S.w - 14, inModel ? S.h - 26 : S.h - 44, INK2);
 }
 
 /* ---------- section ---------- */
@@ -960,7 +980,7 @@ function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {
 /* ---------- loop ---------- */
 function frame(now) {
   tickSun(now || performance.now());
-  if ((S.mode === 'model' || S.mode === 'analysis') && S.rain) { if (!S.rainPaused) stepRain(); drawRain(); if (S.dirty) { S.dirty = false; drawPip(); } }
+  if ((S.mode === 'model' || S.mode === 'analysis') && S.rain) { if (!S.rainPaused) stepRain(); drawRain(); S.dirty = false; drawPip(); }
   else if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel(ctx, S.w, S.h, 1)); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); }
   requestAnimationFrame(frame);
 }
@@ -973,6 +993,13 @@ function zoomAt(pan, mx, my, f, w, h, mul) {   // keep the point under (mx,my) f
 function orbit(dx, dy) { S.cam.yaw -= dx * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch - dy * .006)); S.dirty = true; }
 const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw = 0, ph = 0, pdrag = null;
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+let pipShot = { key: '', canvas: null };
+function pipFrame() {                     // the 3d preview drawn once (camera already swapped in by drawPip), reused while the rain moves
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain].join('|');
+  if (pipShot.key !== key) { const off = document.createElement('canvas'); off.width = Math.max(1, Math.round(pw * dpr)); off.height = Math.max(1, Math.round(ph * dpr)); const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0); o.fillStyle = PAPER; o.fillRect(0, 0, pw, ph);
+    (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, pw, ph, 3, true); pipShot = { key, canvas: off }; }
+  return pipShot.canvas;
+}
 let pipFolded = false;
 function setPipFold(f) { pipFolded = f; pip.classList.toggle('folded', f); try { localStorage.setItem('pipFold', f ? '1' : '0'); } catch (_) {} sizePip(); S.dirty = true; }
 try { if (localStorage.getItem('pipFold') === '1') { pipFolded = true; pip.classList.add('folded'); } } catch (_) {}
@@ -982,7 +1009,10 @@ function drawPip() {
   if (pipFolded) { pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph); pctx.fillStyle = INK2; pctx.font = font(9.5, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▴ preview', pw / 2, ph / 2 + .5); return; } pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
   const showSec = S.mode === 'model' || (S.pipView === 'section' && S.mode !== 'section');
   if (showSec) drawSection(pctx, pw, ph, true);
-  else { const zoom0 = S.cam.zoom, pan0 = S.cam.pan; S.cam.zoom = zoom0 * S.pipZoom; S.cam.pan = S.pipPan; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0; S.cam.pan = pan0; }
+  else { const zoom0 = S.cam.zoom, pan0 = S.cam.pan, cm0 = S.colorMode; S.cam.zoom = zoom0 * S.pipZoom; S.cam.pan = S.pipPan; if (S.mode === 'analysis' && S.an.sun) S.colorMode = 'sun';
+    pctx.drawImage(pipFrame(), 0, 0, pw, ph);
+    if (S.rain) drawRainOverlay(pctx, camera(pw, ph).proj, pw, ph, true);
+    S.cam.zoom = zoom0; S.cam.pan = pan0; S.colorMode = cm0; }
   if (S.mode !== 'section' && S.mode !== 'model') { pctx.font = font(9.5, 600); pctx.textBaseline = 'top'; pctx.textAlign = 'right';
     pctx.fillStyle = showSec ? INK3 : ACC; pctx.fillText('3d', pw - 52, 7); pctx.fillStyle = showSec ? ACC : INK3; pctx.fillText('section', pw - 8, 7); }
   pctx.fillStyle = 'rgba(240,240,236,.85)'; pctx.fillRect(0, ph - 18, pw, 18);
@@ -1043,6 +1073,7 @@ cv.addEventListener('pointerdown', e => {
   if ((S.mode === 'plan' || S.mode === 'analysis') && (e.button === 1 || e.shiftKey)) { drag = { p, kind: 'planpan' }; return; }
   if (S.mode === 'analysis') { const g = toGrid(p[0], p[1]); if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) return;
     const an = analyze(); let best = null, bd = 14 * 14; for (const kp of an.keypoints) { const q = toSheet(kp.i, kp.j); const d = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2; if (d < bd) { bd = d; best = kp; } }
+    if (S.tapMode === 'dam') { S.damPt = best ? [best.i, best.j] : [Math.round(g[0]), Math.round(g[1])]; S.dirty = true; toast(best ? 'dam at the keypoint' : 'dam placed'); return; }
     S.keyPt = best ? [best.i, best.j] : g; S.keyAuto = false; S.dirty = true; toast(best ? 'keypoint selected' : 'custom keyline point'); return; }
   if (S.mode !== 'plan') return;
   const g = toGrid(p[0], p[1]);
@@ -1131,9 +1162,13 @@ document.getElementById('home').onclick = () => goHome(false);
 document.getElementById('undo').onclick = undo;
 function setRainPause(p) { S.rainPaused = p; document.getElementById('rainPause').classList.toggle('on', p); document.getElementById('rainPause').textContent = p ? 'paused · resume' : 'pause'; S.dirty = true; }
 document.getElementById('rainPause').onclick = () => setRainPause(!S.rainPaused);
-function setRain(on) { S.rain = on; setRainPause(false); document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling · stop (r)' : 'rain animation (r)'; if (on) { drops.length = 0; dep.key = ''; damBasin.key = ''; } S.dirty = true; }
+function setRain(on) { S.rain = on; setRainPause(false); document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling · stop (r)' : 'rain animation (r)'; if (on) { drops.length = 0; dep.key = ''; damBasin.key = ''; rainStats = { done: 0, creek: 0 }; } S.dirty = true; }
 document.getElementById('rainBtn').onclick = () => setRain(!S.rain);
-document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]); showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none'; S.dirty = true; };
+document.getElementById('tapRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tapMode = b.dataset.t; document.querySelectorAll('#tapRow button').forEach(x => x.classList.toggle('on', x === b)); };
+document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]);
+  if (b.dataset.a === 'plow') rainStats = { done: 0, creek: 0 };
+  if (b.dataset.a === 'sun') { S.colorMode = S.an.sun ? 'sun' : (S.aerial ? 'aerial' : 'paper'); document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === S.colorMode)); }
+  showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none'; S.dirty = true; };
 function showSun() { document.getElementById('sunSec').style.display = ((S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun')) ? '' : 'none'; }
 document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sunMode = b.dataset.s; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -1321,7 +1356,7 @@ async function loadTerrarium(lat, lon) {
   const px = (la, lo) => [(lo + 180) / 360 * n * 256, (1 - Math.log(Math.tan(la * D2R) + 1 / Math.cos(la * D2R)) / Math.PI) / 2 * n * 256];
   const P = new Float64Array(W * H * 2); let tx0 = 1e12, ty0 = 1e12, tx1 = -1, ty1 = -1;
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const [la, lo] = nodeLatLon(i, j, lat, lon), q = px(la, lo); P[idx(i, j) * 2] = q[0]; P[idx(i, j) * 2 + 1] = q[1];
-    tx0 = Math.min(tx0, Math.floor(q[0] / 256)); ty0 = Math.min(ty0, Math.floor(q[1] / 256)); tx1 = Math.max(tx1, Math.floor((q[0] + 1) / 256)); ty1 = Math.max(ty1, Math.floor((q[1] + 1) / 256)); }
+    tx0 = Math.min(tx0, Math.floor((q[0] - 1) / 256)); ty0 = Math.min(ty0, Math.floor((q[1] - 1) / 256)); tx1 = Math.max(tx1, Math.floor((q[0] + 2) / 256)); ty1 = Math.max(ty1, Math.floor((q[1] + 2) / 256)); }
   const cols = tx1 - tx0 + 1, count = cols * (ty1 - ty0 + 1); if (count > 36) throw new Error('site too wide for tiles');
   worldStatus(`fetching ${count} elevation tile${count > 1 ? 's' : ''} at zoom ${Zm}…`);
   const tiles = new Map(), oc = document.createElement('canvas'); oc.width = oc.height = 256; const o = oc.getContext('2d', { willReadFrequently: true });
@@ -1329,8 +1364,10 @@ async function loadTerrarium(lat, lon) {
     return loadImage(`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${Zm}/${tx}/${ty}.png`).then(im => { o.clearRect(0, 0, 256, 256); o.drawImage(im, 0, 0); tiles.set(tx + '/' + ty, o.getImageData(0, 0, 256, 256).data); }); }));
   const at = (x, y) => { const tx = Math.floor(x / 256), ty = Math.floor(y / 256), d = tiles.get(tx + '/' + ty); if (!d) return 0;
     const q = ((y - ty * 256) * 256 + (x - tx * 256)) * 4; return d[q] * 256 + d[q + 1] + d[q + 2] / 256 - 32768; };
+  const cub = (t, a, b, c, d) => b + .5 * t * (c - a + t * (2 * a - 5 * b + 4 * c - d + t * (3 * (b - c) + d - a)));   // catmull-rom: smooth between data pixels, passes through them
   for (let m = 0; m < W * H; m++) { const x = P[m * 2], y = P[m * 2 + 1], x0 = Math.floor(x), y0 = Math.floor(y), u = x - x0, v = y - y0;
-    base[m] = at(x0, y0) * (1 - u) * (1 - v) + at(x0 + 1, y0) * u * (1 - v) + at(x0, y0 + 1) * (1 - u) * v + at(x0 + 1, y0 + 1) * u * v; }
+    const rows = []; for (let r = -1; r <= 2; r++) rows.push(cub(u, at(x0 - 1, y0 + r), at(x0, y0 + r), at(x0 + 1, y0 + r), at(x0 + 2, y0 + r)));
+    base[m] = cub(v, rows[0], rows[1], rows[2], rows[3]); }
 }
 async function loadOpenTopo(lat, lon) {
   const GW = 40, GH = 27, pts = []; for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) pts.push(nodeLatLon(i / (GW - 1) * (W - 1), j / (GH - 1) * (H - 1), lat, lon));
@@ -1368,7 +1405,7 @@ async function fetchWorld(known, quiet) {
     try { await loadTerrarium(lat, lon); } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); }
     S.world = { lat, lon, name }; resetGrading(); const [lo, hi] = range(base);
     autoInterval();
-    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide. change site width to zoom out or in; it refetches.`); toast('real terrain loaded');
+    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide · elevation data about 30 m (10 m in the US), smoothly resampled. change site width to zoom; it refetches.`); toast('real terrain loaded');
   } catch (e) {
     const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message));
     const msg = blocked ? 'network blocked on this page. open the live site: shopnerd.github.io/coyote-mountain/topo.html' : String(e.message || e);
@@ -1381,13 +1418,13 @@ async function fetchWorld(known, quiet) {
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr) {
   if (!pr || pr.app !== 'coyote-topo' || !pr.base || pr.base.length !== W * H) throw new Error('not a coyote topo file');
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
-  S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
+  S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
   if (pr.unit === 'm' || pr.unit === 'ft') { S.unit = pr.unit; document.getElementById('unit').value = pr.unit; }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
   for (const id of SLIDERS) { if (id === 'relief') continue; const el = document.getElementById(id); if (el.oninput) el.oninput({ target: el }); }
