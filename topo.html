@@ -203,16 +203,35 @@ function drawLegend(c, w, h, mode, lo, hi) {
     c.textAlign = 'center'; c.fillText('aspect · which way it faces', cx, y + 24);
   }
 }
-function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [[x1,y1,x2,y2], ...]); labels along index contours
-  c.font = font(9.5, 600); c.textAlign = 'center'; c.textBaseline = 'middle';
-  const placed = [];
+function linkSegs(segs) {   // screen-space fragments -> polylines (arrays of [x,y])
+  const key = (x, y) => Math.round(x * 50) + ',' + Math.round(y * 50), map = new Map();
+  segs.forEach((sg, n) => { for (const kk of [key(sg[0], sg[1]), key(sg[2], sg[3])]) { if (!map.has(kk)) map.set(kk, []); map.get(kk).push(n); } });
+  const used = new Uint8Array(segs.length), polys = [];
+  const walk = (start, fromEnd) => { const pts = []; let cur = start, px = fromEnd ? segs[start][2] : segs[start][0], py = fromEnd ? segs[start][3] : segs[start][1];
+    for (let g = 0; g < segs.length; g++) { used[cur] = 1; const sg = segs[cur], atStart = key(sg[0], sg[1]) === key(px, py); const nx = atStart ? sg[2] : sg[0], ny = atStart ? sg[3] : sg[1]; pts.push([nx, ny]);
+      const cands = (map.get(key(nx, ny)) || []).filter(m => !used[m]); if (!cands.length) break; cur = cands[0]; px = nx; py = ny; }
+    return pts; };
+  for (let n = 0; n < segs.length; n++) { if (used[n]) continue;
+    // walk forward from the segment's end, then backward from its start, and stitch
+    const fwd = walk(n, false); used[n] = 0; const back = walk(n, true); back.reverse(); back.pop();
+    const pts = back.concat([[segs[n][0], segs[n][1]]], fwd); if (pts.length > 1) polys.push(pts); }
+  return polys;
+}
+function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [[x1,y1,x2,y2], ...])
+  c.font = font(9.5, 600); c.textAlign = 'center'; c.textBaseline = 'middle'; const placed = [];
   for (const [lv, segs] of groups) {
-    const txt = fL(lv, 2).replace(/ (m|ft)$/, ''); const tw = c.measureText(txt).width + 6;
-    for (const [x1, y1, x2, y2] of segs) {
-      if (Math.hypot(x2 - x1, y2 - y1) < 2.5) continue;
-      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2; if (placed.some(q => Math.hypot(mx - q[0], my - q[1]) < spacing)) continue; placed.push([mx, my]);
-      let ang = rotate ? Math.atan2(y2 - y1, x2 - x1) : 0; if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
-      c.save(); c.translate(mx, my); c.rotate(ang); c.fillStyle = PAPER; c.fillRect(-tw / 2, -6, tw, 12); c.fillStyle = INK; c.fillText(txt, 0, .5); c.restore();
+    const txt = fL(lv, 2).replace(/ (m|ft)$/, ''), tw = c.measureText(txt).width + 8;
+    for (const poly of linkSegs(segs)) {
+      const cum = [0]; for (let q = 1; q < poly.length; q++) cum.push(cum[q - 1] + Math.hypot(poly[q][0] - poly[q - 1][0], poly[q][1] - poly[q - 1][1]));
+      const L = cum[cum.length - 1]; if (L < tw * 2.5) continue;
+      const at = d => { d = Math.max(0, Math.min(L, d)); let q = 1; while (q < cum.length - 1 && cum[q] < d) q++; const t = (d - cum[q - 1]) / Math.max(1e-6, cum[q] - cum[q - 1]); return [poly[q - 1][0] + (poly[q][0] - poly[q - 1][0]) * t, poly[q - 1][1] + (poly[q][1] - poly[q - 1][1]) * t]; };
+      const n = Math.max(1, Math.floor(L / spacing));
+      for (let k = 0; k < n; k++) {
+        const d = (k + .5) * L / n, m = at(d), a = at(d - tw / 2), b = at(d + tw / 2);
+        if (placed.some(q => Math.hypot(m[0] - q[0], m[1] - q[1]) < spacing * .45)) continue; placed.push(m);
+        let ang = rotate ? Math.atan2(b[1] - a[1], b[0] - a[0]) : 0; if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
+        c.save(); c.translate(m[0], m[1]); c.rotate(ang); c.fillStyle = PAPER; c.fillRect(-tw / 2, -6.5, tw, 13); c.fillStyle = INK; c.fillText(txt, 0, .5); c.restore();
+      }
     }
   }
 }
@@ -354,7 +373,7 @@ function drawPlan() {
   }
   const strokeSegs = (arr, wdt, alpha) => { ctx.lineWidth = wdt; ctx.globalAlpha = alpha; ctx.beginPath(); for (let q = 0; q < arr.length; q += 4) { ctx.moveTo(arr[q], arr[q + 1]); ctx.lineTo(arr[q + 2], arr[q + 3]); } ctx.stroke(); ctx.globalAlpha = 1; };
   ctx.strokeStyle = INK; strokeSegs(segs, .7, .8); strokeSegs(segsIdx, 1.4, 1);
-  if (S.labels) { contourLabels(ctx, groups, 170, true); spotLabels(ctx, (i, j) => toSheet(i, j)); }
+  if (S.labels) { contourLabels(ctx, groups, 240, true); spotLabels(ctx, (i, j) => toSheet(i, j)); }
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
@@ -432,7 +451,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   if (S.labels && !mini) {
     const groups = new Map(), dmed = items.length ? items[Math.floor(items.length * .45)].d : 0;
     for (const it of items) if (it.d >= dmed) for (const [a, b, ix, lv] of it.lines) if (ix) { if (!groups.has(lv)) groups.set(lv, []); groups.get(lv).push([a[0], a[1], b[0], b[1]]); }
-    contourLabels(c, groups, 160, false); spotLabels(c, (i, j, zz) => proj(i, j, zz));
+    contourLabels(c, groups, 200, true); spotLabels(c, (i, j, zz) => proj(i, j, zz));
   }
   if (!mini && mode !== 'paper') drawLegend(c, w, h, mode, lo, hi);
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
