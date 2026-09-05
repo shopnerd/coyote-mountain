@@ -557,18 +557,35 @@ function d8(field) {                       // steepest-descent neighbour for eve
     down[n] = best; }
   return down;
 }
+function fillPits(field) {                // raise every pit and flat so water always has a way out (edge cells stay put)
+  const f = Float32Array.from(field), eps = .002; let changed = true, it = 0;
+  while (changed && it++ < 600) { changed = false;
+    for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) { const n = idx(i, j); let mn = Infinity;
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (di || dj) { const v = f[n + dj * W + di]; if (v < mn) mn = v; } }
+      if (f[n] <= mn) { f[n] = mn + eps; changed = true; } } }
+  return f;
+}
+function findPonds(filled, thrCells) {     // connected pools where the filled surface sits above the ground
+  const N = W * H, depth = new Float32Array(N); for (let n = 0; n < N; n++) depth[n] = filled[n] - z[n];
+  const seen = new Uint8Array(N), ponds = [];
+  for (let n0 = 0; n0 < N; n0++) { if (seen[n0] || depth[n0] < .05) continue; const stack = [n0]; seen[n0] = 1; let cells = 0, vol = 0, mx = 0, deep = n0, ci = 0, cj = 0;
+    while (stack.length) { const n = stack.pop(); cells++; vol += depth[n]; ci += n % W; cj += (n / W) | 0; if (depth[n] > mx) { mx = depth[n]; deep = n; }
+      const i = n % W, j = (n / W) | 0; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (!seen[m] && depth[m] >= .05) { seen[m] = 1; stack.push(m); } } }
+    if (cells >= Math.max(4, thrCells / 6) && mx >= .2) ponds.push({ n: deep, cells, depth: mx, vol, ci: ci / cells, cj: cj / cells }); }
+  ponds.sort((a, b) => b.cells - a.cells); return ponds.slice(0, 12);
+}
 function accumulate(field, down) { const N = W * H, order = new Uint32Array(N); for (let n = 0; n < N; n++) order[n] = n; order.sort((a, b) => field[b] - field[a]);
   const acc = new Float32Array(N).fill(1); for (const n of order) if (down[n] >= 0) acc[down[n]] += acc[n]; return { acc, order }; }
 function analyze() {
   const key = S.terrainVer + '|' + S.thrV + '|' + S.siteW; if (ana.key === key) return ana;
   const N = W * H, A = cs() * cs(), thrCells = Math.max(3, thrArea(S.thrV) / A);
-  const down = d8(z), { acc, order } = accumulate(z, down);
-  const inv = new Float32Array(N); for (let n = 0; n < N; n++) inv[n] = -z[n];
-  const downR = d8(inv), accR = accumulate(inv, downR).acc;
+  const filled = fillPits(z), down = d8(filled), { acc, order } = accumulate(filled, down), ponds = findPonds(filled, thrCells);
+  const inv = new Float32Array(N); for (let n = 0; n < N; n++) inv[n] = -z[n]; const invF = fillPits(inv);
+  const downR = d8(invF), accR = accumulate(invF, downR).acc;
   // outlets: interior sinks (ponds) and edge exits with real catchments
   const label = new Int32Array(N).fill(-1), outlets = [], isEdge = n => { const i = n % W, j = (n / W) | 0; return i === 0 || j === 0 || i === W - 1 || j === H - 1; };
   for (let q = N - 1; q >= 0; q--) { const n = order[q];
-    if (down[n] < 0) { const sink = !isEdge(n); if (acc[n] >= (sink ? thrCells : N * .02)) { outlets.push({ n, sink, cells: 0, ci: 0, cj: 0 }); label[n] = outlets.length - 1; } }
+    if (down[n] < 0) { if (acc[n] >= N * .02) { outlets.push({ n, cells: 0, ci: 0, cj: 0 }); label[n] = outlets.length - 1; } }
     else label[n] = label[down[n]]; }
   for (let n = 0; n < N; n++) { const l = label[n]; if (l >= 0) { const o = outlets[l]; o.cells++; o.ci += n % W; o.cj += (n / W) | 0; } }
   // keypoints: for each channel head, trace down to the confluence; the keypoint is the steepest point of that reach
@@ -583,13 +600,22 @@ function analyze() {
     if (bi < 0 || bs < .03) continue; const kn = path[bi]; keypoints.push({ i: kn % W, j: (kn / W) | 0, n: kn, z: z[kn], acc: acc[kn], slope: bs });
   }
   keypoints.sort((a, b) => b.acc - a.acc); keypoints.splice(12);
-  ana = { key, down, acc, downR, accR, label, outlets, keypoints, thrCells, A };
+  ana = { key, down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A };
   if (S.keyAuto || !S.keyPt) S.keyPt = keypoints.length ? [keypoints[0].i, keypoints[0].j] : null;
   return ana;
 }
+function smoothPoly(poly, win) {          // resample to ~3 px and box-smooth over win px
+  if (poly.length < 3) return poly; const res = [poly[0]];
+  for (let q = 1; q < poly.length; q++) { let a = res[res.length - 1]; const b = poly[q]; const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.round(L / 3)); for (let t = 1; t <= n; t++) res.push([a[0] + (b[0] - a[0]) * t / n, a[1] + (b[1] - a[1]) * t / n]); }
+  const r = Math.max(1, Math.round(win / 6)), out = [];
+  for (let q = 0; q < res.length; q++) { let x = 0, y = 0, c = 0; for (let t = -r; t <= r; t++) { const m = res[Math.max(0, Math.min(res.length - 1, q + t))]; x += m[0]; y += m[1]; c++; } out.push([x / c, y / c]); }
+  return out;
+}
 function offsetPoly(poly, d) {           // parallel copy of a polyline, d px to one side
   const out = []; for (let q = 0; q < poly.length; q++) { const a = poly[Math.max(0, q - 1)], b = poly[Math.min(poly.length - 1, q + 1)]; let tx = b[0] - a[0], ty = b[1] - a[1]; const L = Math.hypot(tx, ty) || 1; tx /= L; ty /= L; out.push([poly[q][0] - ty * d, poly[q][1] + tx * d]); }
-  return out.map((p, q) => q === 0 || q === out.length - 1 ? p : [(out[q - 1][0] + p[0] + out[q + 1][0]) / 3, (out[q - 1][1] + p[1] + out[q + 1][1]) / 3]);
+  // drop points where the offset curve folds back against the base direction (inside of tight bends)
+  const keep = []; for (let q = 1; q < out.length; q++) { const bx = poly[q][0] - poly[q - 1][0], by = poly[q][1] - poly[q - 1][1], ox = out[q][0] - out[q - 1][0], oy = out[q][1] - out[q - 1][1]; if (bx * ox + by * oy > 0) keep.push(out[q]); }
+  return keep;
 }
 function keylineFor(gx, gy) {            // the contour through a grid point, as sheet-space polylines
   const lv = sample(z, gx, gy), k = sheet.k, segs = [];
@@ -622,7 +648,7 @@ function sunImage() {
   if (S.sunMode === 'hour') {
     const { alt, az } = sunPos(S.month, S.hour, lat), lit = litMask(alt, az, hi), b = az - S.rot * D2R, sx = Math.sin(b) * Math.cos(alt), sy = -Math.cos(b) * Math.cos(alt), sz = Math.sin(alt);
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); let c;
-      if (alt <= 0) c = hex2('#b7bcc4'); else if (!lit[n]) c = hex2('#aab3bd'); else { const g = grad(i, j), nl = Math.hypot(g[0], g[1], 1), lam = Math.max(0, (-g[0] * sx - g[1] * sy + sz) / nl); c = mix('#d9d3bf', '#fbf7ea', lam); }
+      if (alt <= 0) c = hex2('#b7bcc4'); else if (!lit[n]) c = hex2('#98a4b0'); else { const g = grad(i, j), nl = Math.hypot(g[0], g[1], 1), lam = Math.max(0, (-g[0] * sx - g[1] * sy + sz) / nl); c = mix('#c9c0a6', '#fcf8ec', Math.pow(lam, .8)); }
       d[n * 4] = c[0]; d[n * 4 + 1] = c[1]; d[n * 4 + 2] = c[2]; d[n * 4 + 3] = 255; }
     note = alt <= 0 ? `sun below the horizon at ${document.getElementById('o_hour').textContent}` : `sun altitude ${(alt / D2R).toFixed(0)}° · azimuth ${(az / D2R).toFixed(0)}° · lat ${lat.toFixed(1)}`;
   } else {
@@ -635,7 +661,7 @@ function sunImage() {
   o.putImageData(img, 0, 0); sunCache = { key, canvas: off, note, max: sunCache.max }; return sunCache;
 }
 function drawAnalysis() {
-  ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = analyze(), { down, acc, downR, accR, label, outlets, keypoints, thrCells, A } = an;
+  ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = analyze(), { down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A } = an;
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
   const cellXY = n => toSheet(n % W, (n / W) | 0);
   let sunNote = '';
@@ -661,12 +687,12 @@ function drawAnalysis() {
   ctx.font = font(9.5, 600); ctx.textBaseline = 'middle';
   if (S.an.catch) for (const o of outlets) { if (o.cells < 40) continue; const c = toSheet(o.ci / o.cells, o.cj / o.cells), txt = fBig(o.cells * A), tw = ctx.measureText(txt).width + 8;
     ctx.fillStyle = 'rgba(240,240,236,.85)'; ctx.fillRect(c[0] - tw / 2, c[1] - 7, tw, 14); ctx.fillStyle = INK2; ctx.textAlign = 'center'; ctx.fillText(txt, c[0], c[1] + .5); }
-  for (const o of outlets) { if (!o.sink) continue; const p = cellXY(o.n); ctx.fillStyle = WATER; ctx.beginPath(); ctx.arc(p[0], p[1], 5, 0, TAU); ctx.fill(); ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], 2, 0, TAU); ctx.fill();
-    ctx.fillStyle = WATER; ctx.textAlign = 'left'; ctx.fillText('pond · ' + fBig(o.cells * A) + ' catchment', p[0] + 9, p[1] + .5); }
+  if (S.an.flow) for (const o of ponds) { const p = toSheet(o.ci, o.cj); ctx.fillStyle = WATER; ctx.globalAlpha = .9; ctx.beginPath(); ctx.arc(p[0], p[1], 5, 0, TAU); ctx.fill(); ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], 2, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+    ctx.fillStyle = WATER; ctx.textAlign = 'left'; ctx.fillText(`pond · ${fBig(o.cells * A)} · ${fL(o.depth, 1)} deep`, p[0] + 9, p[1] + .5); }
   if (S.an.keyline && S.keyPt) { const { lv, poly } = keylineFor(S.keyPt[0], S.keyPt[1]);
     if (poly && poly.length > 3) { ctx.save(); ctx.beginPath(); ctx.rect(sheet.x, sheet.y, sheet.w, sheet.h); ctx.clip();
-      const dpx = plowFor(S.plowV) / cs() * k; ctx.strokeStyle = ACC; ctx.lineWidth = .8; ctx.globalAlpha = .55;
-      for (let m = 1; m <= 8; m++) for (const sg of [1, -1]) { const q = offsetPoly(poly, sg * m * dpx); ctx.beginPath(); q.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); }
+      const dpx = plowFor(S.plowV) / cs() * k, base = smoothPoly(poly, dpx); ctx.strokeStyle = ACC; ctx.lineWidth = .8; ctx.globalAlpha = .55;
+      for (let m = 1; m <= 5; m++) for (const sg of [1, -1]) { const q = offsetPoly(base, sg * m * dpx); ctx.beginPath(); q.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); }
       ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.beginPath(); poly.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore();
       const mid = poly[Math.floor(poly.length / 2)], txt = 'keyline ' + fL(lv, 2), tw = ctx.measureText(txt).width + 8; ctx.fillStyle = PAPER; ctx.fillRect(mid[0] - tw / 2, mid[1] - 7, tw, 14); ctx.fillStyle = ACC; ctx.textAlign = 'center'; ctx.fillText(txt, mid[0], mid[1] + .5); } }
   if (S.an.keys) for (const kp of keypoints) { const p = toSheet(kp.i, kp.j), sel = S.keyPt && S.keyPt[0] === kp.i && S.keyPt[1] === kp.j;
@@ -678,7 +704,7 @@ function drawAnalysis() {
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   if (sunNote) ctx.fillText(sunNote, sheet.x, sheet.y + sheet.h + 20);
-  ctx.fillText(`analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} · blue water, dashed ember ridges`, sheet.x, sheet.y + sheet.h + 6);
+  ctx.fillText(`analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} · blue water, dashed ember ridges`, sheet.x, sheet.y + sheet.h + 6);
 }
 
 /* ---------- section ---------- */
