@@ -417,7 +417,7 @@ function drawPlan() {
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   const fy = Math.min(sheet.y + sheet.h + 6, S.h - 32), fx = Math.max(sheet.x, 8);
-  const foot = `site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : (S.aerial && S.world ? ' · ' + (aerialCache.status || 'loading photo') : '')}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x (0 resets)' : ''}`;
+  const foot = S.w < 620 ? `${fL(S.siteW, 0)} wide · ${fL(iv, 2)} contours${S.world ? ' · ' + S.world.name.split(',')[0] : ''}` : `site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}${aerialOn ? (S.w < 620 ? ' · Esri imagery' : ' · imagery Esri, Maxar, Earthstar Geographics') : (S.aerial && S.world ? ' · ' + (aerialCache.status || 'loading photo') : '')}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`;
   if (aerialOn || PV.zoom > 1) { ctx.fillStyle = 'rgba(240,240,236,.88)'; ctx.fillRect(fx - 4, fy - 2, ctx.measureText(foot).width + 8, 15); ctx.fillStyle = INK2; }
   ctx.fillText(foot, fx, fy);
   const uf = isFt() ? FT : 1, barD = niceBar(S.siteW * uf / 5), bar = barD / uf, bw = bar / cs() * k, bx = Math.min(sheet.x + sheet.w, S.w - 16) - bw, by = fy + 4;
