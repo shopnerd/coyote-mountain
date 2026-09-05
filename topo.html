@@ -475,7 +475,7 @@ function drawSection(c = ctx, w = w, h = h, mini = false) {
   // datum axis with elevation ticks
   c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL, Y(lo) + 2); c.lineTo(mL, Y(hi) - 8); c.stroke();
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle';
-  for (let v = Math.ceil(lo / iv) * iv; v <= hi; v += iv) { c.beginPath(); c.moveTo(mL - 4, Y(v)); c.lineTo(mL, Y(v)); c.stroke(); if (isIndex(v) || (hi - lo) / iv < 8) c.fillText(fL(v, 2), mL - 7, Y(v)); }
+  for (let v = Math.ceil(lo / iv) * iv; v <= hi; v += iv) { c.beginPath(); c.moveTo(mL - 4, Y(v)); c.lineTo(mL, Y(v)); c.stroke(); if ((isIndex(v) || (hi - lo) / iv < 8) && (!mini || iv * pxm * vs >= 12 || isIndex(v))) c.fillText(fL(v, 2), mL - 7, Y(v)); }
   // labels
   c.textAlign = 'center'; c.textBaseline = 'top'; c.fillStyle = ACC; c.font = font(13, 600);
   c.fillText('A', X(0), mT - 34); c.fillText('B', X(n), mT - 34);
