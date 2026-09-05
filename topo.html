@@ -65,6 +65,9 @@ main{position:relative;background:var(--paper);overflow:hidden}
 main::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(42,42,40,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,40,.06) 1px,transparent 1px);background-size:24px 24px}
 canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 canvas.orbit{cursor:grab}
+#pip{inset:auto;top:12px;right:12px;width:300px;height:200px;border:1px solid var(--line);background:var(--paper);cursor:grab;touch-action:none}
+#pip[hidden]{display:none}
+@media (max-width:760px){#pip{width:42vw;height:28vw}}
 .toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:#efeee8;padding:6px 14px;border-radius:20px;font-size:11px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 @media (max-width:760px){
@@ -117,7 +120,7 @@ canvas.orbit{cursor:grab}
     <div class="params">
       <div class="p"><label>units</label><select id="unit"><option value="m">metric · m, m³, mm</option><option value="ft">imperial · ft, yd³, in</option></select></div>
       <div class="p"><label>site width<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="1000" step="5" value="60"></div>
-      <div class="p"><label>existing relief<output id="o_relief">2.0 m</output></label><input type="range" id="relief" min="0" max="10" step=".5" value="2"></div>
+      <div class="p" title="how much the starting ground rises and falls before you sketch anything"><label>existing ground relief<output id="o_relief">2.0 m</output></label><input type="range" id="relief" min="0" max="10" step=".5" value="2"></div>
       <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="4" step="1" value="2"></div>
       <div class="p"><label>hachures<output id="o_hach">60</output></label><input type="range" id="hach" min="0" max="100" step="5" value="60"></div>
       <div class="p"><label>vertical exaggeration<output id="o_ve">1.5 x</output></label><input type="range" id="ve" min="1" max="5" step=".25" value="1.5"></div>
@@ -148,6 +151,7 @@ canvas.orbit{cursor:grab}
       <button class="btn" id="reseed">new existing</button>
       <button class="btn" id="reset">reset grading</button>
       <button class="btn" id="wipe">delete all</button>
+      <button class="btn" id="undo">undo</button>
       <button class="btn" id="png">save png</button>
       <button class="btn" id="stl">export stl</button>
       <button class="btn primary wide" id="laser">export laser svg (cardboard stack)</button>
@@ -155,6 +159,7 @@ canvas.orbit{cursor:grab}
   </aside>
   <main>
     <canvas id="c"></canvas>
+    <canvas id="pip" title="3d preview. drag to orbit, double-tap to open"></canvas>
     <div class="toast" id="toast"></div>
   </main>
 </div>
@@ -256,7 +261,7 @@ function resize() {
   S.w = r.width; S.h = r.height; cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const m = 36, aw = S.w - 2 * m, ah = S.h - 2 * m - 20, k = Math.min(aw / (W - 1), ah / (H - 1));
   sheet = { x: (S.w - k * (W - 1)) / 2, y: (S.h - 20 - k * (H - 1)) / 2, w: k * (W - 1), h: k * (H - 1), k };
-  S.dirty = true;
+  sizePip(); S.dirty = true;
 }
 const toSheet = (gx, gy) => [sheet.x + gx * sheet.k, sheet.y + gy * sheet.k];
 const toGrid = (px, py) => [(px - sheet.x) / sheet.k, (py - sheet.y) / sheet.k];
@@ -322,15 +327,15 @@ function drawSectionLine() {
 }
 
 /* ---------- model (orthographic orbit, painter's sort) ---------- */
-function drawModel() {
-  ctx.clearRect(0, 0, S.w, S.h);
+function drawModel(c = ctx, w = w, h = h, step = 2, mini = false) {
+  c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
-  const scale = zoom * Math.min(S.w, S.h) / (S.siteW * 1.25), ox = S.w / 2, oy = S.h / 2 + 10;
+  const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2, oy = h / 2 + 10;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
     return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
-  const step = 2, items = [], iv = interval();
+  const items = [], iv = interval();
   const lx = -.5, ly = -.4, lz = .77;  // light from upper left
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
     const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
@@ -357,20 +362,20 @@ function drawModel() {
   if (west[west.length - 1][1] !== H - 1) { west.push([0, H - 1]); east.push([W - 1, H - 1]); }
   side(north); side(south); side(west); side(east);
   walls.sort((a, b) => a.d - b.d);
-  ctx.lineJoin = 'round';
-  for (const wl of walls) { ctx.fillStyle = TONES[3]; ctx.strokeStyle = TONES[3]; ctx.lineWidth = .8; ctx.beginPath();
-    wl.P.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+  c.lineJoin = 'round';
+  for (const wl of walls) { c.fillStyle = TONES[3]; c.strokeStyle = TONES[3]; c.lineWidth = .8; c.beginPath();
+    wl.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
   items.sort((a, b) => a.d - b.d);
   for (const it of items) {
-    ctx.fillStyle = it.tone; ctx.strokeStyle = it.tone; ctx.lineWidth = .8; ctx.beginPath();
-    it.P.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.stroke();
-    if (it.lines.length) { ctx.strokeStyle = INK; for (const [a, b, ix] of it.lines) { ctx.lineWidth = ix ? 1.2 : .6; ctx.globalAlpha = ix ? .9 : .7; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); } ctx.globalAlpha = 1; }
+    c.fillStyle = it.tone; c.strokeStyle = it.tone; c.lineWidth = .8; c.beginPath();
+    it.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke();
+    if (it.lines.length) { c.strokeStyle = INK; for (const [a, b, ix] of it.lines) { c.lineWidth = ix ? 1.2 : .6; c.globalAlpha = ix ? .9 : .7; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.globalAlpha = 1; }
   }
   // base outline
-  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.beginPath();
-  [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.stroke();
-  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-  ctx.fillText(`model · ${S.ve}x vertical · drag to orbit · pinch or wheel to zoom`, 14, S.h - 10);
+  c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
+  [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
+  c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
+  if (mini) return; c.fillText(`model · ${S.ve}x vertical · drag to orbit · pinch or wheel to zoom`, 14, h - 10);
 }
 
 /* ---------- stepped model: the cardboard stack before you cut it ---------- */
@@ -385,11 +390,11 @@ function steppedLayers() {
   }
   stepCache = { key, layers }; return layers;
 }
-function drawStepped() {
-  ctx.clearRect(0, 0, S.w, S.h);
+function drawStepped(c = ctx, w = w, h = h, step = 2, mini = false) {
+  c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
-  const scale = zoom * Math.min(S.w, S.h) / (S.siteW * 1.25), ox = S.w / 2, oy = S.h / 2 + 10;
+  const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2, oy = h / 2 + 10;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
   const layers = steppedLayers();
@@ -400,20 +405,20 @@ function drawStepped() {
       const nX = dy, nY = -dx, ny1 = nX * sy + nY * cy; if (ny1 <= 0) continue;   // back-facing
       const P = [proj(a[0], a[1], zt), proj(b[0], b[1], zt), proj(b[0], b[1], zb), proj(a[0], a[1], zb)];
       quads.push({ d: (P[0][2] + P[1][2]) / 2, P }); }
-    quads.sort((u, v) => u.d - v.d); ctx.fillStyle = tone; ctx.strokeStyle = tone; ctx.lineWidth = .6;
-    for (const qd of quads) { ctx.beginPath(); qd.P.forEach((p, k) => k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fill(); ctx.stroke(); } };
-  ctx.lineJoin = 'round';
+    quads.sort((u, v) => u.d - v.d); c.fillStyle = tone; c.strokeStyle = tone; c.lineWidth = .6;
+    for (const qd of quads) { c.beginPath(); qd.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); } };
+  c.lineJoin = 'round';
   risers(corners, baseZ, lo, TONES[3]);
   for (const L of layers) {
     for (const loop of L.loops) risers(loop, L.level, L.top, TONES[2]);
-    ctx.beginPath();
-    for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }), ctx.closePath();
-    ctx.fillStyle = TONES[0]; ctx.fill('evenodd'); ctx.strokeStyle = INK; ctx.lineWidth = .7; ctx.globalAlpha = .8; ctx.stroke(); ctx.globalAlpha = 1;
+    c.beginPath();
+    for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
+    c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
-  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.beginPath();
-  corners.forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.closePath(); ctx.stroke();
-  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-  ctx.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · drag to orbit`, 14, S.h - 10);
+  c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
+  corners.forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
+  c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
+  if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · drag to orbit`, 14, h - 10);
 }
 
 /* ---------- section ---------- */
@@ -469,11 +474,29 @@ function drawSection() {
 
 /* ---------- loop ---------- */
 function frame() {
-  if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel()); else drawSection(); }
+  if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel()); else drawSection(); if (S.mode !== 'model') drawPip(); }
   requestAnimationFrame(frame);
 }
 
 /* ---------- pointer ---------- */
+function orbit(dx, dy) { S.cam.yaw -= dx * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch + dy * .006)); S.dirty = true; }
+const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw = 0, ph = 0, pdrag = null;
+function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+function drawPip() {
+  if (!pw) sizePip(); pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
+  (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true);
+  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · double-tap to open', 8, ph - 6);
+}
+pip.addEventListener('pointerdown', e => { pip.setPointerCapture(e.pointerId); pdrag = [e.clientX, e.clientY]; });
+pip.addEventListener('pointermove', e => { if (!pdrag) return; orbit(e.clientX - pdrag[0], e.clientY - pdrag[1]); pdrag = [e.clientX, e.clientY]; });
+pip.addEventListener('pointerup', () => { pdrag = null; }); pip.addEventListener('pointercancel', () => { pdrag = null; });
+pip.addEventListener('dblclick', () => setMode('model'));
+
+/* ---------- undo ---------- */
+const undoStack = [];
+function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null }); if (undoStack.length > 40) undoStack.shift(); }
+function undo() { const u = undoStack.pop(); if (!u) { toast('nothing to undo'); return; }
+  z.set(u.z); base.set(u.base); S.world = u.world; S.sec = u.sec; S.terrainVer++; S.dirty = true; updateStats(); toast(`undo · ${undoStack.length} left`); }
 let drag = null, pinch = null; const pts = new Map();
 const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 cv.addEventListener('pointerdown', e => {
@@ -482,6 +505,7 @@ cv.addEventListener('pointerdown', e => {
   if (S.mode === 'model') { drag = { p, kind: 'orbit' }; return; }
   if (S.mode !== 'plan') return;
   const g = toGrid(p[0], p[1]);
+  snapshot();
   if (S.brush === 'section') { S.sec = [g, g]; drag = { g, kind: 'section' }; S.dirty = true; return; }
   drag = { g, kind: 'brush', z0: sample(z, g[0], g[1]) }; dab(g[0], g[1], S.brush, drag.z0); S.dirty = true;
 });
@@ -490,7 +514,7 @@ cv.addEventListener('pointermove', e => {
   if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); S.cam.zoom = Math.max(.4, Math.min(4, pinch.z * d / pinch.d)); S.dirty = true; return; }
   if (S.mode === 'plan') { const g = toGrid(p[0], p[1]); S.ptr = g; readout(g); S.dirty = true; }
   if (!drag) return;
-  if (drag.kind === 'orbit') { S.cam.yaw += (p[0] - drag.p[0]) * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch + (p[1] - drag.p[1]) * .006)); drag.p = p; S.dirty = true; }
+  if (drag.kind === 'orbit') { orbit(p[0] - drag.p[0], p[1] - drag.p[1]); drag.p = p; }
   else if (drag.kind === 'section') { S.sec[1] = toGrid(p[0], p[1]); S.dirty = true; }
   else { const g = toGrid(p[0], p[1]); strokeLine(drag.g, g, S.brush, drag.z0); drag.g = g; S.dirty = true; }
 });
@@ -515,7 +539,7 @@ const DESC = { plan: 'sketch grade with the brush. contours and hachures redraw 
 function setMode(m) {
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = m === 'plan' ? '' : 'none';
-  cv.classList.toggle('orbit', m === 'model'); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; S.dirty = true;
+  cv.classList.toggle('orbit', m === 'model'); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = m === 'model'; S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
 document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.brush = b.dataset.b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
@@ -537,11 +561,12 @@ document.getElementById('modelStyle').onclick = e => { const b = e.target.closes
 document.getElementById('unit').onchange = e => { S.unit = e.target.value; relabels.forEach(f => f()); updateStats(); S.dirty = true; if (S.mode === 'plan' && S.ptr) readout(S.ptr); };
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
+document.getElementById('undo').onclick = undo;
 document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetchWorld(); };
 document.getElementById('laser').onclick = () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); };
-document.getElementById('reseed').onclick = () => { S.world = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
-document.getElementById('reset').onclick = () => { resetGrading(); toast('grading reset to existing'); };
-document.getElementById('wipe').onclick = () => { base.fill(0); S.world = null; S.sec = null; worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
+document.getElementById('reseed').onclick = () => { snapshot(); S.world = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
+document.getElementById('reset').onclick = () => { snapshot(); resetGrading(); toast('grading reset to existing'); };
+document.getElementById('wipe').onclick = () => { snapshot(); base.fill(0); S.world = null; S.sec = null; worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
 document.getElementById('png').onclick = () => {
   const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height; const o = out.getContext('2d');
   o.fillStyle = PAPER; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0);
@@ -698,7 +723,7 @@ async function fetchWorld(known) {
     const m = q.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
     if (m) { lat = +m[1]; lon = +m[2]; name = `${lat.toFixed(4)}, ${lon.toFixed(4)}`; }
   }
-  fetching = true; btn.disabled = true; btn.textContent = 'fetching…';
+  fetching = true; btn.disabled = true; btn.textContent = 'fetching…'; snapshot();
   try {
     if (lat === undefined) {
       worldStatus('finding the place…');
@@ -727,7 +752,7 @@ buildExisting(); resetGrading();
   S.radius = +document.getElementById('radius').value; S.strength = +document.getElementById('strength').value;
   S.sec = [[20, 85], [120, 15]];
 })();
-addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; const m = { '1': 'plan', '2': 'model', '3': 'section' }[e.key]; if (m) setMode(m); if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); });
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section' }[e.key]; if (m) setMode(m); if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); });
 updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 })();
 </script>
