@@ -383,7 +383,7 @@ function drawPlan() {
   const uf = isFt() ? FT : 1, barD = niceBar(S.siteW * uf / 5), bar = barD / uf, bw = bar / cs() * k, bx = sheet.x + sheet.w - bw, by = sheet.y + sheet.h + 10;
   ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.stroke();
   ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, bx + bw, by + 4);
-  ctx.save(); ctx.translate(sheet.x + sheet.w - 22, sheet.y + 26); ctx.rotate(-S.rot * D2R); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('N', 0, -9);
+  ctx.save(); ctx.translate(sheet.x + 22, sheet.y + 26); ctx.rotate(-S.rot * D2R); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('N', 0, -9);
   ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, -6); ctx.moveTo(-3, -2); ctx.lineTo(0, -6); ctx.lineTo(3, -2); ctx.stroke(); ctx.restore(); ctx.textBaseline = 'top';
   // section line
   if (S.sec) drawSectionLine();
