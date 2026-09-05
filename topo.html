@@ -191,7 +191,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 60, ve: 1.5, mm: 150,
-  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', ledge: 12, modelStyle: 'smooth', terrainVer: 0, cam: { yaw: -.7, pitch: .95, zoom: 1 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, cam: { yaw: -.7, pitch: .95, zoom: 1 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -484,12 +484,19 @@ const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw 
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 function drawPip() {
   if (!pw) sizePip(); pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
-  const zoom0 = S.cam.zoom; S.cam.zoom = zoom0 * 1.55; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0;
-  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · double-tap to open', 8, ph - 6);
+  const zoom0 = S.cam.zoom; S.cam.zoom = zoom0 * S.pipZoom; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0;
+  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · wheel or pinch to zoom · double-tap to open', 8, ph - 6);
 }
-pip.addEventListener('pointerdown', e => { pip.setPointerCapture(e.pointerId); pdrag = [e.clientX, e.clientY]; });
-pip.addEventListener('pointermove', e => { if (!pdrag) return; orbit(e.clientX - pdrag[0], e.clientY - pdrag[1]); pdrag = [e.clientX, e.clientY]; });
-pip.addEventListener('pointerup', () => { pdrag = null; }); pip.addEventListener('pointercancel', () => { pdrag = null; });
+const ppts = new Map(); let ppinch = null;
+const pipZoomTo = v => { S.pipZoom = Math.max(.5, Math.min(6, v)); S.dirty = true; };
+pip.addEventListener('pointerdown', e => { pip.setPointerCapture(e.pointerId); ppts.set(e.pointerId, [e.clientX, e.clientY]); pdrag = [e.clientX, e.clientY];
+  if (ppts.size === 2) { const a = [...ppts.values()]; ppinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.pipZoom }; pdrag = null; } });
+pip.addEventListener('pointermove', e => { if (ppts.has(e.pointerId)) ppts.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ppinch && ppts.size === 2) { const a = [...ppts.values()]; pipZoomTo(ppinch.z * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / ppinch.d); return; }
+  if (!pdrag) return; orbit(e.clientX - pdrag[0], e.clientY - pdrag[1]); pdrag = [e.clientX, e.clientY]; });
+const pipEnd = e => { ppts.delete(e.pointerId); if (ppts.size < 2) ppinch = null; pdrag = null; };
+pip.addEventListener('pointerup', pipEnd); pip.addEventListener('pointercancel', pipEnd);
+pip.addEventListener('wheel', e => { e.preventDefault(); pipZoomTo(S.pipZoom * (e.deltaY < 0 ? 1.1 : .9)); }, { passive: false });
 pip.addEventListener('dblclick', () => setMode('model'));
 
 /* ---------- undo ---------- */
