@@ -828,7 +828,7 @@ function drawRain() {
   ctx.fillStyle = WATER; let pooled = 0;
   for (let n = 0; n < W * H; n++) { const c = rests[n]; if (!c) continue; pooled += c; const p = proj(n % W, (n / W) | 0, z[n] + .02); const r = Math.min(7, 1.5 + Math.sqrt(c) * .6); ctx.globalAlpha = Math.min(.9, .35 + c * .04); ctx.beginPath(); ctx.arc(p[0], p[1], r, 0, TAU); ctx.fill(); }
   ctx.globalAlpha = .85; for (const d of drops) { const p = proj(d.x, d.y, sample(z, d.x, d.y) + .05); ctx.beginPath(); ctx.arc(p[0], p[1], 1.6, 0, TAU); ctx.fill(); }
-  ctx.globalAlpha = 1; ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(`rain · ${drops.length} drops moving · ${pooled} pooled · r stops`, S.w - 14, S.h - 10);
+  ctx.globalAlpha = 1; ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom'; ctx.fillText(`rain · ${drops.length} drops moving · ${pooled} pooled · r stops`, S.w - 14, S.h - 26);
 }
 
 /* ---------- section ---------- */
