@@ -157,7 +157,7 @@ canvas.orbit{cursor:grab}
       <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
       <div class="seg" style="padding:0"><button id="fetch" style="flex:2">fetch real terrain</button><button id="home" title="Encino Solo">home</button></div>
-      <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no aerial</button><button data-ae="1">aerial photo under plan</button></div>
+      <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no aerial</button><button data-ae="1">aerial photo on plan and model</button></div>
       <div class="p" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
       <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
     </div>
@@ -1099,7 +1099,9 @@ document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
 bind('rot', v => v + '°', v => S.rot = v);
 bind('aop', v => v + '%', v => S.aop = v / 100);
 document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.aerial = b.dataset.ae === '1'; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
-  if (!S.aerial && S.colorMode === 'aerial') { S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'paper')); showSun(); }
+  const setColor = c => { S.colorMode = c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === c)); showSun(); };
+  if (!S.aerial && S.colorMode === 'aerial') setColor('paper');
+  if (S.aerial && (S.colorMode === 'paper' || S.colorMode === 'aerial')) setColor('aerial');
   if (S.aerial && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
 document.getElementById('rot').onchange = () => { if (S.world) fetchWorld(S.world); };
 document.getElementById('dblW').onclick = () => setSiteW(S.siteW * 2);
@@ -1116,7 +1118,7 @@ document.getElementById('unit').onchange = e => { S.unit = e.target.value; try {
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
 function goHome(quiet) { document.getElementById('place').value = HOME.lat + ', ' + HOME.lon; setSiteW(HOME.siteW, true); autoPlow(); document.getElementById('rot').value = 0; document.getElementById('rot').dispatchEvent(new Event('input'));
-  S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); }
+  S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; if (S.colorMode === 'paper') { S.colorMode = 'aerial'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'aerial')); } fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); }
 document.getElementById('home').onclick = () => goHome(false);
 document.getElementById('undo').onclick = undo;
 function setRainPause(p) { S.rainPaused = p; document.getElementById('rainPause').classList.toggle('on', p); document.getElementById('rainPause').textContent = p ? 'paused · resume' : 'pause'; S.dirty = true; }
@@ -1149,7 +1151,9 @@ bind('swale', v => fL(swaleDrop(v), 2), v => S.swaleV = v);
 bind('dam', v => fL(v, 1), v => S.damH = v);
 const rainMM = v => 2 + 198 * (v / 100) ** 2;
 bind('rain', v => isFt() ? tz((rainMM(v) / 25.4).toFixed(2)) + ' in' : Math.round(rainMM(v)) + ' mm', v => S.rainV = v);
-document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); showSun(); S.dirty = true; };
+document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); showSun();
+  if (S.colorMode === 'aerial' && !S.aerial) { S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(x => x.classList.toggle('on', x.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; }
+  S.dirty = true; };
 document.getElementById('labelRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.labels = b.dataset.l === '1'; document.querySelectorAll('#labelRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 document.getElementById('sculptRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sculpt = b.dataset.k === 'sculpt'; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.pick = null; S.dirty = true; toast(S.sculpt ? 'left drag sculpts · right drag orbits · middle drag pans' : 'left drag orbits'); };
 
