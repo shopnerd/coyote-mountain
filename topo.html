@@ -141,7 +141,7 @@ canvas.orbit{cursor:grab}
         <div class="p" title="vertical drop between swales"><label>swale drop<output id="o_swale">0.5 m</output></label><input type="range" id="swale" min="1" max="100" step="1" value="30"></div>
         <div class="p" title="wall height of a dam at the keypoint"><label>dam height<output id="o_dam">2 m</output></label><input type="range" id="dam" min="0.5" max="12" step=".5" value="2"></div>
       </div>
-      <div class="desc" id="anaDesc">swales are ditches dug on contour that hold water where it lands; here they step down from the keyline by the swale drop. flood pooling drops one storm's rain on every cell, runs it downhill and fills each hollow with what reaches it, brimming and overflowing when full (no soak-in, so it is a worst case). the dam site sits at the keypoint; the tool floods the ground upstream to the dam height. sun study shades the ground for the site's latitude with real cast shadows; sun hours sums a whole day. keyline design: a valley's steep upper slope eases at the keypoint, the best small-dam site. the keyline is the contour through it. plowing parallel to the keyline drifts runoff from wet valleys toward dry ridges. tap any spot on the sheet to set your own keyline; tap a keypoint to use it.</div>
+      <div class="desc" id="anaDesc">swales are ditches dug on contour that hold water where it lands; here they step down from the keyline by the swale drop. flood pooling drops one storm's rain on every cell, runs it downhill and fills each hollow with what reaches it, brimming and overflowing when full (no soak-in, so it is a worst case). the dam site sits at the keypoint; the tool floods the ground upstream to the dam height. sun study shades the ground for the site's latitude with real cast shadows; sun hours sums a whole day. keyline design: a valley's steep upper slope eases at the keypoint, the best small-dam site. the keyline is the contour through it. plowing parallel to the keyline, within that valley's catchment, drifts runoff from the wet valley toward the dry ridges. tap any spot on the sheet to set your own keyline; tap a keypoint to use it.</div>
     </div>
 
     <div class="sec">world</div>
@@ -625,6 +625,12 @@ function offsetPoly(poly, d) {           // parallel copy of a polyline, d px to
   const keep = []; for (let q = 1; q < out.length; q++) { const bx = poly[q][0] - poly[q - 1][0], by = poly[q][1] - poly[q - 1][1], ox = out[q][0] - out[q - 1][0], oy = out[q][1] - out[q - 1][1]; if (bx * ox + by * oy > 0) keep.push(out[q]); }
   return keep;
 }
+function clipToLabel(poly, lab, label) {   // keep only the stretches of a sheet-space polyline inside one catchment
+  if (lab < 0) return [poly]; const out = []; let cur = [];
+  for (const p of poly) { const g = toGrid(p[0], p[1]); const i = Math.max(0, Math.min(W - 1, Math.round(g[0]))), j = Math.max(0, Math.min(H - 1, Math.round(g[1])));
+    if (label[idx(i, j)] === lab) cur.push(p); else if (cur.length) { out.push(cur); cur = []; } }
+  if (cur.length) out.push(cur); return out.filter(q => q.length > 3);
+}
 function keylineFor(gx, gy) {            // the contour through a grid point, as sheet-space polylines
   const lv = sample(z, gx, gy), k = sheet.k, segs = [];
   for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { const a = z[idx(i, j)], b = z[idx(i + 1, j)], c = z[idx(i + 1, j + 1)], d = z[idx(i, j + 1)];
@@ -738,21 +744,23 @@ function drawAnalysis() {
     ctx.fillStyle = WATER; ctx.textAlign = 'left'; ctx.fillText(`pond · ${fBig(o.cells * A)} · ${fL(o.depth, 1)} deep`, p[0] + 9, p[1] + .5); }
   if (S.an.keyline && S.keyPt) { const { lv, poly } = keylineFor(S.keyPt[0], S.keyPt[1]);
     if (poly && poly.length > 3) { ctx.save(); ctx.beginPath(); ctx.rect(sheet.x, sheet.y, sheet.w, sheet.h); ctx.clip();
-      const dpx = plowFor(S.plowV) / cs() * k, base = smoothPoly(poly, dpx); ctx.strokeStyle = ACC; ctx.lineWidth = .8; ctx.globalAlpha = .55;
-      for (let m = 1; m <= 5; m++) for (const sg of [1, -1]) { const q = offsetPoly(base, sg * m * dpx); ctx.beginPath(); q.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); }
-      ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.beginPath(); poly.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore();
+      const kLab = label[idx(Math.max(0, Math.min(W - 1, Math.round(S.keyPt[0]))), Math.max(0, Math.min(H - 1, Math.round(S.keyPt[1]))))];
+      const dpx = Math.max(2.5, plowFor(S.plowV) / cs() * k), base = smoothPoly(poly, Math.max(dpx, 8)), nLines = Math.min(40, Math.floor(160 / dpx) + 4);
+      ctx.strokeStyle = ACC; ctx.lineWidth = .7; ctx.globalAlpha = .5;
+      for (let m = 1; m <= nLines; m++) for (const sg of [1, -1]) { const q = offsetPoly(base, sg * m * dpx); for (const part of clipToLabel(q, kLab, label)) { ctx.beginPath(); part.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); } }
+      ctx.globalAlpha = 1; ctx.lineWidth = 2; for (const part of clipToLabel(poly, kLab, label)) { ctx.beginPath(); part.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); } ctx.restore();
       const mid = poly[Math.floor(poly.length / 2)], txt = 'keyline ' + fL(lv, 2), tw = ctx.measureText(txt).width + 8; ctx.fillStyle = PAPER; ctx.fillRect(mid[0] - tw / 2, mid[1] - 7, tw, 14); ctx.fillStyle = ACC; ctx.textAlign = 'center'; ctx.fillText(txt, mid[0], mid[1] + .5); } }
   if (S.an.swales && S.keyPt) { const zk = sample(z, S.keyPt[0], S.keyPt[1]), drop = swaleDrop(S.swaleV), [lo, hi] = range(z);
     const kLab = label[idx(Math.round(S.keyPt[0]), Math.round(S.keyPt[1]))];
     ctx.font = font(9, 600); for (let n = -8; n <= 8; n++) { const lv = zk + n * drop; if (lv <= lo || lv >= hi) continue;
       for (const poly of contourPolys(lv)) { if (poly.length < 6) continue;
-        if (kLab >= 0) { const gm = toGrid(poly[Math.floor(poly.length / 2)][0], poly[Math.floor(poly.length / 2)][1]); if (label[idx(Math.max(0, Math.min(W - 1, Math.round(gm[0]))), Math.max(0, Math.min(H - 1, Math.round(gm[1]))))] !== kLab) continue; }
+        const parts = clipToLabel(poly, kLab, label); if (!parts.length) continue;
         const m = poly[Math.floor(poly.length / 2)], a = poly[Math.max(0, Math.floor(poly.length / 2) - 2)], b = poly[Math.min(poly.length - 1, Math.floor(poly.length / 2) + 2)];
         let tx = b[0] - a[0], ty = b[1] - a[1]; const L = Math.hypot(tx, ty) || 1; tx /= L; ty /= L; const g1 = toGrid(m[0] - ty * 5, m[1] + tx * 5), g2 = toGrid(m[0] + ty * 5, m[1] - tx * 5);
         const side = sample(z, g1[0], g1[1]) < sample(z, g2[0], g2[1]) ? 1 : -1;   // berm goes on the downhill side
-        ctx.strokeStyle = WATER; ctx.lineWidth = 1.3; ctx.setLineDash([6, 3]); ctx.beginPath(); poly.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.setLineDash([]);
-        const berm = offsetPoly(poly, side * 3.5); ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.globalAlpha = .6; ctx.beginPath(); berm.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.globalAlpha = 1;
-        if (poly.length > 40) { const txt = 'swale ' + fL(lv, 1), tw = ctx.measureText(txt).width + 6; ctx.fillStyle = PAPER; ctx.fillRect(m[0] - tw / 2, m[1] - 6, tw, 12); ctx.fillStyle = WATER; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, m[0], m[1] + .5); } } } }
+        for (const part of parts) { ctx.strokeStyle = WATER; ctx.lineWidth = 1.3; ctx.setLineDash([6, 3]); ctx.beginPath(); part.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.setLineDash([]);
+          const berm = offsetPoly(part, side * 3.5); ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.globalAlpha = .6; ctx.beginPath(); berm.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.globalAlpha = 1; }
+        const big = parts.reduce((a, b) => b.length > a.length ? b : a, parts[0]); if (big.length > 40) { const mm = big[Math.floor(big.length / 2)], txt = 'swale ' + fL(lv, 1), tw = ctx.measureText(txt).width + 6; ctx.fillStyle = PAPER; ctx.fillRect(mm[0] - tw / 2, mm[1] - 6, tw, 12); ctx.fillStyle = WATER; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(txt, mm[0], mm[1] + .5); } } } }
   if (S.an.dam && S.keyPt) { const pool = damPool(an, S.keyPt[0], S.keyPt[1], S.damH), k2 = sheet.k;
     if (pool.cells.length) { ctx.fillStyle = WATER; ctx.globalAlpha = .35; for (const n of pool.cells) { const p = cellXY(n); ctx.fillRect(p[0] - k2 / 2, p[1] - k2 / 2, k2 + .5, k2 + .5); } ctx.globalAlpha = 1; }
     const p = toSheet(S.keyPt[0], S.keyPt[1]), dn = down[pool.kn]; let fx = 0, fy = 1; if (dn >= 0) { const q = cellXY(dn); fx = q[0] - p[0]; fy = q[1] - p[1]; const L = Math.hypot(fx, fy) || 1; fx /= L; fy /= L; }
@@ -774,7 +782,7 @@ function drawAnalysis() {
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   if (sunNote) ctx.fillText(sunNote, sheet.x, sheet.y + sheet.h + 20);
-  ctx.fillText(`${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} · blue water, dashed ember ridges`, sheet.x, sheet.y + sheet.h + 6);
+  ctx.fillText(`${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges`, sheet.x, sheet.y + sheet.h + 6);
 }
 
 /* ---------- section ---------- */
@@ -962,7 +970,8 @@ const bind = (id, fmt, fn) => { const el = document.getElementById(id), out = do
 const radiusFor = v => S.siteW * (.003 + .25 * (v / 100) ** 2);   // 0.3% to 25% of the site width, fine at the small end
 bind('radius', v => fL(radiusFor(v), radiusFor(v) < 10 ? 1 : 0), v => S.radius = radiusFor(v));
 bind('strength', v => v, v => S.strength = v);
-bind('siteW', v => fL(v, 0), v => { S.siteW = v; ['radius', 'thr', 'plow'].forEach(id => { const el = document.getElementById(id); if (el && el.oninput) el.dispatchEvent(new Event('input')); }); updateStats(); });
+bind('siteW', v => fL(v, 0), v => { S.siteW = v; ['radius', 'thr'].forEach(id => { const el = document.getElementById(id); if (el && el.oninput) el.dispatchEvent(new Event('input')); }); updateStats(); });
+document.getElementById('siteW').addEventListener('change', () => { if (document.getElementById('plow').oninput) autoPlow(); });
 document.getElementById('siteW').onchange = () => { if (S.world) fetchWorld(S.world); };
 const setSiteW = v => { const el = document.getElementById('siteW'); el.value = Math.max(+el.min, Math.min(+el.max, Math.round(v / 10) * 10)); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); };
 document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
@@ -988,9 +997,10 @@ const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', '
 bind('month', v => MONTHS[v - 1], v => S.month = v);
 bind('hour', v => { const h = Math.floor(v), m = v % 1 ? ':30' : ':00'; return (h % 12 || 12) + m + (h < 12 ? ' am' : ' pm'); }, v => S.hour = v);
 const thrArea = v => S.siteW * S.siteW * (H - 1) / (W - 1) * (.002 + .098 * (v / 100) ** 2);
-const plowFor = v => S.siteW * (.01 + .19 * v / 100);
+const plowFor = v => .5 + 29.5 * (v / 100) ** 1.6;                 // 0.5 to 30 m, real ground distance
+function autoPlow() { const target = Math.max(1, Math.min(30, S.siteW / 60)), v = Math.round(100 * Math.pow((target - .5) / 29.5, 1 / 1.6)); const el = document.getElementById('plow'); el.value = v; el.dispatchEvent(new Event('input')); }
 bind('thr', v => fBig(thrArea(v)), v => S.thrV = v);
-bind('plow', v => fL(plowFor(v), plowFor(v) < 10 ? 1 : 0), v => S.plowV = v);
+bind('plow', v => fL(plowFor(v), plowFor(v) < 10 ? 1 : 0), v => S.plowV = v); autoPlow();
 const swaleDrop = v => { const [lo, hi] = range(z); return Math.max(.1, (hi - lo) * (.02 + .3 * v / 100)); };
 bind('swale', v => fL(swaleDrop(v), 2), v => S.swaleV = v);
 bind('dam', v => fL(v, 1), v => S.damH = v);
