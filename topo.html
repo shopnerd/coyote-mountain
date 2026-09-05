@@ -866,7 +866,9 @@ function stepRain() {
     if (sl > .004) { const sp = Math.min(.6, .12 + sl * 1.2); dr.x -= g[0] / sl * sp; dr.y -= g[1] / sl * sp; }
     else { const i = Math.round(dr.x), j = Math.round(dr.y); let best = -1, bz = z[idx(i, j)] - 1e-4; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const v = z[idx(ii, jj)]; if (v < bz) { bz = v; best = idx(ii, jj); } }
       if (best < 0) { if (db && db.mask[n]) absorb(db, dr, q); else if (c >= 0) absorb(d.comps[c], dr, q); else drops.splice(q, 1); continue; } dr.x += (best % W - dr.x) * .25; dr.y += (((best / W) | 0) - dr.y) * .25; }
-    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 1800) drops.splice(q, 1); }
+    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 1800) { drops.splice(q, 1); continue; }
+    if (db && db.mask[n] && !db.mask[idx(Math.round(dr.x), Math.round(dr.y))]) absorb(db, dr, q);   // tried to cross the dam wall: held behind it
+  }
 }
 function drawRain() {
   ctx.clearRect(0, 0, S.w, S.h); ctx.drawImage(modelFrame(), 0, 0, S.w, S.h); const { proj } = camera(), d = depressions();
