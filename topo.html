@@ -271,7 +271,7 @@ const isFt = () => S.unit === 'ft', tz = t => t.replace(/(\.\d*?)0+$/, '$1').rep
 const fL = (m, d = 1) => isFt() ? tz((m * FT).toFixed(d)) + ' ft' : tz(m.toFixed(d)) + ' m';
 const fA = m2 => isFt() ? Math.round(m2 * FT * FT).toLocaleString() + ' ft²' : tz(m2.toFixed(1)) + ' m²';
 const fV = m3 => isFt() ? Math.round(m3 * 1.30795).toLocaleString() + ' yd³' : Math.round(m3).toLocaleString() + ' m³';
-const fBig = m2 => isFt() ? tz((m2 / 4046.86).toFixed(m2 / 4046.86 < 10 ? 2 : 1)) + ' ac' : tz((m2 / 1e4).toFixed(m2 / 1e4 < 10 ? 2 : 1)) + ' ha';
+const fBig = m2 => m2 < 1000 ? fA(m2) : isFt() ? tz((m2 / 4046.86).toFixed(m2 / 4046.86 < 10 ? 2 : 1)) + ' ac' : tz((m2 / 1e4).toFixed(m2 / 1e4 < 10 ? 2 : 1)) + ' ha';
 const fS = mm => isFt() ? tz((mm / 25.4).toFixed(2)) + ' in' : tz(mm.toFixed(1)) + ' mm';
 
 /* ---------- noise ---------- */
