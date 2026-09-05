@@ -327,7 +327,7 @@ function drawSectionLine() {
 }
 
 /* ---------- model (orthographic orbit, painter's sort) ---------- */
-function drawModel(c = ctx, w = w, h = h, step = 2, mini = false) {
+function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
@@ -390,7 +390,7 @@ function steppedLayers() {
   }
   stepCache = { key, layers }; return layers;
 }
-function drawStepped(c = ctx, w = w, h = h, step = 2, mini = false) {
+function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
