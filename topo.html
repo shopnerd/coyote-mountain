@@ -557,12 +557,13 @@ function d8(field) {                       // steepest-descent neighbour for eve
     down[n] = best; }
   return down;
 }
-function fillPits(field) {                // raise every pit and flat so water always has a way out (edge cells stay put)
-  const f = Float32Array.from(field), eps = .002; let changed = true, it = 0;
-  while (changed && it++ < 600) { changed = false;
-    for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) { const n = idx(i, j); let mn = Infinity;
-      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (di || dj) { const v = f[n + dj * W + di]; if (v < mn) mn = v; } }
-      if (f[n] <= mn) { f[n] = mn + eps; changed = true; } } }
+function fillPits(field) {                // priority-flood: sweep inward from the edges so every cell can drain out
+  const N = W * H, f = Float32Array.from(field), closed = new Uint8Array(N), eps = .001;
+  const hk = [], hv = []; const push = (n, v) => { hk.push(v); hv.push(n); let q = hk.length - 1; while (q > 0) { const pq = (q - 1) >> 1; if (hk[pq] <= hk[q]) break; [hk[pq], hk[q]] = [hk[q], hk[pq]]; [hv[pq], hv[q]] = [hv[q], hv[pq]]; q = pq; } };
+  const pop = () => { const n = hv[0]; const lk = hk.pop(), lv = hv.pop(); if (hk.length) { hk[0] = lk; hv[0] = lv; let q = 0; for (;;) { let a = 2 * q + 1, b = a + 1, m = q; if (a < hk.length && hk[a] < hk[m]) m = a; if (b < hk.length && hk[b] < hk[m]) m = b; if (m === q) break; [hk[m], hk[q]] = [hk[q], hk[m]]; [hv[m], hv[q]] = [hv[q], hv[m]]; q = m; } } return n; };
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (i === 0 || j === 0 || i === W - 1 || j === H - 1) { const n = idx(i, j); closed[n] = 1; push(n, f[n]); }
+  while (hk.length) { const c = pop(), ci = c % W, cj = (c / W) | 0;
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const ii = ci + di, jj = cj + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const n = idx(ii, jj); if (closed[n]) continue; closed[n] = 1; if (f[n] < f[c] + eps) f[n] = f[c] + eps; push(n, f[n]); } }
   return f;
 }
 function findPonds(filled, thrCells) {     // connected pools where the filled surface sits above the ground
