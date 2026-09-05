@@ -128,7 +128,7 @@ canvas.orbit{cursor:grab}
     <div class="params">
       <div class="p"><label>units</label><select id="unit"><option value="m">metric · m, m³, mm</option><option value="ft">imperial · ft, yd³, in</option></select></div>
       <div class="p" title="how much the starting ground rises and falls before you sketch anything"><label>existing ground relief<output id="o_relief">2.0 m</output></label><input type="range" id="relief" min="0" max="10" step=".5" value="2"></div>
-      <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="4" step="1" value="2"></div>
+      <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="6" step="1" value="2"></div>
       <div class="p"><label>hachures<output id="o_hach">60</output></label><input type="range" id="hach" min="0" max="100" step="5" value="60"></div>
       <div class="seg" id="labelRow"><button data-l="1" class="on">elevation labels</button><button data-l="0">no labels</button></div>
       <div class="p"><label>vertical exaggeration<output id="o_ve">1.5 x</output></label><input type="range" id="ve" min="1" max="5" step=".25" value="1.5"></div>
@@ -242,8 +242,8 @@ function spotLabels(c, toXY) {   // high and low points of the proposed grade
   for (const [n, glyph] of [[ma, '▲'], [mi, '▼']]) { const p = toXY(n % W, Math.floor(n / W), z[n]); const txt = glyph + ' ' + fL(z[n], 2); const tw = c.measureText(txt).width + 6;
     c.fillStyle = ACC; c.beginPath(); c.arc(p[0], p[1], 2.5, 0, TAU); c.fill(); c.fillStyle = PAPER; c.fillRect(p[0] + 5, p[1] - 6, tw, 12); c.fillStyle = ACC; c.fillText(txt, p[0] + 8, p[1] + .5); }
 }
-const INTERVALS = [0.1, 0.25, 0.5, 1, 2];
-const FT = 3.28084, INTERVALS_FT = [0.25, 0.5, 1, 2, 5].map(f => f / FT);
+const INTERVALS = [0.1, 0.25, 0.5, 1, 2, 5, 10];
+const FT = 3.28084, INTERVALS_FT = [0.25, 0.5, 1, 2, 5, 10, 20].map(f => f / FT);
 const isFt = () => S.unit === 'ft', tz = t => t.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
 const fL = (m, d = 1) => isFt() ? tz((m * FT).toFixed(d)) + ' ft' : tz(m.toFixed(d)) + ' m';
 const fA = m2 => isFt() ? Math.round(m2 * FT * FT).toLocaleString() + ' ft²' : tz(m2.toFixed(1)) + ' m²';
@@ -892,6 +892,8 @@ async function fetchWorld(known) {
     }
     try { await loadTerrarium(lat, lon); } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); }
     S.world = { lat, lon, name }; resetGrading(); const [lo, hi] = range(base);
+    { const list = isFt() ? INTERVALS_FT : INTERVALS; let k = 0; while (k < list.length - 1 && (hi - lo) / list[k] > 40) k++;
+      const el = document.getElementById('interval'); if (+el.value !== k) { el.value = k; el.dispatchEvent(new Event('input')); } }
     worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide. change site width to zoom out or in; it refetches.`); toast('real terrain loaded');
   } catch (e) {
     const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message));
