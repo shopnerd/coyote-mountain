@@ -1101,7 +1101,7 @@ bind('aop', v => v + '%', v => S.aop = v / 100);
 document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.aerial = b.dataset.ae === '1'; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
   const setColor = c => { S.colorMode = c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === c)); showSun(); };
   if (!S.aerial && S.colorMode === 'aerial') setColor('paper');
-  if (S.aerial && (S.colorMode === 'paper' || S.colorMode === 'aerial')) setColor('aerial');
+  if (S.aerial) setColor('aerial');
   if (S.aerial && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
 document.getElementById('rot').onchange = () => { if (S.world) fetchWorld(S.world); };
 document.getElementById('dblW').onclick = () => setSiteW(S.siteW * 2);
@@ -1118,7 +1118,7 @@ document.getElementById('unit').onchange = e => { S.unit = e.target.value; try {
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
 function goHome(quiet) { document.getElementById('place').value = HOME.lat + ', ' + HOME.lon; setSiteW(HOME.siteW, true); autoPlow(); document.getElementById('rot').value = 0; document.getElementById('rot').dispatchEvent(new Event('input'));
-  S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; if (S.colorMode === 'paper') { S.colorMode = 'aerial'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'aerial')); } fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); }
+  S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; S.colorMode = 'aerial'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'aerial')); showSun(); fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); }
 document.getElementById('home').onclick = () => goHome(false);
 document.getElementById('undo').onclick = undo;
 function setRainPause(p) { S.rainPaused = p; document.getElementById('rainPause').classList.toggle('on', p); document.getElementById('rainPause').textContent = p ? 'paused · resume' : 'pause'; S.dirty = true; }
@@ -1388,7 +1388,7 @@ function loadProject(pr) {
   document.querySelectorAll('#anaLayers button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none';
   document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode)); document.querySelectorAll('#modelStyle button').forEach(b => b.classList.toggle('on', b.dataset.s === S.modelStyle));
   document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === S.aerial)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
-  if (S.aerial && S.colorMode === 'paper') S.colorMode = 'aerial'; if (!S.aerial && S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
+  if (S.aerial) S.colorMode = 'aerial'; if (!S.aerial && S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
   relabels.forEach(f => f()); worldStatus(S.world ? `${S.world.name} · site ${fL(S.siteW, 0)} wide (from file)` : 'noise terrain.'); S.terrainVer++; updateStats(); S.dirty = true;
 }
 function saveProject() { const pr = snapshotProject(), name = `coyote-topo-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 30)}.json`; dl(URL.createObjectURL(new Blob([JSON.stringify(pr)], { type: 'application/json' })), name); }
