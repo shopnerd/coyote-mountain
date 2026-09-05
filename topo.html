@@ -486,7 +486,8 @@ function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r
 function drawPip() {
   if (!pw) sizePip(); pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
   const zoom0 = S.cam.zoom; S.cam.zoom = zoom0 * S.pipZoom; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0;
-  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · wheel or pinch to zoom · double-tap to open', 22, ph - 6);
+  pctx.fillStyle = 'rgba(240,240,236,.85)'; pctx.fillRect(0, ph - 18, pw, 18);
+  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · wheel or pinch to zoom · double-tap to open', 22, ph - 5);
   pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.moveTo(2, ph - 12); pctx.lineTo(12, ph - 2); pctx.moveTo(2, ph - 6); pctx.lineTo(6, ph - 2); pctx.stroke();
 }
 const ppts = new Map(); let ppinch = null;
