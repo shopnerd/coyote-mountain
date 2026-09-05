@@ -110,7 +110,7 @@ canvas.orbit{cursor:grab}
         <button data-b="section" style="flex-basis:100%">draw section line a to b</button>
       </div>
       <div class="params">
-        <div class="p"><label>radius<output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="20" step=".5" value="4"></div>
+        <div class="p" title="brush size scales with the site width"><label>radius<output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label>strength<output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
       </div>
     </div>
@@ -698,9 +698,10 @@ document.getElementById('brushes').onclick = e => { const b = e.target.closest('
 const relabels = [];
 const bind = (id, fmt, fn) => { const el = document.getElementById(id), out = document.getElementById('o_' + id);
   const apply = () => { const v = +el.value; out.textContent = fmt(v); fn(v); S.dirty = true; }; el.oninput = apply; relabels.push(() => { out.textContent = fmt(+el.value); }); apply(); };
-bind('radius', v => fL(v, 1), v => S.radius = v);
+const radiusFor = v => S.siteW * (.003 + .25 * (v / 100) ** 2);   // 0.3% to 25% of the site width, fine at the small end
+bind('radius', v => fL(radiusFor(v), radiusFor(v) < 10 ? 1 : 0), v => S.radius = radiusFor(v));
 bind('strength', v => v, v => S.strength = v);
-bind('siteW', v => fL(v, 0), v => { S.siteW = v; updateStats(); });
+bind('siteW', v => fL(v, 0), v => { S.siteW = v; document.getElementById('radius').dispatchEvent(new Event('input')); updateStats(); });
 document.getElementById('siteW').onchange = () => { if (S.world) fetchWorld(S.world); };
 const setSiteW = v => { const el = document.getElementById('siteW'); el.value = Math.max(+el.min, Math.min(+el.max, Math.round(v / 10) * 10)); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); };
 document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
@@ -915,7 +916,7 @@ buildExisting(); resetGrading();
   const berm = [[30, 70], [45, 60], [62, 52], [80, 50], [98, 55]]; for (let q = 0; q + 1 < berm.length; q++) strokeLine(berm[q], berm[q + 1], 'raise', 0);
   S.radius = 4; S.strength = 45;
   const swale = [[40, 30], [60, 34], [85, 30], [110, 22]]; for (let q = 0; q + 1 < swale.length; q++) strokeLine(swale[q], swale[q + 1], 'lower', 0);
-  S.radius = +document.getElementById('radius').value; S.strength = +document.getElementById('strength').value;
+  document.getElementById('radius').dispatchEvent(new Event('input')); S.strength = +document.getElementById('strength').value;
   S.sec = [[20, 85], [120, 15]];
 })();
 addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section' }[e.key]; if (m) setMode(m); if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); });
