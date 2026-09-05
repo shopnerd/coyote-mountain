@@ -134,6 +134,7 @@ canvas.orbit{cursor:grab}
         <div class="params" style="padding-top:6px">
           <div class="p"><label>month<output id="o_month">jun</output></label><input type="range" id="month" min="1" max="12" step="1" value="6"></div>
           <div class="p"><label>hour<output id="o_hour">3 pm</output></label><input type="range" id="hour" min="5" max="20" step=".5" value="15"></div>
+          <div class="seg" style="padding:0"><button id="playDay" title="sweep the hour from dawn to dusk">play the day</button><button id="playYear" title="sweep the months at this hour">play the year</button></div>
         </div>
       </div>
       <div class="params">
@@ -304,7 +305,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, rainV: 35, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -887,7 +888,8 @@ function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {
 }
 
 /* ---------- loop ---------- */
-function frame() {
+function frame(now) {
+  tickSun(now || performance.now());
   if (S.mode === 'model' && S.rain) { stepRain(); drawRain(); if (S.dirty) { S.dirty = false; drawPip(); } }
   else if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel()); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); }
   requestAnimationFrame(frame);
@@ -1052,6 +1054,15 @@ document.getElementById('anaLayers').onclick = e => { const b = e.target.closest
 document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sunMode = b.dataset.s; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 bind('month', v => MONTHS[v - 1], v => S.month = v);
+function setSunPlay(kind) { S.sunPlay = S.sunPlay === kind ? null : kind; S.sunClock = 0; document.getElementById('playDay').classList.toggle('on', S.sunPlay === 'day'); document.getElementById('playYear').classList.toggle('on', S.sunPlay === 'year');
+  document.getElementById('playDay').textContent = S.sunPlay === 'day' ? 'playing · stop' : 'play the day'; document.getElementById('playYear').textContent = S.sunPlay === 'year' ? 'playing · stop' : 'play the year';
+  if (S.sunPlay && S.sunMode !== 'hour') document.querySelector('#sunSec .seg button[data-s="hour"]').click(); }
+document.getElementById('playDay').onclick = () => setSunPlay('day'); document.getElementById('playYear').onclick = () => setSunPlay('year');
+function tickSun(now) {
+  if (!S.sunPlay || S.mode !== 'analysis' || !S.an.sun) return; if (now - S.sunClock < 110) return; S.sunClock = now;
+  if (S.sunPlay === 'day') { const el = document.getElementById('hour'); let v = +el.value + .5; if (v > 20) v = 5; el.value = v; el.dispatchEvent(new Event('input')); }
+  else { const el = document.getElementById('month'); let v = +el.value + 1; if (v > 12) v = 1; el.value = v; el.dispatchEvent(new Event('input')); }
+}
 bind('hour', v => { const h = Math.floor(v), m = v % 1 ? ':30' : ':00'; return (h % 12 || 12) + m + (h < 12 ? ' am' : ' pm'); }, v => S.hour = v);
 const thrArea = v => S.siteW * S.siteW * (H - 1) / (W - 1) * (.002 + .098 * (v / 100) ** 2);
 const plowFor = v => .5 + 29.5 * (v / 100) ** 1.6;                 // 0.5 to 30 m, real ground distance
