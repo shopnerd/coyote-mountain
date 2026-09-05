@@ -715,8 +715,10 @@ function drawAnalysis() {
       ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.beginPath(); poly.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore();
       const mid = poly[Math.floor(poly.length / 2)], txt = 'keyline ' + fL(lv, 2), tw = ctx.measureText(txt).width + 8; ctx.fillStyle = PAPER; ctx.fillRect(mid[0] - tw / 2, mid[1] - 7, tw, 14); ctx.fillStyle = ACC; ctx.textAlign = 'center'; ctx.fillText(txt, mid[0], mid[1] + .5); } }
   if (S.an.swales && S.keyPt) { const zk = sample(z, S.keyPt[0], S.keyPt[1]), drop = swaleDrop(S.swaleV), [lo, hi] = range(z);
-    ctx.font = font(9, 600); for (let n = -30; n <= 30; n++) { const lv = zk + n * drop; if (lv <= lo || lv >= hi) continue;
+    const kLab = label[idx(Math.round(S.keyPt[0]), Math.round(S.keyPt[1]))];
+    ctx.font = font(9, 600); for (let n = -8; n <= 8; n++) { const lv = zk + n * drop; if (lv <= lo || lv >= hi) continue;
       for (const poly of contourPolys(lv)) { if (poly.length < 6) continue;
+        if (kLab >= 0) { const gm = toGrid(poly[Math.floor(poly.length / 2)][0], poly[Math.floor(poly.length / 2)][1]); if (label[idx(Math.max(0, Math.min(W - 1, Math.round(gm[0]))), Math.max(0, Math.min(H - 1, Math.round(gm[1]))))] !== kLab) continue; }
         const m = poly[Math.floor(poly.length / 2)], a = poly[Math.max(0, Math.floor(poly.length / 2) - 2)], b = poly[Math.min(poly.length - 1, Math.floor(poly.length / 2) + 2)];
         let tx = b[0] - a[0], ty = b[1] - a[1]; const L = Math.hypot(tx, ty) || 1; tx /= L; ty /= L; const g1 = toGrid(m[0] - ty * 5, m[1] + tx * 5), g2 = toGrid(m[0] + ty * 5, m[1] - tx * 5);
         const side = sample(z, g1[0], g1[1]) < sample(z, g2[0], g2[1]) ? 1 : -1;   // berm goes on the downhill side
@@ -730,7 +732,7 @@ function drawAnalysis() {
     ctx.strokeStyle = ACC; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke();
     ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke(); ctx.lineCap = 'butt';
     ctx.font = font(9.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    const txt = `dam site · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`, tw = ctx.measureText(txt).width + 8, lx = p[0] + fy * half + 8, ly = p[1] - fx * half - 14;
+    const txt = `dam site · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`, tw = ctx.measureText(txt).width + 8; let lx = p[0] + fy * half + 8; const ly = p[1] - fx * half - 14; if (lx + tw > sheet.x + sheet.w) lx = p[0] - fy * half - tw - 4;
     ctx.fillStyle = PAPER; ctx.fillRect(lx - 4, ly - 7, tw, 14); ctx.fillStyle = INK; ctx.fillText(txt, lx, ly + .5); }
   if (S.an.keys) for (const kp of keypoints) { const p = toSheet(kp.i, kp.j), sel = S.keyPt && S.keyPt[0] === kp.i && S.keyPt[1] === kp.j;
     ctx.strokeStyle = ACC; ctx.lineWidth = sel ? 2 : 1.2; ctx.fillStyle = sel ? ACC : PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], sel ? 6 : 4.5, 0, TAU); ctx.fill(); ctx.stroke();
