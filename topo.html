@@ -484,7 +484,7 @@ const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw 
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 function drawPip() {
   if (!pw) sizePip(); pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
-  (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true);
+  const zoom0 = S.cam.zoom; S.cam.zoom = zoom0 * 1.55; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0;
   pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · double-tap to open', 8, ph - 6);
 }
 pip.addEventListener('pointerdown', e => { pip.setPointerCapture(e.pointerId); pdrag = [e.clientX, e.clientY]; });
