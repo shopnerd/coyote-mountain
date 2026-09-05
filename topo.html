@@ -87,12 +87,12 @@ canvas.orbit{cursor:grab}
   <header>
     <span class="logo">coyote_mountain<b>_topo</b></span>
     <a href="index.html">studio</a>
-    <span class="read" id="read">keys 1 plan · 2 model · 3 section</span>
+    <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis</span>
   </header>
   <aside>
     <div class="sec">view</div>
     <div class="seg" id="modes">
-      <button data-m="plan" class="on">plan</button><button data-m="model">model</button><button data-m="section">section</button>
+      <button data-m="plan" class="on">plan</button><button data-m="model">model</button><button data-m="section">section</button><button data-m="analysis">analysis</button>
     </div>
     <div class="desc" id="desc"></div>
     <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped stack</button></div>
@@ -113,6 +113,28 @@ canvas.orbit{cursor:grab}
         <div class="p" title="brush size scales with the site width"><label>radius<output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label>strength<output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
       </div>
+    </div>
+
+    <div id="anaSec" style="display:none">
+      <div class="sec">analysis layers</div>
+      <div class="seg wrap" id="anaLayers">
+        <button data-a="flow" class="on">water flow</button><button data-a="catch" class="on">catchments</button>
+        <button data-a="ridge" class="on">ridges</button><button data-a="keys" class="on">keypoints</button>
+        <button data-a="keyline" class="on" style="flex-basis:100%">keyline + plow lines</button>
+        <button data-a="sun" style="flex-basis:100%">sun study</button>
+      </div>
+      <div id="sunSec" style="display:none">
+        <div class="seg" style="margin-top:6px"><button data-s="hour" class="on">shadows at an hour</button><button data-s="hours">sun hours per day</button></div>
+        <div class="params" style="padding-top:6px">
+          <div class="p"><label>month<output id="o_month">jun</output></label><input type="range" id="month" min="1" max="12" step="1" value="6"></div>
+          <div class="p"><label>hour<output id="o_hour">3 pm</output></label><input type="range" id="hour" min="5" max="20" step=".5" value="15"></div>
+        </div>
+      </div>
+      <div class="params">
+        <div class="p" title="how much upstream ground it takes to count as a stream"><label>stream threshold<output id="o_thr">1 ha</output></label><input type="range" id="thr" min="1" max="100" step="1" value="35"></div>
+        <div class="p"><label>plow spacing<output id="o_plow">3.5 m</output></label><input type="range" id="plow" min="1" max="100" step="1" value="25"></div>
+      </div>
+      <div class="desc" id="anaDesc">sun study shades the ground for the site's latitude with real cast shadows; sun hours sums a whole day. keyline design: a valley's steep upper slope eases at the keypoint, the best small-dam site. the keyline is the contour through it. plowing parallel to the keyline drifts runoff from wet valleys toward dry ridges. tap any spot on the sheet to set your own keyline; tap a keypoint to use it.</div>
     </div>
 
     <div class="sec">world</div>
@@ -249,6 +271,7 @@ const isFt = () => S.unit === 'ft', tz = t => t.replace(/(\.\d*?)0+$/, '$1').rep
 const fL = (m, d = 1) => isFt() ? tz((m * FT).toFixed(d)) + ' ft' : tz(m.toFixed(d)) + ' m';
 const fA = m2 => isFt() ? Math.round(m2 * FT * FT).toLocaleString() + ' ft²' : tz(m2.toFixed(1)) + ' m²';
 const fV = m3 => isFt() ? Math.round(m3 * 1.30795).toLocaleString() + ' yd³' : Math.round(m3).toLocaleString() + ' m³';
+const fBig = m2 => isFt() ? tz((m2 / 4046.86).toFixed(m2 / 4046.86 < 10 ? 2 : 1)) + ' ac' : tz((m2 / 1e4).toFixed(m2 / 1e4 < 10 ? 2 : 1)) + ' ha';
 const fS = mm => isFt() ? tz((mm / 25.4).toFixed(2)) + ' in' : tz(mm.toFixed(1)) + ' mm';
 
 /* ---------- noise ---------- */
@@ -265,7 +288,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 60, ve: 1.5, mm: 150,
-  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', rot: 0, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', rot: 0, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -362,20 +385,7 @@ function drawPlan() {
     }
     ctx.stroke(); ctx.globalAlpha = 1;
   }
-  // contours
-  const segs = [], segsIdx = [], groups = new Map();
-  for (let lv = Math.ceil(lo / iv) * iv; lv <= hi; lv += iv) {
-    const out = isIndex(lv) ? segsIdx : segs; const grp = isIndex(lv) ? [] : null; if (grp) groups.set(lv, grp);
-    for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) {
-      const a = z[idx(i, j)], b = z[idx(i + 1, j)], c = z[idx(i + 1, j + 1)], d = z[idx(i, j + 1)];
-      const mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d); if (lv < mn || lv > mx) continue;
-      const tmp = []; isoSegs(a, b, c, d, lv, tmp);
-      for (let q = 0; q < tmp.length; q += 4) { const sx1 = sheet.x + (i + tmp[q]) * k, sy1 = sheet.y + (j + tmp[q + 1]) * k, sx2 = sheet.x + (i + tmp[q + 2]) * k, sy2 = sheet.y + (j + tmp[q + 3]) * k; out.push(sx1, sy1, sx2, sy2); if (grp) grp.push([sx1, sy1, sx2, sy2]); }
-    }
-  }
-  const strokeSegs = (arr, wdt, alpha) => { ctx.lineWidth = wdt; ctx.globalAlpha = alpha; ctx.beginPath(); for (let q = 0; q < arr.length; q += 4) { ctx.moveTo(arr[q], arr[q + 1]); ctx.lineTo(arr[q + 2], arr[q + 3]); } ctx.stroke(); ctx.globalAlpha = 1; };
-  ctx.strokeStyle = INK; strokeSegs(segs, .7, .8); strokeSegs(segsIdx, 1.4, 1);
-  if (S.labels) { contourLabels(ctx, groups, 240, true); spotLabels(ctx, (i, j) => toSheet(i, j)); }
+  drawContours(1, S.labels);
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
@@ -392,6 +402,22 @@ function drawPlan() {
     const p = toSheet(S.ptr[0], S.ptr[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.arc(p[0], p[1], S.radius / cs() * k, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
   }
+}
+function drawContours(alpha, labels) {
+  const k = sheet.k, [lo, hi] = range(z), iv = interval();
+  const segs = [], segsIdx = [], groups = new Map();
+  for (let lv = Math.ceil(lo / iv) * iv; lv <= hi; lv += iv) {
+    const out = isIndex(lv) ? segsIdx : segs; const grp = isIndex(lv) ? [] : null; if (grp) groups.set(lv, grp);
+    for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) {
+      const a = z[idx(i, j)], b = z[idx(i + 1, j)], c = z[idx(i + 1, j + 1)], d = z[idx(i, j + 1)];
+      const mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d); if (lv < mn || lv > mx) continue;
+      const tmp = []; isoSegs(a, b, c, d, lv, tmp);
+      for (let q = 0; q < tmp.length; q += 4) { const sx1 = sheet.x + (i + tmp[q]) * k, sy1 = sheet.y + (j + tmp[q + 1]) * k, sx2 = sheet.x + (i + tmp[q + 2]) * k, sy2 = sheet.y + (j + tmp[q + 3]) * k; out.push(sx1, sy1, sx2, sy2); if (grp) grp.push([sx1, sy1, sx2, sy2]); }
+    }
+  }
+  const strokeSegs = (arr, wdt, alpha) => { ctx.lineWidth = wdt; ctx.globalAlpha = alpha; ctx.beginPath(); for (let q = 0; q < arr.length; q += 4) { ctx.moveTo(arr[q], arr[q + 1]); ctx.lineTo(arr[q + 2], arr[q + 3]); } ctx.stroke(); ctx.globalAlpha = 1; };
+  ctx.strokeStyle = INK; strokeSegs(segs, .7, .8 * alpha); strokeSegs(segsIdx, 1.4, alpha);
+  if (labels) { contourLabels(ctx, groups, 240, true); spotLabels(ctx, (i, j) => toSheet(i, j)); }
 }
 function niceBar(v) { const p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p; return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * p; }
 function drawSectionLine() {
@@ -520,6 +546,141 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
 }
 
+/* ---------- analysis: flow, catchments, ridges, keypoints, keyline ---------- */
+const WATER = '#5f86a8', CATCH = ['#6a9e7c', '#7396b3', '#8d83e0', '#c9a83a', '#58a3aa', '#c05468', '#c97b4a'];
+let ana = { key: '' };
+function d8(field) {                       // steepest-descent neighbour for every cell; -1 = sink or edge exit
+  const down = new Int32Array(W * H).fill(-1), s = cs();
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); let best = -1, bs = 0;
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue;
+      const m = idx(ii, jj), drop = (field[n] - field[m]) / (s * Math.hypot(di, dj)); if (drop > bs) { bs = drop; best = m; } }
+    down[n] = best; }
+  return down;
+}
+function accumulate(field, down) { const N = W * H, order = new Uint32Array(N); for (let n = 0; n < N; n++) order[n] = n; order.sort((a, b) => field[b] - field[a]);
+  const acc = new Float32Array(N).fill(1); for (const n of order) if (down[n] >= 0) acc[down[n]] += acc[n]; return { acc, order }; }
+function analyze() {
+  const key = S.terrainVer + '|' + S.thrV + '|' + S.siteW; if (ana.key === key) return ana;
+  const N = W * H, A = cs() * cs(), thrCells = Math.max(3, thrArea(S.thrV) / A);
+  const down = d8(z), { acc, order } = accumulate(z, down);
+  const inv = new Float32Array(N); for (let n = 0; n < N; n++) inv[n] = -z[n];
+  const downR = d8(inv), accR = accumulate(inv, downR).acc;
+  // outlets: interior sinks (ponds) and edge exits with real catchments
+  const label = new Int32Array(N).fill(-1), outlets = [], isEdge = n => { const i = n % W, j = (n / W) | 0; return i === 0 || j === 0 || i === W - 1 || j === H - 1; };
+  for (let q = N - 1; q >= 0; q--) { const n = order[q];
+    if (down[n] < 0) { const sink = !isEdge(n); if (acc[n] >= (sink ? thrCells : N * .02)) { outlets.push({ n, sink, cells: 0, ci: 0, cj: 0 }); label[n] = outlets.length - 1; } }
+    else label[n] = label[down[n]]; }
+  for (let n = 0; n < N; n++) { const l = label[n]; if (l >= 0) { const o = outlets[l]; o.cells++; o.ci += n % W; o.cj += (n / W) | 0; } }
+  // keypoints: for each channel head, trace down to the confluence; the keypoint is the steepest point of that reach
+  const chan = new Uint8Array(N); for (let n = 0; n < N; n++) chan[n] = acc[n] >= thrCells ? 1 : 0;
+  const hasUp = new Uint8Array(N); for (let n = 0; n < N; n++) if (chan[n] && down[n] >= 0 && chan[down[n]]) hasUp[down[n]] = 1;
+  const keypoints = [], s = cs();
+  for (let n = 0; n < N; n++) { if (!chan[n] || hasUp[n]) continue;
+    const path = [n], dist = [0]; let cur = n;
+    while (down[cur] >= 0 && path.length < 400) { const nx = down[cur]; if (acc[nx] > acc[cur] * 1.8 && path.length > 3) break; dist.push(dist[dist.length - 1] + s * Math.hypot(nx % W - cur % W, ((nx / W) | 0) - ((cur / W) | 0))); path.push(nx); cur = nx; }
+    if (path.length < 14) continue;
+    let bi = -1, bs = 0; for (let q = 4; q < path.length - 4; q++) { const sl = (z[path[q - 3]] - z[path[q + 3]]) / Math.max(1e-6, dist[q + 3] - dist[q - 3]); if (sl > bs) { bs = sl; bi = q; } }
+    if (bi < 0 || bs < .03) continue; const kn = path[bi]; keypoints.push({ i: kn % W, j: (kn / W) | 0, n: kn, z: z[kn], acc: acc[kn], slope: bs });
+  }
+  keypoints.sort((a, b) => b.acc - a.acc); keypoints.splice(12);
+  ana = { key, down, acc, downR, accR, label, outlets, keypoints, thrCells, A };
+  if (S.keyAuto || !S.keyPt) S.keyPt = keypoints.length ? [keypoints[0].i, keypoints[0].j] : null;
+  return ana;
+}
+function offsetPoly(poly, d) {           // parallel copy of a polyline, d px to one side
+  const out = []; for (let q = 0; q < poly.length; q++) { const a = poly[Math.max(0, q - 1)], b = poly[Math.min(poly.length - 1, q + 1)]; let tx = b[0] - a[0], ty = b[1] - a[1]; const L = Math.hypot(tx, ty) || 1; tx /= L; ty /= L; out.push([poly[q][0] - ty * d, poly[q][1] + tx * d]); }
+  return out.map((p, q) => q === 0 || q === out.length - 1 ? p : [(out[q - 1][0] + p[0] + out[q + 1][0]) / 3, (out[q - 1][1] + p[1] + out[q + 1][1]) / 3]);
+}
+function keylineFor(gx, gy) {            // the contour through a grid point, as sheet-space polylines
+  const lv = sample(z, gx, gy), k = sheet.k, segs = [];
+  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { const a = z[idx(i, j)], b = z[idx(i + 1, j)], c = z[idx(i + 1, j + 1)], d = z[idx(i, j + 1)];
+    if (lv < Math.min(a, b, c, d) || lv > Math.max(a, b, c, d)) continue; const tmp = []; isoSegs(a, b, c, d, lv, tmp);
+    for (let q = 0; q < tmp.length; q += 4) segs.push([sheet.x + (i + tmp[q]) * k, sheet.y + (j + tmp[q + 1]) * k, sheet.x + (i + tmp[q + 2]) * k, sheet.y + (j + tmp[q + 3]) * k]); }
+  const polys = linkSegs(segs), P = toSheet(gx, gy); let best = null, bd = 1e12;
+  for (const poly of polys) for (const p of poly) { const d = (p[0] - P[0]) ** 2 + (p[1] - P[1]) ** 2; if (d < bd) { bd = d; best = poly; } }
+  return { lv, poly: best };
+}
+function sunPos(month, hour, lat) {     // altitude + azimuth (clockwise from north), solar time
+  const day = Math.round((month - .5) * 30.4), dec = 23.44 * D2R * Math.sin(TAU / 365 * (day - 81)), Hh = (hour - 12) * 15 * D2R, la = lat * D2R;
+  const sinAlt = Math.sin(la) * Math.sin(dec) + Math.cos(la) * Math.cos(dec) * Math.cos(Hh), alt = Math.asin(sinAlt);
+  let az = Math.acos(Math.max(-1, Math.min(1, (Math.sin(dec) - Math.sin(la) * sinAlt) / Math.max(1e-6, Math.cos(la) * Math.cos(alt))))); if (Hh > 0) az = TAU - az;
+  return { alt, az };
+}
+function litMask(alt, az, hi) {          // 1 = in sun, 0 = in cast shadow, for the whole grid
+  const N = W * H, out = new Uint8Array(N); if (alt <= 0) return out;
+  const b = az - S.rot * D2R, dx = Math.sin(b), dy = -Math.cos(b), s = cs(), rise = s * Math.tan(alt), stepT = 1.5;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j), z0 = z[n]; let lit = 1; const maxT = Math.min(220, (hi - z0) / rise + 1);
+    for (let t = stepT; t <= maxT; t += stepT) { const x = i + dx * t, y = j + dy * t; if (x < 0 || y < 0 || x > W - 1 || y > H - 1) break; if (sample(z, x, y) > z0 + t * rise + .02) { lit = 0; break; } }
+    out[n] = lit; }
+  return out;
+}
+let sunCache = { key: '' };
+function sunImage() {
+  const lat = S.world ? S.world.lat : 34.1, key = [S.terrainVer, S.sunMode, S.month, S.hour, S.rot, S.siteW, lat].join('|'); if (sunCache.key === key) return sunCache;
+  const N = W * H, [lo, hi] = range(z), off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d'), img = o.createImageData(W, H), d = img.data;
+  let note = '';
+  if (S.sunMode === 'hour') {
+    const { alt, az } = sunPos(S.month, S.hour, lat), lit = litMask(alt, az, hi), b = az - S.rot * D2R, sx = Math.sin(b) * Math.cos(alt), sy = -Math.cos(b) * Math.cos(alt), sz = Math.sin(alt);
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); let c;
+      if (alt <= 0) c = hex2('#b7bcc4'); else if (!lit[n]) c = hex2('#aab3bd'); else { const g = grad(i, j), nl = Math.hypot(g[0], g[1], 1), lam = Math.max(0, (-g[0] * sx - g[1] * sy + sz) / nl); c = mix('#d9d3bf', '#fbf7ea', lam); }
+      d[n * 4] = c[0]; d[n * 4 + 1] = c[1]; d[n * 4 + 2] = c[2]; d[n * 4 + 3] = 255; }
+    note = alt <= 0 ? `sun below the horizon at ${document.getElementById('o_hour').textContent}` : `sun altitude ${(alt / D2R).toFixed(0)}° · azimuth ${(az / D2R).toFixed(0)}° · lat ${lat.toFixed(1)}`;
+  } else {
+    const hrs = new Float32Array(N); let steps = 0;
+    for (let h = 4; h <= 20.01; h += 1 / 3) { const { alt, az } = sunPos(S.month, h, lat); if (alt <= 0) continue; const lit = litMask(alt, az, hi); for (let n = 0; n < N; n++) hrs[n] += lit[n] / 3; steps++; }
+    let mx = 0; for (let n = 0; n < N; n++) mx = Math.max(mx, hrs[n]);
+    for (let n = 0; n < N; n++) { const c = ramp(['#9fb0bf', '#eeeadf', '#e6b57a'], mx ? hrs[n] / mx : 0); d[n * 4] = c[0]; d[n * 4 + 1] = c[1]; d[n * 4 + 2] = c[2]; d[n * 4 + 3] = 255; }
+    note = `direct sun per day in ${MONTHS[S.month - 1]} · 0 to ${mx.toFixed(1)} h · lat ${lat.toFixed(1)}`; sunCache.max = mx;
+  }
+  o.putImageData(img, 0, 0); sunCache = { key, canvas: off, note, max: sunCache.max }; return sunCache;
+}
+function drawAnalysis() {
+  ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = analyze(), { down, acc, downR, accR, label, outlets, keypoints, thrCells, A } = an;
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
+  const cellXY = n => toSheet(n % W, (n / W) | 0);
+  let sunNote = '';
+  if (S.an.sun) { const su = sunImage(); sunNote = su.note; ctx.imageSmoothingEnabled = false; ctx.drawImage(su.canvas, sheet.x - k / 2, sheet.y - k / 2, W * k, H * k); ctx.imageSmoothingEnabled = true; }
+  if (S.an.catch && outlets.length) {
+    const off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d'), img = o.createImageData(W, H), d = img.data;
+    for (let n = 0; n < W * H; n++) { const l = label[n]; if (l < 0) continue; const c = hex2(CATCH[l % CATCH.length]); d[n * 4] = c[0]; d[n * 4 + 1] = c[1]; d[n * 4 + 2] = c[2]; d[n * 4 + 3] = 46; }
+    o.putImageData(img, 0, 0); if (!S.an.sun) { ctx.imageSmoothingEnabled = false; ctx.drawImage(off, sheet.x - k / 2, sheet.y - k / 2, W * k, H * k); ctx.imageSmoothingEnabled = true; }
+    ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.globalAlpha = .55; ctx.beginPath();
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j);
+      if (i < W - 1 && label[n] !== label[n + 1]) { const x = sheet.x + (i + .5) * k; ctx.moveTo(x, sheet.y + (j - .5) * k); ctx.lineTo(x, sheet.y + (j + .5) * k); }
+      if (j < H - 1 && label[n] !== label[n + W]) { const y = sheet.y + (j + .5) * k; ctx.moveTo(sheet.x + (i - .5) * k, y); ctx.lineTo(sheet.x + (i + .5) * k, y); } }
+    ctx.stroke(); ctx.globalAlpha = 1;
+  }
+  drawContours(.3, false);
+  if (S.an.flow) { ctx.strokeStyle = WATER; ctx.lineCap = 'round';
+    for (let n = 0; n < W * H; n++) { if (down[n] < 0 || acc[n] < thrCells * .2) continue; const a = cellXY(n), b = cellXY(down[n]);
+      ctx.lineWidth = .5 + 1.6 * Math.log10(acc[n] / thrCells + 1); ctx.globalAlpha = acc[n] >= thrCells ? .9 : .4; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+    ctx.globalAlpha = 1; ctx.lineCap = 'butt'; }
+  if (S.an.ridge) { ctx.strokeStyle = ACC; ctx.lineWidth = .9; ctx.setLineDash([4, 3]); ctx.globalAlpha = .7; ctx.beginPath();
+    for (let n = 0; n < W * H; n++) { if (downR[n] < 0 || accR[n] < thrCells) continue; const a = cellXY(n), b = cellXY(downR[n]); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+  ctx.font = font(9.5, 600); ctx.textBaseline = 'middle';
+  if (S.an.catch) for (const o of outlets) { if (o.cells < 40) continue; const c = toSheet(o.ci / o.cells, o.cj / o.cells), txt = fBig(o.cells * A), tw = ctx.measureText(txt).width + 8;
+    ctx.fillStyle = 'rgba(240,240,236,.85)'; ctx.fillRect(c[0] - tw / 2, c[1] - 7, tw, 14); ctx.fillStyle = INK2; ctx.textAlign = 'center'; ctx.fillText(txt, c[0], c[1] + .5); }
+  for (const o of outlets) { if (!o.sink) continue; const p = cellXY(o.n); ctx.fillStyle = WATER; ctx.beginPath(); ctx.arc(p[0], p[1], 5, 0, TAU); ctx.fill(); ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], 2, 0, TAU); ctx.fill();
+    ctx.fillStyle = WATER; ctx.textAlign = 'left'; ctx.fillText('pond · ' + fBig(o.cells * A) + ' catchment', p[0] + 9, p[1] + .5); }
+  if (S.an.keyline && S.keyPt) { const { lv, poly } = keylineFor(S.keyPt[0], S.keyPt[1]);
+    if (poly && poly.length > 3) { ctx.save(); ctx.beginPath(); ctx.rect(sheet.x, sheet.y, sheet.w, sheet.h); ctx.clip();
+      const dpx = plowFor(S.plowV) / cs() * k; ctx.strokeStyle = ACC; ctx.lineWidth = .8; ctx.globalAlpha = .55;
+      for (let m = 1; m <= 8; m++) for (const sg of [1, -1]) { const q = offsetPoly(poly, sg * m * dpx); ctx.beginPath(); q.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); }
+      ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.beginPath(); poly.forEach((p, t) => t ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.stroke(); ctx.restore();
+      const mid = poly[Math.floor(poly.length / 2)], txt = 'keyline ' + fL(lv, 2), tw = ctx.measureText(txt).width + 8; ctx.fillStyle = PAPER; ctx.fillRect(mid[0] - tw / 2, mid[1] - 7, tw, 14); ctx.fillStyle = ACC; ctx.textAlign = 'center'; ctx.fillText(txt, mid[0], mid[1] + .5); } }
+  if (S.an.keys) for (const kp of keypoints) { const p = toSheet(kp.i, kp.j), sel = S.keyPt && S.keyPt[0] === kp.i && S.keyPt[1] === kp.j;
+    ctx.strokeStyle = ACC; ctx.lineWidth = sel ? 2 : 1.2; ctx.fillStyle = sel ? ACC : PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], sel ? 6 : 4.5, 0, TAU); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = ACC; ctx.textAlign = 'left'; ctx.fillText('keypoint ' + fL(kp.z, 1), p[0] + 10, p[1] + .5); }
+  if (S.keyPt && !keypoints.some(kp => kp.i === S.keyPt[0] && kp.j === S.keyPt[1])) { const p = toSheet(S.keyPt[0], S.keyPt[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(p[0] - 5, p[1]); ctx.lineTo(p[0] + 5, p[1]); ctx.moveTo(p[0], p[1] - 5); ctx.lineTo(p[0], p[1] + 5); ctx.stroke(); }
+  if (S.an.sun && S.sunMode === 'hours') { const x = sheet.x + sheet.w - 130, y = sheet.y + 10; for (let q = 0; q < 120; q++) { ctx.fillStyle = rgb(ramp(['#9fb0bf', '#eeeadf', '#e6b57a'], q / 119)); ctx.fillRect(x + q, y, 1.5, 8); }
+    ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.strokeRect(x, y, 120, 8); ctx.fillStyle = INK2; ctx.font = font(9.5); ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillText('0 h', x, y + 11); ctx.textAlign = 'right'; ctx.fillText((sunCache.max || 0).toFixed(0) + ' h sun', x + 120, y + 11); }
+  ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
+  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  if (sunNote) ctx.fillText(sunNote, sheet.x, sheet.y + sheet.h + 20);
+  ctx.fillText(`analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} · blue water, dashed ember ridges`, sheet.x, sheet.y + sheet.h + 6);
+}
+
 /* ---------- section ---------- */
 function sectionProfile(n) {
   const [a, b] = S.sec, L = Math.hypot(b[0] - a[0], b[1] - a[1]) * cs(), prop = [], ex = [];
@@ -577,7 +738,7 @@ function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {
 
 /* ---------- loop ---------- */
 function frame() {
-  if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel()); else drawSection(); drawPip(); }
+  if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel()); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); }
   requestAnimationFrame(frame);
 }
 
@@ -648,6 +809,9 @@ cv.addEventListener('pointerdown', e => {
     if (btn === 2) { drag = { p, kind: 'orbit' }; return; }
     if (S.sculpt) { const g = pick(p[0], p[1]); if (!g) return; snapshot(); const kind = S.brush === 'section' ? 'raise' : S.brush; drag = { g, kind: 'sculpt', brush: kind, z0: z[idx(g[0], g[1])] }; dab(g[0], g[1], kind, drag.z0); S.pick = g; S.dirty = true; return; }
     drag = { p, kind: 'orbit' }; return; }
+  if (S.mode === 'analysis') { const g = toGrid(p[0], p[1]); if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) return;
+    const an = analyze(); let best = null, bd = 14 * 14; for (const kp of an.keypoints) { const q = toSheet(kp.i, kp.j); const d = (q[0] - p[0]) ** 2 + (q[1] - p[1]) ** 2; if (d < bd) { bd = d; best = kp; } }
+    S.keyPt = best ? [best.i, best.j] : g; S.keyAuto = false; S.dirty = true; toast(best ? 'keypoint selected' : 'custom keyline point'); return; }
   if (S.mode !== 'plan') return;
   const g = toGrid(p[0], p[1]);
   snapshot();
@@ -658,6 +822,7 @@ cv.addEventListener('pointermove', e => {
   const p = pt(e); if (pts.has(e.pointerId)) pts.set(e.pointerId, p);
   if (pinch && pts.size === 2) { const a = [...pts.values()]; const d = Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]); const target = pinch.z * d / pinch.d, mid = [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2]; if (S.mode === 'model') { S.cam.pan.x += mid[0] - pinch.mid[0]; S.cam.pan.y += mid[1] - pinch.mid[1]; zoomAt(S.cam.pan, mid[0], mid[1], target / S.cam.zoom, S.w, S.h); } pinch.mid = mid; return; }
   if (S.mode === 'plan') { const g = toGrid(p[0], p[1]); S.ptr = g; readout(g); S.dirty = true; }
+  if (S.mode === 'analysis') readout(toGrid(p[0], p[1]));
   if (S.mode === 'model' && S.sculpt && !drag) { const g = pick(p[0], p[1]); if ((g && !S.pick) || (!g && S.pick) || (g && S.pick && (g[0] !== S.pick[0] || g[1] !== S.pick[1]))) { S.pick = g; S.dirty = true; } if (g) readout(g); }
   if (!drag) return;
   if (drag.kind === 'orbit') { orbit(p[0] - drag.p[0], p[1] - drag.p[1]); drag.p = p; }
@@ -687,10 +852,10 @@ function readout(g) {
 }
 
 /* ---------- rail ---------- */
-const DESC = { plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
+const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints and the keyline.', plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
 function setMode(m) {
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
-  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; S.pick = null;
+  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; S.pick = null;
   cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; document.getElementById('dragRow').style.display = m === 'model' ? '' : 'none'; S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
@@ -701,7 +866,7 @@ const bind = (id, fmt, fn) => { const el = document.getElementById(id), out = do
 const radiusFor = v => S.siteW * (.003 + .25 * (v / 100) ** 2);   // 0.3% to 25% of the site width, fine at the small end
 bind('radius', v => fL(radiusFor(v), radiusFor(v) < 10 ? 1 : 0), v => S.radius = radiusFor(v));
 bind('strength', v => v, v => S.strength = v);
-bind('siteW', v => fL(v, 0), v => { S.siteW = v; document.getElementById('radius').dispatchEvent(new Event('input')); updateStats(); });
+bind('siteW', v => fL(v, 0), v => { S.siteW = v; ['radius', 'thr', 'plow'].forEach(id => { const el = document.getElementById(id); if (el && el.oninput) el.dispatchEvent(new Event('input')); }); updateStats(); });
 document.getElementById('siteW').onchange = () => { if (S.world) fetchWorld(S.world); };
 const setSiteW = v => { const el = document.getElementById('siteW'); el.value = Math.max(+el.min, Math.min(+el.max, Math.round(v / 10) * 10)); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); };
 document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
@@ -720,6 +885,15 @@ document.getElementById('unit').onchange = e => { S.unit = e.target.value; relab
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
 document.getElementById('undo').onclick = undo;
+document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]); document.getElementById('sunSec').style.display = S.an.sun ? '' : 'none'; S.dirty = true; };
+document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sunMode = b.dataset.s; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+bind('month', v => MONTHS[v - 1], v => S.month = v);
+bind('hour', v => { const h = Math.floor(v), m = v % 1 ? ':30' : ':00'; return (h % 12 || 12) + m + (h < 12 ? ' am' : ' pm'); }, v => S.hour = v);
+const thrArea = v => S.siteW * S.siteW * (H - 1) / (W - 1) * (.002 + .098 * (v / 100) ** 2);
+const plowFor = v => S.siteW * (.01 + .19 * v / 100);
+bind('thr', v => fBig(thrArea(v)), v => S.thrV = v);
+bind('plow', v => fL(plowFor(v), plowFor(v) < 10 ? 1 : 0), v => S.plowV = v);
 document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 document.getElementById('labelRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.labels = b.dataset.l === '1'; document.querySelectorAll('#labelRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 document.getElementById('sculptRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sculpt = b.dataset.k === 'sculpt'; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.pick = null; S.dirty = true; toast(S.sculpt ? 'left drag sculpts · right drag orbits · middle drag pans' : 'left drag orbits'); };
@@ -919,7 +1093,7 @@ buildExisting(); resetGrading();
   document.getElementById('radius').dispatchEvent(new Event('input')); S.strength = +document.getElementById('strength').value;
   S.sec = [[20, 85], [120, 15]];
 })();
-addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section' }[e.key]; if (m) setMode(m); if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); });
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section', '4': 'analysis' }[e.key]; if (m) setMode(m); if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); });
 updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 })();
 </script>
