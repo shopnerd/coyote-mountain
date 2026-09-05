@@ -65,7 +65,8 @@ main{position:relative;background:var(--paper);overflow:hidden}
 main::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(42,42,40,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,40,.06) 1px,transparent 1px);background-size:24px 24px}
 canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 canvas.orbit{cursor:grab}
-#pip{inset:auto;top:12px;right:12px;width:300px;height:200px;border:1px solid var(--line);background:var(--paper);cursor:grab;touch-action:none}
+#pip{inset:auto;top:12px;right:12px;width:300px;height:200px;border:1px solid var(--ink2);background:var(--paper);cursor:grab;touch-action:none}
+#pip.rs{cursor:nesw-resize}
 #pip[hidden]{display:none}
 @media (max-width:760px){#pip{width:42vw;height:28vw}}
 .toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:#efeee8;padding:6px 14px;border-radius:20px;font-size:11px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
@@ -485,16 +486,27 @@ function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r
 function drawPip() {
   if (!pw) sizePip(); pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
   const zoom0 = S.cam.zoom; S.cam.zoom = zoom0 * S.pipZoom; (S.modelStyle === 'stepped' ? drawStepped : drawModel)(pctx, pw, ph, 3, true); S.cam.zoom = zoom0;
-  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · wheel or pinch to zoom · double-tap to open', 8, ph - 6);
+  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText('3d · drag to orbit · wheel or pinch to zoom · double-tap to open', 22, ph - 6);
+  pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.moveTo(2, ph - 12); pctx.lineTo(12, ph - 2); pctx.moveTo(2, ph - 6); pctx.lineTo(6, ph - 2); pctx.stroke();
 }
 const ppts = new Map(); let ppinch = null;
 const pipZoomTo = v => { S.pipZoom = Math.max(.5, Math.min(6, v)); S.dirty = true; };
-pip.addEventListener('pointerdown', e => { pip.setPointerCapture(e.pointerId); ppts.set(e.pointerId, [e.clientX, e.clientY]); pdrag = [e.clientX, e.clientY];
+let presize = null; const GRIP = 22;
+const inGrip = e => { const r = pip.getBoundingClientRect(); return e.clientX - r.left < GRIP && r.bottom - e.clientY < GRIP; };
+function setPipSize(w, h) { const m = cv.parentElement.getBoundingClientRect(); w = Math.max(160, Math.min(m.width * .8, w)); h = Math.max(110, Math.min(m.height * .8, h));
+  pip.style.width = w + 'px'; pip.style.height = h + 'px'; sizePip(); S.dirty = true; try { localStorage.setItem('pipSize', w + 'x' + h); } catch (_) {} }
+try { const v = localStorage.getItem('pipSize'); if (v) { const [w, h] = v.split('x').map(Number); if (w && h) { pip.style.width = w + 'px'; pip.style.height = h + 'px'; } } } catch (_) {}
+pip.addEventListener('pointerdown', e => { pip.setPointerCapture(e.pointerId);
+  if (inGrip(e) && ppts.size === 0) { const r = pip.getBoundingClientRect(); presize = { x: e.clientX, y: e.clientY, w: r.width, h: r.height }; return; }
+  ppts.set(e.pointerId, [e.clientX, e.clientY]); pdrag = [e.clientX, e.clientY];
   if (ppts.size === 2) { const a = [...ppts.values()]; ppinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.pipZoom }; pdrag = null; } });
-pip.addEventListener('pointermove', e => { if (ppts.has(e.pointerId)) ppts.set(e.pointerId, [e.clientX, e.clientY]);
+pip.addEventListener('pointermove', e => {
+  if (presize) { setPipSize(presize.w + (presize.x - e.clientX), presize.h + (e.clientY - presize.y)); return; }
+  if (!pdrag && !ppinch) pip.classList.toggle('rs', inGrip(e));
+  if (ppts.has(e.pointerId)) ppts.set(e.pointerId, [e.clientX, e.clientY]);
   if (ppinch && ppts.size === 2) { const a = [...ppts.values()]; pipZoomTo(ppinch.z * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / ppinch.d); return; }
   if (!pdrag) return; orbit(e.clientX - pdrag[0], e.clientY - pdrag[1]); pdrag = [e.clientX, e.clientY]; });
-const pipEnd = e => { ppts.delete(e.pointerId); if (ppts.size < 2) ppinch = null; pdrag = null; };
+const pipEnd = e => { presize = null; ppts.delete(e.pointerId); if (ppts.size < 2) ppinch = null; pdrag = null; };
 pip.addEventListener('pointerup', pipEnd); pip.addEventListener('pointercancel', pipEnd);
 pip.addEventListener('wheel', e => { e.preventDefault(); pipZoomTo(S.pipZoom * (e.deltaY < 0 ? 1.1 : .9)); }, { passive: false });
 pip.addEventListener('dblclick', () => setMode('model'));
