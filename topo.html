@@ -98,7 +98,7 @@ canvas.orbit{cursor:grab}
     <div class="desc" id="desc"></div>
     <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped stack</button></div>
     <div class="desc" id="colorLbl" style="display:none;padding-bottom:2px">surface color</div>
-    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="aerial">aerial photo</button><button data-c="sun">sun</button></div>
+    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="aerial" title="photo on the model. 'no aerial' in the world section clears it too">aerial photo</button><button data-c="sun">sun</button></div>
     <div id="sunSec" style="display:none">
         <div class="seg" style="margin-top:6px"><button data-s="hour" class="on">shadows at an hour</button><button data-s="hours">sun hours per day</button></div>
         <div class="params" style="padding-top:6px">
@@ -1087,6 +1087,7 @@ document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
 bind('rot', v => v + '°', v => S.rot = v);
 bind('aop', v => v + '%', v => S.aop = v / 100);
 document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.aerial = b.dataset.ae === '1'; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
+  if (!S.aerial && S.colorMode === 'aerial') { S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'paper')); showSun(); }
   if (S.aerial && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
 document.getElementById('rot').onchange = () => { if (S.world) fetchWorld(S.world); };
 document.getElementById('dblW').onclick = () => setSiteW(S.siteW * 2);
