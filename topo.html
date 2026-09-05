@@ -118,14 +118,15 @@ canvas.orbit{cursor:grab}
     <div class="sec">world</div>
     <div class="params">
       <div class="p"><label>place or lat, lng</label><input type="text" id="place" placeholder="Griffith Observatory" autocomplete="off"></div>
+      <div class="p"><label>site width · area to fetch<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="3000" step="10" value="60"></div>
+      <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <button class="btn" id="fetch">fetch real terrain</button>
-      <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data at the site width below.</div>
+      <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
     </div>
 
     <div class="sec">site</div>
     <div class="params">
       <div class="p"><label>units</label><select id="unit"><option value="m">metric · m, m³, mm</option><option value="ft">imperial · ft, yd³, in</option></select></div>
-      <div class="p"><label>site width<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="1000" step="5" value="60"></div>
       <div class="p" title="how much the starting ground rises and falls before you sketch anything"><label>existing ground relief<output id="o_relief">2.0 m</output></label><input type="range" id="relief" min="0" max="10" step=".5" value="2"></div>
       <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="4" step="1" value="2"></div>
       <div class="p"><label>hachures<output id="o_hach">60</output></label><input type="range" id="hach" min="0" max="100" step="5" value="60"></div>
@@ -698,6 +699,9 @@ bind('radius', v => fL(v, 1), v => S.radius = v);
 bind('strength', v => v, v => S.strength = v);
 bind('siteW', v => fL(v, 0), v => { S.siteW = v; updateStats(); });
 document.getElementById('siteW').onchange = () => { if (S.world) fetchWorld(S.world); };
+const setSiteW = v => { const el = document.getElementById('siteW'); el.value = Math.max(+el.min, Math.min(+el.max, Math.round(v / 10) * 10)); el.dispatchEvent(new Event('input')); el.dispatchEvent(new Event('change')); };
+document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
+document.getElementById('dblW').onclick = () => setSiteW(S.siteW * 2);
 bind('relief', v => fL(v, 1), v => { S.relief = v; if (S.world) { toast('real terrain loaded. new existing returns to noise'); return; } buildExisting(); resetGrading(); });
 bind('interval', v => fL((isFt() ? INTERVALS_FT : INTERVALS)[v], 2), v => S.ivl = v);
 bind('hach', v => v, v => S.hach = v);
@@ -888,7 +892,7 @@ async function fetchWorld(known) {
     }
     try { await loadTerrarium(lat, lon); } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); }
     S.world = { lat, lon, name }; resetGrading(); const [lo, hi] = range(base);
-    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide`); toast('real terrain loaded');
+    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide. change site width to zoom out or in; it refetches.`); toast('real terrain loaded');
   } catch (e) {
     const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message));
     const msg = blocked ? 'network blocked on this page. open the live site: shopnerd.github.io/coyote-mountain/topo.html' : String(e.message || e);
