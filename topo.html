@@ -855,7 +855,7 @@ function modelFrame() {                   // the model rendered once, reused whi
   return modelShot.canvas;
 }
 function stepRain() {
-  const d = depressions(), dropVol = d.A * .012;
+  const d = depressions(), dropVol = d.A * .025;
   for (let q = 0; q < 5 && drops.length < 1400; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0, trail: [] });
   const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); drops.splice(q, 1); }; const db = damBasinGet();
   for (let q = drops.length - 1; q >= 0; q--) { const dr = drops[q]; dr.age++; dr.trail.push([dr.x, dr.y]); if (dr.trail.length > 14) dr.trail.shift();
