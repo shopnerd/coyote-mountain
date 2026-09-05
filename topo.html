@@ -684,7 +684,7 @@ function sunImage() {
   if (S.sunMode === 'hour') {
     const { alt, az } = sunPos(S.month, S.hour, lat), lit = litMask(alt, az, hi), b = az - S.rot * D2R, sx = Math.sin(b) * Math.cos(alt), sy = -Math.cos(b) * Math.cos(alt), sz = Math.sin(alt);
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); let c;
-      if (alt <= 0) c = hex2('#b7bcc4'); else if (!lit[n]) c = hex2('#98a4b0'); else { const g = grad(i, j), nl = Math.hypot(g[0], g[1], 1), lam = Math.max(0, (-g[0] * sx - g[1] * sy + sz) / nl); c = mix('#c9c0a6', '#fcf8ec', Math.pow(lam, .8)); }
+      if (alt <= 0) c = hex2('#b7bcc4'); else if (!lit[n]) c = hex2('#8e9aa7'); else { const g = grad(i, j), nl = Math.hypot(g[0], g[1], 1), lam = Math.max(0, (-g[0] * sx - g[1] * sy + sz) / nl); c = mix('#a89d80', '#fcf8ec', Math.pow(lam, 1.6)); }
       d[n * 4] = c[0]; d[n * 4 + 1] = c[1]; d[n * 4 + 2] = c[2]; d[n * 4 + 3] = 255; }
     note = alt <= 0 ? `sun below the horizon at ${document.getElementById('o_hour').textContent}` : `sun altitude ${(alt / D2R).toFixed(0)}° · azimuth ${(az / D2R).toFixed(0)}° · lat ${lat.toFixed(1)}`;
   } else {
