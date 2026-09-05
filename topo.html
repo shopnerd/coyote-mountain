@@ -992,7 +992,7 @@ function zoomAt(pan, mx, my, f, w, h, mul) {   // keep the point under (mx,my) f
   const z0 = S.cam.zoom, z1 = Math.max(.4, Math.min(6, z0 * f)), fr = z1 / z0;
   const ox = w / 2 + pan.x, oy = h / 2 + 10 + pan.y; pan.x += (mx - ox) * (1 - fr); pan.y += (my - oy) * (1 - fr); S.cam.zoom = z1; S.dirty = true;
 }
-function orbit(dx, dy) { S.cam.yaw += dx * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch - dy * .006)); S.dirty = true; }
+function orbit(dx, dy) { S.cam.yaw -= dx * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch - dy * .006)); S.dirty = true; }
 const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw = 0, ph = 0, pdrag = null;
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 let pipShot = { key: '', canvas: null };
