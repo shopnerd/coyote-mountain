@@ -503,6 +503,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     it.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke();
     if (it.lines.length) { c.strokeStyle = INK; for (const [a, b, ix] of it.lines) { c.lineWidth = ix ? 1.2 : .6; c.globalAlpha = ix ? .9 : .7; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.globalAlpha = 1; }
   }
+  if (S.an.dam && S.keyPt && !mini) drawDam3D(c, proj);
   if (S.labels && !mini) {
     const groups = new Map(), dmed = items.length ? items[Math.floor(items.length * .45)].d : 0;
     for (const it of items) if (it.d >= dmed) for (const [a, b, ix, lv] of it.lines) if (ix) { if (!groups.has(lv)) groups.set(lv, []); groups.get(lv).push([a[0], a[1], b[0], b[1]]); }
@@ -529,6 +530,20 @@ function pick(px, py) {
   for (let j = 0; j < H; j += 2) for (let i = 0; i < W; i += 2) { const p = proj(i, j, z[idx(i, j)]); const d = (p[0] - px) ** 2 + (p[1] - py) ** 2;
     if (d < bd - 36 || (d < bd + 36 && best && p[2] > best[2])) { bd = d; best = [i, j, p[2]]; } }
   return bd < 900 ? [best[0], best[1]] : null;
+}
+
+function drawDam3D(c, proj) {             // the dam wall and the pond it holds, on the model
+  const an = analyze(), pool = damPool(an, S.keyPt[0], S.keyPt[1], S.damH), L = pool.crest;
+  if (pool.cells.length) { c.fillStyle = WATER; c.globalAlpha = .55; c.beginPath();
+    for (const n of pool.cells) { const i = n % W, j = (n / W) | 0; const a = proj(i - .5, j - .5, L), b = proj(i + .5, j - .5, L), d = proj(i + .5, j + .5, L), e = proj(i - .5, j + .5, L); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.lineTo(d[0], d[1]); c.lineTo(e[0], e[1]); c.closePath(); }
+    c.fill(); c.globalAlpha = 1; }
+  const kn = pool.kn, ki = kn % W, kj = (kn / W) | 0, dn = an.down[kn]; let fx = 0, fy = 1; if (dn >= 0) { fx = dn % W - ki; fy = ((dn / W) | 0) - kj; const m = Math.hypot(fx, fy) || 1; fx /= m; fy /= m; }
+  const half = Math.max(2.5, Math.min(9, Math.sqrt(pool.cells.length) * .45)), px = -fy, py = fx;   // wall runs across the flow
+  const ends = [[ki + px * half, kj + py * half], [ki - px * half, kj - py * half]], top = [], bot = [];
+  for (let t = 0; t <= 8; t++) { const gx = ends[0][0] + (ends[1][0] - ends[0][0]) * t / 8, gy = ends[0][1] + (ends[1][1] - ends[0][1]) * t / 8; top.push(proj(gx, gy, L)); bot.push(proj(gx, gy, Math.min(L, sample(z, gx, gy)))); }
+  c.beginPath(); top.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); for (let t = bot.length - 1; t >= 0; t--) c.lineTo(bot[t][0], bot[t][1]); c.closePath();
+  c.fillStyle = '#4a4744'; c.fill(); c.strokeStyle = ACC; c.lineWidth = 1.5; c.stroke();
+  const mid = top[4]; c.font = font(9.5, 600); c.textAlign = 'center'; c.textBaseline = 'bottom'; haloText(c, `dam · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)}`, mid[0], mid[1] - 6, INK);
 }
 
 /* ---------- stepped model: the cardboard stack before you cut it ---------- */
@@ -570,6 +585,7 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
+  if (S.an.dam && S.keyPt && !mini) drawDam3D(c, proj);
   c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
   if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
@@ -828,7 +844,7 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt)].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 2, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
