@@ -93,7 +93,7 @@ canvas.orbit{cursor:grab}
     <div class="sec">view</div>
     <div id="modes">
       <div class="seg"><button data-m="plan" class="on">plan</button><button data-m="model">model</button><button data-m="section">section</button></div>
-      <div class="seg" style="margin-top:4px"><button data-m="analysis" style="border-radius:3px">analysis · water, keyline, sun</button></div>
+      <div class="seg" style="margin-top:4px"><button data-m="analysis" style="border-radius:3px">analyze</button></div>
     </div>
     <div class="desc" id="desc"></div>
     <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped stack</button></div>
@@ -123,7 +123,10 @@ canvas.orbit{cursor:grab}
         <button data-a="ridge" class="on">ridges</button><button data-a="keys" class="on">keypoints</button>
         <button data-a="keyline" class="on" style="flex-basis:100%">keyline + plow lines</button>
         <button data-a="swales">swales on contour</button><button data-a="dam" class="on">dam site</button>
-        <button data-a="sun" style="flex-basis:100%">sun study</button>
+        <button data-a="flood">flood pooling</button><button data-a="sun">sun study</button>
+      </div>
+      <div class="params" id="floodSec" style="display:none;padding-top:6px">
+        <div class="p" title="rain falling on the whole site in one storm, no infiltration"><label>storm rain<output id="o_rain">25 mm</output></label><input type="range" id="rain" min="1" max="100" step="1" value="35"></div>
       </div>
       <div id="sunSec" style="display:none">
         <div class="seg" style="margin-top:6px"><button data-s="hour" class="on">shadows at an hour</button><button data-s="hours">sun hours per day</button></div>
@@ -138,7 +141,7 @@ canvas.orbit{cursor:grab}
         <div class="p" title="vertical drop between swales"><label>swale drop<output id="o_swale">0.5 m</output></label><input type="range" id="swale" min="1" max="100" step="1" value="30"></div>
         <div class="p" title="wall height of a dam at the keypoint"><label>dam height<output id="o_dam">2 m</output></label><input type="range" id="dam" min="0.5" max="12" step=".5" value="2"></div>
       </div>
-      <div class="desc" id="anaDesc">swales are ditches dug on contour that hold water where it lands; here they step down from the keyline by the swale drop. the dam site sits at the keypoint; the tool floods the ground upstream to the dam height. sun study shades the ground for the site's latitude with real cast shadows; sun hours sums a whole day. keyline design: a valley's steep upper slope eases at the keypoint, the best small-dam site. the keyline is the contour through it. plowing parallel to the keyline drifts runoff from wet valleys toward dry ridges. tap any spot on the sheet to set your own keyline; tap a keypoint to use it.</div>
+      <div class="desc" id="anaDesc">swales are ditches dug on contour that hold water where it lands; here they step down from the keyline by the swale drop. flood pooling drops one storm's rain on every cell, runs it downhill and fills each hollow with what reaches it, brimming and overflowing when full (no soak-in, so it is a worst case). the dam site sits at the keypoint; the tool floods the ground upstream to the dam height. sun study shades the ground for the site's latitude with real cast shadows; sun hours sums a whole day. keyline design: a valley's steep upper slope eases at the keypoint, the best small-dam site. the keyline is the contour through it. plowing parallel to the keyline drifts runoff from wet valleys toward dry ridges. tap any spot on the sheet to set your own keyline; tap a keypoint to use it.</div>
     </div>
 
     <div class="sec">world</div>
@@ -292,7 +295,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 60, ve: 1.5, mm: 150,
-  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', rot: 0, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, thick: 3, sheet: [300, 450], world: null, unit: 'm', rot: 0, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, flipDrag: false, pipView: '3d', sculpt: true, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, swaleV: 30, damH: 2, rainV: 35, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -605,7 +608,7 @@ function analyze() {
     if (bi < 0 || bs < .03) continue; const kn = path[bi]; keypoints.push({ i: kn % W, j: (kn / W) | 0, n: kn, z: z[kn], acc: acc[kn], slope: bs });
   }
   keypoints.sort((a, b) => b.acc - a.acc); keypoints.splice(12);
-  ana = { key, down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order };
+  ana = { key, down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order, filled };
   if (S.keyAuto || !S.keyPt) S.keyPt = keypoints.length ? [keypoints[0].i, keypoints[0].j] : null;
   return ana;
 }
@@ -679,6 +682,27 @@ function damPool(an, gi, gj, hgt) {      // cells upstream of the dam node that 
   for (let n = 0; n < N; n++) if (up[n] && z[n] < crest) { cells.push(n); vol += crest - z[n]; ci += n % W; cj += (n / W) | 0; }
   return { cells, vol: vol * an.A, area: cells.length * an.A, ci: cells.length ? ci / cells.length : gi, cj: cells.length ? cj / cells.length : gj, zk, crest, kn };
 }
+let floodCache = { key: '' };
+function floodSim(an, rainM) {           // fill every depression with the rain that drains into it
+  const key = an.key + '|' + rainM; if (floodCache.key === key) return floodCache;
+  const N = W * H, A = an.A, filled = an.filled, depth = new Float32Array(N); for (let n = 0; n < N; n++) depth[n] = filled[n] - z[n];
+  const comp = new Int32Array(N).fill(-1), comps = [];
+  for (let n0 = 0; n0 < N; n0++) { if (comp[n0] >= 0 || depth[n0] < .01) continue; const id = comps.length, cells = [n0]; comp[n0] = id; const stack = [n0];
+    while (stack.length) { const n = stack.pop(), i = n % W, j = (n / W) | 0; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (comp[m] < 0 && depth[m] >= .01) { comp[m] = id; cells.push(m); stack.push(m); } } }
+    comps.push({ cells, inflow: 0 }); }
+  // where does rain on each cell end up on the real (unfilled) ground?
+  const down0 = d8(z), term = new Int32Array(N).fill(-2);
+  for (let n = 0; n < N; n++) { if (term[n] !== -2) continue; const path = []; let c = n; while (term[c] === -2 && down0[c] >= 0) { path.push(c); c = down0[c]; if (path.length > N) break; } const t = term[c] === -2 ? c : term[c]; for (const q of path) term[q] = t; term[c] = t; }
+  for (let n = 0; n < N; n++) { const t = term[n]; if (t >= 0 && comp[t] >= 0) comps[comp[t]].inflow++; }
+  const water = new Float32Array(N), pools = [];
+  for (const cp of comps) { const cells = cp.cells.slice().sort((a, b) => z[a] - z[b]); let spill = -Infinity, cap = 0; for (const n of cells) { spill = Math.max(spill, filled[n]); cap += depth[n] * A; }
+    const V = cp.inflow * A * rainM; let level, overflow = 0;
+    if (V >= cap) { level = spill; overflow = V - cap; } else { let lo = z[cells[0]], hi = spill; for (let it = 0; it < 30; it++) { const mid = (lo + hi) / 2; let v = 0; for (const n of cells) { if (z[n] >= mid) break; v += (mid - z[n]) * A; } if (v < V) lo = mid; else hi = mid; } level = (lo + hi) / 2; }
+    let area = 0, vol = 0, deep = cells[0], ci = 0, cj = 0; for (const n of cells) { const d = level - z[n]; if (d <= 0) continue; water[n] = d; area += A; vol += d * A; ci += n % W; cj += (n / W) | 0; if (d > water[deep]) deep = n; }
+    if (area >= 4 * A && water[deep] >= .03) pools.push({ area, vol, cap, level, overflow, depth: water[deep], ci: ci / (area / A), cj: cj / (area / A), full: cap ? Math.min(1, vol / cap) : 1 }); }
+  pools.sort((a, b) => b.area - a.area);
+  floodCache = { key, water, pools }; return floodCache;
+}
 function drawAnalysis() {
   ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = analyze(), { down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order } = an;
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
@@ -695,6 +719,10 @@ function drawAnalysis() {
       if (j < H - 1 && label[n] !== label[n + W]) { const y = sheet.y + (j + .5) * k; ctx.moveTo(sheet.x + (i - .5) * k, y); ctx.lineTo(sheet.x + (i + .5) * k, y); } }
     ctx.stroke(); ctx.globalAlpha = 1;
   }
+  let flood = null;
+  if (S.an.flood) { flood = floodSim(an, rainMM(S.rainV) / 1000); const k2 = sheet.k;
+    for (let n = 0; n < W * H; n++) { const d = flood.water[n]; if (d <= 0) continue; const p = cellXY(n); ctx.fillStyle = WATER; ctx.globalAlpha = .28 + .55 * Math.min(1, d / 1.5); ctx.fillRect(p[0] - k2 / 2, p[1] - k2 / 2, k2 + .5, k2 + .5); }
+    ctx.globalAlpha = 1; }
   drawContours(.3, false);
   if (S.an.flow) { ctx.strokeStyle = WATER; ctx.lineCap = 'round';
     for (let n = 0; n < W * H; n++) { if (down[n] < 0 || acc[n] < thrCells * .2) continue; const a = cellXY(n), b = cellXY(down[n]);
@@ -734,6 +762,9 @@ function drawAnalysis() {
     ctx.font = font(9.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     const txt = `dam site · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`, tw = ctx.measureText(txt).width + 8; let lx = p[0] + fy * half + 8; const ly = p[1] - fx * half - 14; if (lx + tw > sheet.x + sheet.w) lx = p[0] - fy * half - tw - 4;
     ctx.fillStyle = PAPER; ctx.fillRect(lx - 4, ly - 7, tw, 14); ctx.fillStyle = INK; ctx.fillText(txt, lx, ly + .5); }
+  if (flood) { ctx.font = font(9.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    for (const pl of flood.pools.slice(0, 10)) { const p = toSheet(pl.ci, pl.cj); const txt = `pool · ${fBig(pl.area)} · ${fL(pl.depth, 1)} deep · ${pl.overflow > 0 ? 'full, overflowing ' + fV(pl.overflow) : Math.round(pl.full * 100) + '% full'}`, tw = ctx.measureText(txt).width + 8;
+      let lx = p[0] + 8; if (lx + tw > sheet.x + sheet.w) lx = p[0] - tw - 8; ctx.fillStyle = 'rgba(240,240,236,.9)'; ctx.fillRect(lx - 4, p[1] - 7, tw, 14); ctx.fillStyle = '#3f6488'; ctx.fillText(txt, lx, p[1] + .5); } }
   if (S.an.keys) for (const kp of keypoints) { const p = toSheet(kp.i, kp.j), sel = S.keyPt && S.keyPt[0] === kp.i && S.keyPt[1] === kp.j;
     ctx.strokeStyle = ACC; ctx.lineWidth = sel ? 2 : 1.2; ctx.fillStyle = sel ? ACC : PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], sel ? 6 : 4.5, 0, TAU); ctx.fill(); ctx.stroke();
     ctx.fillStyle = ACC; ctx.textAlign = 'left'; ctx.fillText('keypoint ' + fL(kp.z, 1), p[0] + 10, p[1] + .5); }
@@ -743,7 +774,7 @@ function drawAnalysis() {
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   if (sunNote) ctx.fillText(sunNote, sheet.x, sheet.y + sheet.h + 20);
-  ctx.fillText(`analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} · blue water, dashed ember ridges`, sheet.x, sheet.y + sheet.h + 6);
+  ctx.fillText(`${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} · blue water, dashed ember ridges`, sheet.x, sheet.y + sheet.h + 6);
 }
 
 /* ---------- section ---------- */
@@ -950,7 +981,7 @@ document.getElementById('unit').onchange = e => { S.unit = e.target.value; relab
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
 document.getElementById('undo').onclick = undo;
-document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]); document.getElementById('sunSec').style.display = S.an.sun ? '' : 'none'; S.dirty = true; };
+document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]); document.getElementById('sunSec').style.display = S.an.sun ? '' : 'none'; document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none'; S.dirty = true; };
 document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sunMode = b.dataset.s; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 bind('month', v => MONTHS[v - 1], v => S.month = v);
@@ -962,6 +993,8 @@ bind('plow', v => fL(plowFor(v), plowFor(v) < 10 ? 1 : 0), v => S.plowV = v);
 const swaleDrop = v => { const [lo, hi] = range(z); return Math.max(.1, (hi - lo) * (.02 + .3 * v / 100)); };
 bind('swale', v => fL(swaleDrop(v), 2), v => S.swaleV = v);
 bind('dam', v => fL(v, 1), v => S.damH = v);
+const rainMM = v => 2 + 198 * (v / 100) ** 2;
+bind('rain', v => isFt() ? tz((rainMM(v) / 25.4).toFixed(2)) + ' in' : Math.round(rainMM(v)) + ' mm', v => S.rainV = v);
 document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 document.getElementById('labelRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.labels = b.dataset.l === '1'; document.querySelectorAll('#labelRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 document.getElementById('sculptRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sculpt = b.dataset.k === 'sculpt'; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.pick = null; S.dirty = true; toast(S.sculpt ? 'left drag sculpts · right drag orbits · middle drag pans' : 'left drag orbits'); };
