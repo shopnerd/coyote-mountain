@@ -133,8 +133,8 @@ canvas.orbit{cursor:grab}
         <button data-b="pen" title="freehand pen: draws on the plan and drapes over the 3d ground">pen</button><button data-b="erase" title="drag over pen strokes to remove them">eraser</button>
         <button data-b="section" style="flex-basis:100%">section line</button>
       </div>
-      <div class="seg" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circle</button></div>
-      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penDash" title="dashed strokes">dashed</button><button id="penClear" title="remove every pen stroke">clear</button></div>
+      <div class="seg" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circ</button></div>
+      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penDash">dash</button><button id="penClear" title="remove every pen stroke">clear</button></div>
       <div class="params">
         <div class="p" title="brush size scales with the site width"><label><span id="l_radius">radius</span><output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label><span id="l_strength">strength</span><output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
@@ -444,8 +444,8 @@ function drawPlan() {
   ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, -6); ctx.moveTo(-3, -2); ctx.lineTo(0, -6); ctx.lineTo(3, -2); ctx.stroke(); ctx.restore(); ctx.textBaseline = 'top';
   drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
   if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.globalAlpha = st.a; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * st.w; ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
-  // section line
-  if (S.sec) drawSectionLine();
+  // section line: shown only while the section tool is selected
+  if (S.sec && S.brush === 'section') drawSectionLine();
   // brush cursor
   if (S.ptr && S.mode === 'plan' && S.brush !== 'section' && S.brush !== 'pen' && S.brush !== 'erase') {
     const p = toSheet(S.ptr[0], S.ptr[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
@@ -1215,7 +1215,7 @@ function readout(g) {
 /* ---------- floating descriptions on dwell ---------- */
 const TIPS = {
   'm:plan': 'the drawing sheet: contours, hachures, your grading and pen sketch', 'm:model': 'the ground in 3d. orbit, sculpt, colour it, watch rain and sun', 'm:section': 'a cut through the ground along the A–B line: proposed over existing, cut and fill', 'm:analysis': 'where water goes: flow, catchments, flood, keyline, dam, rain, sun',
-  'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'drag a line from A to B to cut a section',
+  'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'shows the A–B section line; drag a new one to cut a section',
   'pm:smart': 'freehand that tidies itself on lift: straight lines, circles, boxes, clean polylines', 'pm:free': 'freehand kept exactly as drawn', 'pm:line': 'drag a straight line', 'pm:rect': 'drag a rectangle corner to corner', 'pm:circle': 'drag a circle from its centre',
   'pc:ink': 'black pen', 'pc:ember': 'orange pen', 'pc:water': 'blue pen', penDash: 'dashed strokes on or off', penClear: 'remove every pen stroke',
   'a:flow': 'blue lines where water runs, thicker with more ground feeding them', 'a:catch': 'each outlet\'s basin, tinted, with its area', 'a:ridge': 'dashed ember lines along the ridges', 'a:keys': 'keypoints: where a valley\'s steep upper slope eases, the classic small-dam site', 'a:keyline': 'the contour through the keypoint plus parallel plow lines in its catchment', 'a:swales': 'on-contour ditches stepping down from the keyline', 'a:dam': 'a dam at the keypoint or wherever you place it, with the pond it holds', 'a:flood': 'one storm\'s rain pooled in every hollow, worst case, no soak-in', 'a:sun': 'shadows at an hour, or sun hours per day, for the site\'s latitude', 'a:plow': 'rain follows the plow furrows: water drifts from the valley toward the ridges',
