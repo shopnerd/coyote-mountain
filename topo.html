@@ -839,7 +839,7 @@ function drawAnalysis() {
     const txt = `dam site · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`, tw = ctx.measureText(txt).width + 8; let lx = p[0] + fy * half + 8; const ly = p[1] - fx * half - 14; if (lx + tw > sheet.x + sheet.w) lx = p[0] - fy * half - tw - 4;
     haloText(ctx, txt, lx, ly + .5, INK); }
   if (flood) { ctx.font = font(10.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    for (const pl of flood.pools.slice(0, 10)) { const p = toSheet(pl.ci, pl.cj); const txt = `pool · ${fBig(pl.area)} · ${fL(pl.depth, 1)} deep · ${pl.overflow > 0 ? 'full, overflowing ' + fV(pl.overflow) : Math.round(pl.full * 100) + '% full'}`, tw = ctx.measureText(txt).width + 8;
+    for (const pl of flood.pools.slice(0, 5)) { const p = toSheet(pl.ci, pl.cj); const txt = `pool · ${fBig(pl.area)} · ${fL(pl.depth, 1)} deep · ${pl.overflow > 0 ? 'full, overflowing ' + fV(pl.overflow) : Math.round(pl.full * 100) + '% full'}`, tw = ctx.measureText(txt).width + 8;
       let lx = p[0] + 8; if (lx + tw > sheet.x + sheet.w) lx = p[0] - tw - 8; haloText(ctx, txt, lx, p[1] + .5, '#3f6488'); } }
   drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
   if (S.an.keys) for (const kp of keypoints) { const p = toSheet(kp.i, kp.j), sel = S.keyPt && S.keyPt[0] === kp.i && S.keyPt[1] === kp.j;
