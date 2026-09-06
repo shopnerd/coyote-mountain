@@ -15,7 +15,7 @@
 html,body{height:100%}
 body{background:var(--page);color:var(--ink);font:13px/1.5 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 :root{--rail:256px}
-#app{display:grid;grid-template-rows:38px 26px 1fr;grid-template-columns:var(--rail) minmax(0,1fr);height:100dvh;width:100vw;max-width:100vw}
+#app{display:grid;grid-template-rows:38px 26px 1fr;grid-template-columns:var(--rail) minmax(0,1fr);height:100dvh;width:100vw;max-width:100vw;position:relative}
 header{grid-column:1/-1;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 12px}
 header .logo{font-weight:600}
 header .logo b{color:var(--accent);font-weight:600}
@@ -32,8 +32,10 @@ header .read b{color:var(--ink);font-weight:600}
 .cmd button{flex:0 0 auto;min-height:20px;padding:1px 8px;border:1px solid #9a9992;background:var(--panel);color:var(--ink);border-radius:3px;font:inherit;font-size:11px;cursor:pointer}
 .cmd button:hover{background:#fdf3ea;border-color:#d9895d}
 aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;position:relative}
-#railGrip{position:absolute;top:0;bottom:0;right:0;width:8px;cursor:col-resize;z-index:5}
-#railGrip:hover,#railGrip.on{background:rgba(201,107,58,.18)}
+#railGrip{position:absolute;left:calc(var(--rail) - 7px);top:64px;bottom:0;width:14px;cursor:col-resize;z-index:5}
+#railGrip::after{content:'';position:absolute;left:5px;top:50%;width:4px;height:36px;margin-top:-18px;border-radius:2px;background:#b3b2aa}
+#railGrip:hover,#railGrip.on{background:rgba(201,107,58,.10)}
+#railGrip:hover::after,#railGrip.on::after{background:var(--accent)}
 .sec{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);padding:10px 12px 4px;display:flex;align-items:baseline;gap:8px}
 .sec::after{content:"";flex:1;border-top:1px solid var(--line);transform:translateY(-3px)}
 .seg{display:flex;padding:0 12px;gap:0}
@@ -145,6 +147,8 @@ canvas.orbit{cursor:grab}
       <div class="params">
         <div class="p" title="brush size scales with the site width"><label><span id="l_radius">radius</span><output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label><span id="l_strength">strength</span><output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
+        <div class="p"><label>hachures<output id="o_hach">15</output></label><input type="range" id="hach" min="0" max="100" step="5" value="15"></div>
+        <div class="seg" id="labelRow" style="margin-top:6px"><button data-l="1" class="on">labels</button><button data-l="0">no labels</button></div>
       </div>
     </div>
 
@@ -193,8 +197,6 @@ canvas.orbit{cursor:grab}
       <div class="p" id="reliefRow" title="height of the invented hills, low point to high point"><label>invented hills relief<output id="o_relief">2.0 m</output></label><input type="range" id="relief" min="0" max="10" step=".5" value="2"></div>
       <div class="seg" style="padding:0"><button id="reseed" title="throw away the ground and invent fresh rolling hills">random ground</button><button id="reset" title="drop your grading, keep the ground">reset grade</button></div>
       <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="6" step="1" value="2"></div>
-      <div class="p"><label>hachures<output id="o_hach">15</output></label><input type="range" id="hach" min="0" max="100" step="5" value="15"></div>
-      <div class="seg" id="labelRow"><button data-l="1" class="on">labels</button><button data-l="0">no labels</button></div>
       <div class="p"><label>vertical exaggeration<output id="o_ve">1.5 x</output></label><input type="range" id="ve" min="1" max="5" step=".25" value="1.5"></div>
     </div>
 
@@ -233,11 +235,11 @@ canvas.orbit{cursor:grab}
       <input type="file" id="openFile" accept=".json,application/json" style="display:none">
       <button class="btn" id="png">save png</button>
       <button class="btn" id="stl">export stl</button>
-      <button class="btn primary wide" id="laser">laser cut svg</button>
-      <button class="btn wide" id="sheetBtn">drawing sheet · pdf + png</button>
+      <button class="btn" id="laser">export laser svg</button>
+      <button class="btn primary wide" id="sheetBtn">drawing sheet · pdf + png</button>
     </div>
-    <div id="railGrip" title="drag to widen the menu; everything in it grows with it"></div>
   </aside>
+  <div id="railGrip" title="drag to widen the menu; everything in it grows with it"></div>
   <div id="tip"></div>
   <main>
     <canvas id="c"></canvas>
@@ -382,6 +384,7 @@ function dab(gx, gy, kind, z0) {
       z[n] += ((l + r + u + dn) / 4 - z[n]) * .5 * k * wgt;
     }
   }
+  contourDirty(i0 - 1, j0 - 1, i1, j1);
 }
 function strokeLine(a, b, kind, z0) {   // grid coords
   const d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d / 1.5));
@@ -461,7 +464,7 @@ function drawPlanBase() {
     }
     ctx.stroke(); ctx.globalAlpha = 1;
   }
-  drawContours(1, S.labels);
+  drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt')));
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   if (!S.noFoot) {
@@ -491,18 +494,37 @@ function contours() {                     // every contour level as linked polyl
     const segs = [];
     for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { const q = j * (W - 1) + i; if (lv < cmin[q] || lv > cmax[q]) continue;
       const tmp = []; isoSegs(z[idx(i, j)], z[idx(i + 1, j)], z[idx(i + 1, j + 1)], z[idx(i, j + 1)], lv, tmp);
-      for (let t = 0; t < tmp.length; t += 4) segs.push([i + tmp[t], j + tmp[t + 1], i + tmp[t + 2], j + tmp[t + 3]]); }
-    if (segs.length) { const index = isIndex(lv); levels.push({ lv, index, segs, polys: index ? linkSegs(segs) : null }); }   // only index levels are linked (for labels); the rest draw as fragments
+      for (let t = 0; t < tmp.length; t += 4) segs.push([i + tmp[t], j + tmp[t + 1], i + tmp[t + 2], j + tmp[t + 3], q]); }
+    if (segs.length) { const index = isIndex(lv); levels.push({ lv, index, segs, polys: null }); }   // linked into polylines only when labels need them
   }
-  contourCache = { key, levels }; return contourCache;
+  contourCache = { key, iv, levels, cmin, cmax }; return contourCache;
+}
+function contourDirty(i0, j0, i1, j1) {   // a brush dab changed nodes in this rect: patch the cached contours there instead of rebuilding every level
+  const C = contourCache; if (C.key !== (S.terrainVer - 1) + '|' + C.iv || !C.levels.length) return;
+  i0 = Math.max(0, i0); j0 = Math.max(0, j0); i1 = Math.min(W - 2, i1); j1 = Math.min(H - 2, j1); if (i1 < i0 || j1 < j0) return;
+  let lo = 1e9, hi = -1e9, olo = 1e9, ohi = -1e9;
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const q = j * (W - 1) + i; if (C.cmin[q] < olo) olo = C.cmin[q]; if (C.cmax[q] > ohi) ohi = C.cmax[q]; }   // the rect's range before the dab
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const a = z[idx(i, j)], b = z[idx(i + 1, j)], c = z[idx(i + 1, j + 1)], d = z[idx(i, j + 1)], q = j * (W - 1) + i; C.cmin[q] = Math.min(a, b, c, d); C.cmax[q] = Math.max(a, b, c, d); if (C.cmin[q] < lo) lo = C.cmin[q]; if (C.cmax[q] > hi) hi = C.cmax[q]; }
+  // levels that only now exist (the brush pushed the ground past the top or bottom contour) are added empty; their segments come from the rect below
+  for (let lv = C.levels[0].lv - C.iv; lv >= Math.ceil(lo / C.iv) * C.iv - 1e-9; lv -= C.iv) C.levels.unshift({ lv, index: isIndex(lv), segs: [], polys: null });
+  for (let lv = C.levels[C.levels.length - 1].lv + C.iv; lv <= hi + 1e-9; lv += C.iv) C.levels.push({ lv, index: isIndex(lv), segs: [], polys: null });
+  const inRect = q => { const ci = q % (W - 1), cj = (q / (W - 1)) | 0; return ci >= i0 && ci <= i1 && cj >= j0 && cj <= j1; };
+  const rlo = Math.min(lo, olo), rhi = Math.max(hi, ohi);
+  for (const L of C.levels) { if (L.lv < rlo || L.lv > rhi) continue;   // only levels that cross the rect, before or after
+    const keep = []; for (const sg of L.segs) if (!inRect(sg[4])) keep.push(sg);
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const q = j * (W - 1) + i; if (L.lv < C.cmin[q] || L.lv > C.cmax[q]) continue;
+      const tmp = []; isoSegs(z[idx(i, j)], z[idx(i + 1, j)], z[idx(i + 1, j + 1)], z[idx(i, j + 1)], L.lv, tmp);
+      for (let t = 0; t < tmp.length; t += 4) keep.push([i + tmp[t], j + tmp[t + 1], i + tmp[t + 2], j + tmp[t + 3], q]); }
+    L.segs = keep; L.polys = null; }
+  C.key = S.terrainVer + '|' + C.iv;
 }
 function drawContours(alpha, labels) {
   const { levels } = contours(), k = sheet.k, groups = new Map();
   ctx.strokeStyle = INK;
   for (const pass of [0, 1]) { ctx.lineWidth = pass ? 1.4 : .7; ctx.globalAlpha = pass ? alpha : .8 * alpha; ctx.beginPath();
     for (const L of levels) { if ((L.index ? 1 : 0) !== pass) continue;
-      if (!pass) { for (const sg of L.segs) { ctx.moveTo(sheet.x + sg[0] * k, sheet.y + sg[1] * k); ctx.lineTo(sheet.x + sg[2] * k, sheet.y + sg[3] * k); } continue; }
-      const sp = [];
+      if (!pass || !labels) { for (const sg of L.segs) { ctx.moveTo(sheet.x + sg[0] * k, sheet.y + sg[1] * k); ctx.lineTo(sheet.x + sg[2] * k, sheet.y + sg[3] * k); } continue; }
+      if (!L.polys) L.polys = linkSegs(L.segs); const sp = [];
       for (const poly of L.polys) { const P = new Array(poly.length);
         for (let q = 0; q < poly.length; q++) { const x = sheet.x + poly[q][0] * k, y = sheet.y + poly[q][1] * k; if (q) ctx.lineTo(x, y); else ctx.moveTo(x, y); P[q] = [x, y]; }
         sp.push(P); }
@@ -1089,7 +1111,7 @@ function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r
 let pipShot = { key: '', canvas: null };
 function pipFrame() {                     // the 3d preview drawn once (camera already swapped in by drawPip), reused while the rain moves
   const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
-  if (pipShot.key !== key) { const now = performance.now(); if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt') && pipShot.canvas && now - (pipShot.t || 0) < 200) return pipShot.canvas;
+  if (pipShot.key !== key) { const now = performance.now(); if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt') && pipShot.canvas) return pipShot.canvas;
     const off = document.createElement('canvas'); off.width = Math.max(1, Math.round(pw * dpr)); off.height = Math.max(1, Math.round(ph * dpr)); const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0); o.fillStyle = PAPER; o.fillRect(0, 0, pw, ph);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, pw, ph, 3, true); pipShot = { key, canvas: off, t: now }; }
   return pipShot.canvas;
@@ -1552,7 +1574,7 @@ function layerPlan() {
 }
 function footInfo() {                      // the printed object: width x depth x height at this scale
   const { k, lo, hi } = layerPlan(), w = S.mm, d = S.mm * (H - 1) / (W - 1), h = (hi - lo) * S.ve * k + 3, dim = mm => isFt() ? tz((mm / 25.4).toFixed(2)) : Math.round(mm);
-  document.getElementById('footInfo').textContent = `model · ${dim(w)} × ${dim(d)} × ${dim(h)} ${isFt() ? 'in' : 'mm'} · width × depth × height, base included`;
+  document.getElementById('footInfo').textContent = `model · ${dim(w)} × ${dim(d)} × ${dim(h)} ${isFt() ? 'in' : 'mm'} · width × depth × height`;
 }
 function layersInfo() {
   footInfo();
