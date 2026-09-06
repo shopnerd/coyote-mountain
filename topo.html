@@ -523,7 +523,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   if (!mini && mode === 'aerial') { c.fillStyle = INK2; c.font = font(10.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(S.world ? (aerialCache.canvas ? 'imagery Esri, Maxar, Earthstar Geographics' : (aerialCache.status || 'loading photo')) : 'fetch real terrain to get a photo', w - 14, h - 10); }
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
-  if (mini) return; c.fillText(`model · ${S.ve}x vertical · right drag orbit · middle or shift drag pan · ctrl+right drag zoom · wheel zoom · double-click reset · r rain`, 14, h - 10);
+  if (mini) return; c.fillText(w < 1150 ? `model · ${S.ve}x vertical · right drag orbit · wheel zoom · double-click reset` : `model · ${S.ve}x vertical · right drag orbit · middle or shift drag pan · ctrl+right drag zoom · wheel zoom · double-click reset · r rain`, 14, h - 10);
 }
 
 /* ---------- camera + picking (screen point -> grid node on the surface) ---------- */
@@ -598,7 +598,7 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
-  if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
+  if (mini) return; c.fillText(w < 1150 ? `stepped stack · ${layers.length} layers of ${fS(S.thick)} · right drag orbit` : `stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
 }
 
 /* ---------- analysis: flow, catchments, ridges, keypoints, keyline ---------- */
