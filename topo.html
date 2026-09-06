@@ -431,6 +431,7 @@ function drawPlan() {
   ctx.save(); ctx.translate(sheet.x + 22, sheet.y + 26); ctx.rotate(-S.rot * D2R); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('N', 0, -9);
   ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, -6); ctx.moveTo(-3, -2); ctx.lineTo(0, -6); ctx.lineTo(3, -2); ctx.stroke(); ctx.restore(); ctx.textBaseline = 'top';
   drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
+  if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)); ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); }
   // section line
   if (S.sec) drawSectionLine();
   // brush cursor
@@ -1087,7 +1088,7 @@ cv.addEventListener('pointerdown', e => {
   if (S.mode !== 'plan') return;
   const g = toGrid(p[0], p[1]);
   snapshot();
-  if (S.brush === 'pen' && (S.penMode === 'line' || S.penMode === 'rect' || S.penMode === 'circle')) { const base = document.createElement('canvas'); base.width = cv.width; base.height = cv.height; base.getContext('2d').drawImage(cv, 0, 0); drag = { kind: 'shape', p0: p, base }; return; }
+  if (S.brush === 'pen' && (S.penMode === 'line' || S.penMode === 'rect' || S.penMode === 'circle')) { drag = { kind: 'shape', p0: p, p1: null }; return; }
   if (S.brush === 'pen') { const st = { color: S.penColor, pts: [[g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5]] }; S.strokes.push(st); drag = { kind: 'pen', st, last: p }; return; }
   if (S.brush === 'erase') { drag = { kind: 'erase' }; eraseAt(g); return; }
   if (S.brush === 'section') { S.sec = [g, g]; drag = { g, kind: 'section' }; S.dirty = true; return; }
@@ -1113,8 +1114,7 @@ cv.addEventListener('pointermove', e => {
       ctx.lineWidth = (1 + 2.4 * (last[2] + pr) / 2) * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)); ctx.beginPath(); ctx.moveTo(drag.last[0], drag.last[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); drag.last = q; }
     ctx.lineCap = 'butt'; }
   else if (drag.kind === 'erase') eraseAt(toGrid(p[0], p[1]));
-  else if (drag.kind === 'shape') { ctx.clearRect(0, 0, S.w, S.h); ctx.drawImage(drag.base, 0, 0, S.w, S.h); const st = shapeFromDrag(S.penMode, drag.p0, p); drag.p1 = p;
-    ctx.strokeStyle = PEN[st.color] || INK; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)); ctx.lineJoin = 'round'; ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); }
+  else if (drag.kind === 'shape') { drag.p1 = p; S.dirty = true; }
   else { const g = toGrid(p[0], p[1]); strokeLine(drag.g, g, S.brush, drag.z0); drag.g = g; S.dirty = true; }
 });
 function simplifyDP(P, tol) {             // douglas-peucker on [x,y] points
