@@ -1297,7 +1297,7 @@ document.getElementById('fetch').onclick = () => fetchWorld();
 function setBrush(b) { S.brush = b; document.getElementById('l_radius').textContent = b === 'pen' ? 'stroke width' : 'radius'; document.getElementById('l_strength').textContent = b === 'pen' ? 'opacity' : 'strength'; if (typeof relabels !== 'undefined') relabels.forEach(f => f()); document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; }
 function setInterval1ft() { const list = isFt() ? INTERVALS_FT : INTERVALS, want = isFt() ? 1 / FT : .5; let k = 0; for (let q = 0; q < list.length; q++) if (Math.abs(list[q] - want) < Math.abs(list[k] - want)) k = q; const el = document.getElementById('interval'); el.value = k; el.dispatchEvent(new Event('input')); }
 async function goHome(quiet) {
-  try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr, true); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'home project'); if (!quiet) toast('home'); return; } } catch (_) {}
+  try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr, true); undoStack.length = 0; worldStatus(''); if (!quiet) toast('home'); return; } } catch (_) {}
   document.getElementById('place').value = HOME.lat + ', ' + HOME.lon; setSiteW(HOME.siteW, true); autoPlow(); document.getElementById('rot').value = 0; document.getElementById('rot').dispatchEvent(new Event('input'));
   S.aerial = false; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '0')); document.getElementById('aerialOp').style.display = 'none';
   if (S.colorMode === 'aerial') { S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'paper')); }
@@ -1582,14 +1582,14 @@ function loadProject(pr, fromHome) {
   document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode)); document.querySelectorAll('#modelStyle button').forEach(b => b.classList.toggle('on', b.dataset.s === S.modelStyle));
   document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === S.aerial)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
   if (S.aerial) S.colorMode = 'aerial'; if (!S.aerial && S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
-  relabels.forEach(f => f()); worldStatus(S.world ? `${S.world.name} · site ${fL(S.siteW, 0)} wide (from file)` : 'noise terrain.'); S.terrainVer++; updateStats(); S.dirty = true;
+  relabels.forEach(f => f()); worldStatus(''); S.terrainVer++; updateStats(); S.dirty = true;
 }
 function saveProject() { const pr = snapshotProject(), name = `coyote-topo-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 30)}.json`; dl(URL.createObjectURL(new Blob([JSON.stringify(pr)], { type: 'application/json' })), name); }
 document.getElementById('saveProj').onclick = saveProject;
 document.getElementById('openProj').onclick = () => document.getElementById('openFile').click();
 document.getElementById('openFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { loadProject(JSON.parse(rd.result)); toast('project opened'); } catch (err) { toast(String(err.message || err)); } }; rd.readAsText(f); e.target.value = ''; };
 let lastAuto = ''; setInterval(() => { try { const pr = snapshotProject(); const sig = S.terrainVer + '|' + S.strokeVer + '|' + pr.brush + '|' + pr.sculpt + '|' + JSON.stringify([pr.sliders, pr.world, pr.sec, pr.keyPt, pr.an, pr.unit, pr.aerial, pr.colorMode, pr.modelStyle]); if (sig !== lastAuto) { lastAuto = sig; localStorage.setItem('topo-session', JSON.stringify(pr)); } } catch (_) {} }, 4000);
-function restoreSession() { try { const raw = localStorage.getItem('topo-session'); if (!raw) return false; loadProject(JSON.parse(raw), false); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'restored from your last session'); return true; } catch (_) { return false; } }
+function restoreSession() { try { const raw = localStorage.getItem('topo-session'); if (!raw) return false; loadProject(JSON.parse(raw), false); undoStack.length = 0; worldStatus(''); return true; } catch (_) { return false; } }
 
 /* ---------- start: existing grade plus a sketched berm and swale so the sheet is not empty ---------- */
 buildExisting(); resetGrading();
