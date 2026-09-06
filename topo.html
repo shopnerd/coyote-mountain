@@ -197,8 +197,8 @@ canvas.orbit{cursor:grab}
 
     <div class="sec">fabricate</div>
     <div class="params">
-      <div class="p"><label>model width<output id="o_mm">150 mm</output></label><input type="range" id="mm" min="50" max="600" step="10" value="150"></div>
-      <div class="p"><label>cardboard<output id="o_thick">3.0 mm</output></label><input type="range" id="thick" min="1" max="12" step=".5" value="3"></div>
+      <div class="p" title="how much the site shrinks to become the object: 1 to N"><label>scale<output id="o_mm">1:400</output></label><input type="range" id="mm" min="50" max="600" step="10" value="150"></div>
+      <div class="p"><label>material thickness<output id="o_thick">3.0 mm</output></label><input type="range" id="thick" min="1" max="12" step=".5" value="3"></div>
       <div class="p"><label>sheet</label><select id="sheet">
         <option value="300x450">300 × 450 mm</option>
         <option value="495x279">495 × 279 mm (glowforge)</option>
@@ -1307,7 +1307,7 @@ const radiusFor = v => S.siteW * (.003 + .25 * (v / 100) ** 2);   // 0.3% to 25%
 const penWidth = v => .4 + 3.6 * (v / 100) ** 1.3;
 bind('radius', v => S.brush === 'pen' ? tz(penWidth(v).toFixed(1)) + ' px' : fL(radiusFor(v), radiusFor(v) < 10 ? 1 : 0), v => { S.radius = radiusFor(v); S.penW = penWidth(v); });
 bind('strength', v => S.brush === 'pen' ? v + '%' : v, v => { S.strength = v; S.penA = v / 100; });
-bind('siteW', v => fL(v, 0), v => { S.siteW = v; ['radius', 'thr'].forEach(id => { const el = document.getElementById(id); if (el && el.oninput) el.dispatchEvent(new Event('input')); }); updateStats(); });
+bind('siteW', v => fL(v, 0), v => { S.siteW = v; ['radius', 'thr', 'mm'].forEach(id => { const el = document.getElementById(id); if (el && el.oninput) el.dispatchEvent(new Event('input')); }); updateStats(); });
 document.getElementById('siteW').addEventListener('change', () => { if (document.getElementById('plow').oninput) autoPlow(); sheetInfo(); });
 document.getElementById('siteW').onchange = () => { if (S.world) fetchWorld(S.world); };
 const setSiteW = (v, silent) => { const el = document.getElementById('siteW'); el.value = Math.max(+el.min, Math.min(+el.max, Math.round(v / 10) * 10)); el.dispatchEvent(new Event('input')); if (!silent) el.dispatchEvent(new Event('change')); };
@@ -1325,7 +1325,7 @@ bind('relief', v => fL(v, 1), v => { S.relief = v; if (S.world) { toast('real te
 bind('interval', v => fL((isFt() ? INTERVALS_FT : INTERVALS)[v], 2), v => S.ivl = v);
 bind('hach', v => v, v => S.hach = v);
 bind('ve', v => v.toFixed(2).replace(/\.?0+$/, '') + ' x', v => { S.ve = v; layersInfo(); });
-bind('mm', v => fS(v), v => { S.mm = v; layersInfo(); });
+bind('mm', v => '1:' + Math.round(S.siteW * 1000 / v).toLocaleString() + ' · ' + fS(v) + ' wide', v => { S.mm = v; layersInfo(); });
 bind('thick', v => fS(v), v => { S.thick = v; layersInfo(); });
 bind('ledge', v => v === 0 ? 'off (solid)' : 'ledge ' + fS(v), v => S.ledge = v);
 document.getElementById('modelStyle').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.modelStyle = b.dataset.s; document.querySelectorAll('#modelStyle button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
@@ -1484,7 +1484,7 @@ function laserSVG() {
   if (S.ledge > 0) for (let q = 0; q + 1 < layers.length; q++) layers[q].holes = insetLoops(layers[q + 1].level, S.ledge / gu);
   const path = (loops, ox, oy) => loops.map(l => 'M' + l.map(([x, y]) => (x * gu + ox).toFixed(2) + ',' + (y * gu + oy).toFixed(2)).join('L') + 'Z').join('');
   let x = margin, y = margin, rowH = 0, sheetN = 0, body = '', sheetBody = '';
-  const flush = () => { if (sheetBody) body += `<g id="sheet-${sheetN + 1}" transform="translate(0,${(sheetN * (sh + 20)).toFixed(1)})"><rect x="0" y="0" width="${sw}" height="${sh}" fill="none" stroke="#999999" stroke-width="0.2" stroke-dasharray="4 3"/><text x="4" y="-4" font-size="5" font-family="monospace" fill="#999999">sheet ${sheetN + 1} · ${sw} × ${sh} mm · cardboard ${S.thick} mm</text>${sheetBody}</g>`; sheetBody = ''; };
+  const flush = () => { if (sheetBody) body += `<g id="sheet-${sheetN + 1}" transform="translate(0,${(sheetN * (sh + 20)).toFixed(1)})"><rect x="0" y="0" width="${sw}" height="${sh}" fill="none" stroke="#999999" stroke-width="0.2" stroke-dasharray="4 3"/><text x="4" y="-4" font-size="5" font-family="monospace" fill="#999999">sheet ${sheetN + 1} · ${sw} × ${sh} mm · material ${S.thick} mm</text>${sheetBody}</g>`; sheetBody = ''; };
   for (let q = 0; q < layers.length; q++) {
     const L = layers[q], bw = L.bb[2] - L.bb[0], bh = L.bb[3] - L.bb[1];
     if (x + bw > sw - margin) { x = margin; y += rowH + gap; rowH = 0; }
@@ -1497,7 +1497,7 @@ function laserSVG() {
     x += bw + gap; rowH = Math.max(rowH, bh);
   }
   flush(); const sheets = sheetN + 1, totalH = sheets * (sh + 20) - 20;
-  const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${sw}mm" height="${totalH}mm" viewBox="0 0 ${sw} ${totalH}">\n<!-- coyote mountain topo · ${layers.length} layers of ${S.thick} mm cardboard · red = cut (outer edge + hollow interior leaving a ${S.ledge} mm ledge), blue = engrave (layer number, elevation, outline of the layer above for alignment) · model ${modelW.toFixed(0)} x ${modelH.toFixed(0)} mm -->\n${body}\n</svg>`;
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${sw}mm" height="${totalH}mm" viewBox="0 0 ${sw} ${totalH}">\n<!-- coyote mountain topo · ${layers.length} layers of ${S.thick} mm material · red = cut (outer edge + hollow interior leaving a ${S.ledge} mm ledge), blue = engrave (layer number, elevation, outline of the layer above for alignment) · model ${modelW.toFixed(0)} x ${modelH.toFixed(0)} mm -->\n${body}\n</svg>`;
   toast(`${layers.length} layers on ${sheets} sheet${sheets > 1 ? 's' : ''}`);
   return { svg, layers: layers.length };
 }
