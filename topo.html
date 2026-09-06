@@ -92,6 +92,8 @@ canvas.orbit{cursor:grab}
   .actions{grid-template-columns:repeat(4,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+#tip{position:fixed;z-index:50;max-width:250px;background:var(--paper);color:var(--ink);border:1px solid #d9895d;border-radius:3px;padding:6px 9px;font-size:11.5px;line-height:1.45;box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:none;opacity:0;transition:opacity .12s}
+#tip.show{opacity:1}
 </style>
 </head>
 <body>
@@ -219,6 +221,7 @@ canvas.orbit{cursor:grab}
       <button class="btn primary wide" id="laser">laser cut svg</button>
     </div>
   </aside>
+  <div id="tip"></div>
   <main>
     <canvas id="c"></canvas>
     <canvas id="pip" title="3d preview. drag to orbit, double-tap to open"></canvas>
@@ -1208,6 +1211,36 @@ function readout(g) {
   const zp = sample(z, g[0], g[1]), ze = sample(base, g[0], g[1]), gr = grad(g[0], g[1]), sl = Math.hypot(gr[0], gr[1]) * 100;
   el.innerHTML = `x ${fL(g[0] * cs(), 1)} · y ${fL(g[1] * cs(), 1)} &nbsp; spot <b>${zp >= 0 && !S.world ? '+' : ''}${fL(zp, 2)}</b> &nbsp; existing ${fL(ze, 2)} &nbsp; slope ${sl.toFixed(0)}%`;
 }
+
+/* ---------- floating descriptions on dwell ---------- */
+const TIPS = {
+  'm:plan': 'the drawing sheet: contours, hachures, your grading and pen sketch', 'm:model': 'the ground in 3d. orbit, sculpt, colour it, watch rain and sun', 'm:section': 'a cut through the ground along the A–B line: proposed over existing, cut and fill', 'm:analysis': 'where water goes: flow, catchments, flood, keyline, dam, rain, sun',
+  'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'drag a line from A to B to cut a section',
+  'pm:smart': 'freehand that tidies itself on lift: straight lines, circles, boxes, clean polylines', 'pm:free': 'freehand kept exactly as drawn', 'pm:line': 'drag a straight line', 'pm:rect': 'drag a rectangle corner to corner', 'pm:circle': 'drag a circle from its centre',
+  'pc:ink': 'black pen', 'pc:ember': 'orange pen', 'pc:water': 'blue pen', penDash: 'dashed strokes on or off', penClear: 'remove every pen stroke',
+  'a:flow': 'blue lines where water runs, thicker with more ground feeding them', 'a:catch': 'each outlet\'s basin, tinted, with its area', 'a:ridge': 'dashed ember lines along the ridges', 'a:keys': 'keypoints: where a valley\'s steep upper slope eases, the classic small-dam site', 'a:keyline': 'the contour through the keypoint plus parallel plow lines in its catchment', 'a:swales': 'on-contour ditches stepping down from the keyline', 'a:dam': 'a dam at the keypoint or wherever you place it, with the pond it holds', 'a:flood': 'one storm\'s rain pooled in every hollow, worst case, no soak-in', 'a:sun': 'shadows at an hour, or sun hours per day, for the site\'s latitude', 'a:plow': 'rain follows the plow furrows: water drifts from the valley toward the ridges',
+  't:key': 'a tap on the sheet sets the keyline point', 't:dam': 'a tap on the sheet places the dam', rainBtn: 'animated raindrops running downhill and pooling, here and on the model (r)', rainPause: 'freeze the drops and pools (p)',
+  's:hour': 'shade the ground for one month and hour, with cast shadows', 's:hours': 'colour the ground by hours of direct sun in a day', playDay: 'sweep the hour from dawn to dusk', playYear: 'sweep the months at this hour',
+  'c:paper': 'plain paper tones', 'c:elevation': 'green low to ember high', 'c:slope': 'paper flat to ember steep', 'c:aspect': 'which way each slope faces', 'c:aerial': 'the satellite photo on the ground', 'c:sun': 'sun shading on the ground', 's:smooth': 'the ground as a continuous surface', 's:stepped': 'the ground as the cardboard stack you would cut',
+  'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush',
+  halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
+  reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label',
+  undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', laser: 'cardboard layers nested on sheets for the laser cutter', extents: 'refit the view (0)'
+};
+function tipFor(el) { const d = el.dataset; const key = el.id && TIPS[el.id] ? el.id : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
+  return (key && TIPS[key]) || el.title || ''; }
+const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
+function showTip(el) { const t = tipFor(el); if (!t) return; tipEl.textContent = t; tipEl.classList.add('show'); const r = el.getBoundingClientRect(), tw = Math.min(250, tipEl.offsetWidth || 200);
+  let x = r.right + 8, y = r.top; if (x + tw > innerWidth - 8) x = Math.max(8, r.left - tw - 8); if (innerWidth < 760) { x = Math.max(8, Math.min(innerWidth - tw - 8, r.left)); y = r.top - 8 - tipEl.offsetHeight; }
+  tipEl.style.left = x + 'px'; tipEl.style.top = Math.max(4, Math.min(innerHeight - tipEl.offsetHeight - 4, y)) + 'px'; }
+function hideTip() { clearTimeout(tipTimer); tipTimer = null; tipTarget = null; tipEl.classList.remove('show'); }
+document.querySelectorAll('button').forEach(el => { if (el.title && tipFor(el)) el.removeAttribute('title'); });
+document.addEventListener('pointerover', e => { const el = e.target.closest('button'); if (!el || el === tipTarget || e.pointerType === 'touch') return; hideTip(); tipTarget = el; tipTimer = setTimeout(() => showTip(el), 500); });
+document.addEventListener('pointerout', e => { const el = e.target.closest('button'); if (el && el === tipTarget) hideTip(); });
+document.addEventListener('pointerdown', e => { const el = e.target.closest('button'); if (e.pointerType === 'touch' && el) { hideTip(); tipTarget = el; tipTimer = setTimeout(() => { showTip(el); el.dataset.held = '1'; }, 600); } else hideTip(); }, true);
+document.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { const held = tipTarget && tipTarget.dataset.held; clearTimeout(tipTimer); if (!held) hideTip(); else setTimeout(hideTip, 1800); } }, true);
+document.addEventListener('click', e => { const el = e.target.closest('button'); if (el && el.dataset.held) { delete el.dataset.held; e.stopPropagation(); e.preventDefault(); } }, true);
+document.addEventListener('scroll', hideTip, true);
 
 /* ---------- command line: what a drag or tap does right now ---------- */
 let lastHint = '';
