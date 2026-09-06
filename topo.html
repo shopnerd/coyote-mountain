@@ -144,7 +144,7 @@ canvas.orbit{cursor:grab}
         <button data-b="section" class="planOnly" style="flex-basis:100%">section line</button>
       </div>
       <div class="seg" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circ</button></div>
-      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penDash">dash</button><button id="penClear" title="remove every pen stroke">clear</button></div>
+      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">red</button><button data-pc="water">blue</button><button id="penDash">dash</button><button id="penClear" title="remove every pen stroke">clear</button></div>
       <div class="params">
         <div class="p" title="brush size scales with the site width"><label><span id="l_radius">radius</span><output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label><span id="l_strength">strength</span><output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
@@ -1162,7 +1162,16 @@ pip.addEventListener('pointerdown', e => { pip.setPointerCapture(e.pointerId);
   if (inGrip(e) && ppts.size === 0) { const r = pip.getBoundingClientRect(); presize = { x: e.clientX, y: e.clientY, w: r.width, h: r.height }; return; }
   ppts.set(e.pointerId, [e.clientX, e.clientY]); pdrag = [e.clientX, e.clientY]; pdrag.pan = e.button === 1 || e.shiftKey; pdrag.zoom = e.button === 2 && e.ctrlKey; pdrag.at = [e.clientX, e.clientY]; pdrag.moved = false; pdrag.target = inTarget(e); pdrag.tab = inTabs(e); pdrag.sec = S.pipView === 'section' || S.mode === 'model';
   if (ppts.size === 2) { const a = [...ppts.values()]; ppinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.pipZoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; pdrag = null; } });
+let pipTipKey = '';
+function pipTipFor(e) {                   // which hot spot of the preview the pointer is over, and what to say about it
+  if (pipFolded) return ['fold', 'open the preview'];
+  if (inFold(e)) return ['fold', 'fold the preview away'];
+  if (inTarget(e)) return ['target', 'recenter the 3d preview'];
+  const tab = inTabs(e); if (tab) return ['tab:' + tab, tab === '3d' ? 'show the 3d model here' : tab === 'plan' ? 'show the plan here' : 'show the section a–b here'];
+  return null;
+}
 pip.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'touch' && !pdrag && !presize) { const t = pipTipFor(e), key = t ? t[0] : ''; if (key !== pipTipKey) { pipTipKey = key; hideTip(); if (t) { const r = pip.getBoundingClientRect(); tipTimer = setTimeout(() => showTipAt(t[1], { left: r.left, right: r.left, top: e.clientY - 10 }), 500); } } }
   if (presize) { setPipSize(presize.w + (presize.x - e.clientX), presize.h + (e.clientY - presize.y)); return; }
   if (!pdrag && !ppinch) pip.classList.toggle('rs', inGrip(e));
   if (ppts.has(e.pointerId)) ppts.set(e.pointerId, [e.clientX, e.clientY]);
@@ -1171,7 +1180,7 @@ pip.addEventListener('pointermove', e => {
   if (pdrag.sec) {} else if (pdrag.pan) { S.pipPan.x += dx; S.pipPan.y += dy; S.dirty = true; } else if (pdrag.zoom) pipZoomAt(S.pipZoom * Math.exp(-dy * .006), pdrag.at[0], pdrag.at[1]); else orbit(dx, dy);
   const keep = pdrag; pdrag = [e.clientX, e.clientY]; pdrag.pan = keep.pan; pdrag.zoom = keep.zoom; pdrag.at = keep.at; pdrag.moved = keep.moved; pdrag.target = keep.target; pdrag.tab = keep.tab; pdrag.sec = keep.sec; });
 const pipEnd = e => { if (pdrag && (pdrag.unfold || pdrag.fold) && !pdrag.moved) { setPipFold(!!pdrag.fold); pdrag = null; ppts.delete(e.pointerId); return; } if (pdrag && pdrag.tab && !pdrag.moved) { if (S.mode === 'model') { S.pipModel = pdrag.tab; try { localStorage.setItem('pipModel', S.pipModel); } catch (_) {} } else { S.pipView = pdrag.tab; try { localStorage.setItem('pipView', S.pipView); } catch (_) {} } S.dirty = true; } else if (pdrag && pdrag.target && !pdrag.moved) pipRecenter(); presize = null; ppts.delete(e.pointerId); if (ppts.size < 2) ppinch = null; pdrag = null; };
-pip.addEventListener('pointerup', pipEnd); pip.addEventListener('pointercancel', pipEnd);
+pip.addEventListener('pointerup', pipEnd); pip.addEventListener('pointercancel', pipEnd); pip.addEventListener('pointerleave', () => { pipTipKey = ''; hideTip(); }); pip.addEventListener('pointerdown', () => { pipTipKey = ''; hideTip(); }, true);
 pip.addEventListener('wheel', e => { e.preventDefault(); if (S.pipView === 'section' || S.mode === 'model') return; pipZoomAt(S.pipZoom * (e.deltaY < 0 ? 1.1 : .9), e.clientX, e.clientY); }, { passive: false });
 function pipRecenter() { S.pipPan.x = S.pipPan.y = 0; S.pipZoom = 1.55; S.dirty = true; toast('preview recentered'); }
 const inTarget = e => { if (S.mode === 'model' || S.pipView === 'section') return false; const r = pip.getBoundingClientRect(); return e.clientX - r.left < 24 && e.clientY - r.top < 24; };
@@ -1309,7 +1318,7 @@ const TIPS = {
   'm:plan': 'the drawing sheet: contours, hachures, your grading and pen sketch', 'm:model': 'the ground in 3d. orbit, sculpt, colour it, watch rain and sun', 'm:section': 'a cut through the ground along the A–B line: proposed over existing, cut and fill', 'm:analysis': 'where water goes: flow, catchments, flood, keyline, dam, rain, sun',
   'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'shows the A–B section line; drag a new one to cut a section',
   'pm:smart': 'freehand that tidies itself on lift: straight lines, circles, boxes, clean polylines', 'pm:free': 'freehand kept exactly as drawn', 'pm:line': 'drag a straight line', 'pm:rect': 'drag a rectangle corner to corner', 'pm:circle': 'drag a circle from its centre',
-  'pc:ink': 'black pen', 'pc:ember': 'orange pen', 'pc:water': 'blue pen', penDash: 'dashed strokes on or off', penClear: 'remove every pen stroke',
+  'pc:ink': 'black pen', 'pc:ember': 'red pen', 'pc:water': 'blue pen', penDash: 'dashed strokes on or off', penClear: 'remove every pen stroke',
   'a:flow': 'blue lines where water runs, thicker with more ground feeding them', 'a:catch': 'each outlet\'s basin, tinted, with its area', 'a:ridge': 'dashed ember lines along the ridges', 'a:keys': 'keypoints: where a valley\'s steep upper slope eases, the classic small-dam site', 'a:keyline': 'the contour through the keypoint plus parallel plow lines in its catchment', 'a:swales': 'on-contour ditches stepping down from the keyline', 'a:dam': 'a dam at the keypoint or wherever you place it, with the pond it holds', 'a:flood': 'one storm\'s rain pooled in every hollow, worst case, no soak-in', 'a:sun': 'shadows at an hour, or sun hours per day, for the site\'s latitude', 'a:plow': 'rain follows the plow furrows: water drifts from the valley toward the ridges',
   't:key': 'a tap on the sheet sets the keyline point', 't:dam': 'a tap on the sheet places the dam', rainBtn: 'animated raindrops running downhill and pooling, here and on the model (r)', rainPause: 'freeze the drops and pools (p)',
   's:hour': 'shade the ground for one month and hour, with cast shadows', 's:hours': 'colour the ground by hours of direct sun in a day', playDay: 'sweep the hour from dawn to dusk', playYear: 'sweep the months at this hour',
@@ -1329,7 +1338,8 @@ function tipFor(el) { const d = el.dataset; let key;
   else key = el.id && TIPS[el.id] ? el.id : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
   const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.title || ''; }
 const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
-function showTip(el) { const t = tipFor(el); if (!t) return; tipEl.textContent = t; tipEl.classList.add('show'); const r = el.getBoundingClientRect(), tw = Math.min(250, tipEl.offsetWidth || 200);
+function showTip(el) { const t = tipFor(el); if (!t) return; showTipAt(t, el.getBoundingClientRect()); }
+function showTipAt(t, r) { tipEl.textContent = t; tipEl.classList.add('show'); const tw = Math.min(250, tipEl.offsetWidth || 200);
   let x = r.right + 8, y = r.top; if (x + tw > innerWidth - 8) x = Math.max(8, r.left - tw - 8); if (innerWidth < 760) { x = Math.max(8, Math.min(innerWidth - tw - 8, r.left)); y = r.top - 8 - tipEl.offsetHeight; }
   tipEl.style.left = x + 'px'; tipEl.style.top = Math.max(4, Math.min(innerHeight - tipEl.offsetHeight - 4, y)) + 'px'; }
 function hideTip() { clearTimeout(tipTimer); tipTimer = null; tipTarget = null; tipEl.classList.remove('show'); }
@@ -1386,7 +1396,7 @@ function setMode(m) {
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
 document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; setBrush(b.dataset.b); S.dirty = true; };
 document.getElementById('penMode').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.penMode = b.dataset.pm; document.querySelectorAll('#penMode button').forEach(x => x.classList.toggle('on', x === b)); };
-const PEN = { ink: INK, ember: ACC, water: '#3f6488' };
+const PEN = { ink: INK, ember: '#c8321e', water: '#3f6488' };
 document.getElementById('penRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'penDash') { S.penDash = !S.penDash; b.classList.toggle('on', S.penDash); return; } if (b.id === 'penClear') { if (S.strokes.length) { snapshot(); S.strokes = []; S.strokeVer++; S.dirty = true; toast('sketch cleared'); } return; } S.penColor = b.dataset.pc; document.querySelectorAll('#penRow button[data-pc]').forEach(x => x.classList.toggle('on', x === b)); };
 function densify(pts, maxStep) {           // add points so no gap is longer than maxStep cells (so the line can follow the ground)
   const out = [pts[0]]; for (let q = 1; q < pts.length; q++) { const a = pts[q - 1], b = pts[q], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d / maxStep)); for (let t = 1; t <= n; t++) out.push([a[0] + (b[0] - a[0]) * t / n, a[1] + (b[1] - a[1]) * t / n, a[2] + (b[2] - a[2]) * t / n]); }
