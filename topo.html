@@ -149,6 +149,8 @@ canvas.orbit{cursor:grab}
         <div class="p"><label><span id="l_strength">strength</span><output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
         <div class="p"><label>hachures<output id="o_hach">15</output></label><input type="range" id="hach" min="0" max="100" step="5" value="15"></div>
         <div class="seg" id="labelRow" style="margin-top:6px"><button data-l="1" class="on">labels</button><button data-l="0">no labels</button></div>
+        <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no photo</button><button data-ae="1">aerial photo</button></div>
+        <div class="p" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
       </div>
     </div>
 
@@ -186,8 +188,6 @@ canvas.orbit{cursor:grab}
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
       <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / geojson</button><button id="kmlClear">clear</button></div>
       <input type="file" id="kmlFile" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml,application/geo+json" style="display:none">
-      <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no photo</button><button data-ae="1">aerial photo</button></div>
-      <div class="p" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
       <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
     </div>
 
