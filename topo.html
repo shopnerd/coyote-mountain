@@ -100,15 +100,15 @@ canvas.orbit{cursor:grab}
       <div class="seg" style="margin-top:4px"><button data-m="analysis" style="border-radius:3px">analyze</button></div>
     </div>
     <div class="desc" id="desc"></div>
-    <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped stack</button></div>
+    <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped</button></div>
     <div class="desc" id="colorLbl" style="display:none;padding-bottom:2px">surface color</div>
-    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="aerial" title="photo on the model. 'no aerial' in the world section clears it too">aerial photo</button><button data-c="sun">sun</button></div>
+    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="aerial" title="photo on the model. 'no aerial' in the world section clears it too">aerial</button><button data-c="sun">sun</button></div>
     <div id="sunSec" style="display:none">
-        <div class="seg" style="margin-top:6px"><button data-s="hour" class="on">shadows at an hour</button><button data-s="hours">sun hours per day</button></div>
+        <div class="seg" style="margin-top:6px"><button data-s="hour" class="on">shadows</button><button data-s="hours">sun hours</button></div>
         <div class="params" style="padding-top:6px">
           <div class="p"><label>month<output id="o_month">jun</output></label><input type="range" id="month" min="1" max="12" step="1" value="6"></div>
           <div class="p"><label>hour<output id="o_hour">3 pm</output></label><input type="range" id="hour" min="5" max="20" step=".5" value="15"></div>
-          <div class="seg" style="padding:0"><button id="playDay" title="sweep the hour from dawn to dusk">play the day</button><button id="playYear" title="sweep the months at this hour">play the year</button></div>
+          <div class="seg" style="padding:0"><button id="playDay" title="sweep the hour from dawn to dusk">play day</button><button id="playYear" title="sweep the months at this hour">play year</button></div>
         </div>
       </div>
     <div class="desc" id="sculptLbl" style="display:none;padding-bottom:2px">left drag or one finger</div>
@@ -120,9 +120,9 @@ canvas.orbit{cursor:grab}
         <button data-b="raise" class="on">raise</button><button data-b="lower">lower</button>
         <button data-b="smooth">smooth</button><button data-b="flatten">flatten</button>
         <button data-b="pen" title="freehand pen: draws on the plan and drapes over the 3d ground">pen</button><button data-b="erase" title="drag over pen strokes to remove them">eraser</button>
-        <button data-b="section" style="flex-basis:100%">draw section line a to b</button>
+        <button data-b="section" style="flex-basis:100%">section line</button>
       </div>
-      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penClear" title="remove every pen stroke">clear sketch</button></div>
+      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penClear" title="remove every pen stroke">clear</button></div>
       <div class="params">
         <div class="p" title="brush size scales with the site width"><label>radius<output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label>strength<output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
@@ -132,15 +132,15 @@ canvas.orbit{cursor:grab}
     <div id="anaSec" style="display:none">
       <div class="sec">analysis layers</div>
       <div class="seg wrap" id="anaLayers">
-        <button data-a="flow" class="on">water flow</button><button data-a="catch" class="on">catchments</button>
+        <button data-a="flow" class="on">flow</button><button data-a="catch" class="on">catchments</button>
         <button data-a="ridge" class="on">ridges</button><button data-a="keys" class="on">keypoints</button>
-        <button data-a="keyline" class="on" style="flex-basis:100%">keyline + plow lines</button>
-        <button data-a="swales">swales on contour</button><button data-a="dam" class="on">dam site</button>
-        <button data-a="flood">flood pooling</button><button data-a="sun">sun study</button>
-        <button data-a="plow" style="flex-basis:100%" title="rain follows the plow furrows: water drifts from the valley toward the ridges">keyline plowing effect on rain</button>
+        <button data-a="keyline" class="on" style="flex-basis:100%">keyline + plow</button>
+        <button data-a="swales">swales</button><button data-a="dam" class="on">dam site</button>
+        <button data-a="flood">flood</button><button data-a="sun">sun study</button>
+        <button data-a="plow" style="flex-basis:100%" title="rain follows the plow furrows: water drifts from the valley toward the ridges">plowing effect</button>
       </div>
-      <div class="seg" id="tapRow" style="margin-top:6px"><button data-t="key" class="on">tap sets keyline</button><button data-t="dam">tap places dam</button></div>
-      <div class="seg" style="margin-top:6px"><button id="rainBtn" title="animated raindrops running downhill and pooling, here and on the model (r)" style="flex:2">rain animation (r)</button><button id="rainPause" title="freeze the drops and pools (p)">pause</button></div>
+      <div class="seg" id="tapRow" style="margin-top:6px"><button data-t="key" class="on">tap: keyline</button><button data-t="dam">tap: dam</button></div>
+      <div class="seg" style="margin-top:6px"><button id="rainBtn" title="animated raindrops running downhill and pooling, here and on the model (r)" style="flex:2">rain (r)</button><button id="rainPause" title="freeze the drops and pools (p)">pause</button></div>
       <div class="params" id="floodSec" style="display:none;padding-top:6px">
         <div class="p" title="rain falling on the whole site in one storm, no infiltration"><label>storm rain<output id="o_rain">25 mm</output></label><input type="range" id="rain" min="1" max="100" step="1" value="35"></div>
       </div>
@@ -160,8 +160,8 @@ canvas.orbit{cursor:grab}
       <div class="p"><label>site width · area to fetch<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="3000" step="10" value="60"></div>
       <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
-      <div class="seg" style="padding:0"><button id="fetch" style="flex:2">fetch real terrain</button><button id="home" title="Encino Solo">home</button></div>
-      <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no aerial</button><button data-ae="1">aerial photo on plan and model</button></div>
+      <div class="seg" style="padding:0"><button id="fetch" style="flex:2">fetch terrain</button><button id="home" title="Encino Solo">home</button></div>
+      <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no photo</button><button data-ae="1">aerial photo</button></div>
       <div class="p" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
       <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
     </div>
@@ -170,10 +170,10 @@ canvas.orbit{cursor:grab}
     <div class="params">
       <div class="p"><label>units</label><select id="unit"><option value="ft">imperial · ft, yd³, in</option><option value="m">metric · m, m³, mm</option></select></div>
       <div class="p" title="how much the starting ground rises and falls before you sketch anything"><label>existing ground relief<output id="o_relief">2.0 m</output></label><input type="range" id="relief" min="0" max="10" step=".5" value="2"></div>
-      <div class="seg" style="padding:0"><button id="reseed" title="fresh rolling ground from noise">new existing ground</button><button id="reset" title="drop your grading, keep the ground">reset grading</button></div>
+      <div class="seg" style="padding:0"><button id="reseed" title="fresh rolling ground from noise">new ground</button><button id="reset" title="drop your grading, keep the ground">reset grade</button></div>
       <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="6" step="1" value="2"></div>
       <div class="p"><label>hachures<output id="o_hach">15</output></label><input type="range" id="hach" min="0" max="100" step="5" value="15"></div>
-      <div class="seg" id="labelRow"><button data-l="1" class="on">elevation labels</button><button data-l="0">no labels</button></div>
+      <div class="seg" id="labelRow"><button data-l="1" class="on">labels</button><button data-l="0">no labels</button></div>
       <div class="p"><label>vertical exaggeration<output id="o_ve">1.5 x</output></label><input type="range" id="ve" min="1" max="5" step=".25" value="1.5"></div>
     </div>
 
@@ -201,12 +201,12 @@ canvas.orbit{cursor:grab}
     <div class="actions">
       <button class="btn" id="undo">undo</button>
       <button class="btn" id="wipe">delete all</button>
-      <button class="btn" id="saveProj">save project</button>
-      <button class="btn" id="openProj">open project</button>
+      <button class="btn" id="saveProj">save</button>
+      <button class="btn" id="openProj">open</button>
       <input type="file" id="openFile" accept=".json,application/json" style="display:none">
       <button class="btn" id="png">save png</button>
       <button class="btn" id="stl">export stl</button>
-      <button class="btn primary wide" id="laser">export laser svg (cardboard stack)</button>
+      <button class="btn primary wide" id="laser">laser cut svg</button>
     </div>
   </aside>
   <main>
@@ -1192,13 +1192,20 @@ try { const u = localStorage.getItem('unit'); if (u === 'm' || u === 'ft') { S.u
 document.getElementById('unit').onchange = e => { S.unit = e.target.value; try { localStorage.setItem('unit', S.unit); } catch (_) {} relabels.forEach(f => f()); if (S.world) autoInterval(); updateStats(); S.dirty = true; if (S.mode === 'plan' && S.ptr) readout(S.ptr); };
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
-function goHome(quiet) { document.getElementById('place').value = HOME.lat + ', ' + HOME.lon; setSiteW(HOME.siteW, true); autoPlow(); document.getElementById('rot').value = 0; document.getElementById('rot').dispatchEvent(new Event('input'));
-  S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; S.colorMode = 'aerial'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'aerial')); showSun(); fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); }
+function setBrush(b) { S.brush = b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; }
+function setInterval1ft() { const list = isFt() ? INTERVALS_FT : INTERVALS, want = isFt() ? 1 / FT : .5; let k = 0; for (let q = 0; q < list.length; q++) if (Math.abs(list[q] - want) < Math.abs(list[k] - want)) k = q; const el = document.getElementById('interval'); el.value = k; el.dispatchEvent(new Event('input')); }
+async function goHome(quiet) {
+  try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'home project'); if (!quiet) toast('home'); return; } } catch (_) {}
+  document.getElementById('place').value = HOME.lat + ', ' + HOME.lon; setSiteW(HOME.siteW, true); autoPlow(); document.getElementById('rot').value = 0; document.getElementById('rot').dispatchEvent(new Event('input'));
+  S.aerial = false; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '0')); document.getElementById('aerialOp').style.display = 'none';
+  if (S.colorMode === 'aerial') { S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'paper')); }
+  setBrush('pen'); await fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); setInterval1ft();
+}
 document.getElementById('home').onclick = () => goHome(false);
 document.getElementById('undo').onclick = undo;
-function setRainPause(p) { S.rainPaused = p; document.getElementById('rainPause').classList.toggle('on', p); document.getElementById('rainPause').textContent = p ? 'paused · resume' : 'pause'; S.dirty = true; }
+function setRainPause(p) { S.rainPaused = p; document.getElementById('rainPause').classList.toggle('on', p); document.getElementById('rainPause').textContent = p ? 'resume' : 'pause'; S.dirty = true; }
 document.getElementById('rainPause').onclick = () => setRainPause(!S.rainPaused);
-function setRain(on) { S.rain = on; setRainPause(false); document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'rain falling · stop (r)' : 'rain animation (r)'; if (on) { drops.length = 0; dep.key = ''; damBasin.key = ''; rainStats = { done: 0, creek: 0, run: 0 }; } S.dirty = true; }
+function setRain(on) { S.rain = on; setRainPause(false); document.getElementById('rainBtn').classList.toggle('on', on); document.getElementById('rainBtn').textContent = on ? 'stop rain (r)' : 'rain (r)'; if (on) { drops.length = 0; dep.key = ''; damBasin.key = ''; rainStats = { done: 0, creek: 0, run: 0 }; } S.dirty = true; }
 document.getElementById('rainBtn').onclick = () => setRain(!S.rain);
 document.getElementById('tapRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tapMode = b.dataset.t; document.querySelectorAll('#tapRow button').forEach(x => x.classList.toggle('on', x === b)); };
 document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]);
@@ -1210,7 +1217,7 @@ document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
 bind('month', v => MONTHS[v - 1], v => S.month = v);
 function setSunPlay(kind) { S.sunPlay = S.sunPlay === kind ? null : kind; S.sunClock = 0; document.getElementById('playDay').classList.toggle('on', S.sunPlay === 'day'); document.getElementById('playYear').classList.toggle('on', S.sunPlay === 'year');
-  document.getElementById('playDay').textContent = S.sunPlay === 'day' ? 'playing · pause' : 'play the day'; document.getElementById('playYear').textContent = S.sunPlay === 'year' ? 'playing · pause' : 'play the year'; if (S.sunPlay) S.sunHeld = null;
+  document.getElementById('playDay').textContent = S.sunPlay === 'day' ? 'pause' : 'play day'; document.getElementById('playYear').textContent = S.sunPlay === 'year' ? 'pause' : 'play year'; if (S.sunPlay) S.sunHeld = null;
   if (S.sunPlay && S.sunMode !== 'hour') document.querySelector('#sunSec .seg button[data-s="hour"]').click(); }
 for (const id of ['hour', 'month']) document.getElementById(id).addEventListener('pointerdown', () => { if (S.sunPlay) { const k = S.sunPlay; setSunPlay(k); S.sunHeld = k; } });
 document.getElementById('playDay').onclick = () => setSunPlay('day'); document.getElementById('playYear').onclick = () => setSunPlay('year');
@@ -1419,7 +1426,7 @@ async function loadOpenTopo(lat, lon) {
 }
 function autoInterval() { const [lo, hi] = range(base), list = isFt() ? INTERVALS_FT : INTERVALS; let k = 0; while (k < list.length - 1 && (hi - lo) / list[k] > 40) k++;
   const el = document.getElementById('interval'); if (+el.value !== k) { el.value = k; el.dispatchEvent(new Event('input')); } }
-const HOME = { lat: 32.015109, lon: -116.777769, name: 'Encino Solo', siteW: 500 };
+const HOME = { lat: 32.015109, lon: -116.777769, name: 'Encino Solo', siteW: 1000 };
 let fetching = false;
 async function fetchWorld(known, quiet) {
   if (fetching) return; const btn = document.getElementById('fetch');
@@ -1447,7 +1454,7 @@ async function fetchWorld(known, quiet) {
     const msg = blocked ? 'network blocked on this page. open the live site: shopnerd.github.io/coyote-mountain/topo.html' : String(e.message || e);
     worldStatus(msg); if (!quiet) toast(blocked ? 'terrain fetch blocked here. use the live site' : msg);
   }
-  fetching = false; btn.disabled = false; btn.textContent = 'fetch real terrain';
+  fetching = false; btn.disabled = false; btn.textContent = 'fetch terrain';
 }
 
 /* ---------- project file + session memory ---------- */
