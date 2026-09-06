@@ -1249,7 +1249,7 @@ document.getElementById('fetch').onclick = () => fetchWorld();
 function setBrush(b) { S.brush = b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; }
 function setInterval1ft() { const list = isFt() ? INTERVALS_FT : INTERVALS, want = isFt() ? 1 / FT : .5; let k = 0; for (let q = 0; q < list.length; q++) if (Math.abs(list[q] - want) < Math.abs(list[k] - want)) k = q; const el = document.getElementById('interval'); el.value = k; el.dispatchEvent(new Event('input')); }
 async function goHome(quiet) {
-  try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'home project'); if (!quiet) toast('home'); return; } } catch (_) {}
+  try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr, true); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'home project'); if (!quiet) toast('home'); return; } } catch (_) {}
   document.getElementById('place').value = HOME.lat + ', ' + HOME.lon; setSiteW(HOME.siteW, true); autoPlow(); document.getElementById('rot').value = 0; document.getElementById('rot').dispatchEvent(new Event('input'));
   S.aerial = false; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '0')); document.getElementById('aerialOp').style.display = 'none';
   if (S.colorMode === 'aerial') { S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'paper')); }
@@ -1515,12 +1515,14 @@ async function fetchWorld(known, quiet) {
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
-function loadProject(pr) {
+function loadProject(pr, fromHome) {
+  if (fromHome) S.homeSaved = pr.saved || '';
   if (!pr || pr.app !== 'coyote-topo' || !pr.base || pr.base.length !== W * H) throw new Error('not a coyote topo file');
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
+  if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
   S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
   if (pr.unit === 'm' || pr.unit === 'ft') { S.unit = pr.unit; document.getElementById('unit').value = pr.unit; }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
@@ -1538,7 +1540,7 @@ document.getElementById('saveProj').onclick = saveProject;
 document.getElementById('openProj').onclick = () => document.getElementById('openFile').click();
 document.getElementById('openFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { loadProject(JSON.parse(rd.result)); toast('project opened'); } catch (err) { toast(String(err.message || err)); } }; rd.readAsText(f); e.target.value = ''; };
 let lastAuto = ''; setInterval(() => { try { const pr = snapshotProject(); const sig = S.terrainVer + '|' + S.strokeVer + '|' + pr.brush + '|' + pr.sculpt + '|' + JSON.stringify([pr.sliders, pr.world, pr.sec, pr.keyPt, pr.an, pr.unit, pr.aerial, pr.colorMode, pr.modelStyle]); if (sig !== lastAuto) { lastAuto = sig; localStorage.setItem('topo-session', JSON.stringify(pr)); } } catch (_) {} }, 4000);
-function restoreSession() { try { const raw = localStorage.getItem('topo-session'); if (!raw) return false; loadProject(JSON.parse(raw)); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'restored from your last session'); return true; } catch (_) { return false; } }
+function restoreSession() { try { const raw = localStorage.getItem('topo-session'); if (!raw) return false; loadProject(JSON.parse(raw), false); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'restored from your last session'); return true; } catch (_) { return false; } }
 
 /* ---------- start: existing grade plus a sketched berm and swale so the sheet is not empty ---------- */
 buildExisting(); resetGrading();
@@ -1554,7 +1556,12 @@ addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if 
   if (e.key === 'p') { if (S.rain) setRainPause(!S.rainPaused); if (S.sunPlay) { S.sunHeld = S.sunPlay; setSunPlay(S.sunPlay); } else if (S.sunHeld) { const k = S.sunHeld; S.sunHeld = null; setSunPlay(k); } } });
 updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 setBrush('pen');
-if (!restoreSession()) goHome(true);
+(async () => {   // a newer home file beats a stale session; otherwise the session wins
+  let homeSaved = null; try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) homeSaved = ((await r.json()).saved) || ''; } catch (_) {}
+  let sessionHome = null; try { const raw = localStorage.getItem('topo-session'); if (raw) sessionHome = JSON.parse(raw).homeSaved || ''; } catch (_) {}
+  if (homeSaved !== null && sessionHome !== null && sessionHome !== homeSaved) { await goHome(true); toast('home project updated'); return; }
+  if (!restoreSession()) goHome(true);
+})();
 })();
 </script>
 </body>
