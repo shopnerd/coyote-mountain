@@ -1600,7 +1600,7 @@ async function fetchWorld(known, quiet) {
 }
 
 /* ---------- drawing sheet: plan at a standard scale, section, model, title block ---------- */
-const SCALES_FT = [10, 20, 30, 40, 50, 60, 100, 200, 300, 400, 500, 1000], SCALES_M = [100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000];
+const SCALES_FT = [10, 20, 30, 40, 50, 60, 80, 100, 200, 300, 400, 500, 600, 800, 1000, 2000], SCALES_M = [100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000];
 function pickScale(boxWpx, boxHpx, dpi) {   // largest standard scale at which the whole site fits the plan box
   const siteW = S.siteW, siteH = S.siteW * (H - 1) / (W - 1), pad = .92;
   if (isFt()) { for (const F of SCALES_FT) { const ppm = dpi / (F * .3048); if (siteW * ppm <= boxWpx * pad && siteH * ppm <= boxHpx * pad) return { ppm, label: `1 in = ${F} ft`, ratio: Math.round(F * 12), unitM: F * .3048, unitLabel: v => Math.round(v / .3048) + ' ft' }; } const F = SCALES_FT.at(-1); return { ppm: dpi / (F * .3048), label: `1 in = ${F} ft`, ratio: F * 12, unitM: F * .3048, unitLabel: v => Math.round(v / .3048) + ' ft' }; }
@@ -1637,7 +1637,7 @@ function drawingSheet() {
   o.strokeStyle = INK; o.lineWidth = 1.5; o.font = `600 ${16}px ${getComputedStyle(document.body).fontFamily}`; o.fillStyle = INK; o.textBaseline = 'bottom'; o.textAlign = 'left';
   for (const [box, title] of [[planBox, 'PLAN · ' + sc.label], [modelBox, 'MODEL · not to scale'], [secBox, 'SECTION A–A · vertical ' + S.ve + '×']]) { o.strokeRect(box.x + .5, box.y + .5, box.w - 1, box.h - 1); o.fillText(title, box.x + 12, box.y + box.h - 12); o.beginPath(); o.moveTo(box.x + 12, box.y + box.h - 8); o.lineTo(box.x + 12 + o.measureText(title).width, box.y + box.h - 8); o.stroke(); }
   // graphic scale bar in the plan: four one-inch (or 2 cm) segments
-  const seg = sc.unitM * sc.ppm, bx = planBox.x + 12, by = planBox.y + planBox.h - 46; o.lineWidth = 1;
+  const seg = sc.unitM * sc.ppm, bx = planBox.x + 12, by = planBox.y + planBox.h - 78; o.lineWidth = 1;
   for (let q = 0; q < 4; q++) { o.fillStyle = q % 2 ? '#fff' : INK; o.fillRect(bx + q * seg, by, seg, 8); o.strokeRect(bx + q * seg + .5, by + .5, seg - 1, 7); }
   o.fillStyle = INK; o.font = `${12}px ${getComputedStyle(document.body).fontFamily}`; o.textBaseline = 'top'; o.textAlign = 'center'; for (let q = 0; q <= 4; q++) o.fillText(q ? sc.unitLabel(Math.round(q * sc.unitM * 1e4) / 1e4) : '0', bx + q * seg, by + 11);
   // border, title block
