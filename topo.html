@@ -7,36 +7,36 @@
 <style>
 :root{
   --page:#d0d0cc; --panel:#e8e8e4; --paper:#f0f0ec; --hover:#e2e2dc;
-  --ink:#2a2a28; --ink2:#6a6a66; --ink3:#a0a09a; --line:#c8c8c2;
+  --ink:#1a1a18; --ink2:#454440; --ink3:#6e6d68; --line:#c8c8c2;
   --accent:#C96B3A; --accent2:#a85830;
   --font:'SF Mono','Cascadia Mono',Consolas,'Liberation Mono',Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{background:var(--page);color:var(--ink);font:12px/1.5 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
-#app{display:grid;grid-template-rows:38px 1fr;grid-template-columns:232px minmax(0,1fr);height:100dvh;width:100vw;max-width:100vw}
+body{background:var(--page);color:var(--ink);font:13px/1.5 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+#app{display:grid;grid-template-rows:38px 1fr;grid-template-columns:256px minmax(0,1fr);height:100dvh;width:100vw;max-width:100vw}
 header{grid-column:1/-1;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 12px}
 header .logo{font-weight:600}
 header .logo b{color:var(--accent);font-weight:600}
 header a{color:var(--ink3);text-decoration:none;font-size:10px}
 header a:hover{color:var(--ink)}
-header .read{margin-left:auto;color:var(--ink2);font-size:10.5px;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+header .read{margin-left:auto;color:var(--ink2);font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
 header .read b{color:var(--ink);font-weight:600}
 aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column}
-.sec{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);padding:10px 12px 4px;display:flex;align-items:baseline;gap:8px}
+.sec{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);padding:10px 12px 4px;display:flex;align-items:baseline;gap:8px}
 .sec::after{content:"";flex:1;border-top:1px solid var(--line);transform:translateY(-3px)}
 .seg{display:flex;padding:0 12px;gap:0}
-.seg button{flex:1;min-height:34px;border:1px solid var(--line);background:transparent;color:var(--ink2);font:inherit;font-size:11px;cursor:pointer;margin-left:-1px}
+.seg button{flex:1;min-height:36px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:12px;cursor:pointer;margin-left:-1px}
 .seg button:first-child{border-radius:3px 0 0 3px;margin-left:0}
 .seg button:last-child{border-radius:0 3px 3px 0}
 .seg button:hover{background:var(--paper);color:var(--ink)}
 .seg button.on{background:#d9d8d2;border-color:#b9b8b1;color:var(--ink);position:relative;z-index:1}
 .seg.wrap{flex-wrap:wrap;gap:4px}
 .seg.wrap button{flex:1 1 40%;border-radius:3px;margin:0}
-.desc{padding:6px 12px 4px;color:var(--ink3);font-size:10.5px;line-height:1.5}
+.desc{padding:6px 12px 4px;color:var(--ink2);font-size:11.5px;line-height:1.5}
 .params{padding:2px 12px 6px;display:flex;flex-direction:column;gap:6px}
 .p{display:flex;flex-direction:column;gap:2px}
-.p label{display:flex;justify-content:space-between;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.p label{display:flex;justify-content:space-between;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
 .p label output{color:var(--ink);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:26px;background:transparent;cursor:pointer}
 input[type=range]::-webkit-slider-runnable-track{height:2px;background:var(--line)}
@@ -52,11 +52,11 @@ input[type=text]::placeholder{color:var(--ink3)}
 .btn:disabled{opacity:.6;cursor:wait}
 .stats{padding:4px 12px 8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .stat{background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:6px 8px}
-.stat span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
-.stat b{font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}
+.stat span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
+.stat b{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
 .stat.cut b{color:var(--accent)}
 .actions{margin-top:auto;padding:10px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-top:1px solid var(--line)}
-.btn{min-height:36px;padding:6px 8px;border:1px solid var(--line);background:transparent;color:var(--ink2);border-radius:3px;font:inherit;font-size:11px;cursor:pointer;line-height:1}
+.btn{min-height:38px;padding:6px 8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:3px;font:inherit;font-size:12px;cursor:pointer;line-height:1}
 .btn:hover{background:var(--paper);color:var(--ink)}
 .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn.primary:hover{background:var(--accent2)}
@@ -119,8 +119,10 @@ canvas.orbit{cursor:grab}
       <div class="seg wrap" id="brushes">
         <button data-b="raise" class="on">raise</button><button data-b="lower">lower</button>
         <button data-b="smooth">smooth</button><button data-b="flatten">flatten</button>
+        <button data-b="pen" title="freehand pen: draws on the plan and drapes over the 3d ground">pen</button><button data-b="erase" title="drag over pen strokes to remove them">eraser</button>
         <button data-b="section" style="flex-basis:100%">draw section line a to b</button>
       </div>
+      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penClear" title="remove every pen stroke">clear sketch</button></div>
       <div class="params">
         <div class="p" title="brush size scales with the site width"><label>radius<output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label>strength<output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
@@ -217,7 +219,7 @@ canvas.orbit{cursor:grab}
 (() => {
 'use strict';
 const TAU = Math.PI * 2, D2R = Math.PI / 180;
-const INK = '#2a2a28', INK2 = '#6a6a66', INK3 = '#a0a09a', ACC = '#C96B3A', PAPER = '#f0f0ec';
+const INK = '#1a1a18', INK2 = '#454440', INK3 = '#6e6d68', ACC = '#C96B3A', PAPER = '#f0f0ec';
 const TONES = ['#ebeae4', '#dedcd4', '#cfcdc4', '#bdbbb1'];
 const hex2 = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
 const mix = (a, b, t) => { const A = hex2(a), B = hex2(b); return [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t]; };
@@ -239,7 +241,7 @@ function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   return rgb(mix(TONES[3], TONES[0], Math.max(0, Math.min(1, (light - .25) / .75))));
 }
 function drawLegend(c, w, h, mode, lo, hi) {
-  const x = w - 160, y = h - 64; c.font = font(9.5); c.textBaseline = 'middle';
+  const x = w - 160, y = h - 64; c.font = font(10.5); c.textBaseline = 'middle';
   if (mode === 'elevation' || mode === 'slope') {
     const stops = mode === 'elevation' ? ELEV : SLOPE; for (let q = 0; q < 120; q++) { c.fillStyle = rgb(ramp(stops, q / 119)); c.fillRect(x + q, y, 1.5, 10); }
     c.strokeStyle = INK2; c.lineWidth = .8; c.strokeRect(x, y, 120, 10); c.fillStyle = INK2; c.textAlign = 'left';
@@ -266,7 +268,7 @@ function linkSegs(segs) {   // screen-space fragments -> polylines (arrays of [x
   return polys;
 }
 function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [[x1,y1,x2,y2], ...])
-  c.font = font(9.5, 600); c.textAlign = 'center'; c.textBaseline = 'middle'; const placed = [];
+  c.font = font(10.5, 600); c.textAlign = 'center'; c.textBaseline = 'middle'; const placed = [];
   for (const [lv, segs] of groups) {
     const txt = fL(lv, 2).replace(/ (m|ft)$/, ''), tw = c.measureText(txt).width + 8;
     for (const poly of linkSegs(segs)) {
@@ -286,7 +288,7 @@ function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [
 function haloText(c, txt, x, y, color) { if (!S.labels) return; c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, x, y); c.fillStyle = color; c.fillText(txt, x, y); }
 function spotLabels(c, toXY) {   // high and low points of the proposed grade
   let mi = 0, ma = 0; for (let n = 1; n < W * H; n++) { if (z[n] > z[ma]) ma = n; if (z[n] < z[mi]) mi = n; }
-  c.font = font(9.5, 600); c.textAlign = 'left'; c.textBaseline = 'middle';
+  c.font = font(10.5, 600); c.textAlign = 'left'; c.textBaseline = 'middle';
   for (const [n, glyph] of [[ma, '▲'], [mi, '▼']]) { const p = toXY(n % W, Math.floor(n / W), z[n]); const txt = glyph + ' ' + fL(z[n], 2); const tw = c.measureText(txt).width + 6;
     c.fillStyle = ACC; c.beginPath(); c.arc(p[0], p[1], 2.5, 0, TAU); c.fill(); c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, p[0] + 8, p[1] + .5); c.fillStyle = ACC; c.fillText(txt, p[0] + 8, p[1] + .5); }
 }
@@ -313,7 +315,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -417,7 +419,7 @@ function drawPlan() {
   drawContours(1, S.labels);
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
-  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillStyle = INK2; ctx.font = font(11); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   const fy = Math.min(sheet.y + sheet.h + 6, S.h - 32), fx = Math.max(sheet.x, 8);
   const foot = S.w < 620 ? `${fL(S.siteW, 0)} wide · ${fL(iv, 2)} contours${S.world ? ' · ' + S.world.name.split(',')[0] : ''}` : `site ${fL(S.siteW, 0)} × ${fL(S.siteW * (H - 1) / (W - 1), 0)} · contour interval ${fL(iv, 2)} · index every ${fL(iv * 5, 2)}${S.world ? ' · ' + S.world.name : ''}${aerialOn ? (S.w < 620 ? ' · Esri imagery' : ' · imagery Esri, Maxar, Earthstar Geographics') : (S.aerial && S.world ? ' · ' + (aerialCache.status || 'loading photo') : '')}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`;
   if (aerialOn || PV.zoom > 1) { ctx.fillStyle = 'rgba(240,240,236,.88)'; ctx.fillRect(fx - 4, fy - 2, ctx.measureText(foot).width + 8, 15); ctx.fillStyle = INK2; }
@@ -427,10 +429,11 @@ function drawPlan() {
   ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, bx + bw, by + 4);
   ctx.save(); ctx.translate(sheet.x + 22, sheet.y + 26); ctx.rotate(-S.rot * D2R); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('N', 0, -9);
   ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, -6); ctx.moveTo(-3, -2); ctx.lineTo(0, -6); ctx.lineTo(3, -2); ctx.stroke(); ctx.restore(); ctx.textBaseline = 'top';
+  drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
   // section line
   if (S.sec) drawSectionLine();
   // brush cursor
-  if (S.ptr && S.mode === 'plan' && S.brush !== 'section') {
+  if (S.ptr && S.mode === 'plan' && S.brush !== 'section' && S.brush !== 'pen' && S.brush !== 'erase') {
     const p = toSheet(S.ptr[0], S.ptr[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.arc(p[0], p[1], S.radius / cs() * k, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
   }
@@ -508,6 +511,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     it.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke();
     if (it.lines.length) { c.strokeStyle = INK; for (const [a, b, ix] of it.lines) { c.lineWidth = ix ? 1.2 : .6; c.globalAlpha = ix ? .9 : .7; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.globalAlpha = 1; }
   }
+  drawStrokes(c, (i, j) => proj(i, j, sample(z, i, j) + .15), mini ? .7 : 1);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   if (S.labels && !mini) {
     const groups = new Map(), dmed = items.length ? items[Math.floor(items.length * .45)].d : 0;
@@ -515,9 +519,9 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     contourLabels(c, groups, 200, true); spotLabels(c, (i, j, zz) => proj(i, j, zz));
   }
   if (!mini && mode !== 'paper' && mode !== 'aerial' && mode !== 'sun') drawLegend(c, w, h, mode, lo, hi);
-  if (!mini && mode === 'sun') { c.fillStyle = INK2; c.font = font(9.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(sunCache.note || '', w - 14, h - 10); }
-  if (!mini && mode === 'aerial') { c.fillStyle = INK2; c.font = font(9.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(S.world ? (aerialCache.canvas ? 'imagery Esri, Maxar, Earthstar Geographics' : (aerialCache.status || 'loading photo')) : 'fetch real terrain to get a photo', w - 14, h - 10); }
-  c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
+  if (!mini && mode === 'sun') { c.fillStyle = INK2; c.font = font(10.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(sunCache.note || '', w - 14, h - 10); }
+  if (!mini && mode === 'aerial') { c.fillStyle = INK2; c.font = font(10.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(S.world ? (aerialCache.canvas ? 'imagery Esri, Maxar, Earthstar Geographics' : (aerialCache.status || 'loading photo')) : 'fetch real terrain to get a photo', w - 14, h - 10); }
+  c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
   if (mini) return; c.fillText(`model · ${S.ve}x vertical · right drag orbit · middle or shift drag pan · ctrl+right drag zoom · wheel zoom · double-click reset · r rain`, 14, h - 10);
 }
@@ -548,7 +552,7 @@ function drawDam3D(c, proj) {             // the dam wall and the pond it holds,
   for (let t = 0; t <= 8; t++) { const gx = ends[0][0] + (ends[1][0] - ends[0][0]) * t / 8, gy = ends[0][1] + (ends[1][1] - ends[0][1]) * t / 8; top.push(proj(gx, gy, L)); bot.push(proj(gx, gy, Math.min(L, sample(z, gx, gy)))); }
   c.beginPath(); top.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); for (let t = bot.length - 1; t >= 0; t--) c.lineTo(bot[t][0], bot[t][1]); c.closePath();
   c.fillStyle = '#4a4744'; c.fill(); c.strokeStyle = ACC; c.lineWidth = 1.5; c.stroke();
-  const mid = top[4]; c.font = font(9.5, 600); c.textAlign = 'center'; c.textBaseline = 'bottom'; haloText(c, `dam · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)}`, mid[0], mid[1] - 6, INK);
+  const mid = top[4]; c.font = font(10.5, 600); c.textAlign = 'center'; c.textBaseline = 'bottom'; haloText(c, `dam · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)}`, mid[0], mid[1] - 6, INK);
 }
 
 /* ---------- stepped model: the cardboard stack before you cut it ---------- */
@@ -590,8 +594,9 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
+  drawStrokes(c, (i, j) => proj(i, j, sample(z, i, j) + .15), mini ? .7 : 1);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
-  c.fillStyle = INK2; c.font = font(10); c.textAlign = 'left'; c.textBaseline = 'bottom';
+  c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
   if (mini) return; c.fillText(`stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
 }
@@ -782,7 +787,7 @@ function drawAnalysis() {
   if (S.an.ridge) { ctx.strokeStyle = ACC; ctx.lineWidth = .9; ctx.setLineDash([4, 3]); ctx.globalAlpha = .7; ctx.beginPath();
     for (let n = 0; n < W * H; n++) { if (downR[n] < 0 || accR[n] < thrCells) continue; const a = cellXY(n), b = cellXY(downR[n]); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); }
     ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
-  ctx.font = font(9.5, 600); ctx.textBaseline = 'middle';
+  ctx.font = font(10.5, 600); ctx.textBaseline = 'middle';
   if (S.an.catch && S.labels) for (const o of outlets) { if (o.cells < 40) continue; const c = toSheet(o.ci / o.cells, o.cj / o.cells), txt = fBig(o.cells * A), tw = ctx.measureText(txt).width + 8;
     ctx.textAlign = 'center'; haloText(ctx, txt, c[0], c[1] + .5, INK2); }
   if (S.an.flow) for (const o of ponds) { const p = toSheet(o.ci, o.cj); ctx.fillStyle = WATER; ctx.globalAlpha = .9; ctx.beginPath(); ctx.arc(p[0], p[1], 5, 0, TAU); ctx.fill(); ctx.fillStyle = PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], 2, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
@@ -797,7 +802,7 @@ function drawAnalysis() {
       const mid = poly[Math.floor(poly.length / 2)], txt = 'keyline ' + fL(lv, 2); ctx.textAlign = 'center'; haloText(ctx, txt, mid[0], mid[1] + .5, ACC); } }
   if (S.an.swales && S.keyPt) { const zk = sample(z, S.keyPt[0], S.keyPt[1]), drop = swaleDrop(S.swaleV), [lo, hi] = range(z);
     const kLab = label[idx(Math.round(S.keyPt[0]), Math.round(S.keyPt[1]))];
-    ctx.font = font(9, 600); for (let n = -8; n <= 8; n++) { const lv = zk + n * drop; if (lv <= lo || lv >= hi) continue;
+    ctx.font = font(10, 600); for (let n = -8; n <= 8; n++) { const lv = zk + n * drop; if (lv <= lo || lv >= hi) continue;
       for (const poly of contourPolys(lv)) { if (poly.length < 6) continue;
         const parts = clipToLabel(poly, kLab, label); if (!parts.length) continue;
         const m = poly[Math.floor(poly.length / 2)], a = poly[Math.max(0, Math.floor(poly.length / 2) - 2)], b = poly[Math.min(poly.length - 1, Math.floor(poly.length / 2) + 2)];
@@ -812,20 +817,21 @@ function drawAnalysis() {
     const half = Math.max(12, Math.min(40, Math.sqrt(pool.cells.length) * k2 * .5));
     ctx.strokeStyle = ACC; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke();
     ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke(); ctx.lineCap = 'butt';
-    ctx.font = font(9.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    ctx.font = font(10.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     const txt = `dam site · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`, tw = ctx.measureText(txt).width + 8; let lx = p[0] + fy * half + 8; const ly = p[1] - fx * half - 14; if (lx + tw > sheet.x + sheet.w) lx = p[0] - fy * half - tw - 4;
     haloText(ctx, txt, lx, ly + .5, INK); }
-  if (flood) { ctx.font = font(9.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  if (flood) { ctx.font = font(10.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     for (const pl of flood.pools.slice(0, 10)) { const p = toSheet(pl.ci, pl.cj); const txt = `pool · ${fBig(pl.area)} · ${fL(pl.depth, 1)} deep · ${pl.overflow > 0 ? 'full, overflowing ' + fV(pl.overflow) : Math.round(pl.full * 100) + '% full'}`, tw = ctx.measureText(txt).width + 8;
       let lx = p[0] + 8; if (lx + tw > sheet.x + sheet.w) lx = p[0] - tw - 8; haloText(ctx, txt, lx, p[1] + .5, '#3f6488'); } }
+  drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
   if (S.an.keys) for (const kp of keypoints) { const p = toSheet(kp.i, kp.j), sel = S.keyPt && S.keyPt[0] === kp.i && S.keyPt[1] === kp.j;
     ctx.strokeStyle = ACC; ctx.lineWidth = sel ? 2 : 1.2; ctx.fillStyle = sel ? ACC : PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], sel ? 6 : 4.5, 0, TAU); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'left'; haloText(ctx, 'keypoint ' + fL(kp.z, 1), p[0] + 10, p[1] + .5, ACC); }
   if (S.keyPt && !keypoints.some(kp => kp.i === S.keyPt[0] && kp.j === S.keyPt[1])) { const p = toSheet(S.keyPt[0], S.keyPt[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(p[0] - 5, p[1]); ctx.lineTo(p[0] + 5, p[1]); ctx.moveTo(p[0], p[1] - 5); ctx.lineTo(p[0], p[1] + 5); ctx.stroke(); }
   if (S.an.sun && S.sunMode === 'hours') { const x = sheet.x + sheet.w - 130, y = sheet.y + 10; for (let q = 0; q < 120; q++) { ctx.fillStyle = rgb(ramp(['#9fb0bf', '#eeeadf', '#e6b57a'], q / 119)); ctx.fillRect(x + q, y, 1.5, 8); }
-    ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.strokeRect(x, y, 120, 8); ctx.fillStyle = INK2; ctx.font = font(9.5); ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillText('0 h', x, y + 11); ctx.textAlign = 'right'; ctx.fillText((sunCache.max || 0).toFixed(0) + ' h sun', x + 120, y + 11); }
+    ctx.strokeStyle = INK2; ctx.lineWidth = .8; ctx.strokeRect(x, y, 120, 8); ctx.fillStyle = INK2; ctx.font = font(10.5); ctx.textBaseline = 'top'; ctx.textAlign = 'left'; ctx.fillText('0 h', x, y + 11); ctx.textAlign = 'right'; ctx.fillText((sunCache.max || 0).toFixed(0) + ' h sun', x + 120, y + 11); }
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
-  ctx.fillStyle = INK2; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+  ctx.fillStyle = INK2; ctx.font = font(11); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   const fy = Math.min(sheet.y + sheet.h + 6, S.h - 32), fx = Math.max(sheet.x, 8);
   if (sunNote) ctx.fillText(sunNote, fx, fy + 14);
   const foot2 = `${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ' · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : ''}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`;
@@ -855,7 +861,7 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
@@ -899,7 +905,7 @@ function stepRain() {
 }
 let sheetShot = { key: '', canvas: null };
 function analysisFrame() {                // the analysis sheet rendered once, reused while the rain moves
-  const key = [S.terrainVer, JSON.stringify(S.an), S.thrV, S.plowV, S.swaleV, S.damH, S.rainV, S.month, S.hour, S.sunMode, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.unit, S.labels, S.aerial, S.aop, aerialCache.status, sheet.x, sheet.y, sheet.k, S.w, S.h, S.rain].join('|');
+  const key = [S.terrainVer, JSON.stringify(S.an), S.thrV, S.plowV, S.swaleV, S.damH, S.rainV, S.month, S.hour, S.sunMode, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.unit, S.labels, S.aerial, S.aop, aerialCache.status, sheet.x, sheet.y, sheet.k, S.w, S.h, S.rain, S.strokeVer].join('|');
   if (sheetShot.key !== key) { drawAnalysis(); const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); sheetShot = { key, canvas: off }; }
   return sheetShot.canvas;
 }
@@ -919,7 +925,7 @@ function drawRain() {
   ctx.clearRect(0, 0, S.w, S.h); ctx.drawImage(inModel ? modelFrame() : analysisFrame(), 0, 0, S.w, S.h);
   const proj = inModel ? camera().proj : (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; };
   const { pooled, db } = drawRainOverlay(ctx, proj, S.w, S.h, inModel);
-  ctx.font = font(10); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  ctx.font = font(11); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
   const run = rainStats.creek ? rainStats.run / rainStats.creek : 0;
   haloText(ctx, `rain${S.rainPaused ? ' paused' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · water runs ${fL(run, 0)} across the land before reaching a creek${S.an.plow ? ' (keyline plowing on)' : ''} · r stops · p pauses`, S.w - 14, inModel ? S.h - 26 : S.h - 44, INK2);
 }
@@ -957,14 +963,14 @@ function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {
   c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); prop.forEach((v, q) => q ? c.lineTo(X(q), Y(v)) : c.moveTo(X(q), Y(v))); c.stroke();
   // datum axis with elevation ticks
   c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL, Y(lo) + 2); c.lineTo(mL, Y(hi) - 8); c.stroke();
-  c.fillStyle = INK2; c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle';
+  c.fillStyle = INK2; c.font = font(11); c.textAlign = 'right'; c.textBaseline = 'middle';
   const need = mini ? 12 : 14; let tick = iv; for (const m of [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]) { tick = iv * m; if (tick * pxm * vs >= need) break; }
   if (tick !== iv && iv * pxm * vs >= 4) for (let v = Math.ceil(lo / iv) * iv; v <= hi; v += iv) { c.beginPath(); c.moveTo(mL - 2, Y(v)); c.lineTo(mL, Y(v)); c.stroke(); }
   for (let v = Math.ceil(lo / tick) * tick; v <= hi + 1e-9; v += tick) { c.beginPath(); c.moveTo(mL - 5, Y(v)); c.lineTo(mL, Y(v)); c.stroke(); c.fillText(fL(v, 2), mL - 7, Y(v)); }
   // labels
   c.textAlign = 'center'; c.textBaseline = 'top'; c.fillStyle = ACC; c.font = font(13, 600);
   c.fillText('A', X(0), mT - 34); c.fillText('B', X(n), mT - 34);
-  c.fillStyle = INK2; c.font = font(10);
+  c.fillStyle = INK2; c.font = font(11);
   if (!mini) {
   const uf = isFt() ? FT : 1, barD = niceBar(L * uf / 5), bar = barD / uf; c.textAlign = 'left';
   c.fillText(`section A–B · length ${fL(L, 1)} · vertical ${vs.toFixed(2)}x`, mL, ground + 36);
@@ -997,7 +1003,7 @@ const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw 
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 let pipShot = { key: '', canvas: null };
 function pipFrame() {                     // the 3d preview drawn once (camera already swapped in by drawPip), reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
   if (pipShot.key !== key) { const off = document.createElement('canvas'); off.width = Math.max(1, Math.round(pw * dpr)); off.height = Math.max(1, Math.round(ph * dpr)); const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0); o.fillStyle = PAPER; o.fillRect(0, 0, pw, ph);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, pw, ph, 3, true); pipShot = { key, canvas: off }; }
   return pipShot.canvas;
@@ -1008,17 +1014,17 @@ try { if (localStorage.getItem('pipFold') === '1') { pipFolded = true; pip.class
 const inFold = e => { const r = pip.getBoundingClientRect(); return r.right - e.clientX < 20 && r.bottom - e.clientY < 20; };
 function drawPip() {
   if (!pw) sizePip();
-  if (pipFolded) { pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph); pctx.fillStyle = INK2; pctx.font = font(9.5, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▴ preview', pw / 2, ph / 2 + .5); return; } pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
+  if (pipFolded) { pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph); pctx.fillStyle = INK2; pctx.font = font(10.5, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▴ preview', pw / 2, ph / 2 + .5); return; } pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
   const showSec = S.mode === 'model' || (S.pipView === 'section' && S.mode !== 'section');
   if (showSec) drawSection(pctx, pw, ph, true);
   else { const zoom0 = S.cam.zoom, pan0 = S.cam.pan, cm0 = S.colorMode; S.cam.zoom = zoom0 * S.pipZoom; S.cam.pan = S.pipPan; if (S.mode === 'analysis' && S.an.sun) S.colorMode = 'sun';
     pctx.drawImage(pipFrame(), 0, 0, pw, ph);
     if (S.rain) drawRainOverlay(pctx, camera(pw, ph).proj, pw, ph, true);
     S.cam.zoom = zoom0; S.cam.pan = pan0; S.colorMode = cm0; }
-  if (S.mode !== 'section' && S.mode !== 'model') { pctx.font = font(9.5, 600); pctx.textBaseline = 'top'; pctx.textAlign = 'right';
+  if (S.mode !== 'section' && S.mode !== 'model') { pctx.font = font(10.5, 600); pctx.textBaseline = 'top'; pctx.textAlign = 'right';
     pctx.fillStyle = showSec ? INK3 : ACC; pctx.fillText('3d', pw - 52, 7); pctx.fillStyle = showSec ? ACC : INK3; pctx.fillText('section', pw - 8, 7); }
   pctx.fillStyle = 'rgba(240,240,236,.85)'; pctx.fillRect(0, ph - 18, pw, 18);
-  pctx.fillStyle = INK3; pctx.font = font(9); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText(showSec ? 'section A–B · updates as you brush · double-tap to open' : '3d · drag orbit · middle or shift drag pan · wheel zoom · double-tap open', 22, ph - 5);
+  pctx.fillStyle = INK2; pctx.font = font(9.5); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText(showSec ? 'section A–B · updates as you brush · double-tap to open' : '3d · drag orbit · middle or shift drag pan · wheel zoom · double-tap open', 22, ph - 5);
   pctx.fillStyle = 'rgba(240,240,236,.9)'; pctx.fillRect(pw - 18, ph - 18, 18, 18); pctx.fillStyle = INK2; pctx.font = font(10, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▾', pw - 9, ph - 8);
   if (!showSec) { pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.arc(12, 12, 5, 0, 6.2832); pctx.moveTo(4, 12); pctx.lineTo(20, 12); pctx.moveTo(12, 4); pctx.lineTo(12, 20); pctx.stroke(); }
   pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.moveTo(2, ph - 12); pctx.lineTo(12, ph - 2); pctx.moveTo(2, ph - 6); pctx.lineTo(6, ph - 2); pctx.stroke();
@@ -1057,14 +1063,14 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function undo() { const u = undoStack.pop(); if (!u) { toast('nothing to undo'); return; }
-  z.set(u.z); base.set(u.base); S.world = u.world; S.sec = u.sec; S.terrainVer++; S.dirty = true; updateStats(); toast(`undo · ${undoStack.length} left`); }
+  z.set(u.z); base.set(u.base); S.world = u.world; S.sec = u.sec; S.strokes = u.strokes || []; S.strokeVer++; S.terrainVer++; S.dirty = true; updateStats(); toast(`undo · ${undoStack.length} left`); }
 let drag = null, pinch = null; const pts = new Map();
 const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 cv.addEventListener('pointerdown', e => {
   cv.setPointerCapture(e.pointerId); const p = pt(e); pts.set(e.pointerId, p);
-  if (pts.size === 2) { const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, pz: PV.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
+  if (pts.size === 2) { if (drag && drag.kind === 'pen') { S.strokes.pop(); S.strokeVer++; } const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, pz: PV.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
   if (S.mode === 'model') {
     const btn = e.button;
     if (btn === 1 || e.shiftKey) { drag = { p, kind: 'pan' }; return; }
@@ -1080,6 +1086,8 @@ cv.addEventListener('pointerdown', e => {
   if (S.mode !== 'plan') return;
   const g = toGrid(p[0], p[1]);
   snapshot();
+  if (S.brush === 'pen') { const st = { color: S.penColor, pts: [[g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5]] }; S.strokes.push(st); drag = { kind: 'pen', st }; S.strokeVer++; S.dirty = true; return; }
+  if (S.brush === 'erase') { drag = { kind: 'erase' }; eraseAt(g); return; }
   if (S.brush === 'section') { S.sec = [g, g]; drag = { g, kind: 'section' }; S.dirty = true; return; }
   drag = { g, kind: 'brush', z0: sample(z, g[0], g[1]) }; dab(g[0], g[1], S.brush, drag.z0); S.dirty = true;
 });
@@ -1096,9 +1104,13 @@ cv.addEventListener('pointermove', e => {
   else if (drag.kind === 'zoom') { zoomAt(S.cam.pan, drag.at[0], drag.at[1], Math.exp((drag.p[1] - p[1]) * .006), S.w, S.h); drag.p = p; }
   else if (drag.kind === 'sculpt') { const g = pick(p[0], p[1]); if (!g) return; strokeLine(drag.g, g, drag.brush, drag.z0); drag.g = g; S.pick = g; S.dirty = true; }
   else if (drag.kind === 'section') { S.sec[1] = toGrid(p[0], p[1]); S.dirty = true; }
+  else if (drag.kind === 'pen') { const g = toGrid(p[0], p[1]), last = drag.st.pts[drag.st.pts.length - 1]; if (Math.hypot(g[0] - last[0], g[1] - last[1]) >= .25) { drag.st.pts.push([g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5]); S.strokeVer++; S.dirty = true; } }
+  else if (drag.kind === 'erase') eraseAt(toGrid(p[0], p[1]));
   else { const g = toGrid(p[0], p[1]); strokeLine(drag.g, g, S.brush, drag.z0); drag.g = g; S.dirty = true; }
 });
+function eraseAt(g) { const r = 8 / sheet.k; const before = S.strokes.length; S.strokes = S.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - g[0], q[1] - g[1]) < r)); if (S.strokes.length !== before) { S.strokeVer++; S.dirty = true; } }
 function endPointer(e) {
+  if (drag && drag.kind === 'pen') { const st = drag.st; if (st.pts.length < 2) S.strokes.pop(); else if (st.pts.length > 3) { const sm = st.pts.map((q, i) => i === 0 || i === st.pts.length - 1 ? q : [(st.pts[i - 1][0] + q[0] + st.pts[i + 1][0]) / 3, (st.pts[i - 1][1] + q[1] + st.pts[i + 1][1]) / 3, q[2]]); st.pts = sm; } S.strokeVer++; S.dirty = true; }
   pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
   if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt')) updateStats();
   if (drag && drag.kind === 'section') { const [a, b] = S.sec; if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 3) S.sec = null; else { setMode('section'); toast('section cut. back to plan to redraw it'); } }
@@ -1125,7 +1137,14 @@ function setMode(m) {
   cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
-document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.brush = b.dataset.b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
+document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.brush = b.dataset.b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('penRow').style.display = (S.brush === 'pen' || S.brush === 'erase') ? '' : 'none'; S.dirty = true; };
+const PEN = { ink: INK, ember: ACC, water: '#3f6488' };
+document.getElementById('penRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'penClear') { if (S.strokes.length) { snapshot(); S.strokes = []; S.strokeVer++; S.dirty = true; toast('sketch cleared'); } return; } S.penColor = b.dataset.pc; document.querySelectorAll('#penRow button[data-pc]').forEach(x => x.classList.toggle('on', x === b)); };
+function drawStrokes(c, toXY, k) {          // pen strokes through any projection; k scales width with zoom
+  for (const st of S.strokes) { if (st.pts.length < 2) continue; c.strokeStyle = PEN[st.color] || INK; c.lineCap = 'round'; c.lineJoin = 'round';
+    for (let q = 1; q < st.pts.length; q++) { const a = st.pts[q - 1], b = st.pts[q]; c.lineWidth = (1 + 2.2 * ((a[2] + b[2]) / 2)) * k; c.beginPath(); const pa = toXY(a[0], a[1]), pb = toXY(b[0], b[1]); c.moveTo(pa[0], pa[1]); c.lineTo(pb[0], pb[1]); c.stroke(); } }
+  c.lineCap = 'butt';
+}
 const relabels = [];
 const bind = (id, fmt, fn) => { const el = document.getElementById(id), out = document.getElementById('o_' + id);
   const apply = () => { const v = +el.value; out.textContent = fmt(v); fn(v); S.dirty = true; }; el.oninput = apply; relabels.push(() => { out.textContent = fmt(+el.value); }); apply(); };
@@ -1206,7 +1225,7 @@ document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetch
 document.getElementById('laser').onclick = () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); };
 document.getElementById('reseed').onclick = () => { snapshot(); S.world = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
 document.getElementById('reset').onclick = () => { snapshot(); resetGrading(); toast('grading reset to existing'); };
-document.getElementById('wipe').onclick = () => { snapshot(); base.fill(0); S.world = null; S.sec = null; worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
+document.getElementById('wipe').onclick = () => { snapshot(); S.strokes = []; S.strokeVer++; base.fill(0); S.world = null; S.sec = null; worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
 document.getElementById('png').onclick = () => {
   const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height; const o = out.getContext('2d');
   o.fillStyle = PAPER; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0);
@@ -1420,13 +1439,13 @@ async function fetchWorld(known, quiet) {
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, strokes: S.strokes.map(st => ({ color: st.color, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr) {
   if (!pr || pr.app !== 'coyote-topo' || !pr.base || pr.base.length !== W * H) throw new Error('not a coyote topo file');
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
-  S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
+  S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
   if (pr.unit === 'm' || pr.unit === 'ft') { S.unit = pr.unit; document.getElementById('unit').value = pr.unit; }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
   for (const id of SLIDERS) { if (id === 'relief') continue; const el = document.getElementById(id); if (el.oninput) el.oninput({ target: el }); }
@@ -1442,7 +1461,7 @@ function saveProject() { const pr = snapshotProject(), name = `coyote-topo-${(S.
 document.getElementById('saveProj').onclick = saveProject;
 document.getElementById('openProj').onclick = () => document.getElementById('openFile').click();
 document.getElementById('openFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { loadProject(JSON.parse(rd.result)); toast('project opened'); } catch (err) { toast(String(err.message || err)); } }; rd.readAsText(f); e.target.value = ''; };
-let lastAuto = ''; setInterval(() => { try { const pr = snapshotProject(); const sig = S.terrainVer + '|' + JSON.stringify([pr.sliders, pr.world, pr.sec, pr.keyPt, pr.an, pr.unit, pr.aerial, pr.colorMode, pr.modelStyle]); if (sig !== lastAuto) { lastAuto = sig; localStorage.setItem('topo-session', JSON.stringify(pr)); } } catch (_) {} }, 4000);
+let lastAuto = ''; setInterval(() => { try { const pr = snapshotProject(); const sig = S.terrainVer + '|' + S.strokeVer + '|' + JSON.stringify([pr.sliders, pr.world, pr.sec, pr.keyPt, pr.an, pr.unit, pr.aerial, pr.colorMode, pr.modelStyle]); if (sig !== lastAuto) { lastAuto = sig; localStorage.setItem('topo-session', JSON.stringify(pr)); } } catch (_) {} }, 4000);
 function restoreSession() { try { const raw = localStorage.getItem('topo-session'); if (!raw) return false; loadProject(JSON.parse(raw)); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'restored from your last session'); return true; } catch (_) { return false; } }
 
 /* ---------- start: existing grade plus a sketched berm and swale so the sheet is not empty ---------- */
