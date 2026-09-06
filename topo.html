@@ -1210,6 +1210,10 @@ function drawStrokes(c, toXY, k, dense) {   // pen strokes through any projectio
   for (const st of S.strokes) { if (st.pts.length < 2) continue; c.strokeStyle = PEN[st.color] || INK; const sw = st.w || 1; c.globalAlpha = st.a == null ? 1 : st.a; c.setLineDash(st.dash ? [7 * sw + 2, 5 * sw + 2] : []);
     const pts = dense ? densify(st.pts, .3) : st.pts, P = pts.map(q => toXY(q[0], q[1]));
     if (st.shape) { c.lineWidth = 2.2 * k * sw; c.beginPath(); P.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); continue; }
+    if ((st.a != null && st.a < 1) || st.dash) {   // one continuous path: no overlap darkening, unbroken dash pattern
+      let pr = 0; for (const q of pts) pr += q[2]; pr /= pts.length; c.lineWidth = (1 + 2.4 * pr) * k * sw; c.beginPath(); c.moveTo(P[0][0], P[0][1]);
+      for (let q = 1; q < P.length - 1; q++) { const mx = (P[q][0] + P[q + 1][0]) / 2, my = (P[q][1] + P[q + 1][1]) / 2; c.quadraticCurveTo(P[q][0], P[q][1], mx, my); }
+      c.lineTo(P[P.length - 1][0], P[P.length - 1][1]); c.stroke(); continue; }
     for (let a = 0; a < pts.length - 1; a += 5) {   // short runs, each with its own pen pressure
       const b = Math.min(pts.length - 1, a + 5); let pr = 0; for (let q = a; q <= b; q++) pr += pts[q][2]; pr /= (b - a + 1);
       c.lineWidth = (1 + 2.4 * pr) * k * sw; c.beginPath(); c.moveTo(P[a][0], P[a][1]);
