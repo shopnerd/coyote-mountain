@@ -122,6 +122,7 @@ canvas.orbit{cursor:grab}
         <button data-b="pen" title="freehand pen: draws on the plan and drapes over the 3d ground">pen</button><button data-b="erase" title="drag over pen strokes to remove them">eraser</button>
         <button data-b="section" style="flex-basis:100%">section line</button>
       </div>
+      <div class="seg" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circle</button></div>
       <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penClear" title="remove every pen stroke">clear</button></div>
       <div class="params">
         <div class="p" title="brush size scales with the site width"><label>radius<output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
@@ -315,7 +316,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -1063,14 +1064,14 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function undo() { const u = undoStack.pop(); if (!u) { toast('nothing to undo'); return; }
   z.set(u.z); base.set(u.base); S.world = u.world; S.sec = u.sec; S.strokes = u.strokes || []; S.strokeVer++; S.terrainVer++; S.dirty = true; updateStats(); toast(`undo · ${undoStack.length} left`); }
 let drag = null, pinch = null; const pts = new Map();
 const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 cv.addEventListener('pointerdown', e => {
   cv.setPointerCapture(e.pointerId); const p = pt(e); pts.set(e.pointerId, p);
-  if (pts.size === 2) { if (drag && drag.kind === 'pen') { S.strokes.pop(); S.strokeVer++; } const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, pz: PV.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
+  if (pts.size === 2) { if (drag && drag.kind === 'pen') { S.strokes.pop(); S.strokeVer++; } if (drag && drag.kind === 'shape') { drag = null; S.dirty = true; } const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, pz: PV.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
   if (S.mode === 'model') {
     const btn = e.button;
     if (btn === 1 || e.shiftKey) { drag = { p, kind: 'pan' }; return; }
@@ -1086,6 +1087,7 @@ cv.addEventListener('pointerdown', e => {
   if (S.mode !== 'plan') return;
   const g = toGrid(p[0], p[1]);
   snapshot();
+  if (S.brush === 'pen' && (S.penMode === 'line' || S.penMode === 'rect' || S.penMode === 'circle')) { const base = document.createElement('canvas'); base.width = cv.width; base.height = cv.height; base.getContext('2d').drawImage(cv, 0, 0); drag = { kind: 'shape', p0: p, base }; return; }
   if (S.brush === 'pen') { const st = { color: S.penColor, pts: [[g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5]] }; S.strokes.push(st); drag = { kind: 'pen', st, last: p }; return; }
   if (S.brush === 'erase') { drag = { kind: 'erase' }; eraseAt(g); return; }
   if (S.brush === 'section') { S.sec = [g, g]; drag = { g, kind: 'section' }; S.dirty = true; return; }
@@ -1111,11 +1113,61 @@ cv.addEventListener('pointermove', e => {
       ctx.lineWidth = (1 + 2.4 * (last[2] + pr) / 2) * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)); ctx.beginPath(); ctx.moveTo(drag.last[0], drag.last[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); drag.last = q; }
     ctx.lineCap = 'butt'; }
   else if (drag.kind === 'erase') eraseAt(toGrid(p[0], p[1]));
+  else if (drag.kind === 'shape') { ctx.clearRect(0, 0, S.w, S.h); ctx.drawImage(drag.base, 0, 0, S.w, S.h); const st = shapeFromDrag(S.penMode, drag.p0, p); drag.p1 = p;
+    ctx.strokeStyle = PEN[st.color] || INK; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)); ctx.lineJoin = 'round'; ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); }
   else { const g = toGrid(p[0], p[1]); strokeLine(drag.g, g, S.brush, drag.z0); drag.g = g; S.dirty = true; }
 });
+function simplifyDP(P, tol) {             // douglas-peucker on [x,y] points
+  if (P.length < 3) return P.slice(); const keep = new Uint8Array(P.length); keep[0] = keep[P.length - 1] = 1; const stack = [[0, P.length - 1]];
+  while (stack.length) { const [a, b] = stack.pop(); const ax = P[a][0], ay = P[a][1], bx = P[b][0], by = P[b][1], L = Math.hypot(bx - ax, by - ay) || 1; let md = -1, mi = -1;
+    for (let q = a + 1; q < b; q++) { const d = Math.abs((by - ay) * P[q][0] - (bx - ax) * P[q][1] + bx * ay - by * ax) / L; if (d > md) { md = d; mi = q; } }
+    if (md > tol && mi > 0) { keep[mi] = 1; stack.push([a, mi], [mi, b]); } }
+  return P.filter((_, q) => keep[q]);
+}
+function recognizeStroke(st) {            // turn a freehand stroke into a clean shape when it clearly is one; sheet-space tolerances
+  const P = st.pts.map(q => toSheet(q[0], q[1])); if (P.length < 4) return null;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of P) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
+  const bw = x1 - x0, bh = y1 - y0, diag = Math.hypot(bw, bh); if (diag < 14) return null;
+  const closed = Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) < Math.max(14, diag * .18), pr = .5;
+  const toG = q => { const g = toGrid(q[0], q[1]); return [g[0], g[1], pr]; };
+  if (closed) {
+    // circle / ellipse: points sit near the ellipse inscribed in the bounding box
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = bw / 2, ry = bh / 2; let err = 0;
+    for (const q of P) err += Math.abs(Math.hypot((q[0] - cx) / rx, (q[1] - cy) / ry) - 1); err /= P.length;
+    if (err < .13 && rx > 5 && ry > 5) { const pts = []; for (let t = 0; t <= 48; t++) { const a = t / 48 * TAU; pts.push(toG([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry])); } return { color: st.color, shape: true, pts }; }
+    // rectangle / triangle / clean polygon: few corners after simplification
+    const sim = simplifyDP(P, Math.max(6, diag * .06)); const corners = sim.length - 1;   // last point ~ first
+    if (corners === 4 || corners === 3 || corners === 5 || corners === 6) {
+      let pts = sim.slice(0, corners);
+      if (corners === 4) { const axisish = pts.every((q, i) => { const n = pts[(i + 1) % 4]; const a = Math.abs(Math.atan2(n[1] - q[1], n[0] - q[0])) % (Math.PI / 2); return a < .2 || a > Math.PI / 2 - .2; }); if (axisish) pts = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]; }
+      return { color: st.color, shape: true, pts: pts.concat([pts[0]]).map(toG) }; }
+    return null;
+  }
+  // straight line: everything close to the chord
+  const a = P[0], b = P[P.length - 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]); let md = 0;
+  for (const q of P) md = Math.max(md, Math.abs((b[1] - a[1]) * q[0] - (b[0] - a[0]) * q[1] + b[0] * a[1] - b[1] * a[0]) / (L || 1));
+  if (L > 18 && md < Math.max(4, L * .045)) return { color: st.color, shape: true, pts: [toG(a), toG(b)] };
+  // clean polyline: a handful of straight legs
+  const sim = simplifyDP(P, Math.max(6, diag * .05)); if (sim.length >= 3 && sim.length <= 7) return { color: st.color, shape: true, pts: sim.map(toG) };
+  return null;
+}
+function snapEnds(st) {                   // auto-connect: endpoints jump to a nearby vertex of another stroke
+  const r = 10 / sheet.k; for (const e of [0, st.pts.length - 1]) { const q = st.pts[e]; let best = null, bd = r * r;
+    for (const o of S.strokes) { if (o === st) continue; for (const v of (o.shape ? o.pts : [o.pts[0], o.pts[o.pts.length - 1]])) { const d = (v[0] - q[0]) ** 2 + (v[1] - q[1]) ** 2; if (d < bd) { bd = d; best = v; } } }
+    if (best) st.pts[e] = [best[0], best[1], q[2]]; }
+}
+function shapeFromDrag(mode, p0, p1) {   // primitives dragged out on the sheet
+  const pr = .5, toG = q => { const g = toGrid(q[0], q[1]); return [g[0], g[1], pr]; };
+  if (mode === 'line') return { color: S.penColor, shape: true, pts: [toG(p0), toG(p1)] };
+  if (mode === 'rect') return { color: S.penColor, shape: true, pts: [[p0[0], p0[1]], [p1[0], p0[1]], [p1[0], p1[1]], [p0[0], p1[1]], [p0[0], p0[1]]].map(toG) };
+  const r = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), pts = []; for (let t = 0; t <= 48; t++) { const a = t / 48 * TAU; pts.push(toG([p0[0] + Math.cos(a) * r, p0[1] + Math.sin(a) * r])); } return { color: S.penColor, shape: true, pts };
+}
 function eraseAt(g) { const r = 8 / sheet.k; const before = S.strokes.length; S.strokes = S.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - g[0], q[1] - g[1]) < r)); if (S.strokes.length !== before) { S.strokeVer++; S.dirty = true; } }
 function endPointer(e) {
-  if (drag && drag.kind === 'pen') { const st = drag.st; if (st.pts.length < 2) S.strokes.pop(); else if (st.pts.length > 3) { const sm = st.pts.map((q, i) => i === 0 || i === st.pts.length - 1 ? q : [(st.pts[i - 1][0] + 2 * q[0] + st.pts[i + 1][0]) / 4, (st.pts[i - 1][1] + 2 * q[1] + st.pts[i + 1][1]) / 4, q[2]]); st.pts = sm; } S.strokeVer++; S.dirty = true; }
+  if (drag && drag.kind === 'shape') { if (drag.p1 && Math.hypot(drag.p1[0] - drag.p0[0], drag.p1[1] - drag.p0[1]) > 4) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); snapEnds(st); S.strokes.push(st); } S.strokeVer++; S.dirty = true; }
+  if (drag && drag.kind === 'pen') { const st = drag.st; if (st.pts.length < 2) S.strokes.pop(); else { if (st.pts.length > 3) { const sm = st.pts.map((q, i) => i === 0 || i === st.pts.length - 1 ? q : [(st.pts[i - 1][0] + 2 * q[0] + st.pts[i + 1][0]) / 4, (st.pts[i - 1][1] + 2 * q[1] + st.pts[i + 1][1]) / 4, q[2]]); st.pts = sm; }
+      if (S.penMode === 'smart') { const rec = recognizeStroke(st); if (rec) { snapEnds(rec); S.strokes[S.strokes.length - 1] = rec; toast(rec.pts.length === 2 ? 'straightened' : rec.pts.length === 49 ? 'circle' : 'shape'); } else snapEnds(st); } }
+    S.strokeVer++; S.dirty = true; }
   pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
   if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt')) updateStats();
   if (drag && drag.kind === 'section') { const [a, b] = S.sec; if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 3) S.sec = null; else { setMode('section'); toast('section cut. back to plan to redraw it'); } }
@@ -1142,7 +1194,8 @@ function setMode(m) {
   cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
-document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.brush = b.dataset.b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('penRow').style.display = (S.brush === 'pen' || S.brush === 'erase') ? '' : 'none'; S.dirty = true; };
+document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; setBrush(b.dataset.b); S.dirty = true; };
+document.getElementById('penMode').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.penMode = b.dataset.pm; document.querySelectorAll('#penMode button').forEach(x => x.classList.toggle('on', x === b)); };
 const PEN = { ink: INK, ember: ACC, water: '#3f6488' };
 document.getElementById('penRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'penClear') { if (S.strokes.length) { snapshot(); S.strokes = []; S.strokeVer++; S.dirty = true; toast('sketch cleared'); } return; } S.penColor = b.dataset.pc; document.querySelectorAll('#penRow button[data-pc]').forEach(x => x.classList.toggle('on', x === b)); };
 function densify(pts, maxStep) {           // add points so no gap is longer than maxStep cells (so the line can follow the ground)
@@ -1153,6 +1206,7 @@ function drawStrokes(c, toXY, k, dense) {   // pen strokes through any projectio
   c.lineCap = 'round'; c.lineJoin = 'round';
   for (const st of S.strokes) { if (st.pts.length < 2) continue; c.strokeStyle = PEN[st.color] || INK;
     const pts = dense ? densify(st.pts, .3) : st.pts, P = pts.map(q => toXY(q[0], q[1]));
+    if (st.shape) { c.lineWidth = 2.2 * k; c.beginPath(); P.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); continue; }
     for (let a = 0; a < pts.length - 1; a += 5) {   // short runs, each with its own pen pressure
       const b = Math.min(pts.length - 1, a + 5); let pr = 0; for (let q = a; q <= b; q++) pr += pts[q][2]; pr /= (b - a + 1);
       c.lineWidth = (1 + 2.4 * pr) * k; c.beginPath(); c.moveTo(P[a][0], P[a][1]);
@@ -1192,7 +1246,7 @@ try { const u = localStorage.getItem('unit'); if (u === 'm' || u === 'ft') { S.u
 document.getElementById('unit').onchange = e => { S.unit = e.target.value; try { localStorage.setItem('unit', S.unit); } catch (_) {} relabels.forEach(f => f()); if (S.world) autoInterval(); updateStats(); S.dirty = true; if (S.mode === 'plan' && S.ptr) readout(S.ptr); };
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
-function setBrush(b) { S.brush = b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; }
+function setBrush(b) { S.brush = b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; }
 function setInterval1ft() { const list = isFt() ? INTERVALS_FT : INTERVALS, want = isFt() ? 1 / FT : .5; let k = 0; for (let q = 0; q < list.length; q++) if (Math.abs(list[q] - want) < Math.abs(list[k] - want)) k = q; const el = document.getElementById('interval'); el.value = k; el.dispatchEvent(new Event('input')); }
 async function goHome(quiet) {
   try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'home project'); if (!quiet) toast('home'); return; } } catch (_) {}
@@ -1461,7 +1515,7 @@ async function fetchWorld(known, quiet) {
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, strokes: S.strokes.map(st => ({ color: st.color, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr) {
