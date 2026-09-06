@@ -204,6 +204,7 @@ canvas.orbit{cursor:grab}
     <div class="sec">fabricate</div>
     <div class="params">
       <div class="p" title="how much the site shrinks to become the object: 1 to N"><label>scale<output id="o_mm">1:400</output></label><input type="range" id="mm" min="50" max="600" step="10" value="150"></div>
+      <div class="desc" id="footInfo" style="padding:0 0 6px"></div>
       <div class="p"><label>material thickness<output id="o_thick">3.0 mm</output></label><input type="range" id="thick" min="1" max="12" step=".5" value="3"></div>
       <div class="p"><label>sheet</label><select id="sheet">
         <option value="300x450">300 × 450 mm</option>
@@ -966,8 +967,11 @@ function drawRain() {
   const proj = inModel ? camera().proj : (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; };
   const { pooled, db } = drawRainOverlay(ctx, proj, S.w, S.h, inModel);
   ctx.font = font(11); ctx.textAlign = 'right'; ctx.textBaseline = 'bottom';
+  haloText(ctx, rainText(pooled, db, false), S.w - 14, inModel ? S.h - 26 : S.h - 44, INK2);
+}
+function rainText(pooled, db, forSheet) {
   const run = rainStats.creek ? rainStats.run / rainStats.creek : 0;
-  haloText(ctx, `rain${S.rainPaused ? ' paused' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · water runs ${fL(run, 0)} across the land before reaching a creek${S.an.plow ? ' (keyline plowing on)' : ''} · r stops · p pauses`, S.w - 14, inModel ? S.h - 26 : S.h - 44, INK2);
+  return `rain${S.rainPaused ? ' paused' : forSheet ? ' running' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · water runs ${fL(run, 0)} across the land before reaching a creek${S.an.plow ? ' (keyline plowing on)' : ''}${forSheet ? '' : ' · r stops · p pauses'}`;
 }
 
 /* ---------- section ---------- */
@@ -1238,18 +1242,25 @@ const TIPS = {
   'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush',
   kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
   reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label',
-  undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'a titled drawing sheet: plan at a standard scale with a graphic scale and north arrow, section, and model. pdf at true paper size plus a png', laser: 'cardboard layers nested on sheets for the laser cutter', extents: 'refit the view (0)'
+  'p:month': 'month of the year for the sun study', 'p:hour': 'hour of the day for the sun study, solar time', 'p:rain': 'rain falling on the whole site in one storm, no soak-in', 'p:thr': 'how much upstream ground it takes to count as a stream', 'p:plow': 'distance between plow lines, measured on the ground', 'p:swale': 'vertical drop from one swale to the next', 'p:dam': 'wall height of the dam; the pond fills to its crest',
+  'p:place': 'a place name, or lat, lng. then press fetch', 'p:siteW': 'how wide a piece of the world to fetch. wider means coarser ground; it refetches when this changes', 'p:rot': 'turn the fetched area so a long feature lies along the sheet', 'p:aop': 'how strongly the satellite photo shows through',
+  'p:unit': 'imperial or metric, everywhere: sheet, notes, exports', 'p:relief': 'height of the invented hills, low point to high point', 'p:interval': 'vertical spacing between contour lines; every fifth one is an index contour', 'p:hach': 'how many short downhill ticks between contours; 0 for none', 'p:ve': 'stretch heights so relief reads in the model and section; 1 is true',
+  'p:mm': 'how much the site shrinks to become the object, and how wide it comes out', 'p:thick': 'thickness of the cardboard or plywood you will cut', 'p:sheet': 'the laser bed in mm; layers get nested onto sheets this size', 'p:ledge': 'hollow each layer, leaving a ledge this wide for the next one to sit on; 0 keeps them solid', 'p:paper': 'paper size for the drawing sheet set',
+  'p:radius': () => S.brush === 'pen' ? 'width of new pen strokes' : S.brush === 'erase' ? 'how wide the eraser reaches' : 'brush size; it scales with the site width', 'p:strength': () => S.brush === 'pen' ? 'ink opacity of new pen strokes' : 'how hard each pass moves the ground',
+  undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'a two-sheet set: plan at a standard scale with graphic scale and north arrow, section and model; then the analysis sheet with every layer that is on, the rain as it stands, and notes. pdf at true paper size plus a png per sheet', laser: 'cardboard layers nested on sheets for the laser cutter', extents: 'refit the view (0)'
 };
-function tipFor(el) { const d = el.dataset; const key = el.id && TIPS[el.id] ? el.id : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
-  return (key && TIPS[key]) || el.title || ''; }
+function tipFor(el) { const d = el.dataset; let key;
+  if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
+  else key = el.id && TIPS[el.id] ? el.id : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
+  const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.title || ''; }
 const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
 function showTip(el) { const t = tipFor(el); if (!t) return; tipEl.textContent = t; tipEl.classList.add('show'); const r = el.getBoundingClientRect(), tw = Math.min(250, tipEl.offsetWidth || 200);
   let x = r.right + 8, y = r.top; if (x + tw > innerWidth - 8) x = Math.max(8, r.left - tw - 8); if (innerWidth < 760) { x = Math.max(8, Math.min(innerWidth - tw - 8, r.left)); y = r.top - 8 - tipEl.offsetHeight; }
   tipEl.style.left = x + 'px'; tipEl.style.top = Math.max(4, Math.min(innerHeight - tipEl.offsetHeight - 4, y)) + 'px'; }
 function hideTip() { clearTimeout(tipTimer); tipTimer = null; tipTarget = null; tipEl.classList.remove('show'); }
-document.querySelectorAll('button').forEach(el => { if (el.title && tipFor(el)) el.removeAttribute('title'); });
-document.addEventListener('pointerover', e => { const el = e.target.closest('button'); if (!el || el === tipTarget || e.pointerType === 'touch') return; hideTip(); tipTarget = el; tipTimer = setTimeout(() => showTip(el), 500); });
-document.addEventListener('pointerout', e => { const el = e.target.closest('button'); if (el && el === tipTarget) hideTip(); });
+document.querySelectorAll('button,.p').forEach(el => { if (el.title && tipFor(el)) el.removeAttribute('title'); });
+document.addEventListener('pointerover', e => { const el = e.target.closest('button,.p'); if (!el || el === tipTarget || e.pointerType === 'touch') return; hideTip(); tipTarget = el; tipTimer = setTimeout(() => showTip(el), 500); });
+document.addEventListener('pointerout', e => { const el = e.target.closest('button,.p'); if (el && el === tipTarget && !el.contains(e.relatedTarget)) hideTip(); });
 document.addEventListener('pointerdown', e => { const el = e.target.closest('button'); if (e.pointerType === 'touch' && el) { hideTip(); tipTarget = el; tipTimer = setTimeout(() => { showTip(el); el.dataset.held = '1'; }, 600); } else hideTip(); }, true);
 document.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { const held = tipTarget && tipTarget.dataset.held; clearTimeout(tipTimer); if (!held) hideTip(); else setTimeout(hideTip, 1800); } }, true);
 document.addEventListener('click', e => { const el = e.target.closest('button'); if (el && el.dataset.held) { delete el.dataset.held; e.stopPropagation(); e.preventDefault(); } }, true);
@@ -1479,7 +1490,12 @@ function layerPlan() {
   const k = S.mm / S.siteW, [lo, hi] = range(z), dz = S.thick / (k * S.ve), n = Math.floor((hi - lo) / dz + 1e-9);
   return { k, lo, hi, dz, n, gu: cs() * k };
 }
+function footInfo() {                      // the printed object: width x depth x height at this scale
+  const { k, lo, hi } = layerPlan(), w = S.mm, d = S.mm * (H - 1) / (W - 1), h = (hi - lo) * S.ve * k + 3, dim = mm => isFt() ? tz((mm / 25.4).toFixed(2)) : Math.round(mm);
+  document.getElementById('footInfo').textContent = `model · ${dim(w)} × ${dim(d)} × ${dim(h)} ${isFt() ? 'in' : 'mm'} · width × depth × height, base included`;
+}
 function layersInfo() {
+  footInfo();
   const { dz, n } = layerPlan(), el = document.getElementById('layersInfo');
   el.textContent = `${n + 1} layers · ${fL(dz, 2)} of grade per sheet · stack ${fS((n + 1) * S.thick)} tall`;
   el.style.color = n + 1 > 80 ? 'var(--accent)' : '';
@@ -1657,69 +1673,100 @@ function pickScale(boxWpx, boxHpx, dpi) {   // largest standard scale at which t
 }
 function sheetInfo() { const [pw_, ph_] = document.getElementById('paper').value.split('x').map(Number), dpi = 100, boxW = (pw_ - 1) * dpi * .6, boxH = (ph_ - 1.9) * dpi; const sc = pickScale(boxW, boxH, dpi); const el = document.getElementById('sheetInfo'); if (el) el.textContent = `plan would print at ${sc.label}${isFt() ? ' (1:' + sc.ratio.toLocaleString() + ')' : ''}`; return sc; }
 document.getElementById('paper').onchange = sheetInfo;
-function renderPlanAt(k, w, h) {          // draw the plan into the live canvas at an exact scale, hand back the pixels
-  const keep = { cw: cv.width, ch: cv.height, dpr, Sw: S.w, Sh: S.h, sheet, sheetBase, ptr: S.ptr, fs: fontScale };
-  dpr = 1; cv.width = w; cv.height = h; ctx.setTransform(1, 0, 0, 1, 0, 0); S.w = w; S.h = h; S.ptr = null; fontScale = 1.35;
+function renderPlanAt(k, w, h, draw = drawPlan) {   // draw a sheet view into the live canvas at an exact scale, hand back the pixels
+  const keep = { cw: cv.width, ch: cv.height, dpr, Sw: S.w, Sh: S.h, sheet, sheetBase, ptr: S.ptr, fs: fontScale, pz: PV.zoom };
+  dpr = 1; cv.width = w; cv.height = h; ctx.setTransform(1, 0, 0, 1, 0, 0); S.w = w; S.h = h; S.ptr = null; fontScale = 1.35; PV.zoom = 1;
   sheet = { k, w: k * (W - 1), h: k * (H - 1), x: (w - k * (W - 1)) / 2, y: (h - 22 - k * (H - 1)) / 2 }; sheetBase = sheet;
-  drawPlan(); const out = document.createElement('canvas'); out.width = w; out.height = h; out.getContext('2d').drawImage(cv, 0, 0);
-  dpr = keep.dpr; cv.width = keep.cw; cv.height = keep.ch; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); S.w = keep.Sw; S.h = keep.Sh; S.ptr = keep.ptr; fontScale = keep.fs; sheet = keep.sheet; sheetBase = keep.sheetBase; S.dirty = true;
+  draw(); const out = document.createElement('canvas'); out.width = w; out.height = h; out.getContext('2d').drawImage(cv, 0, 0);
+  dpr = keep.dpr; cv.width = keep.cw; cv.height = keep.ch; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); S.w = keep.Sw; S.h = keep.Sh; S.ptr = keep.ptr; fontScale = keep.fs; sheet = keep.sheet; sheetBase = keep.sheetBase; PV.zoom = keep.pz; S.dirty = true;
   return out;
 }
-function drawingSheet() {
-  const [pw_, ph_] = document.getElementById('paper').value.split('x').map(Number), dpi = 100, PW = Math.round(pw_ * dpi), PH = Math.round(ph_ * dpi);
-  const out = document.createElement('canvas'); out.width = PW; out.height = PH; const o = out.getContext('2d'); o.fillStyle = '#ffffff'; o.fillRect(0, 0, PW, PH);
+function wrapText(o, txt, maxW) { const out = []; let ln = ''; for (const wd of txt.split(' ')) { const t = ln ? ln + ' ' + wd : wd; if (ln && o.measureText(t).width > maxW) { out.push(ln); ln = wd; } else ln = t; } if (ln) out.push(ln); return out; }
+function analysisNotes(rain) {             // what the analysis sheet shows, in words
+  const an = analyze(), L = [], names = { flow: 'flow', catch: 'catchments', ridge: 'ridges', keys: 'keypoints', keyline: 'keyline + plow lines', swales: 'swales', dam: 'dam', flood: 'flood pooling', sun: 'sun study', plow: 'keyline plowing effect' };
+  const on = Object.keys(names).filter(k => S.an[k]).map(k => names[k]); L.push(['LAYERS', on.length ? on.join(', ') : 'none']);
+  L.push(['WATER', `streams from ${fBig(thrArea(S.thrV))} of catchment · ${an.outlets.length} catchment${an.outlets.length === 1 ? '' : 's'} · ${an.ponds.length} pond${an.ponds.length === 1 ? '' : 's'} · ${an.keypoints.length} keypoint${an.keypoints.length === 1 ? '' : 's'}`]);
+  if (S.an.keyline && S.keyPt) { const { lv } = keylineFor(S.keyPt[0], S.keyPt[1]); L.push(['KEYLINE', `keyline at ${fL(lv, 1)} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment`]); }
+  if (S.an.swales && S.keyPt) L.push(['SWALES', `on contour, stepping ${fL(swaleDrop(S.swaleV), 1)} down from the keyline · berm on the downhill side`]);
+  if (S.an.dam && damAt()) { const dp = damAt(), pool = damPool(an, dp[0], dp[1], S.damH); L.push(['DAM', `${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`]); }
+  if (S.an.flood) { const fl = floodSim(an, rainMM(S.rainV) / 1000); L.push(['FLOOD', `storm of ${document.getElementById('o_rain').textContent}, no soak-in · ${fl.pools.length} pool${fl.pools.length === 1 ? '' : 's'}` + fl.pools.slice(0, 3).map(pl => ` · ${fBig(pl.area)}, ${fL(pl.depth, 1)} deep, ${pl.overflow > 0 ? 'overflowing' : Math.round(pl.full * 100) + '% full'}`).join('')]); }
+  if (S.an.sun) L.push(['SUN', sunImage().note || (S.sunMode === 'hours' ? 'hours of direct sun per day' : 'shadows at one hour')]);
+  if (rain) L.push(['RAIN', rainText(rain.pooled, rain.db, true)]); else L.push(['RAIN', 'not running when the sheet was made · press r in analysis or model view, then export again']);
+  return L;
+}
+function drawingSheet() {                  // sheet 1: plan, model, section. sheet 2: analysis with its layers and the rain as it stands
+  const [pw_, ph_] = document.getElementById('paper').value.split('x').map(Number), dpi = 100, PW = Math.round(pw_ * dpi), PH = Math.round(ph_ * dpi), fam = getComputedStyle(document.body).fontFamily;
   const m = .5 * dpi, tb = 1.3 * dpi, gap = .25 * dpi;                                  // margins, title block, gutter
   const inner = { x: m, y: m, w: PW - 2 * m, h: PH - 2 * m - tb };
   const planBox = { x: inner.x, y: inner.y, w: inner.w * .6 - gap / 2, h: inner.h };
   const right = { x: inner.x + inner.w * .6 + gap / 2, w: inner.w * .4 - gap / 2 };
   const modelBox = { x: right.x, y: inner.y, w: right.w, h: inner.h * .48 - gap / 2 }, secBox = { x: right.x, y: inner.y + inner.h * .48 + gap / 2, w: right.w, h: inner.h * .52 - gap / 2 };
   const sc = pickScale(planBox.w, planBox.h - 60, dpi), k = sc.ppm * cs();
-  // plan at scale
-  o.drawImage(renderPlanAt(k, Math.round(planBox.w), Math.round(planBox.h)), planBox.x, planBox.y);
-  // section and model through their own canvases
-  const sec = document.createElement('canvas'); sec.width = Math.round(secBox.w); sec.height = Math.round(secBox.h); const so = sec.getContext('2d'); so.fillStyle = '#fff'; so.fillRect(0, 0, sec.width, sec.height);
-  const fs0 = fontScale; fontScale = 1.3; drawSection(so, sec.width, sec.height, false); fontScale = fs0; o.drawImage(sec, secBox.x, secBox.y);
-  const mod = document.createElement('canvas'); mod.width = Math.round(modelBox.w); mod.height = Math.round(modelBox.h); const mo = mod.getContext('2d'); mo.fillStyle = '#fff'; mo.fillRect(0, 0, mod.width, mod.height);
-  fontScale = 1.3; drawModel(mo, mod.width, mod.height, 1, false); fontScale = fs0; mo.fillStyle = '#fff'; mo.fillRect(0, mod.height - 30, mod.width, 30); o.drawImage(mod, modelBox.x, modelBox.y);
-  // view frames and titles
-  o.strokeStyle = INK; o.lineWidth = 1.5; o.font = `600 ${16}px ${getComputedStyle(document.body).fontFamily}`; o.fillStyle = INK; o.textBaseline = 'bottom'; o.textAlign = 'left';
-  for (const [box, title] of [[planBox, 'PLAN · ' + sc.label], [modelBox, 'MODEL · not to scale'], [secBox, 'SECTION A–A · vertical ' + S.ve + '×']]) { o.strokeRect(box.x + .5, box.y + .5, box.w - 1, box.h - 1); o.fillText(title, box.x + 12, box.y + box.h - 12); o.beginPath(); o.moveTo(box.x + 12, box.y + box.h - 8); o.lineTo(box.x + 12 + o.measureText(title).width, box.y + box.h - 8); o.stroke(); }
-  // graphic scale bar in the plan: four one-inch (or 2 cm) segments
-  const seg = sc.unitM * sc.ppm, bx = planBox.x + 12, by = planBox.y + planBox.h - 78; o.lineWidth = 1;
-  for (let q = 0; q < 4; q++) { o.fillStyle = q % 2 ? '#fff' : INK; o.fillRect(bx + q * seg, by, seg, 8); o.strokeRect(bx + q * seg + .5, by + .5, seg - 1, 7); }
-  o.fillStyle = INK; o.font = `${12}px ${getComputedStyle(document.body).fontFamily}`; o.textBaseline = 'top'; o.textAlign = 'center'; for (let q = 0; q <= 4; q++) o.fillText(q ? sc.unitLabel(Math.round(q * sc.unitM * 1e4) / 1e4) : '0', bx + q * seg, by + 11);
-  // border, title block
-  o.strokeStyle = INK; o.lineWidth = 2; o.strokeRect(m - 8, m - 8, PW - 2 * m + 16, PH - 2 * m + 16); o.lineWidth = 1; o.strokeRect(m - 2, m - 2, PW - 2 * m + 4, PH - 2 * m + 4);
-  const ty = PH - m - tb + gap; o.strokeRect(inner.x + .5, ty + .5, inner.w - 1, tb - gap - 1);
-  const cols = [inner.x, inner.x + inner.w * .34, inner.x + inner.w * .62, inner.x + inner.w * .84, inner.x + inner.w];
-  for (let q = 1; q < 4; q++) { o.beginPath(); o.moveTo(cols[q] + .5, ty); o.lineTo(cols[q] + .5, ty + tb - gap); o.stroke(); }
-  const cell = (q, lines) => { o.textAlign = 'left'; let yy = ty + 10; lines.forEach((ln, i) => { o.fillStyle = i ? INK : INK2; o.font = `${i ? 600 : 400} ${i ? 15 : 11}px ${getComputedStyle(document.body).fontFamily}`; o.fillText(ln, cols[q] + 12, yy); yy += i ? 20 : 15; }); };
-  const site = S.world ? S.world.name : 'sketch site', where = S.world ? `${S.world.lat.toFixed(5)}, ${S.world.lon.toFixed(5)}` : 'no real location';
-  cell(0, ['PROJECT', site, where]);
-  cell(1, ['SCALE', sc.label + (isFt() ? ' · 1:' + sc.ratio.toLocaleString() : ''), `contour interval ${fL(interval(), 2)} · index every ${fL(interval() * 5, 2)}`]);
-  cell(2, ['DATUM', `elevations in ${isFt() ? 'ft' : 'm'} above sea level`, S.world ? 'elevation data ~30 m (10 m in the US)' : 'invented ground']);
-  cell(3, ['SHEET', '1 of 1 · ' + new Date().toISOString().slice(0, 10), 'coyote mountain studio']);
-  // north arrow in the title block, turned with the site
-  const nx = cols[3] - 40, ny = ty + (tb - gap) / 2; o.save(); o.translate(nx, ny); o.rotate(-S.rot * D2R); o.strokeStyle = INK; o.lineWidth = 1.5; o.beginPath(); o.moveTo(0, 22); o.lineTo(0, -18); o.moveTo(-7, -9); o.lineTo(0, -18); o.lineTo(7, -9); o.stroke(); o.fillStyle = INK; o.font = `600 12px ${getComputedStyle(document.body).fontFamily}`; o.textAlign = 'center'; o.textBaseline = 'bottom'; o.fillText('N', 0, -22); o.restore();
-  return { canvas: out, wIn: pw_, hIn: ph_, scale: sc };
+  const viewCanvas = (box, fn) => { const c = document.createElement('canvas'); c.width = Math.round(box.w); c.height = Math.round(box.h); const o = c.getContext('2d'); o.fillStyle = '#fff'; o.fillRect(0, 0, c.width, c.height); const fs0 = fontScale; fontScale = 1.3; fn(o, c.width, c.height); fontScale = fs0; return c; };
+  let rain = null;
+  const modelView = withRain => viewCanvas(modelBox, (o, w, h) => { drawModel(o, w, h, 1, false); if (withRain && S.rain) rain = drawRainOverlay(o, camera(w, h).proj, w, h, true); o.fillStyle = '#fff'; o.fillRect(0, h - 30, w, 30); });
+  const page = (n, total, views, notes) => {
+    const out = document.createElement('canvas'); out.width = PW; out.height = PH; const o = out.getContext('2d'); o.fillStyle = '#ffffff'; o.fillRect(0, 0, PW, PH);
+    for (const v of views) if (v.canvas) o.drawImage(v.canvas, v.box.x, v.box.y);
+    if (notes) { const nb = secBox; o.textAlign = 'left'; o.textBaseline = 'top'; let yy = nb.y + 16; const maxW = nb.w - 32;
+      for (const [head, body] of notes) { if (yy > nb.y + nb.h - 60) break; o.fillStyle = INK2; o.font = `600 11px ${fam}`; o.fillText(head, nb.x + 16, yy); yy += 15; o.fillStyle = INK; o.font = `13px ${fam}`; for (const ln of wrapText(o, body, maxW)) { o.fillText(ln, nb.x + 16, yy); yy += 17; } yy += 8; } }
+    // view frames and titles
+    o.strokeStyle = INK; o.lineWidth = 1.5; o.font = `600 16px ${fam}`; o.fillStyle = INK; o.textBaseline = 'bottom'; o.textAlign = 'left';
+    for (const { box, title } of views) { o.strokeRect(box.x + .5, box.y + .5, box.w - 1, box.h - 1); o.fillText(title, box.x + 12, box.y + box.h - 12); o.beginPath(); o.moveTo(box.x + 12, box.y + box.h - 8); o.lineTo(box.x + 12 + o.measureText(title).width, box.y + box.h - 8); o.stroke(); }
+    // graphic scale bar in the scaled view: four one-inch (or 2 cm) segments
+    const seg = sc.unitM * sc.ppm, bx = planBox.x + 12, by = planBox.y + planBox.h - 78; o.lineWidth = 1;
+    for (let q = 0; q < 4; q++) { o.fillStyle = q % 2 ? '#fff' : INK; o.fillRect(bx + q * seg, by, seg, 8); o.strokeRect(bx + q * seg + .5, by + .5, seg - 1, 7); }
+    o.fillStyle = INK; o.font = `12px ${fam}`; o.textBaseline = 'top'; o.textAlign = 'center'; for (let q = 0; q <= 4; q++) o.fillText(q ? sc.unitLabel(Math.round(q * sc.unitM * 1e4) / 1e4) : '0', bx + q * seg, by + 11);
+    // border, title block
+    o.strokeStyle = INK; o.lineWidth = 2; o.strokeRect(m - 8, m - 8, PW - 2 * m + 16, PH - 2 * m + 16); o.lineWidth = 1; o.strokeRect(m - 2, m - 2, PW - 2 * m + 4, PH - 2 * m + 4);
+    const ty = PH - m - tb + gap; o.strokeRect(inner.x + .5, ty + .5, inner.w - 1, tb - gap - 1);
+    const cols = [inner.x, inner.x + inner.w * .34, inner.x + inner.w * .62, inner.x + inner.w * .84, inner.x + inner.w];
+    for (let q = 1; q < 4; q++) { o.beginPath(); o.moveTo(cols[q] + .5, ty); o.lineTo(cols[q] + .5, ty + tb - gap); o.stroke(); }
+    const cell = (q, lines) => { o.textAlign = 'left'; let yy = ty + 10; lines.forEach((ln, i) => { o.fillStyle = i ? INK : INK2; o.font = `${i ? 600 : 400} ${i ? 15 : 11}px ${fam}`; o.fillText(ln, cols[q] + 12, yy); yy += i ? 20 : 15; }); };
+    const site = S.world ? S.world.name : 'sketch site', where = S.world ? `${S.world.lat.toFixed(5)}, ${S.world.lon.toFixed(5)}` : 'no real location';
+    cell(0, ['PROJECT', site, where]);
+    cell(1, ['SCALE', sc.label + (isFt() ? ' · 1:' + sc.ratio.toLocaleString() : ''), `contour interval ${fL(interval(), 2)} · index every ${fL(interval() * 5, 2)}`]);
+    cell(2, ['DATUM', `elevations in ${isFt() ? 'ft' : 'm'} above sea level`, S.world ? 'elevation data ~30 m (10 m in the US)' : 'invented ground']);
+    cell(3, ['SHEET', `${n} of ${total} · ` + new Date().toISOString().slice(0, 10), n === 1 ? 'coyote mountain studio' : 'analysis']);
+    // north arrow in the title block, turned with the site
+    const nx = cols[3] - 40, ny = ty + (tb - gap) / 2; o.save(); o.translate(nx, ny); o.rotate(-S.rot * D2R); o.strokeStyle = INK; o.lineWidth = 1.5; o.beginPath(); o.moveTo(0, 22); o.lineTo(0, -18); o.moveTo(-7, -9); o.lineTo(0, -18); o.lineTo(7, -9); o.stroke(); o.fillStyle = INK; o.font = `600 12px ${fam}`; o.textAlign = 'center'; o.textBaseline = 'bottom'; o.fillText('N', 0, -22); o.restore();
+    return out;
+  };
+  // sheet 1: plan at scale, model, section
+  const p1 = page(1, 2, [
+    { box: planBox, title: 'PLAN · ' + sc.label, canvas: renderPlanAt(k, Math.round(planBox.w), Math.round(planBox.h)) },
+    { box: modelBox, title: 'MODEL · not to scale', canvas: modelView(false) },
+    { box: secBox, title: 'SECTION A–A · vertical ' + S.ve + '×', canvas: viewCanvas(secBox, (o, w, h) => drawSection(o, w, h, false)) }]);
+  // sheet 2: analysis at the same scale with every layer that is on, the model with the same layers, notes. rain drawn as it stands
+  const ana = renderPlanAt(k, Math.round(planBox.w), Math.round(planBox.h), () => { drawAnalysis(); if (S.rain) drawRainOverlay(ctx, (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; }, S.w, S.h, false); ctx.fillStyle = '#fff'; ctx.fillRect(0, sheet.y + sheet.h + 2, S.w, S.h); });   // the screen footer is replaced by the notes box
+  const mv = modelView(true);
+  const p2 = page(2, 2, [
+    { box: planBox, title: 'ANALYSIS · ' + sc.label, canvas: ana },
+    { box: modelBox, title: 'MODEL · analysis layers' + (S.rain ? ' · rain' : ''), canvas: mv },
+    { box: secBox, title: 'NOTES', canvas: null }], analysisNotes(rain));
+  return { pages: [p1, p2], wIn: pw_, hIn: ph_, scale: sc };
 }
-function pdfFromCanvas(canvas, wIn, hIn) {   // one-page pdf holding the sheet as a jpeg at true page size
-  const b64 = canvas.toDataURL('image/jpeg', .92).split(',')[1], bin = atob(b64), img = new Uint8Array(bin.length); for (let q = 0; q < bin.length; q++) img[q] = bin.charCodeAt(q);
-  const Wp = (wIn * 72).toFixed(2), Hp = (hIn * 72).toFixed(2), content = `q ${Wp} 0 0 ${Hp} 0 0 cm /Im1 Do Q`, enc = new TextEncoder(), parts = [], offs = []; let len = 0;
+function pdfFromCanvas(canvases, wIn, hIn) {   // one page per canvas, each a jpeg at true page size
+  if (!Array.isArray(canvases)) canvases = [canvases];
+  const Wp = (wIn * 72).toFixed(2), Hp = (hIn * 72).toFixed(2), enc = new TextEncoder(), parts = [], offs = []; let len = 0;
   const push = t => { const u = typeof t === 'string' ? enc.encode(t) : t; parts.push(u); len += u.length; };
   push('%PDF-1.4\n'); const obj = (n, head, body) => { offs[n] = len; push(`${n} 0 obj\n${head}`); if (body) { push('stream\n'); push(body); push('\nendstream\n'); } push('endobj\n'); };
-  obj(1, '<< /Type /Catalog /Pages 2 0 R >>\n'); obj(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>\n');
-  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${Wp} ${Hp}] /Resources << /XObject << /Im1 5 0 R >> >> /Contents 4 0 R >>\n`);
-  obj(4, `<< /Length ${content.length} >>\n`, content);
-  obj(5, `<< /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>\n`, img);
-  const xref = len; push(`xref\n0 6\n0000000000 65535 f \n` + [1, 2, 3, 4, 5].map(n => String(offs[n]).padStart(10, '0') + ' 00000 n \n').join('') + `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  const ids = canvases.map((_, q) => 3 + q * 3), total = 3 + canvases.length * 3;
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>\n'); obj(2, `<< /Type /Pages /Kids [${ids.map(id => id + ' 0 R').join(' ')}] /Count ${canvases.length} >>\n`);
+  canvases.forEach((canvas, q) => { const id = ids[q], b64 = canvas.toDataURL('image/jpeg', .92).split(',')[1], bin = atob(b64), img = new Uint8Array(bin.length); for (let t = 0; t < bin.length; t++) img[t] = bin.charCodeAt(t);
+    const content = `q ${Wp} 0 0 ${Hp} 0 0 cm /Im1 Do Q`;
+    obj(id, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${Wp} ${Hp}] /Resources << /XObject << /Im1 ${id + 2} 0 R >> >> /Contents ${id + 1} 0 R >>\n`);
+    obj(id + 1, `<< /Length ${content.length} >>\n`, content);
+    obj(id + 2, `<< /Type /XObject /Subtype /Image /Width ${canvas.width} /Height ${canvas.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${img.length} >>\n`, img); });
+  const xref = len; let tbl = `xref\n0 ${total}\n0000000000 65535 f \n`; for (let n = 1; n < total; n++) tbl += String(offs[n]).padStart(10, '0') + ' 00000 n \n';
+  push(tbl + `trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
   return new Blob(parts, { type: 'application/pdf' });
 }
 document.getElementById('sheetBtn').onclick = () => {
   const sh = drawingSheet(), name = `coyote-topo-sheet-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}`;
-  dl(URL.createObjectURL(pdfFromCanvas(sh.canvas, sh.wIn, sh.hIn)), name + '.pdf');
-  setTimeout(() => dl(sh.canvas.toDataURL('image/png'), name + '.png'), 600);
-  toast(`sheet at ${sh.scale.label}`);
+  dl(URL.createObjectURL(pdfFromCanvas(sh.pages, sh.wIn, sh.hIn)), name + '.pdf');
+  sh.pages.forEach((pg, q) => setTimeout(() => dl(pg.toDataURL('image/png'), `${name}-${q + 1}.png`), 700 * (q + 1)));
+  toast(`sheet set at ${sh.scale.label} · ${sh.pages.length} sheets`);
 };
 setTimeout(sheetInfo, 0);
 
