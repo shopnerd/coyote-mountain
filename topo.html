@@ -26,11 +26,11 @@ aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto
 .sec{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);padding:10px 12px 4px;display:flex;align-items:baseline;gap:8px}
 .sec::after{content:"";flex:1;border-top:1px solid var(--line);transform:translateY(-3px)}
 .seg{display:flex;padding:0 12px;gap:0}
-.seg button{flex:1;min-height:36px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:12px;cursor:pointer;margin-left:-1px}
+.seg button{flex:1;min-height:36px;border:1px solid #9a9992;background:transparent;color:var(--ink);font:inherit;font-size:12px;cursor:pointer;margin-left:-1px}
 .seg button:first-child{border-radius:3px 0 0 3px;margin-left:0}
 .seg button:last-child{border-radius:0 3px 3px 0}
 .seg button:hover{background:var(--paper);color:var(--ink)}
-.seg button.on{background:#fbeadb;border-color:#d9895d;color:var(--ink);position:relative;z-index:1;box-shadow:0 0 6px rgba(201,107,58,.28)}
+.seg button.on{background:#fdf3ea;border-color:#d9895d;color:var(--ink);position:relative;z-index:1;box-shadow:0 0 6px rgba(201,107,58,.28)}
 .seg.wrap{flex-wrap:wrap;gap:4px}
 .seg.wrap button{flex:1 1 40%;border-radius:3px;margin:0}
 .desc{padding:6px 12px 4px;color:var(--ink2);font-size:11.5px;line-height:1.5}
@@ -58,7 +58,7 @@ input[type=text]::placeholder{color:var(--ink3)}
 .stat b{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
 .stat.cut b{color:var(--accent)}
 .actions{margin-top:auto;padding:10px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-top:1px solid var(--line)}
-.btn{min-height:38px;padding:6px 8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:3px;font:inherit;font-size:12px;cursor:pointer;line-height:1}
+.btn{min-height:38px;padding:6px 8px;border:1px solid #9a9992;background:transparent;color:var(--ink);border-radius:3px;font:inherit;font-size:12px;cursor:pointer;line-height:1}
 .btn:hover{background:var(--paper);color:var(--ink)}
 .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn.primary:hover{background:var(--accent2)}
@@ -1031,7 +1031,7 @@ try { if (localStorage.getItem('pipFold') === '1') { pipFolded = true; pip.class
 const inFold = e => { const r = pip.getBoundingClientRect(); return r.right - e.clientX < 60 && r.bottom - e.clientY < 22; };
 function drawPip() {
   if (!pw) sizePip();
-  if (pipFolded) { pctx.fillStyle = '#fbeadb'; pctx.fillRect(0, 0, pw, ph); pctx.strokeStyle = ACC; pctx.lineWidth = 1; pctx.strokeRect(.5, .5, pw - 1, ph - 1); pctx.fillStyle = INK; pctx.font = font(10.5, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▴ preview', pw / 2, ph / 2 + .5); return; } pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
+  if (pipFolded) { pctx.fillStyle = '#fdf3ea'; pctx.fillRect(0, 0, pw, ph); pctx.strokeStyle = ACC; pctx.lineWidth = 1; pctx.strokeRect(.5, .5, pw - 1, ph - 1); pctx.fillStyle = INK; pctx.font = font(10.5, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▴ preview', pw / 2, ph / 2 + .5); return; } pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
   const showSec = S.mode === 'model' || (S.pipView === 'section' && S.mode !== 'section');
   if (showSec) drawSection(pctx, pw, ph, true);
   else { const zoom0 = S.cam.zoom, pan0 = S.cam.pan, cm0 = S.colorMode; S.cam.zoom = zoom0 * S.pipZoom; S.cam.pan = S.pipPan; if (S.mode === 'analysis' && S.an.sun) S.colorMode = 'sun';
@@ -1042,7 +1042,7 @@ function drawPip() {
     pctx.fillStyle = showSec ? INK3 : ACC; pctx.fillText('3d', pw - 52, 7); pctx.fillStyle = showSec ? ACC : INK3; pctx.fillText('section', pw - 8, 7); }
   pctx.fillStyle = 'rgba(240,240,236,.85)'; pctx.fillRect(0, ph - 18, pw, 18);
   pctx.fillStyle = INK2; pctx.font = font(9.5); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText(showSec ? 'section A–B · double-tap to open' : '3d · drag orbit · double-tap open', 22, ph - 5);
-  pctx.fillStyle = '#fbeadb'; pctx.fillRect(pw - 58, ph - 20, 56, 18); pctx.strokeStyle = ACC; pctx.lineWidth = 1; pctx.strokeRect(pw - 57.5, ph - 19.5, 55, 17); pctx.fillStyle = INK; pctx.font = font(10, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('hide ▾', pw - 30, ph - 11);
+  pctx.fillStyle = '#fdf3ea'; pctx.fillRect(pw - 58, ph - 20, 56, 18); pctx.strokeStyle = ACC; pctx.lineWidth = 1; pctx.strokeRect(pw - 57.5, ph - 19.5, 55, 17); pctx.fillStyle = INK; pctx.font = font(10, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('hide ▾', pw - 30, ph - 11);
   if (!showSec) { pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.arc(12, 12, 5, 0, 6.2832); pctx.moveTo(4, 12); pctx.lineTo(20, 12); pctx.moveTo(12, 4); pctx.lineTo(12, 20); pctx.stroke(); }
   pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.moveTo(2, ph - 12); pctx.lineTo(12, ph - 2); pctx.moveTo(2, ph - 6); pctx.lineTo(6, ph - 2); pctx.stroke();
 }
