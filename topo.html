@@ -180,10 +180,10 @@ canvas.orbit{cursor:grab}
     <div class="sec">world</div>
     <div class="params">
       <div class="p"><label>place or lat, lng</label><input type="text" id="place" placeholder="place name or lat, lng" autocomplete="off"></div>
+      <div class="seg" style="padding:0;margin-bottom:6px"><button id="fetch" style="flex:2">fetch terrain</button><button id="home" title="Encino Solo">home</button></div>
       <div class="p"><label>site width · area to fetch<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="3000" step="10" value="60"></div>
       <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
-      <div class="seg" style="padding:0"><button id="fetch" style="flex:2">fetch terrain</button><button id="home" title="Encino Solo">home</button></div>
       <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / geojson</button><button id="kmlClear">clear</button></div>
       <input type="file" id="kmlFile" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml,application/geo+json" style="display:none">
       <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no photo</button><button data-ae="1">aerial photo</button></div>
