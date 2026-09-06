@@ -30,7 +30,7 @@ aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto
 .seg button:first-child{border-radius:3px 0 0 3px;margin-left:0}
 .seg button:last-child{border-radius:0 3px 3px 0}
 .seg button:hover{background:var(--paper);color:var(--ink)}
-.seg button.on{background:#d9d8d2;border-color:#b9b8b1;color:var(--ink);position:relative;z-index:1}
+.seg button.on{background:#fbeadb;border-color:#C96B3A;color:var(--ink);position:relative;z-index:1;box-shadow:inset 0 0 0 1px #C96B3A,0 0 7px rgba(201,107,58,.45)}
 .seg.wrap{flex-wrap:wrap;gap:4px}
 .seg.wrap button{flex:1 1 40%;border-radius:3px;margin:0}
 .desc{padding:6px 12px 4px;color:var(--ink2);font-size:11.5px;line-height:1.5}
@@ -49,6 +49,8 @@ input[type=text],select{width:100%;min-height:34px;padding:6px 8px;border:1px so
 input[type=text]:focus,select:focus{outline:none;border-color:var(--accent)}
 input[type=text]::placeholder{color:var(--ink3)}
 .btn.wide{grid-column:1/-1}
+#rainBtn{background:#dfe9f2;border-color:#a9c0d4;color:var(--ink)}
+#rainBtn.on{background:#b7cfe3;border-color:#7f9fbb}
 .btn:disabled{opacity:.6;cursor:wait}
 .stats{padding:4px 12px 8px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .stat{background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:6px 8px}
@@ -123,10 +125,10 @@ canvas.orbit{cursor:grab}
         <button data-b="section" style="flex-basis:100%">section line</button>
       </div>
       <div class="seg" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circle</button></div>
-      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penClear" title="remove every pen stroke">clear</button></div>
+      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penDash" title="dashed strokes">dashed</button><button id="penClear" title="remove every pen stroke">clear</button></div>
       <div class="params">
-        <div class="p" title="brush size scales with the site width"><label>radius<output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
-        <div class="p"><label>strength<output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
+        <div class="p" title="brush size scales with the site width"><label><span id="l_radius">radius</span><output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
+        <div class="p"><label><span id="l_strength">strength</span><output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
       </div>
     </div>
 
@@ -316,7 +318,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -431,7 +433,7 @@ function drawPlan() {
   ctx.save(); ctx.translate(sheet.x + 22, sheet.y + 26); ctx.rotate(-S.rot * D2R); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('N', 0, -9);
   ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, -6); ctx.moveTo(-3, -2); ctx.lineTo(0, -6); ctx.lineTo(3, -2); ctx.stroke(); ctx.restore(); ctx.textBaseline = 'top';
   drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
-  if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)); ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); }
+  if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.globalAlpha = st.a; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * st.w; ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   // section line
   if (S.sec) drawSectionLine();
   // brush cursor
@@ -1065,7 +1067,7 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function undo() { const u = undoStack.pop(); if (!u) { toast('nothing to undo'); return; }
   z.set(u.z); base.set(u.base); S.world = u.world; S.sec = u.sec; S.strokes = u.strokes || []; S.strokeVer++; S.terrainVer++; S.dirty = true; updateStats(); toast(`undo · ${undoStack.length} left`); }
 let drag = null, pinch = null; const pts = new Map();
@@ -1089,7 +1091,7 @@ cv.addEventListener('pointerdown', e => {
   const g = toGrid(p[0], p[1]);
   snapshot();
   if (S.brush === 'pen' && (S.penMode === 'line' || S.penMode === 'rect' || S.penMode === 'circle')) { drag = { kind: 'shape', p0: p, p1: null }; return; }
-  if (S.brush === 'pen') { const st = { color: S.penColor, pts: [[g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5]] }; S.strokes.push(st); drag = { kind: 'pen', st, last: p }; return; }
+  if (S.brush === 'pen') { const st = { color: S.penColor, w: S.penW, a: S.penA, dash: S.penDash, pts: [[g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5]] }; S.strokes.push(st); drag = { kind: 'pen', st, last: p }; return; }
   if (S.brush === 'erase') { drag = { kind: 'erase' }; eraseAt(g); return; }
   if (S.brush === 'section') { S.sec = [g, g]; drag = { g, kind: 'section' }; S.dirty = true; return; }
   drag = { g, kind: 'brush', z0: sample(z, g[0], g[1]) }; dab(g[0], g[1], S.brush, drag.z0); S.dirty = true;
@@ -1108,11 +1110,11 @@ cv.addEventListener('pointermove', e => {
   else if (drag.kind === 'sculpt') { const g = pick(p[0], p[1]); if (!g) return; strokeLine(drag.g, g, drag.brush, drag.z0); drag.g = g; S.pick = g; S.dirty = true; }
   else if (drag.kind === 'section') { S.sec[1] = toGrid(p[0], p[1]); S.dirty = true; }
   else if (drag.kind === 'pen') { const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; if (!evs.length) evs.push(e);
-    ctx.strokeStyle = PEN[drag.st.color] || INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = PEN[drag.st.color] || INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = drag.st.a; ctx.setLineDash(drag.st.dash ? [7 * drag.st.w + 2, 5 * drag.st.w + 2] : []);
     for (const ev of evs) { const q = pt(ev), g = toGrid(q[0], q[1]), last = drag.st.pts[drag.st.pts.length - 1]; if (Math.hypot(q[0] - drag.last[0], q[1] - drag.last[1]) < 1.5) continue;
       const pr = ev.pointerType === 'pen' ? Math.max(.15, ev.pressure || .5) : .5; drag.st.pts.push([g[0], g[1], pr]);
-      ctx.lineWidth = (1 + 2.4 * (last[2] + pr) / 2) * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)); ctx.beginPath(); ctx.moveTo(drag.last[0], drag.last[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); drag.last = q; }
-    ctx.lineCap = 'butt'; }
+      ctx.lineWidth = (1 + 2.4 * (last[2] + pr) / 2) * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * drag.st.w; ctx.beginPath(); ctx.moveTo(drag.last[0], drag.last[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); drag.last = q; }
+    ctx.lineCap = 'butt'; ctx.globalAlpha = 1; ctx.setLineDash([]); }
   else if (drag.kind === 'erase') eraseAt(toGrid(p[0], p[1]));
   else if (drag.kind === 'shape') { drag.p1 = p; S.dirty = true; }
   else { const g = toGrid(p[0], p[1]); strokeLine(drag.g, g, S.brush, drag.z0); drag.g = g; S.dirty = true; }
@@ -1134,21 +1136,21 @@ function recognizeStroke(st) {            // turn a freehand stroke into a clean
     // circle / ellipse: points sit near the ellipse inscribed in the bounding box
     const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = bw / 2, ry = bh / 2; let err = 0;
     for (const q of P) err += Math.abs(Math.hypot((q[0] - cx) / rx, (q[1] - cy) / ry) - 1); err /= P.length;
-    if (err < .13 && rx > 5 && ry > 5) { const pts = []; for (let t = 0; t <= 48; t++) { const a = t / 48 * TAU; pts.push(toG([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry])); } return { color: st.color, shape: true, pts }; }
+    if (err < .13 && rx > 5 && ry > 5) { const pts = []; for (let t = 0; t <= 48; t++) { const a = t / 48 * TAU; pts.push(toG([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry])); } return { color: st.color, w: st.w, a: st.a, dash: st.dash, shape: true, pts }; }
     // rectangle / triangle / clean polygon: few corners after simplification
     const sim = simplifyDP(P, Math.max(6, diag * .06)); const corners = sim.length - 1;   // last point ~ first
     if (corners === 4 || corners === 3 || corners === 5 || corners === 6) {
       let pts = sim.slice(0, corners);
       if (corners === 4) { const axisish = pts.every((q, i) => { const n = pts[(i + 1) % 4]; const a = Math.abs(Math.atan2(n[1] - q[1], n[0] - q[0])) % (Math.PI / 2); return a < .2 || a > Math.PI / 2 - .2; }); if (axisish) pts = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]; }
-      return { color: st.color, shape: true, pts: pts.concat([pts[0]]).map(toG) }; }
+      return { color: st.color, w: st.w, a: st.a, dash: st.dash, shape: true, pts: pts.concat([pts[0]]).map(toG) }; }
     return null;
   }
   // straight line: everything close to the chord
   const a = P[0], b = P[P.length - 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]); let md = 0;
   for (const q of P) md = Math.max(md, Math.abs((b[1] - a[1]) * q[0] - (b[0] - a[0]) * q[1] + b[0] * a[1] - b[1] * a[0]) / (L || 1));
-  if (L > 18 && md < Math.max(4, L * .045)) return { color: st.color, shape: true, pts: [toG(a), toG(b)] };
+  if (L > 18 && md < Math.max(4, L * .045)) return { color: st.color, w: st.w, a: st.a, dash: st.dash, shape: true, pts: [toG(a), toG(b)] };
   // clean polyline: a handful of straight legs
-  const sim = simplifyDP(P, Math.max(6, diag * .05)); if (sim.length >= 3 && sim.length <= 7) return { color: st.color, shape: true, pts: sim.map(toG) };
+  const sim = simplifyDP(P, Math.max(6, diag * .05)); if (sim.length >= 3 && sim.length <= 7) return { color: st.color, w: st.w, a: st.a, dash: st.dash, shape: true, pts: sim.map(toG) };
   return null;
 }
 function snapEnds(st) {                   // auto-connect: endpoints jump to a nearby vertex of another stroke
@@ -1158,9 +1160,10 @@ function snapEnds(st) {                   // auto-connect: endpoints jump to a n
 }
 function shapeFromDrag(mode, p0, p1) {   // primitives dragged out on the sheet
   const pr = .5, toG = q => { const g = toGrid(q[0], q[1]); return [g[0], g[1], pr]; };
-  if (mode === 'line') return { color: S.penColor, shape: true, pts: [toG(p0), toG(p1)] };
-  if (mode === 'rect') return { color: S.penColor, shape: true, pts: [[p0[0], p0[1]], [p1[0], p0[1]], [p1[0], p1[1]], [p0[0], p1[1]], [p0[0], p0[1]]].map(toG) };
-  const r = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), pts = []; for (let t = 0; t <= 48; t++) { const a = t / 48 * TAU; pts.push(toG([p0[0] + Math.cos(a) * r, p0[1] + Math.sin(a) * r])); } return { color: S.penColor, shape: true, pts };
+  const sty = { color: S.penColor, w: S.penW, a: S.penA, dash: S.penDash, shape: true };
+  if (mode === 'line') return { ...sty, pts: [toG(p0), toG(p1)] };
+  if (mode === 'rect') return { ...sty, pts: [[p0[0], p0[1]], [p1[0], p0[1]], [p1[0], p1[1]], [p0[0], p1[1]], [p0[0], p0[1]]].map(toG) };
+  const r = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), pts = []; for (let t = 0; t <= 48; t++) { const a = t / 48 * TAU; pts.push(toG([p0[0] + Math.cos(a) * r, p0[1] + Math.sin(a) * r])); } return { ...sty, pts };
 }
 function eraseAt(g) { const r = 8 / sheet.k; const before = S.strokes.length; S.strokes = S.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - g[0], q[1] - g[1]) < r)); if (S.strokes.length !== before) { S.strokeVer++; S.dirty = true; } }
 function endPointer(e) {
@@ -1197,29 +1200,30 @@ document.getElementById('modes').onclick = e => { const b = e.target.closest('bu
 document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; setBrush(b.dataset.b); S.dirty = true; };
 document.getElementById('penMode').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.penMode = b.dataset.pm; document.querySelectorAll('#penMode button').forEach(x => x.classList.toggle('on', x === b)); };
 const PEN = { ink: INK, ember: ACC, water: '#3f6488' };
-document.getElementById('penRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'penClear') { if (S.strokes.length) { snapshot(); S.strokes = []; S.strokeVer++; S.dirty = true; toast('sketch cleared'); } return; } S.penColor = b.dataset.pc; document.querySelectorAll('#penRow button[data-pc]').forEach(x => x.classList.toggle('on', x === b)); };
+document.getElementById('penRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'penDash') { S.penDash = !S.penDash; b.classList.toggle('on', S.penDash); return; } if (b.id === 'penClear') { if (S.strokes.length) { snapshot(); S.strokes = []; S.strokeVer++; S.dirty = true; toast('sketch cleared'); } return; } S.penColor = b.dataset.pc; document.querySelectorAll('#penRow button[data-pc]').forEach(x => x.classList.toggle('on', x === b)); };
 function densify(pts, maxStep) {           // add points so no gap is longer than maxStep cells (so the line can follow the ground)
   const out = [pts[0]]; for (let q = 1; q < pts.length; q++) { const a = pts[q - 1], b = pts[q], d = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(1, Math.ceil(d / maxStep)); for (let t = 1; t <= n; t++) out.push([a[0] + (b[0] - a[0]) * t / n, a[1] + (b[1] - a[1]) * t / n, a[2] + (b[2] - a[2]) * t / n]); }
   return out;
 }
 function drawStrokes(c, toXY, k, dense) {   // pen strokes through any projection as smooth curves; k scales width with zoom
   c.lineCap = 'round'; c.lineJoin = 'round';
-  for (const st of S.strokes) { if (st.pts.length < 2) continue; c.strokeStyle = PEN[st.color] || INK;
+  for (const st of S.strokes) { if (st.pts.length < 2) continue; c.strokeStyle = PEN[st.color] || INK; const sw = st.w || 1; c.globalAlpha = st.a == null ? 1 : st.a; c.setLineDash(st.dash ? [7 * sw + 2, 5 * sw + 2] : []);
     const pts = dense ? densify(st.pts, .3) : st.pts, P = pts.map(q => toXY(q[0], q[1]));
-    if (st.shape) { c.lineWidth = 2.2 * k; c.beginPath(); P.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); continue; }
+    if (st.shape) { c.lineWidth = 2.2 * k * sw; c.beginPath(); P.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); continue; }
     for (let a = 0; a < pts.length - 1; a += 5) {   // short runs, each with its own pen pressure
       const b = Math.min(pts.length - 1, a + 5); let pr = 0; for (let q = a; q <= b; q++) pr += pts[q][2]; pr /= (b - a + 1);
-      c.lineWidth = (1 + 2.4 * pr) * k; c.beginPath(); c.moveTo(P[a][0], P[a][1]);
+      c.lineWidth = (1 + 2.4 * pr) * k * sw; c.beginPath(); c.moveTo(P[a][0], P[a][1]);
       for (let q = a + 1; q < b; q++) { const mx = (P[q][0] + P[q + 1][0]) / 2, my = (P[q][1] + P[q + 1][1]) / 2; c.quadraticCurveTo(P[q][0], P[q][1], mx, my); }
       c.lineTo(P[b][0], P[b][1]); c.stroke(); } }
-  c.lineCap = 'butt';
+  c.lineCap = 'butt'; c.globalAlpha = 1; c.setLineDash([]);
 }
 const relabels = [];
 const bind = (id, fmt, fn) => { const el = document.getElementById(id), out = document.getElementById('o_' + id);
   const apply = () => { const v = +el.value; out.textContent = fmt(v); fn(v); S.dirty = true; }; el.oninput = apply; relabels.push(() => { out.textContent = fmt(+el.value); }); apply(); };
 const radiusFor = v => S.siteW * (.003 + .25 * (v / 100) ** 2);   // 0.3% to 25% of the site width, fine at the small end
-bind('radius', v => fL(radiusFor(v), radiusFor(v) < 10 ? 1 : 0), v => S.radius = radiusFor(v));
-bind('strength', v => v, v => S.strength = v);
+const penWidth = v => .4 + 3.6 * (v / 100) ** 1.3;
+bind('radius', v => S.brush === 'pen' ? tz(penWidth(v).toFixed(1)) + ' px' : fL(radiusFor(v), radiusFor(v) < 10 ? 1 : 0), v => { S.radius = radiusFor(v); S.penW = penWidth(v); });
+bind('strength', v => S.brush === 'pen' ? v + '%' : v, v => { S.strength = v; S.penA = v / 100; });
 bind('siteW', v => fL(v, 0), v => { S.siteW = v; ['radius', 'thr'].forEach(id => { const el = document.getElementById(id); if (el && el.oninput) el.dispatchEvent(new Event('input')); }); updateStats(); });
 document.getElementById('siteW').addEventListener('change', () => { if (document.getElementById('plow').oninput) autoPlow(); });
 document.getElementById('siteW').onchange = () => { if (S.world) fetchWorld(S.world); };
@@ -1246,7 +1250,7 @@ try { const u = localStorage.getItem('unit'); if (u === 'm' || u === 'ft') { S.u
 document.getElementById('unit').onchange = e => { S.unit = e.target.value; try { localStorage.setItem('unit', S.unit); } catch (_) {} relabels.forEach(f => f()); if (S.world) autoInterval(); updateStats(); S.dirty = true; if (S.mode === 'plan' && S.ptr) readout(S.ptr); };
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
-function setBrush(b) { S.brush = b; document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; }
+function setBrush(b) { S.brush = b; document.getElementById('l_radius').textContent = b === 'pen' ? 'stroke width' : 'radius'; document.getElementById('l_strength').textContent = b === 'pen' ? 'opacity' : 'strength'; if (typeof relabels !== 'undefined') relabels.forEach(f => f()); document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; }
 function setInterval1ft() { const list = isFt() ? INTERVALS_FT : INTERVALS, want = isFt() ? 1 / FT : .5; let k = 0; for (let q = 0; q < list.length; q++) if (Math.abs(list[q] - want) < Math.abs(list[k] - want)) k = q; const el = document.getElementById('interval'); el.value = k; el.dispatchEvent(new Event('input')); }
 async function goHome(quiet) {
   try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr, true); undoStack.length = 0; worldStatus((S.world ? S.world.name + ' · ' : '') + 'home project'); if (!quiet) toast('home'); return; } } catch (_) {}
@@ -1515,7 +1519,7 @@ async function fetchWorld(known, quiet) {
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
