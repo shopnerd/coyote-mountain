@@ -1588,7 +1588,7 @@ async function fetchWorld(known, quiet) {
       lat = +j[0].lat; lon = +j[0].lon; name = j[0].display_name.split(',').slice(0, 2).join(',');
     }
     try { await loadTerrarium(lat, lon); } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); }
-    S.world = { lat, lon, name }; resetGrading(); const [lo, hi] = range(base);
+    S.world = { lat, lon, name }; resetGrading(); if (typeof sheetInfo === 'function') setTimeout(sheetInfo, 0); const [lo, hi] = range(base);
     autoInterval();
     worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide · elevation data about 30 m (10 m in the US), smoothly resampled. change site width to zoom; it refetches.`); toast('real terrain loaded');
   } catch (e) {
@@ -1697,7 +1697,7 @@ function loadProject(pr, fromHome) {
   document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode)); document.querySelectorAll('#modelStyle button').forEach(b => b.classList.toggle('on', b.dataset.s === S.modelStyle));
   document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === S.aerial)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
   if (S.aerial) S.colorMode = 'aerial'; if (!S.aerial && S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
-  relabels.forEach(f => f()); worldStatus(''); S.terrainVer++; updateStats(); S.dirty = true;
+  relabels.forEach(f => f()); worldStatus(''); if (typeof sheetInfo === 'function') setTimeout(sheetInfo, 0); S.terrainVer++; updateStats(); S.dirty = true;
 }
 function saveProject() { const pr = snapshotProject(), name = `coyote-topo-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 30)}.json`; dl(URL.createObjectURL(new Blob([JSON.stringify(pr)], { type: 'application/json' })), name); }
 document.getElementById('saveProj').onclick = saveProject;
