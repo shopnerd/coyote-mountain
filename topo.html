@@ -140,8 +140,8 @@ canvas.orbit{cursor:grab}
       <div class="seg wrap" id="brushes">
         <button data-b="raise" class="on">raise</button><button data-b="lower">lower</button>
         <button data-b="smooth">smooth</button><button data-b="flatten">flatten</button>
-        <button data-b="pen" title="freehand pen: draws on the plan and drapes over the 3d ground">pen</button><button data-b="erase" title="drag over pen strokes to remove them">eraser</button>
-        <button data-b="section" style="flex-basis:100%">section line</button>
+        <button data-b="pen" class="planOnly" title="freehand pen: draws on the plan and drapes over the 3d ground">pen</button><button data-b="erase" class="planOnly" title="drag over pen strokes to remove them">eraser</button>
+        <button data-b="section" class="planOnly" style="flex-basis:100%">section line</button>
       </div>
       <div class="seg" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circ</button></div>
       <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">ember</button><button data-pc="water">blue</button><button id="penDash">dash</button><button id="penClear" title="remove every pen stroke">clear</button></div>
@@ -1376,6 +1376,9 @@ document.getElementById('extents').onclick = () => { planReset(); if (S.mode ===
 /* ---------- rail ---------- */
 const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints, keyline, rain and sun. the model view shows whatever is running here.', plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
 function setMode(m) {
+  if (m === 'model' && S.mode !== 'model' && (S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section')) { S.planBrush = S.brush; setBrush('raise'); }   // the model sculpts; pen tools wait for the plan
+  else if (m !== 'model' && S.mode === 'model' && S.planBrush) { setBrush(S.planBrush); S.planBrush = null; }
+  document.querySelectorAll('#brushes .planOnly').forEach(b => b.style.display = m === 'model' ? 'none' : '');
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null;
   cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
