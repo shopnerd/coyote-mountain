@@ -1171,7 +1171,7 @@ function pipTipFor(e) {                   // which hot spot of the preview the p
   return null;
 }
 pip.addEventListener('pointermove', e => {
-  if (e.pointerType !== 'touch' && !pdrag && !presize) { const t = pipTipFor(e), key = t ? t[0] : ''; if (key !== pipTipKey) { pipTipKey = key; hideTip(); if (t) { const r = pip.getBoundingClientRect(); tipTimer = setTimeout(() => showTipAt(t[1], { left: r.left, right: r.left, top: e.clientY - 10 }), 500); } } }
+  if (e.pointerType !== 'touch' && !pdrag && !presize) { const t = pipTipFor(e), key = t ? t[0] : ''; if (key !== pipTipKey) { pipTipKey = key; hideTip(); if (t) { const r = pip.getBoundingClientRect(); tipTimer = setTimeout(() => showTipAt(t[1], { left: r.left, right: r.right, top: e.clientY - 12 }, 'left'), 500); } } }
   if (presize) { setPipSize(presize.w + (presize.x - e.clientX), presize.h + (e.clientY - presize.y)); return; }
   if (!pdrag && !ppinch) pip.classList.toggle('rs', inGrip(e));
   if (ppts.has(e.pointerId)) ppts.set(e.pointerId, [e.clientX, e.clientY]);
@@ -1339,8 +1339,8 @@ function tipFor(el) { const d = el.dataset; let key;
   const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.title || ''; }
 const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
 function showTip(el) { const t = tipFor(el); if (!t) return; showTipAt(t, el.getBoundingClientRect()); }
-function showTipAt(t, r) { tipEl.textContent = t; tipEl.classList.add('show'); const tw = Math.min(250, tipEl.offsetWidth || 200);
-  let x = r.right + 8, y = r.top; if (x + tw > innerWidth - 8) x = Math.max(8, r.left - tw - 8); if (innerWidth < 760) { x = Math.max(8, Math.min(innerWidth - tw - 8, r.left)); y = r.top - 8 - tipEl.offsetHeight; }
+function showTipAt(t, r, side) { tipEl.textContent = t; tipEl.classList.add('show'); const tw = Math.min(250, tipEl.offsetWidth || 200);
+  let x = side === 'left' ? Math.max(8, r.left - tw - 8) : r.right + 8, y = r.top; if (x + tw > innerWidth - 8) x = Math.max(8, r.left - tw - 8); if (innerWidth < 760) { x = Math.max(8, Math.min(innerWidth - tw - 8, r.left)); y = r.top - 8 - tipEl.offsetHeight; }
   tipEl.style.left = x + 'px'; tipEl.style.top = Math.max(4, Math.min(innerHeight - tipEl.offsetHeight - 4, y)) + 'px'; }
 function hideTip() { clearTimeout(tipTimer); tipTimer = null; tipTarget = null; tipEl.classList.remove('show'); }
 document.querySelectorAll('button,.p').forEach(el => { if (el.title && tipFor(el)) el.removeAttribute('title'); });
