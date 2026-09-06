@@ -184,7 +184,7 @@ canvas.orbit{cursor:grab}
       <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
       <div class="seg" style="padding:0"><button id="fetch" style="flex:2">fetch terrain</button><button id="home" title="Encino Solo">home</button></div>
-      <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">boundary · kml / geojson</button><button id="kmlClear">clear</button></div>
+      <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / geojson</button><button id="kmlClear">clear</button></div>
       <input type="file" id="kmlFile" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml,application/geo+json" style="display:none">
       <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no photo</button><button data-ae="1">aerial photo</button></div>
       <div class="p" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
@@ -235,7 +235,7 @@ canvas.orbit{cursor:grab}
       <input type="file" id="openFile" accept=".json,application/json" style="display:none">
       <button class="btn" id="png">save png</button>
       <button class="btn" id="stl">export stl</button>
-      <button class="btn" id="laser">export laser svg</button>
+      <button class="btn" id="laser">export 2 laser</button>
       <button class="btn primary wide" id="sheetBtn">drawing sheet · pdf + png</button>
     </div>
   </aside>
