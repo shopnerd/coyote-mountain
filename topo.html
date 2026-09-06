@@ -14,7 +14,8 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{background:var(--page);color:var(--ink);font:13px/1.5 var(--font);overflow:hidden;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
-#app{display:grid;grid-template-rows:38px 26px 1fr;grid-template-columns:256px minmax(0,1fr);height:100dvh;width:100vw;max-width:100vw}
+:root{--rail:256px}
+#app{display:grid;grid-template-rows:38px 26px 1fr;grid-template-columns:var(--rail) minmax(0,1fr);height:100dvh;width:100vw;max-width:100vw}
 header{grid-column:1/-1;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 12px}
 header .logo{font-weight:600}
 header .logo b{color:var(--accent);font-weight:600}
@@ -27,7 +28,9 @@ header .read b{color:var(--ink);font-weight:600}
 .cmd .hint{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cmd button{flex:0 0 auto;min-height:20px;padding:1px 8px;border:1px solid #9a9992;background:var(--panel);color:var(--ink);border-radius:3px;font:inherit;font-size:11px;cursor:pointer}
 .cmd button:hover{background:#fdf3ea;border-color:#d9895d}
-aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;display:flex;flex-direction:column;position:relative}
+#railGrip{position:absolute;top:0;bottom:0;right:0;width:8px;cursor:col-resize;z-index:5}
+#railGrip:hover,#railGrip.on{background:rgba(201,107,58,.18)}
 .sec{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink2);padding:10px 12px 4px;display:flex;align-items:baseline;gap:8px}
 .sec::after{content:"";flex:1;border-top:1px solid var(--line);transform:translateY(-3px)}
 .seg{display:flex;padding:0 12px;gap:0}
@@ -85,7 +88,8 @@ canvas.orbit{cursor:grab}
   header .read{display:none}
   aside{min-width:0}
   main{min-width:0}
-  aside{border-right:0;border-top:1px solid var(--line);grid-row:4}
+  aside{border-right:0;border-top:1px solid var(--line);grid-row:4;zoom:1!important}
+  #railGrip{display:none}
   main{grid-row:3}
   header .read{font-size:9.5px}
   header a{display:none}
@@ -173,6 +177,8 @@ canvas.orbit{cursor:grab}
       <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
       <div class="seg" style="padding:0"><button id="fetch" style="flex:2">fetch terrain</button><button id="home" title="Encino Solo">home</button></div>
+      <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">boundary · kml / geojson</button><button id="kmlClear">clear</button></div>
+      <input type="file" id="kmlFile" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml,application/geo+json" style="display:none">
       <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="0" class="on">no photo</button><button data-ae="1">aerial photo</button></div>
       <div class="p" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
       <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
@@ -225,6 +231,7 @@ canvas.orbit{cursor:grab}
       <button class="btn primary wide" id="laser">laser cut svg</button>
       <button class="btn wide" id="sheetBtn">drawing sheet · pdf + png</button>
     </div>
+    <div id="railGrip" title="drag to widen the menu; everything in it grows with it"></div>
   </aside>
   <div id="tip"></div>
   <main>
@@ -333,7 +340,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -448,7 +455,7 @@ function drawPlan() {
   ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, bx + bw, by + 4);
   ctx.save(); ctx.translate(sheet.x + 22, sheet.y + 26); ctx.rotate(-S.rot * D2R); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('N', 0, -9);
   ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, -6); ctx.moveTo(-3, -2); ctx.lineTo(0, -6); ctx.lineTo(3, -2); ctx.stroke(); ctx.restore(); ctx.textBaseline = 'top';
-  drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
+  drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k))); drawBoundary(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false);
   if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.globalAlpha = st.a; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * st.w; ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   // section line: shown only while the section tool is selected
   if (S.sec && S.brush === 'section') drawSectionLine();
@@ -531,7 +538,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     it.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke();
     if (it.lines.length) { c.strokeStyle = INK; for (const [a, b, ix] of it.lines) { c.lineWidth = ix ? 1.2 : .6; c.globalAlpha = ix ? .9 : .7; c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.globalAlpha = 1; }
   }
-  drawStrokes(c, (i, j) => proj(i, j, sample(z, i, j) + .04), mini ? .7 : 1, true);
+  drawStrokes(c, (i, j) => proj(i, j, sample(z, i, j) + .04), mini ? .7 : 1, true); drawBoundary(c, (i, j) => proj(i, j, sample(z, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   if (S.labels && !mini) {
     const groups = new Map(), dmed = items.length ? items[Math.floor(items.length * .45)].d : 0;
@@ -612,7 +619,7 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
-  drawStrokes(c, (i, j) => proj(i, j, sample(z, i, j) + .04), mini ? .7 : 1, true);
+  drawStrokes(c, (i, j) => proj(i, j, sample(z, i, j) + .04), mini ? .7 : 1, true); drawBoundary(c, (i, j) => proj(i, j, sample(z, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
@@ -857,7 +864,7 @@ function drawAnalysis() {
   if (flood) { ctx.font = font(10.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     for (const pl of flood.pools.slice(0, 5)) { const p = toSheet(pl.ci, pl.cj); const txt = `pool · ${fBig(pl.area)} · ${fL(pl.depth, 1)} deep · ${pl.overflow > 0 ? 'full, overflowing ' + fV(pl.overflow) : Math.round(pl.full * 100) + '% full'}`, tw = ctx.measureText(txt).width + 8;
       let lx = p[0] + 8; if (lx + tw > sheet.x + sheet.w) lx = p[0] - tw - 8; haloText(ctx, txt, lx, p[1] + .5, '#3f6488'); } }
-  drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
+  drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k))); drawBoundary(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false);
   if (S.an.keys) for (const kp of keypoints) { const p = toSheet(kp.i, kp.j), sel = S.keyPt && S.keyPt[0] === kp.i && S.keyPt[1] === kp.j;
     ctx.strokeStyle = ACC; ctx.lineWidth = sel ? 2 : 1.2; ctx.fillStyle = sel ? ACC : PAPER; ctx.beginPath(); ctx.arc(p[0], p[1], sel ? 6 : 4.5, 0, TAU); ctx.fill(); ctx.stroke();
     ctx.textAlign = 'left'; haloText(ctx, 'keypoint ' + fL(kp.z, 1), p[0] + 10, p[1] + .5, ACC); }
@@ -1229,7 +1236,7 @@ const TIPS = {
   's:hour': 'shade the ground for one month and hour, with cast shadows', 's:hours': 'colour the ground by hours of direct sun in a day', playDay: 'sweep the hour from dawn to dusk', playYear: 'sweep the months at this hour',
   'c:paper': 'plain paper tones', 'c:elevation': 'green low to ember high', 'c:slope': 'paper flat to ember steep', 'c:aspect': 'which way each slope faces', 'c:aerial': 'the satellite photo on the ground', 'c:sun': 'sun shading on the ground', 's:smooth': 'the ground as a continuous surface', 's:stepped': 'the ground as the cardboard stack you would cut',
   'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush',
-  halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
+  kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
   reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label',
   undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'a titled drawing sheet: plan at a standard scale with a graphic scale and north arrow, section, and model. pdf at true paper size plus a png', laser: 'cardboard layers nested on sheets for the laser cutter', extents: 'refit the view (0)'
 };
@@ -1247,6 +1254,14 @@ document.addEventListener('pointerdown', e => { const el = e.target.closest('but
 document.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { const held = tipTarget && tipTarget.dataset.held; clearTimeout(tipTimer); if (!held) hideTip(); else setTimeout(hideTip, 1800); } }, true);
 document.addEventListener('click', e => { const el = e.target.closest('button'); if (el && el.dataset.held) { delete el.dataset.held; e.stopPropagation(); e.preventDefault(); } }, true);
 document.addEventListener('scroll', hideTip, true);
+
+/* ---------- rail width: drag the edge; the menu scales with it ---------- */
+function setRail(px) { px = Math.max(200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); document.querySelector('aside').style.zoom = (px / 256).toFixed(3); try { localStorage.setItem('rail', px); } catch (_) {} resize(); }
+try { const v = +localStorage.getItem('rail'); if (v >= 200 && innerWidth > 760) setRail(v); } catch (_) {}
+{ const grip = document.getElementById('railGrip'); let rd = null;
+  grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); rd = e.clientX; grip.classList.add('on'); e.preventDefault(); });
+  grip.addEventListener('pointermove', e => { if (rd === null) return; setRail(e.clientX); });
+  const end = () => { rd = null; grip.classList.remove('on'); }; grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end); }
 
 /* ---------- command line: what a drag or tap does right now ---------- */
 let lastHint = '';
@@ -1531,6 +1546,39 @@ function drawAerial() {
   ctx.save(); ctx.globalAlpha = S.aop; ctx.imageSmoothingEnabled = true; ctx.drawImage(ae.canvas, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); return true;
 }
 
+/* ---------- property boundary: lat/lon polylines pinned to the ground ---------- */
+function parseBoundary(text) {            // KML or GeoJSON -> [{closed, pts:[[lat,lon],...]}]
+  const out = []; const t = text.trim();
+  if (t[0] === '{') { const g = JSON.parse(t); const feats = g.type === 'FeatureCollection' ? g.features : [g]; const add = (coords, closed) => out.push({ closed, pts: coords.map(c => [c[1], c[0]]) });
+    for (const f of feats) { const geom = f.geometry || f; if (!geom) continue; const ty = geom.type, c = geom.coordinates;
+      if (ty === 'Polygon') c.forEach(r => add(r, true)); else if (ty === 'MultiPolygon') c.forEach(pg => pg.forEach(r => add(r, true))); else if (ty === 'LineString') add(c, false); else if (ty === 'MultiLineString') c.forEach(l => add(l, false)); } return out; }
+  const doc = new DOMParser().parseFromString(text, 'text/xml');
+  for (const el of doc.getElementsByTagName('coordinates')) { const closed = !!el.closest('Polygon') || !!el.closest('LinearRing'); const pts = el.textContent.trim().split(/\s+/).map(tok => tok.split(',').map(Number)).filter(a => a.length >= 2 && isFinite(a[0]) && isFinite(a[1])).map(a => [a[1], a[0]]); if (pts.length > 1) out.push({ closed, pts }); }
+  return out;
+}
+function latLonToGrid(lat, lon) {         // inverse of nodeLatLon
+  const { lat: la0, lon: lo0 } = S.world, t = S.rot * D2R, dy = (lat - la0) * 111320, dx = (lon - lo0) * 111320 * Math.cos(la0 * D2R);
+  const sx = dx * Math.cos(t) - dy * Math.sin(t), sy = dx * Math.sin(t) + dy * Math.cos(t); return [sx / cs() + (W - 1) / 2, (H - 1) / 2 - sy / cs()];
+}
+let boundaryCache = { key: '', polys: [] };
+function boundaryGrid() {                 // boundary in grid coords for the current site (cached per site/rotation/width)
+  if (!S.boundary || !S.world) return []; const key = [S.world.lat, S.world.lon, S.siteW, S.rot, S.boundary.length].join('|'); if (boundaryCache.key === key) return boundaryCache.polys;
+  const polys = S.boundary.map(b => ({ closed: b.closed, pts: b.pts.map(q => latLonToGrid(q[0], q[1])) })); boundaryCache = { key, polys }; return polys;
+}
+function boundaryArea(b) { let a = 0; for (let q = 0; q < b.pts.length; q++) { const p = b.pts[q], n = b.pts[(q + 1) % b.pts.length]; a += p[0] * n[1] - n[0] * p[1]; } return Math.abs(a) / 2 * cs() * cs(); }
+function drawBoundary(c, toXY, k, dense) {
+  const polys = boundaryGrid(); if (!polys.length) return; c.strokeStyle = INK; c.lineWidth = 1.6 * k; c.setLineDash([12 * k, 4 * k, 3 * k, 4 * k]); c.lineJoin = 'round';
+  for (const b of polys) { const pts = b.closed ? b.pts.concat([b.pts[0]]) : b.pts, P = dense ? densify(pts.map(q => [q[0], q[1], .5]), .3) : pts; c.beginPath(); let pen = false;
+    for (const q of P) { const inside = q[0] >= -1 && q[1] >= -1 && q[0] <= W && q[1] <= H; if (!inside) { pen = false; continue; } const p = toXY(q[0], q[1]); pen ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); pen = true; }
+    c.stroke(); }
+  c.setLineDash([]);
+  if (!dense && S.labels) for (const b of polys) { if (!b.closed || b.pts.length < 3) continue; let ci = 0, cj = 0; for (const q of b.pts) { ci += q[0]; cj += q[1]; } ci /= b.pts.length; cj /= b.pts.length; if (ci < 0 || cj < 0 || ci > W - 1 || cj > H - 1) continue;
+    const p = toXY(ci, cj); c.font = font(10.5, 600); c.textAlign = 'center'; c.textBaseline = 'middle'; haloText(c, 'lot · ' + fBig(boundaryArea(b)), p[0], p[1], INK); }
+}
+document.getElementById('kmlBtn').onclick = () => { if (!S.world) { toast('fetch real terrain first, then load the boundary'); return; } document.getElementById('kmlFile').click(); };
+document.getElementById('kmlFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { const b = parseBoundary(rd.result); if (!b.length) throw new Error('no coordinates found in that file'); S.boundary = b; boundaryCache.key = ''; S.strokeVer++; S.dirty = true; toast(`boundary loaded · ${b.length} line${b.length === 1 ? '' : 's'}`); } catch (err) { toast(String(err.message || err)); } }; rd.readAsText(f); e.target.value = ''; };
+document.getElementById('kmlClear').onclick = () => { S.boundary = null; boundaryCache.key = ''; S.strokeVer++; S.dirty = true; };
+
 /* ---------- world: real elevation for any place ---------- */
 function worldStatus(msg) { document.getElementById('worldStatus').textContent = msg; groundControls(); }
 function groundControls() { const real = !!S.world; document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
@@ -1679,7 +1727,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
@@ -1687,6 +1735,7 @@ function loadProject(pr, fromHome) {
   if (!pr || pr.app !== 'coyote-topo' || !pr.base || pr.base.length !== W * H) throw new Error('not a coyote topo file');
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
   if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
+  S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = '';
   S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
   if (pr.unit === 'm' || pr.unit === 'ft') { S.unit = pr.unit; document.getElementById('unit').value = pr.unit; }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
