@@ -71,7 +71,7 @@ canvas.orbit{cursor:grab}
 #pip.rs{cursor:nesw-resize}
 #pip[hidden]{display:none}
 @media (max-width:760px){#pip{width:36vw;height:24vw}}
-#pip.folded{width:78px!important;height:22px!important;cursor:pointer}
+#pip.folded{width:92px!important;height:26px!important;cursor:pointer;border-color:#C96B3A}
 .toast{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);background:var(--ink);color:#efeee8;padding:6px 14px;border-radius:20px;font-size:11px;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 @media (max-width:760px){
@@ -1015,10 +1015,10 @@ function pipFrame() {                     // the 3d preview drawn once (camera a
 let pipFolded = false;
 function setPipFold(f) { pipFolded = f; pip.classList.toggle('folded', f); try { localStorage.setItem('pipFold', f ? '1' : '0'); } catch (_) {} sizePip(); S.dirty = true; }
 try { if (localStorage.getItem('pipFold') === '1') { pipFolded = true; pip.classList.add('folded'); } } catch (_) {}
-const inFold = e => { const r = pip.getBoundingClientRect(); return r.right - e.clientX < 20 && r.bottom - e.clientY < 20; };
+const inFold = e => { const r = pip.getBoundingClientRect(); return r.right - e.clientX < 60 && r.bottom - e.clientY < 22; };
 function drawPip() {
   if (!pw) sizePip();
-  if (pipFolded) { pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph); pctx.fillStyle = INK2; pctx.font = font(10.5, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▴ preview', pw / 2, ph / 2 + .5); return; } pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
+  if (pipFolded) { pctx.fillStyle = '#fbeadb'; pctx.fillRect(0, 0, pw, ph); pctx.strokeStyle = ACC; pctx.lineWidth = 1; pctx.strokeRect(.5, .5, pw - 1, ph - 1); pctx.fillStyle = INK; pctx.font = font(10.5, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▴ preview', pw / 2, ph / 2 + .5); return; } pctx.fillStyle = PAPER; pctx.fillRect(0, 0, pw, ph);
   const showSec = S.mode === 'model' || (S.pipView === 'section' && S.mode !== 'section');
   if (showSec) drawSection(pctx, pw, ph, true);
   else { const zoom0 = S.cam.zoom, pan0 = S.cam.pan, cm0 = S.colorMode; S.cam.zoom = zoom0 * S.pipZoom; S.cam.pan = S.pipPan; if (S.mode === 'analysis' && S.an.sun) S.colorMode = 'sun';
@@ -1028,8 +1028,8 @@ function drawPip() {
   if (S.mode !== 'section' && S.mode !== 'model') { pctx.font = font(10.5, 600); pctx.textBaseline = 'top'; pctx.textAlign = 'right';
     pctx.fillStyle = showSec ? INK3 : ACC; pctx.fillText('3d', pw - 52, 7); pctx.fillStyle = showSec ? ACC : INK3; pctx.fillText('section', pw - 8, 7); }
   pctx.fillStyle = 'rgba(240,240,236,.85)'; pctx.fillRect(0, ph - 18, pw, 18);
-  pctx.fillStyle = INK2; pctx.font = font(9.5); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText(showSec ? 'section A–B · updates as you brush · double-tap to open' : '3d · drag orbit · middle or shift drag pan · wheel zoom · double-tap open', 22, ph - 5);
-  pctx.fillStyle = 'rgba(240,240,236,.9)'; pctx.fillRect(pw - 18, ph - 18, 18, 18); pctx.fillStyle = INK2; pctx.font = font(10, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('▾', pw - 9, ph - 8);
+  pctx.fillStyle = INK2; pctx.font = font(9.5); pctx.textAlign = 'left'; pctx.textBaseline = 'bottom'; pctx.fillText(showSec ? 'section A–B · double-tap to open' : '3d · drag orbit · double-tap open', 22, ph - 5);
+  pctx.fillStyle = '#fbeadb'; pctx.fillRect(pw - 58, ph - 20, 56, 18); pctx.strokeStyle = ACC; pctx.lineWidth = 1; pctx.strokeRect(pw - 57.5, ph - 19.5, 55, 17); pctx.fillStyle = INK; pctx.font = font(10, 600); pctx.textAlign = 'center'; pctx.textBaseline = 'middle'; pctx.fillText('hide ▾', pw - 30, ph - 11);
   if (!showSec) { pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.arc(12, 12, 5, 0, 6.2832); pctx.moveTo(4, 12); pctx.lineTo(20, 12); pctx.moveTo(12, 4); pctx.lineTo(12, 20); pctx.stroke(); }
   pctx.strokeStyle = INK2; pctx.lineWidth = 1; pctx.beginPath(); pctx.moveTo(2, ph - 12); pctx.lineTo(12, ph - 2); pctx.moveTo(2, ph - 6); pctx.lineTo(6, ph - 2); pctx.stroke();
 }
