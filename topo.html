@@ -182,6 +182,7 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
         <div class="p" id="gradeRow" style="display:none"><label>grade<output id="o_grade">2% fall A→B</output></label><input type="range" id="grade" min="-30" max="30" step=".5" value="2"></div>
         <div class="p" id="sideRow" style="display:none"><label>side slopes<output id="o_side">3:1</output></label><input type="range" id="side" min="1" max="6" step=".5" value="3"></div>
         <div class="p" id="pathWRow" style="display:none"><label>path width<output id="o_pathW">5 ft</output></label><input type="range" id="pathW" min="0.5" max="12" step=".5" value="1.5"></div>
+        <div class="seg" id="pathSurfRow" style="display:none;padding:0;margin-top:6px"><button data-sf="none" class="on">bare</button><button data-sf="gravel">gravel</button><button data-sf="paving">paving</button></div>
         <div class="p" id="pathHRow" style="display:none"><label>raise or sink<output id="o_pathH">sunk</output></label><input type="range" id="pathH" min="-1" max="1" step=".05" value="-0.15"></div>
         <div class="seg" id="padRow" style="display:none;padding:0;margin-top:6px"><button data-ps="rect" class="on">rect</button><button data-ps="oval">oval</button><button data-ps="draw">draw</button></div>
         <div class="seg" id="padLevelRow" style="display:none;padding:0;margin-top:6px"><button data-pl="balance" class="on">balance cut and fill</button><button data-pl="ground">at the start</button></div>
@@ -235,6 +236,8 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="seaRow"><button data-sea="1" class="on">water</button><button data-sea="0">raw ground</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="roadRow"><button data-road="1" class="on">roads</button><button data-road="0">no roads</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="bldRow"><button data-bld="1" class="on">buildings</button><button data-bld="0">no buildings</button></div>
+      <div class="seg" style="padding:0;margin-top:6px;display:none" id="bldModeRow"><button data-bm="mapped" class="on">blocks</button><button data-bm="pedestal">pedestal</button><button data-bm="recess">recess</button><button data-bm="engrave">outline</button></div>
+      <div class="p" id="bldMMRow" style="display:none"><label>pedestal or recess<output id="o_bldMM">3 mm</output></label><input type="range" id="bldMM" min="1" max="10" step=".5" value="3"></div>
       <div class="p" id="riseRow" style="display:none"><label>sea level rise<output id="o_rise">0 ft</output></label><input type="range" id="rise" min="0" max="10" step=".25" value="0"></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="ovRow"><button data-ov="1" class="on">overlay</button><button data-ov="0">no overlay</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="trimRow"><button data-trim="1">trim to lot</button><button data-trim="0" class="on">full site</button></div>
@@ -294,6 +297,7 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
       <button class="btn" id="png">save png</button>
       <button class="btn" id="stl">export stl</button>
       <div style="display:flex;gap:6px"><button class="btn" id="laser" style="flex:1">export laser</button><button class="btn" id="laserDxf" title="the same cut file as DXF, for laser software that prefers it">dxf</button></div>
+      <button class="btn wide" id="cncDxf" title="a dxf at the model's scale in millimetres: site edge, contours, building footprints, path edges, lot line, on their own layers. for engraving on the cnc, or any cad">cnc lines · dxf</button>
       <button class="btn primary wide" id="sheetBtn">drawing sheet · pdf + png</button>
     </div>
   </aside>
@@ -426,9 +430,9 @@ const fbm = (x, y, s) => noise(x, y, s) * .55 + noise(x * 2.1, y * 2.1, s + 1) *
 let W = 150, H = 100;                   // grid nodes; site aspect 3:2 (detail 2x doubles both)
 let base = new Float32Array(W * H);     // existing grade, m
 let z = new Float32Array(W * H);        // proposed grade, m
-let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z;   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
+let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z, modelSurf = false;   // modelSurf: true while the model, the print or the cuts are being made, so footprints carry their pedestal or recess   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, gradeV: 2, sideV: 3, gline: null, padShape: 'rect', padLevel: 'balance', padGradeV: 0, showCF: true, pathW: 1.5, pathH: -.15, labelUp: false, showBase: true, strip: 0, swell: .2, runoff: .7, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, gradeV: 2, sideV: 3, gline: null, padShape: 'rect', padLevel: 'balance', padGradeV: 0, showCF: true, pathW: 1.5, pathH: -.15, pathSurf: 'none', bldMode: 'mapped', bldMM: 3, labelUp: false, showBase: true, strip: 0, swell: .2, runoff: .7, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -506,6 +510,8 @@ function drawPathPreview() {              // the centreline and its width while 
 function drawPath(c, st, toXY, k) {       // a finished path: its two edges, draped on whatever is drawn
   const hw = (st.pw || 1.5) / 2 / cs(), pts = st.pts.map(q => [q[0], q[1]]); if (pts.length < 2) return; const L = [], Rr = [];
   for (let i = 0; i < pts.length; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)]; let tx = b[0] - a[0], ty = b[1] - a[1]; const m = Math.hypot(tx, ty) || 1; tx /= m; ty /= m; L.push([pts[i][0] - ty * hw, pts[i][1] + tx * hw]); Rr.push([pts[i][0] + ty * hw, pts[i][1] - tx * hw]); }
+  if (st.sf) { const o0 = toXY(0, 0), o1 = toXY(1, 0), ppc = Math.hypot(o1[0] - o0[0], o1[1] - o0[1]) || 1, fit = (m, px) => Math.max(m / cs(), px / ppc), corridor = L.concat(Rr.slice().reverse()); c.strokeStyle = INK; c.fillStyle = INK; c.globalAlpha = 1; c.setLineDash([]); c.lineWidth = .7 * k;   // the surface fills the corridor between the edges
+    if (st.sf === 'gravel') pebbles(c, corridor, fit(.9, 8), fit(.14, 1.4), toXY, 1); else if (st.sf === 'paving') flagstones(c, corridor, fit(1.4, 16), toXY); }
   c.strokeStyle = INK; c.globalAlpha = 1; c.setLineDash([]); c.lineJoin = 'round'; c.lineCap = 'round'; c.lineWidth = .9 * k;
   for (const side of [L, Rr]) { c.beginPath(); densify(side, .3).forEach((q, t) => { const p = toXY(q[0], q[1], sample(zv, q[0], q[1]) + .05); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.stroke(); }
   if (st.ph && st.ph < 0) { c.setLineDash([3 * k, 3 * k]); c.lineWidth = .6 * k; c.beginPath(); densify(pts, .3).forEach((q, t) => { const p = toXY(q[0], q[1], sample(zv, q[0], q[1]) + .05); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.stroke(); c.setLineDash([]); }   // a sunk path carries a dashed invert line
@@ -753,7 +759,8 @@ function drawSectionLine() {
 }
 
 /* ---------- model (orthographic orbit, painter's sort) ---------- */
-function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
+function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) { return withModelSurf(() => drawModel0(c, w, h, step, mini)); }
+function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   const fast = S.lowQ && !mini; if (fast) step = Math.max(step, 2);   // while the camera moves: every second cell, no labels; full quality on release
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
@@ -809,7 +816,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   for (const wl of walls) { c.fillStyle = TONES[3]; c.strokeStyle = INK2; c.lineWidth = .7; c.beginPath();
     wl.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
   if (S.showBld && S.coast && S.coast.blds && S.coast.blds.length) for (const b of S.coast.blds) { if (tm && !inTrim(b.pts.reduce((a, q) => a + q[0], 0) / b.pts.length, b.pts.reduce((a, q) => a + q[1], 0) / b.pts.length)) continue;   // blocks: flat roof at the highest ground under the footprint plus the height; walls down to the ground at each corner
-    const g = b.pts.map(q => sample(zv, Math.max(0, Math.min(W - 1, q[0])), Math.max(0, Math.min(H - 1, q[1])))), top = Math.max(...g) + b.h;
+    const g = b.pts.map(q => sample(zv, Math.max(0, Math.min(W - 1, q[0])), Math.max(0, Math.min(H - 1, q[1])))), top = S.bldMode === 'mapped' ? Math.max(...g) + b.h : Math.max(...g) + .001;   // pedestal and recess are already in the ground; outline mode draws a flat footprint on it
     const R = b.pts.map(q => proj(q[0], q[1], top)), G = b.pts.map((q, t) => proj(q[0], q[1], g[t])); let d = -1e9; for (const p of G) d = Math.max(d, p[2]);
     items.push({ d: d + 1e-3, bld: { R, G }, lines: [] }); }
   items.sort((a, b) => a.d - b.d);
@@ -897,7 +904,8 @@ function steppedLayers() {
   }
   stepCache = { key, layers }; return layers;
 }
-function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
+function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) { return withModelSurf(() => drawStepped0(c, w, h, step, mini)); }
+function drawStepped0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
@@ -1230,7 +1238,7 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.bldMode, S.bldMM, S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
@@ -1377,7 +1385,7 @@ const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw 
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 let pipShot = { key: '', canvas: null };
 function pipFrame() {                     // the 3d preview drawn once (camera already swapped in by drawPip), reused while the rain moves
-  const key = [S.terrainVer, S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.bldMode, S.bldMM, S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
   if (pipShot.key !== key) { const now = performance.now(); if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt') && pipShot.canvas) return pipShot.canvas;
     const off = document.createElement('canvas'); off.width = Math.max(1, Math.round(pw * dpr)); off.height = Math.max(1, Math.round(ph * dpr)); const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0); o.fillStyle = PAPER; o.fillRect(0, 0, pw, ph);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, pw, ph, 3, true); pipShot = { key, canvas: off, t: now }; }
@@ -1455,7 +1463,7 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, pw: st.pw, ph: st.ph, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, pw: st.pw, ph: st.ph, sf: st.sf, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function setGrid(f, quiet) {              // rebuild the ground at 150f × 100f; everything in grid coords is rescaled; terrain refetches
   const nw = Math.round(150 * f), nh = Math.round(100 * f); if (nw === W && nh === H) return; const k = nw / W;
   W = nw; H = nh; base = new Float32Array(W * H); z = new Float32Array(W * H); zv = z; zvKey = ''; rawBase = null; waterMask = null; waterLevel = null; wF = null; S.hasSea = S.hasWater = false; S.coast = null;
@@ -1586,7 +1594,7 @@ function endPointer(e) {
     S.strokeVer++; S.dirty = true; }
   pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
   if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt')) updateStats();
-  if (drag && drag.kind === 'path') { const pts = pathClean(drag.pts); if (pts.length >= 2) { const r = applyPath(pts); S.strokes.push({ kind: 'path', color: 'ink', w: 1, a: 1, c: pts[0].slice(), pts: pts.map(q => [q[0], q[1], .5]), pw: S.pathW, ph: S.pathH }); S.strokeVer++; updateStats(); toast(`path ${fL(r.len, 0)} long · ${fL(S.pathW, 1)} wide · ${S.pathH === 0 ? 'flush' : (S.pathH > 0 ? 'raised ' : 'sunk ') + fL(Math.abs(S.pathH), 2)} · cut ${fV(r.cut)} · fill ${fV(r.fill)}`); } }
+  if (drag && drag.kind === 'path') { const pts = pathClean(drag.pts); if (pts.length >= 2) { const r = applyPath(pts); S.strokes.push({ kind: 'path', color: 'ink', w: 1, a: 1, c: pts[0].slice(), pts: pts.map(q => [q[0], q[1], .5]), pw: S.pathW, ph: S.pathH, sf: S.pathSurf === 'none' ? undefined : S.pathSurf }); S.strokeVer++; updateStats(); toast(`path ${fL(r.len, 0)} long · ${fL(S.pathW, 1)} wide · ${S.pathH === 0 ? 'flush' : (S.pathH > 0 ? 'raised ' : 'sunk ') + fL(Math.abs(S.pathH), 2)} · cut ${fV(r.cut)} · fill ${fV(r.fill)}`); } }
   if (drag && drag.kind === 'pad') { const poly = padPoly(drag); if (poly) { const r = applyPad(poly, drag); if (r) { updateStats(); toast(`pad ${fA(r.area)} at ${fL(r.z0, 1)} · cut ${fV(r.cut)} · fill ${fV(r.fill)}${S.padLevel === 'balance' ? ' · balanced' : ''}`); } } }
   if (drag && drag.kind === 'grade') { const [a, b] = S.gline; if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 2) { const r = applyGrade(a, b); updateStats(); S.strokes.push(spotAt(a), spotAt(b), { kind: 'slope', color: 'ink', w: 1, a: 1, c: a.slice(), pts: [[a[0], a[1], .5], [b[0], b[1], .5]], pct: S.gradeV }); S.strokeVer++; toast(`graded ${fL(r.len, 0)} at ${r.txt} · A ${fL(r.zA, 2)} → B ${fL(r.zB, 2)}`); } S.gline = null; }
   if (drag && drag.kind === 'section') { const [a, b] = S.sec; if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 3) S.sec = null; else { setMode('section'); toast('section cut. back to plan to redraw it'); } }
@@ -1609,7 +1617,7 @@ function readout(g) {
 /* ---------- floating descriptions on dwell ---------- */
 const TIPS = {
   'm:plan': 'the drawing sheet: contours, hachures, your grading and pen sketch', 'm:model': 'the ground in 3d. orbit, sculpt, colour it, watch rain and sun', 'm:section': 'a cut through the ground along the A–B line: proposed over existing, cut and fill', 'm:analysis': 'where water goes: flow, catchments, flood, keyline, dam, rain, sun',
-  'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'shows the A–B section line; drag a new one to cut a section', 'b:path': 'a path or road: draw its centreline on the sheet. a corridor of the width below follows the ground, smoothed along its length, raised or sunk by the amount below so it shows in the model and the print; the sides run to daylight', 'p:pathW': 'how wide the path is, edge to edge', 'p:pathH': 'raised for a berm or a built-up road, sunk for a trail or a swale; sunk about 6 in is easy to see on a print', 'b:pad': 'a pad: drag a rectangle, an oval, or draw a shape. the ground inside becomes a flat pad with side slopes that daylight; by default its height is set so cut equals fill', 'ps:rect': 'drag corner to corner', 'ps:oval': 'drag the box the oval fits in', 'ps:draw': 'draw the outline freehand; it closes when you let go', 'pl:balance': 'the pad height is found so the cut equals the fill: no earth to bring in or haul off', 'pl:ground': 'the pad sits at the ground height where you started the drag', 'p:padGrade': 'tilt the pad along the direction you dragged, for drainage; 0 is dead level', 'cf:1': 'ember hatching is fill, grey is cut, stronger with depth; the same wash the model shows', 'cf:0': 'no cut and fill wash on the sheet', 'b:spot': 'tap to place a spot elevation that follows the ground as you grade; the grade tool places its own at A and B with a slope arrow', 'b:grade': 'exact grade: drag A to B and the ground between is set to the fall in the rail, starting from the ground at A; radius is the width', 'p:grade': 'percent fall from A to B along the grade line; negative rises, 0 makes it level', 'p:side': 'how the sides of the graded strip meet the ground: 3:1 is three across for one down. fill slopes down, cut slopes up, until they daylight', 'p:strip': 'topsoil taken off every disturbed area before grading and set aside; reported separately from cut and fill', 'p:swell': 'how much dug earth bulks up when loose; the haul volume uses it', 'p:runoff': 'the share of storm rain that runs over the ground; the rest soaks in. flood and rain volumes use it',
+  'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'shows the A–B section line; drag a new one to cut a section', 'b:path': 'a path or road: draw its centreline on the sheet. a corridor of the width below follows the ground, smoothed along its length, raised or sunk by the amount below so it shows in the model and the print; the sides run to daylight', 'bm:mapped': 'buildings as blocks at their mapped height, in the model view only', 'bm:pedestal': 'each footprint stands proud of the ground by the amount below, in the model, the print and the cnc file: a flat-topped pad a mill can leave', 'bm:recess': 'each footprint is sunk by the amount below: a pocket a mill can cut, for a separately made block to sit in', 'bm:engrave': 'no relief: footprints go out as lines in the cnc dxf, and show as outlines on the model', 'p:bldMM': 'how far the pedestal stands up, or the recess goes down, measured on the finished model', 'p:pathW': 'how wide the path is, edge to edge', 'sf:none': 'plain edges', 'sf:gravel': 'the corridor fills with gravel stipple on the sheet', 'sf:paving': 'the corridor fills with paving on the sheet', 'p:pathH': 'raised for a berm or a built-up road, sunk for a trail or a swale; sunk about 6 in is easy to see on a print', 'b:pad': 'a pad: drag a rectangle, an oval, or draw a shape. the ground inside becomes a flat pad with side slopes that daylight; by default its height is set so cut equals fill', 'ps:rect': 'drag corner to corner', 'ps:oval': 'drag the box the oval fits in', 'ps:draw': 'draw the outline freehand; it closes when you let go', 'pl:balance': 'the pad height is found so the cut equals the fill: no earth to bring in or haul off', 'pl:ground': 'the pad sits at the ground height where you started the drag', 'p:padGrade': 'tilt the pad along the direction you dragged, for drainage; 0 is dead level', 'cf:1': 'ember hatching is fill, grey is cut, stronger with depth; the same wash the model shows', 'cf:0': 'no cut and fill wash on the sheet', 'b:spot': 'tap to place a spot elevation that follows the ground as you grade; the grade tool places its own at A and B with a slope arrow', 'b:grade': 'exact grade: drag A to B and the ground between is set to the fall in the rail, starting from the ground at A; radius is the width', 'p:grade': 'percent fall from A to B along the grade line; negative rises, 0 makes it level', 'p:side': 'how the sides of the graded strip meet the ground: 3:1 is three across for one down. fill slopes down, cut slopes up, until they daylight', 'p:strip': 'topsoil taken off every disturbed area before grading and set aside; reported separately from cut and fill', 'p:swell': 'how much dug earth bulks up when loose; the haul volume uses it', 'p:runoff': 'the share of storm rain that runs over the ground; the rest soaks in. flood and rain volumes use it',
   'pm:tree': 'tap to plant a tree with a 20 ft canopy, or drag from the trunk to size it. click again for plain ink', 'pm:shrub': 'shrub mass: trace a bed, or use rect / circ for a clean one. click again for plain ink', 'pm:hedge': 'hedge row along a line, or around a rect / circ. click again for plain ink', 'pm:gravel': 'gravel stipple inside a traced or rect / circ area. click again for plain ink', 'pm:paving': 'flagstone paving inside a traced or rect / circ area. click again for plain ink',
   'pm:smart': 'freehand that tidies itself on lift: straight lines, circles, boxes, clean polylines', 'pm:free': 'freehand kept exactly as drawn', 'pm:line': 'drag a straight line', 'pm:rect': 'drag a rectangle corner to corner', 'pm:circle': 'drag a circle from its centre',
   'pc:ink': 'black pen', 'pc:ember': 'red pen', 'pc:water': 'blue pen', penDash: 'dashed strokes on or off', penClear: 'remove every pen stroke',
@@ -1629,7 +1637,7 @@ const TIPS = {
 };
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
-  else key = el.id && TIPS[el.id] ? el.id : d.v ? 'v:' + d.v : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.road ? 'road:' + d.road : d.trim ? 'trim:' + d.trim : d.ov ? 'ov:' + d.ov : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : d.x ? 'x:' + d.x : d.ps ? 'ps:' + d.ps : d.pl ? 'pl:' + d.pl : d.cf ? 'cf:' + d.cf : null;
+  else key = el.id && TIPS[el.id] ? el.id : d.v ? 'v:' + d.v : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.road ? 'road:' + d.road : d.trim ? 'trim:' + d.trim : d.ov ? 'ov:' + d.ov : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : d.x ? 'x:' + d.x : d.ps ? 'ps:' + d.ps : d.pl ? 'pl:' + d.pl : d.cf ? 'cf:' + d.cf : d.sf ? 'sf:' + d.sf : d.bm ? 'bm:' + d.bm : null;
   const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.dataset.tip || el.title || ''; }
 const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
 function showTip(el) { const t = tipFor(el); if (!t) return; showTipAt(t, el.getBoundingClientRect()); }
@@ -1784,7 +1792,7 @@ function drawPlant(c, st, toXY, k, dense) {
 }
 function plantSummary() {                  // for the sheet notes
   let trees = 0, canopy = 0, shrubs = 0, bed = 0, hedge = 0, gravel = 0, paving = 0, paths = 0, pathLen = 0; const A = cs() * cs();
-  for (const st of S.strokes) if (st.kind === 'path') { paths++; for (let i = 1; i < st.pts.length; i++) pathLen += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); }
+  for (const st of S.strokes) if (st.kind === 'path') { paths++; let L = 0; for (let i = 1; i < st.pts.length; i++) L += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); pathLen += L; if (st.sf === 'gravel') gravel += L * (st.pw || 1.5); else if (st.sf === 'paving') paving += L * (st.pw || 1.5); }
   for (const st of S.strokes) { if (!st.kind) continue; if (st.kind === 'tree') { trees++; canopy += Math.PI * st.r * st.r * A; } else if (st.kind === 'shrub') { shrubs++; bed += polyArea(st.pts) * A; } else if (st.kind === 'hedge') { for (let i = 1; i < st.pts.length; i++) hedge += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); } else if (st.kind === 'gravel') gravel += polyArea(st.pts) * A; else if (st.kind === 'paving') paving += polyArea(st.pts) * A; }
   if (!trees && !shrubs && !hedge && !gravel && !paving && !paths) return '';
   const parts = []; if (paths) parts.push(`${paths} path${paths === 1 ? '' : 's'} · ${fL(pathLen, 0)}`); if (trees) parts.push(`${trees} tree${trees === 1 ? '' : 's'} · canopy ${fBig(canopy)}`); if (shrubs) parts.push(`${shrubs} shrub mass${shrubs === 1 ? '' : 'es'} · ${fBig(bed)}`); if (hedge) parts.push(`hedge ${fL(hedge, 0)}`); if (gravel) parts.push(`gravel ${fBig(gravel)}`); if (paving) parts.push(`paving ${fBig(paving)}`);
@@ -1816,6 +1824,7 @@ bind('strength', v => S.brush === 'pen' ? v + '%' : v, v => { S.strength = v; S.
 bind('strip', v => v === 0 ? 'none' : (isFt() ? tz((v / 25.4).toFixed(1)) + ' in' : v + ' mm'), v => { S.strip = v / 1000; if (S.earth) updateStats(); });
 bind('swell', v => v + '%', v => { S.swell = v / 100; if (S.earth) updateStats(); });
 bind('pathW', v => fL(v, 1), v => S.pathW = v);
+bind('bldMM', v => v + ' mm on the model', v => { S.bldMM = v; zvKey = ''; S.terrainVer++; S.dirty = true; });
 bind('pathH', v => v === 0 ? 'flush with the ground' : (v > 0 ? 'raised ' : 'sunk ') + fL(Math.abs(v), 2), v => S.pathH = v);
 bind('padGrade', v => v === 0 ? 'level' : tz(Math.abs(v).toFixed(1)) + '% ' + (v > 0 ? 'fall' : 'rise') + ' along the drag', v => S.padGradeV = v);
 bind('side', v => tz(v.toFixed(1)) + ':1 · ' + Math.round(100 / v) + '%', v => S.sideV = v);
@@ -1848,7 +1857,7 @@ try { const u = localStorage.getItem('unit'); if (u === 'm' || u === 'ft') { S.u
 document.getElementById('unit').onchange = e => { S.unit = e.target.value; setTimeout(sheetInfo, 0); try { localStorage.setItem('unit', S.unit); } catch (_) {} relabels.forEach(f => f()); if (S.world) autoInterval(); updateStats(); S.dirty = true; if (S.mode === 'plan' && S.ptr) readout(S.ptr); };
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
-function setBrush(b) { S.brush = b; S.gline = null; document.getElementById('gradeRow').style.display = b === 'grade' ? '' : 'none'; document.getElementById('sideRow').style.display = b === 'grade' || b === 'pad' || b === 'path' ? '' : 'none'; for (const id of ['padRow', 'padLevelRow', 'padGradeRow']) document.getElementById(id).style.display = b === 'pad' ? '' : 'none'; for (const id of ['pathWRow', 'pathHRow']) document.getElementById(id).style.display = b === 'path' ? '' : 'none'; document.getElementById('l_radius').textContent = b === 'pen' ? 'stroke width' : b === 'grade' ? 'half width' : 'radius'; document.getElementById('l_strength').textContent = b === 'pen' ? 'opacity' : 'strength'; if (typeof relabels !== 'undefined') relabels.forEach(f => f()); document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; document.getElementById('plantRow').style.display = b === 'pen' ? '' : 'none'; }
+function setBrush(b) { S.brush = b; S.gline = null; document.getElementById('gradeRow').style.display = b === 'grade' ? '' : 'none'; document.getElementById('sideRow').style.display = b === 'grade' || b === 'pad' || b === 'path' ? '' : 'none'; for (const id of ['padRow', 'padLevelRow', 'padGradeRow']) document.getElementById(id).style.display = b === 'pad' ? '' : 'none'; for (const id of ['pathWRow', 'pathHRow', 'pathSurfRow']) document.getElementById(id).style.display = b === 'path' ? '' : 'none'; document.getElementById('l_radius').textContent = b === 'pen' ? 'stroke width' : b === 'grade' ? 'half width' : 'radius'; document.getElementById('l_strength').textContent = b === 'pen' ? 'opacity' : 'strength'; if (typeof relabels !== 'undefined') relabels.forEach(f => f()); document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; document.getElementById('plantRow').style.display = b === 'pen' ? '' : 'none'; }
 function setInterval1ft() { const list = isFt() ? INTERVALS_FT : INTERVALS, want = isFt() ? 1 / FT : .5; let k = 0; for (let q = 0; q < list.length; q++) if (Math.abs(list[q] - want) < Math.abs(list[k] - want)) k = q; const el = document.getElementById('interval'); el.value = k; el.dispatchEvent(new Event('input')); }
 async function goHome(quiet) {
   try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr, true); undoStack.length = 0; worldStatus(''); if (!quiet) toast('home'); return; } } catch (_) {}
@@ -1896,6 +1905,7 @@ const rainMM = v => 2 + 198 * (v / 100) ** 2;
 bind('rain', v => isFt() ? tz((rainMM(v) / 25.4).toFixed(2)) + ' in' : Math.round(rainMM(v)) + ' mm', v => S.rainV = v);
 document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); showSun();
   S.dirty = true; };
+document.getElementById('pathSurfRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.pathSurf = b.dataset.sf; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
 document.getElementById('padRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.padShape = b.dataset.ps; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
 document.getElementById('padLevelRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.padLevel = b.dataset.pl; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
 function cfUI() { document.querySelectorAll('#cfRow button').forEach(b => b.classList.toggle('on', (b.dataset.cf === '1') === S.showCF)); }
@@ -1907,6 +1917,17 @@ document.getElementById('sculptRow').onclick = e => { const b = e.target.closest
 
 document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetchWorld(); };
 document.getElementById('laser').onclick = () => runBusy('cutting the layers', () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); });
+function cncDxf() {                       // the model's lines at its scale: site edge, every contour, building footprints, path edges and centrelines, the lot
+  const gu = cs() * S.mm / S.siteW, ents = [], mm = pts => pts.map(q => [q[0] * gu, q[1] * gu]), totalW = (W - 1) * gu, totalH = (H - 1) * gu;
+  for (const b of boundaryGrid()) if (b.pts.length > 1) ents.push({ layer: 'LOT', pts: mm(b.pts), closed: !!b.closed });
+  ents.push({ layer: 'SITE', pts: [[0, 0], [totalW, 0], [totalW, totalH], [0, totalH]], closed: true });
+  const { levels } = contours(); for (const L of levels) { if (!L.polys) L.polys = linkSegs(L.segs); for (const poly of L.polys) if (poly.length > 1) ents.push({ layer: L.index ? 'CONTOUR_INDEX' : 'CONTOUR', pts: mm(poly), closed: false }); }
+  if (S.showBld && S.coast && S.coast.blds) for (const b of S.coast.blds) ents.push({ layer: 'BUILDINGS', pts: mm(b.pts), closed: true });
+  for (const st of S.strokes) if (st.kind === 'path') { const hw = (st.pw || 1.5) / 2 / cs(), pts = st.pts.map(q => [q[0], q[1]]), L = [], R = []; for (let i = 0; i < pts.length; i++) { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)]; let tx = b[0] - a[0], ty = b[1] - a[1]; const m = Math.hypot(tx, ty) || 1; tx /= m; ty /= m; L.push([pts[i][0] - ty * hw, pts[i][1] + tx * hw]); R.push([pts[i][0] + ty * hw, pts[i][1] - tx * hw]); } ents.push({ layer: 'PATHS', pts: mm(L), closed: false }, { layer: 'PATHS', pts: mm(R), closed: false }); }
+  ents.push({ layer: 'NOTES', text: `coyote mountain topo · 1:${Math.round(S.siteW * 1000 / S.mm)} · model ${totalW.toFixed(0)} x ${totalH.toFixed(0)} mm · contours every ${fL(interval(), 2)} · buildings ${S.bldMode}` + (S.bldMode === 'pedestal' || S.bldMode === 'recess' ? ' ' + S.bldMM + ' mm' : ''), x: 3, y: totalH + 6, h: 3, left: true });
+  return { dxf: dxfFrom(ents, totalH + 12, totalW), n: ents.length };
+}
+document.getElementById('cncDxf').onclick = () => runBusy('tracing the lines', () => { const out = cncDxf(); dl(URL.createObjectURL(new Blob([out.dxf], { type: 'application/dxf' })), `coyote-topo-cnc-${S.mm}mm.dxf`); toast(`${out.n} lines on layers SITE, CONTOUR, CONTOUR_INDEX, BUILDINGS, PATHS, LOT`); });
 document.getElementById('laserDxf').onclick = () => runBusy('cutting the layers', () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.dxf], { type: 'application/dxf' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.dxf`); });
 document.getElementById('reseed').onclick = () => { snapshot(); S.world = null; rawBase = null; S.coast = null; S.hasSea = S.seaClip = S.hasWater = false; waterMask = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
 document.getElementById('reset').onclick = () => { snapshot(); resetGrading(); toast('grading reset to existing'); };
@@ -1921,7 +1942,8 @@ function dl(href, name) { const a = document.createElement('a'); a.href = href; 
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1600); }
 
 /* ---------- binary stl: surface + walls + bottom, in mm ---------- */
-function stl() { zdisp();
+function stl() { return withModelSurf(stl0); }
+function stl0() { zdisp();
   const k = S.mm / S.siteW, [lo] = rangeT(), baseT = 3, s = cs() * k;
   const X = i => i * s, Y = j => (H - 1 - j) * s, Z = n => (zv[n] - lo) * S.ve * k + baseT;
   const tris = [];
@@ -1987,7 +2009,8 @@ function insetLoops(level, ledgeCells, F = zv) {   // loops of the region at/abo
   const mask = new Uint8Array(W * H); for (let n = 0; n < W * H; n++) mask[n] = F[n] >= level ? 1 : 0;
   return layerLoops(ledgeCells, distIn(mask)).filter(l => l.length > 8);
 }
-function layerPlan() { zdisp();
+function layerPlan() { return withModelSurf(layerPlan0); }
+function layerPlan0() { zdisp();
   const k = S.mm / S.siteW, [lo, hi] = rangeT(), dz = S.thick / (k * S.ve), n = Math.floor((hi - lo) / dz + 1e-9);
   return { k, lo, hi, dz, n, gu: cs() * k };
 }
@@ -2001,7 +2024,8 @@ function layersInfo() {
   el.textContent = `${n + 1} layers · ${fL(dz, 2)} of grade per sheet · stack ${fS((n + 1) * S.thick)} tall`;
   el.style.color = n + 1 > 80 ? 'var(--accent)' : '';
 }
-function laserSVG() { zdisp(); const ents = [];   // every drawn thing is also kept as an entity {layer, pts, closed | text} in sheet mm, y down, for the DXF twin
+function laserSVG() { return withModelSurf(laserSVG0); }
+function laserSVG0() { zdisp(); const ents = [];   // every drawn thing is also kept as an entity {layer, pts, closed | text} in sheet mm, y down, for the DXF twin
   const F = trimField(), { lo, dz, n, gu } = layerPlan(), [sw, sh] = S.sheet, margin = 10, gap = 6, ledgeC = S.ledge / gu, HAIR = '0.0254';
   const modelW = (W - 1) * gu, modelH = (H - 1) * gu;
   if (modelW > sw - 2 * margin || modelH > sh - 2 * margin) { toast(`model ${modelW.toFixed(0)} × ${modelH.toFixed(0)} mm does not fit the sheet`); return null; }
@@ -2066,11 +2090,12 @@ ${body}
   toast(`${layers.length} layers on ${sheets} sheet${sheets > 1 ? 's' : ''}${trimmed ? ' · alignment lines trimmed off cuts' : ''}`);
   return { svg, dxf: dxfFrom(ents, totalH), layers: layers.length, sheets };
 }
-function dxfFrom(ents, totalH) {          // a plain R12 DXF in millimetres: CUT red, ENGRAVE blue, MATERIAL yellow; y flipped so the sheet reads the same way up as the SVG
-  const f = v => (+v).toFixed(3), Y = y => f(totalH - y), o = [];
-  o.push('0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n9\n$INSUNITS\n70\n4\n9\n$EXTMIN\n10\n0\n20\n0\n9\n$EXTMAX\n10\n' + f(S.sheet[0]) + '\n20\n' + f(totalH) + '\n0\nENDSEC');
-  o.push('0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLTYPE\n70\n1\n0\nLTYPE\n2\nCONTINUOUS\n70\n0\n3\nSolid line\n72\n65\n73\n0\n40\n0\n0\nENDTAB\n0\nTABLE\n2\nLAYER\n70\n3');
-  for (const [name, col] of [['CUT', 1], ['ENGRAVE', 5], ['MATERIAL', 2]]) o.push('0\nLAYER\n2\n' + name + '\n70\n0\n62\n' + col + '\n6\nCONTINUOUS');
+const DXF_COL = { CUT: 1, ENGRAVE: 5, MATERIAL: 2, SITE: 7, CONTOUR: 8, CONTOUR_INDEX: 7, BUILDINGS: 1, PATHS: 3, LOT: 6, NOTES: 7 };
+function dxfFrom(ents, totalH, totalW = S.sheet[0]) {   // a plain R12 DXF in millimetres, one layer per kind of line; y flipped so it reads the same way up as the screen
+  const f = v => (+v).toFixed(3), Y = y => f(totalH - y), o = [], layers = [...new Set(ents.map(e => e.layer))];
+  o.push('0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n9\n$INSUNITS\n70\n4\n9\n$EXTMIN\n10\n0\n20\n0\n9\n$EXTMAX\n10\n' + f(totalW) + '\n20\n' + f(totalH) + '\n0\nENDSEC');
+  o.push('0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLTYPE\n70\n1\n0\nLTYPE\n2\nCONTINUOUS\n70\n0\n3\nSolid line\n72\n65\n73\n0\n40\n0\n0\nENDTAB\n0\nTABLE\n2\nLAYER\n70\n' + layers.length);
+  for (const name of layers) o.push('0\nLAYER\n2\n' + name + '\n70\n0\n62\n' + (DXF_COL[name] || 7) + '\n6\nCONTINUOUS');
   o.push('0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES');
   for (const e of ents) {
     if (e.text) { o.push('0\nTEXT\n8\n' + e.layer + '\n10\n' + f(e.x) + '\n20\n' + Y(e.y) + '\n30\n0\n40\n' + f(e.h) + '\n1\n' + e.text.replace(/[^\x20-\x7e]/g, '') + (e.left ? '' : '\n72\n1\n11\n' + f(e.x) + '\n21\n' + Y(e.y) + '\n31\n0')); continue; }
@@ -2228,7 +2253,7 @@ document.getElementById('kmlClear').onclick = () => { S.boundary = null; boundar
 
 /* ---------- world: real elevation for any place ---------- */
 function worldStatus(msg) { document.getElementById('worldStatus').textContent = msg; groundControls(); }
-function groundControls() { const real = !!S.world; document.getElementById('ovRow').style.display = S.overlay ? '' : 'none'; document.querySelectorAll('#ovRow button').forEach(b => b.classList.toggle('on', (b.dataset.ov === '1') === S.overlayOn)); { const has = !!(S.boundary && S.boundary.some(b => b.closed && b.pts.length > 2)); document.getElementById('trimRow').style.display = has ? '' : 'none'; if (!has) S.trim = false; document.querySelectorAll('#trimRow button').forEach(b => b.classList.toggle('on', (b.dataset.trim === '1') === S.trim)); } document.getElementById('roadRow').style.display = S.coast && S.coast.roads && S.coast.roads.length ? '' : 'none'; document.querySelectorAll('#roadRow button').forEach(b => b.classList.toggle('on', (b.dataset.road === '1') === S.showRoads)); document.getElementById('bldRow').style.display = S.coast && S.coast.blds && S.coast.blds.length ? '' : 'none'; document.querySelectorAll('#bldRow button').forEach(b => b.classList.toggle('on', (b.dataset.bld === '1') === S.showBld)); document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
+function groundControls() { const real = !!S.world; if (typeof bldModeUI === 'function') bldModeUI(); document.getElementById('ovRow').style.display = S.overlay ? '' : 'none'; document.querySelectorAll('#ovRow button').forEach(b => b.classList.toggle('on', (b.dataset.ov === '1') === S.overlayOn)); { const has = !!(S.boundary && S.boundary.some(b => b.closed && b.pts.length > 2)); document.getElementById('trimRow').style.display = has ? '' : 'none'; if (!has) S.trim = false; document.querySelectorAll('#trimRow button').forEach(b => b.classList.toggle('on', (b.dataset.trim === '1') === S.trim)); } document.getElementById('roadRow').style.display = S.coast && S.coast.roads && S.coast.roads.length ? '' : 'none'; document.querySelectorAll('#roadRow button').forEach(b => b.classList.toggle('on', (b.dataset.road === '1') === S.showRoads)); document.getElementById('bldRow').style.display = S.coast && S.coast.blds && S.coast.blds.length ? '' : 'none'; document.querySelectorAll('#bldRow button').forEach(b => b.classList.toggle('on', (b.dataset.bld === '1') === S.showBld)); document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
 function nodeLatLon(i, j, lat, lon) { const sx = (i - (W - 1) / 2) * cs(), sy = ((H - 1) / 2 - j) * cs(), t = S.rot * D2R, dx = sx * Math.cos(t) + sy * Math.sin(t), dy = -sx * Math.sin(t) + sy * Math.cos(t); return [lat + dy / 111320, lon + dx / (111320 * Math.cos(lat * D2R))]; }
 function loadImage(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => rej(new Error('tile blocked')); im.src = url; }); }
 const SRC_NOTE = { '3dep': 'USGS 3DEP elevation: lidar where it has been flown, 10 m elsewhere', tiles: 'elevation tiles: the best public source for this place, 30 m or finer', opentopo: 'opentopodata, about 30 m' };
@@ -2522,12 +2547,21 @@ function applySea() {                     // base = raw, with the sea floor clip
 const isWater = n => !!(S.seaClip && waterMask && waterMask[n] && z[n] <= waterLevel[n] + (waterMask[n] === 2 ? 30 : 3));   // mapped water is water whatever the elevation data says (until you grade it 30 m up); detected water gets 3 m of slack
 const isSea = isWater;
 // zv (declared with z): what the views show — the ground, with water cells lifted to their water level
+function withModelSurf(fn) { const was = modelSurf; modelSurf = true; zvKey = ''; zdisp(); try { return fn(); } finally { modelSurf = was; zvKey = ''; zdisp(); } }
+function bldRelief() {                    // metres of pedestal (+) or recess (-) that come out as S.bldMM millimetres on the finished model
+  if (!modelSurf || !S.showBld || !S.coast || !S.coast.blds || !S.coast.blds.length || (S.bldMode !== 'pedestal' && S.bldMode !== 'recess')) return null;
+  const h = S.bldMM / (S.ve * S.mm / S.siteW) * (S.bldMode === 'recess' ? -1 : 1), f = new Float32Array(W * H); let any = false;
+  for (const b of S.coast.blds) { let x0 = W, x1 = -1, y0 = H, y1 = -1; for (const q of b.pts) { x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
+    for (let j = Math.max(0, Math.floor(y0)); j <= Math.min(H - 1, Math.ceil(y1)); j++) for (let i = Math.max(0, Math.floor(x0)); i <= Math.min(W - 1, Math.ceil(x1)); i++) if (inPoly(b.pts, i, j)) { f[idx(i, j)] = h; any = true; } }
+  return any ? f : null;
+}
 function zdisp() {
-  const key = S.terrainVer + '|' + (S.waterVer || 0) + '|' + S.seaClip;
+  const rel = bldRelief(), key = S.terrainVer + '|' + (S.waterVer || 0) + '|' + S.seaClip + '|' + (rel ? 'b' + S.bldMode + S.bldMM : '');
   if (zvKey === key) return zv; zvKey = key;
-  if (!S.seaClip || !waterMask || !S.hasWater) { zv = z; return zv; }
+  const water = S.seaClip && waterMask && S.hasWater;
+  if (!water && !rel) { zv = z; return zv; }
   if (zv === z) zv = new Float32Array(W * H);
-  for (let n = 0; n < W * H; n++) zv[n] = isWater(n) ? Math.max(z[n], waterLevel[n]) : z[n];
+  for (let n = 0; n < W * H; n++) zv[n] = (water && isWater(n) ? Math.max(z[n], waterLevel[n]) : z[n]) + (rel ? rel[n] : 0);
   return zv;
 }
 function waterLoops() {                   // shorelines: loops around the water cells, in grid coords
@@ -2544,7 +2578,9 @@ document.getElementById('ovRow').onclick = e => { const b = e.target.closest('bu
   if (S.overlayOn && (S.aerial || S.aerialM)) { aerialOff(); toast('overlay on · the photo is off; the two would cover each other'); } };
 document.getElementById('trimRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.trim = b.dataset.trim === '1'; S.terrainVer++; S.dirty = true; groundControls(); updateStats(); toast(S.trim ? 'model trimmed to the lot' : 'full site'); };
 document.getElementById('roadRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showRoads = b.dataset.road === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
-document.getElementById('bldRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showBld = b.dataset.bld === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
+document.getElementById('bldRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showBld = b.dataset.bld === '1'; S.strokeVer++; S.dirty = true; zvKey = ''; S.terrainVer++; groundControls(); };
+function bldModeUI() { const has = !!(S.coast && S.coast.blds && S.coast.blds.length && S.showBld); document.getElementById('bldModeRow').style.display = has ? '' : 'none'; document.getElementById('bldMMRow').style.display = has && (S.bldMode === 'pedestal' || S.bldMode === 'recess') ? '' : 'none'; document.querySelectorAll('#bldModeRow button').forEach(b => b.classList.toggle('on', b.dataset.bm === S.bldMode)); }
+document.getElementById('bldModeRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.bldMode = b.dataset.bm; bldModeUI(); zvKey = ''; S.terrainVer++; S.dirty = true; };
 document.getElementById('seaRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.seaClip = b.dataset.sea === '1'; applySea(); toast(S.seaClip ? 'water shown flat at its level' : 'raw ground, no water'); };
 bind('rise', v => fL(v, 1), v => { S.seaRise = v; if (rawBase) { waterDetect(); S.waterVer++; S.dirty = true; } });
 let fetching = false;
@@ -2708,10 +2744,10 @@ document.getElementById('sheetBtn').onclick = () => runBusy('drawing the sheet',
 setTimeout(sheetInfo, 0);
 
 /* ---------- project file + session memory ---------- */
-const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise', 'grade', 'strip', 'swell', 'runoff', 'side', 'padGrade', 'pathW', 'pathH'];
+const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise', 'grade', 'strip', 'swell', 'runoff', 'side', 'padGrade', 'pathW', 'pathH', 'bldMM'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, pw: st.pw, ph: st.ph, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, labelUp: S.labelUp, showBase: S.showBase, showCF: S.showCF, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, pw: st.pw, ph: st.ph, sf: st.sf, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, bldMode: S.bldMode, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, labelUp: S.labelUp, showBase: S.showBase, showCF: S.showCF, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
@@ -2719,7 +2755,7 @@ function loadProject(pr, fromHome) {
   if (!pr || pr.app !== 'coyote-topo' || !pr.base) throw new Error('not a coyote topo file');
   const gw = pr.grid ? pr.grid[0] : 150; if (gw !== W) setGrid(gw / 150, true); if (pr.base.length !== W * H) throw new Error('not a coyote topo file');
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
-  rawBase = pr.world ? base.slice() : null; S.coast = pr.coast && (pr.coast.segs || pr.coast.blds || pr.coast.roads) ? Object.assign({ segs: [], seeds: [], lakes: [], blds: [], roads: [] }, pr.coast) : null; S.showBld = pr.showBld !== false; S.showRoads = pr.showRoads !== false; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
+  rawBase = pr.world ? base.slice() : null; S.coast = pr.coast && (pr.coast.segs || pr.coast.blds || pr.coast.roads) ? Object.assign({ segs: [], seeds: [], lakes: [], blds: [], roads: [] }, pr.coast) : null; S.showBld = pr.showBld !== false; S.bldMode = ['mapped', 'pedestal', 'recess', 'engrave'].includes(pr.bldMode) ? pr.bldMode : 'mapped'; S.showRoads = pr.showRoads !== false; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
   if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
   S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = ''; S.trim = !!pr.trim; setOverlay(pr.overlay && pr.overlay.src ? Object.assign({}, pr.overlay) : null); S.overlayOn = pr.overlayOn !== false;
   S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; S.labelUp = !!pr.labelUp; S.showBase = pr.showBase !== false; annoUI(); S.showCF = pr.showCF !== false; cfUI(); S.aerial = !!pr.aerial; S.aerialM = pr.aerialM === undefined ? !!pr.aerial : !!pr.aerialM; if (pr.cam) Object.assign(S.cam, pr.cam); document.getElementById('perspBtn').classList.toggle('on', !!S.cam.persp); if (pr.sheet) S.sheet = pr.sheet;
