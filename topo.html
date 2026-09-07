@@ -143,9 +143,9 @@ canvas.orbit{cursor:grab}
         <button data-b="pen" class="planOnly" title="freehand pen: draws on the plan and drapes over the 3d ground">pen</button><button data-b="erase" class="planOnly" title="drag over pen strokes to remove them">eraser</button>
         <button data-b="section" class="planOnly" style="flex-basis:100%">section line</button>
       </div>
+      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">red</button><button data-pc="water">blue</button><button id="penDash">dash</button><button id="penClear" title="remove every pen stroke">clear</button></div>
       <div class="seg" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circ</button></div>
       <div class="seg" id="plantRow" style="display:none;margin-top:6px"><button data-pm="tree">tree</button><button data-pm="shrub">shrub</button><button data-pm="hedge">hedge</button><button data-pm="gravel">gravel</button><button data-pm="paving">paving</button></div>
-      <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">red</button><button data-pc="water">blue</button><button id="penDash">dash</button><button id="penClear" title="remove every pen stroke">clear</button></div>
       <div class="params">
         <div class="p" title="brush size scales with the site width"><label><span id="l_radius">radius</span><output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label><span id="l_strength">strength</span><output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
@@ -1415,11 +1415,11 @@ function resample(pts, step, closed) {     // evenly spaced points along a polyl
   for (let i = 1; i < P.length; i++) { const a = P[i - 1], b = P[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]); if (L < 1e-9) continue; let d = step - carry; while (d <= L) { const t = d / L; out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]); d += step; } carry = L - (d - step); }
   return out;
 }
-function scallop(c, pts, closed, s, outward, toXY) {   // the drafting-room cloud line: an arc bulging outward between every pair of points
+function scallop(c, pts, closed, s, outward, toXY, dome = .58) {   // the drafting-room cloud line: a rounded dome bulging outward between every pair of points
   const R = resample(pts, s, closed); if (R.length < 2) return; const Q = closed ? R.concat([R[0]]) : R;
   c.beginPath(); const p0 = toXY(Q[0][0], Q[0][1]); c.moveTo(p0[0], p0[1]);
-  for (let i = 1; i < Q.length; i++) { const a = Q[i - 1], b = Q[i]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L; const bul = .62 * s * outward;
-    const pc = toXY((a[0] + b[0]) / 2 + nx * bul, (a[1] + b[1]) / 2 + ny * bul), pb = toXY(b[0], b[1]); c.quadraticCurveTo(pc[0], pc[1], pb[0], pb[1]); }
+  for (let i = 1; i < Q.length; i++) { const a = Q[i - 1], b = Q[i]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L; const bul = dome * s * outward, in_ = .04;   // cubic with both handles lifted straight off the chord: near-semicircular bumps, no cusps
+    const p1 = toXY(a[0] + (b[0] - a[0]) * in_ + nx * bul, a[1] + (b[1] - a[1]) * in_ + ny * bul), p2 = toXY(b[0] - (b[0] - a[0]) * in_ + nx * bul, b[1] - (b[1] - a[1]) * in_ + ny * bul), pb = toXY(b[0], b[1]); c.bezierCurveTo(p1[0], p1[1], p2[0], p2[1], pb[0], pb[1]); }
   c.stroke();
 }
 function bbox(pts) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of pts) { if (q[0] < x0) x0 = q[0]; if (q[1] < y0) y0 = q[1]; if (q[0] > x1) x1 = q[0]; if (q[1] > y1) y1 = q[1]; } return [x0, y0, x1, y1]; }
@@ -1442,9 +1442,9 @@ function drawPlant(c, st, toXY, k, dense) {
   const o0 = toXY(0, 0), o1 = toXY(1, 0), ppc = Math.hypot(o1[0] - o0[0], o1[1] - o0[1]) || 1, fit = (m, px) => Math.max(m / cs(), px / ppc);   // real size, but never finer than a few pixels
   c.strokeStyle = PEN[st.color] || INK; c.fillStyle = c.strokeStyle; c.globalAlpha = Math.max(.85, st.a == null ? 1 : st.a); c.setLineDash([]); c.lineWidth = .85 * k * Math.max(.7, Math.min(1.4, st.w || 1)); c.lineJoin = 'round'; c.lineCap = 'round';
   const pts = st.pts.map(q => [q[0], q[1]]);
-  if (st.kind === 'tree') { const r = st.r, n = Math.max(8, Math.min(22, Math.round(TAU * r / fit(.9, 6)))), ring = [], a0 = hash(st.c[0], st.c[1], 1) * TAU;
+  if (st.kind === 'tree') { const r = st.r, n = Math.max(8, Math.min(16, Math.round(TAU * r / fit(1.2, 9)))), ring = [], a0 = hash(st.c[0], st.c[1], 1) * TAU;
     for (let t = 0; t < n; t++) { const a = a0 + t / n * TAU; ring.push([st.c[0] + Math.cos(a) * r, st.c[1] + Math.sin(a) * r]); }
-    scallop(c, ring, true, TAU * r / n, 1, toXY);
+    scallop(c, ring, true, TAU * r / n, -1, toXY, .66);   // the ring runs clockwise on screen, so its left normal points in; bulge the other way
     const ctr = toXY(st.c[0], st.c[1]); c.beginPath(); c.arc(ctr[0], ctr[1], Math.max(1.2, .05 * r * ppc), 0, TAU); c.fill();
     c.globalAlpha *= .45; c.beginPath(); for (let t = 0; t <= 24; t++) { const a = t / 24 * TAU, q = toXY(st.c[0] + Math.cos(a) * r * .4, st.c[1] + Math.sin(a) * r * .4); t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); } c.stroke(); c.globalAlpha = 1; return; }
   if (st.kind === 'hedge') { const w = fit(1.0, 8), s = fit(.8, 7), R = resample(pts, s, false); if (R.length < 2) return; const L = [], Rt = [];
