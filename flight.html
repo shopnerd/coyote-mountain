@@ -8,7 +8,7 @@
 :root{
   --page:#d0d0cc; --panel:#e8e8e4; --paper:#f0f0ec; --hover:#e2e2dc;
   --ink:#1a1a18; --ink2:#454440; --ink3:#6e6d68; --line:#c8c8c2;
-  --accent:#C96B3A; --accent2:#a85830;
+  --accent:#C96B3A; --accent2:#a85830; --desk:#f0f0ec;
   --font:'SF Mono','Cascadia Mono',Consolas,'Liberation Mono',Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -75,7 +75,7 @@ input[type=text]::placeholder{color:var(--ink3)}
 .btn.wide{grid-column:1/-1}
 .btn:disabled{opacity:.6;cursor:wait}
 .btn:focus-visible,.seg button:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
-main{position:relative;background:var(--paper);overflow:hidden}
+main{position:relative;background:var(--desk);overflow:hidden}
 main::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(42,42,40,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,40,.06) 1px,transparent 1px);background-size:24px 24px}
 canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 canvas.pan{cursor:grab}
@@ -94,15 +94,31 @@ canvas.pan{cursor:grab}
   .actions{grid-template-columns:repeat(3,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+header .theme{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--ink3);font:inherit;font-size:10px;padding:2px 8px;border-radius:3px;cursor:pointer;margin-left:8px}
+header .theme:hover{color:var(--accent);border-color:var(--accent)}
+:root[data-theme=dark]{--page:#161615;--panel:#1f1f1e;--paper:#262624;--hover:#2d2d2b;--ink:#e6e5df;--ink2:#b8b7b0;--ink3:#8b8a84;--line:#3b3b38}
+:root[data-theme=dark] .cmd button,:root[data-theme=dark] .seg button,:root[data-theme=dark] .btn{border-color:#55554f}
+:root[data-theme=dark] .cmd button:hover,:root[data-theme=dark] .cmd .views button.on,:root[data-theme=dark] .seg button.on{background:#3a2a20;border-color:#b0623a}
+:root[data-theme=dark] input[type=range]::-webkit-slider-thumb{background:#3a2a20;border-color:#b0623a}
+:root[data-theme=dark] input[type=range]::-moz-range-thumb{background:#3a2a20;border-color:#b0623a}
+:root[data-theme=dark] input[type=range]:active::-webkit-slider-thumb{background:#5a3a28}
+:root[data-theme=dark] input[type=text],:root[data-theme=dark] select{background:#2b2b29;color:var(--ink);border-color:#55554f}
+:root[data-theme=dark] #rainBtn{background:#1f2c38;border-color:#3f5a75}
+:root[data-theme=dark] #rainBtn.on{background:#2c4460;border-color:#6d8fb0}
+:root[data-theme=dark] #railGrip::after{background:#55554f}
+:root[data-theme=dark] .toast{background:#e6e5df;color:#1a1a18}
+:root[data-theme=dark] #tip{border-color:#b0623a}
 </style>
 </head>
 <body>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('coyote-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(_){}</script>
 <div id="app">
   <header>
     <span class="logo">coyote_mountain<b>_flight</b></span>
     <a href="index.html">studio</a>
     <a href="topo.html">topo</a>
     <span class="read" id="read">click to draw the survey area · double-click closes it · wheel zooms · right-drag pans · 0 refits</span>
+    <button class="theme" id="themeBtn" title="dark or light around the drawing; the paper stays paper">dark</button>
   </header>
   <div class="cmd"><span class="prompt">›</span><span class="hint" id="hint"></span><button id="extents" title="refit the view (0)">zoom extents</button></div>
   <aside>
@@ -759,6 +775,8 @@ addEventListener('resize', resize); resize(); syncUI(); updateHint(); requestAni
 if (!openFromLink() && !restoreSession()) { $('place').value = HOME.lat + ', ' + HOME.lon; refresh(); fetchWorld(HOME, true); }
 surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseGeoTiff(rec.buf).then(sv => { sv.name = rec.name; S.survey = sv; if (S.terrain) { applySurvey(true); refresh(); } toast('survey ground on: ' + rec.name); }).catch(() => {}); });   // a survey loaded in either tool follows you here
 })();
+{ const tb = document.getElementById('themeBtn'), lab = () => { tb.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; lab();   // dark or light chrome, remembered across the studio's pages; the drawing itself stays paper
+  tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
 </script>
 </body>
 </html>

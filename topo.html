@@ -8,7 +8,7 @@
 :root{
   --page:#d0d0cc; --panel:#e8e8e4; --paper:#f0f0ec; --hover:#e2e2dc;
   --ink:#1a1a18; --ink2:#454440; --ink3:#6e6d68; --line:#c8c8c2;
-  --accent:#C96B3A; --accent2:#a85830;
+  --accent:#C96B3A; --accent2:#a85830; --desk:#f0f0ec;
   --font:'SF Mono','Cascadia Mono',Consolas,'Liberation Mono',Menlo,monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -80,7 +80,7 @@ input[type=text]::placeholder{color:var(--ink3)}
 .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .btn.primary:hover{background:var(--accent2)}
 .btn:focus-visible,.seg button:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
-main{position:relative;background:var(--paper);overflow:hidden}
+main{position:relative;background:var(--desk);overflow:hidden}
 main::before{content:"";position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(42,42,40,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(42,42,40,.06) 1px,transparent 1px);background-size:24px 24px}
 canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
 canvas.orbit{cursor:grab}
@@ -108,15 +108,31 @@ canvas.orbit{cursor:grab}
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
 #tip{position:fixed;z-index:50;max-width:250px;background:var(--paper);color:var(--ink);border:1px solid #d9895d;border-radius:3px;padding:6px 9px;font-size:11.5px;line-height:1.45;box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:none;opacity:0;transition:opacity .12s}
 #tip.show{opacity:1}
+header .theme{flex:0 0 auto;border:1px solid var(--line);background:transparent;color:var(--ink3);font:inherit;font-size:10px;padding:2px 8px;border-radius:3px;cursor:pointer;margin-left:8px}
+header .theme:hover{color:var(--accent);border-color:var(--accent)}
+:root[data-theme=dark]{--page:#161615;--panel:#1f1f1e;--paper:#262624;--hover:#2d2d2b;--ink:#e6e5df;--ink2:#b8b7b0;--ink3:#8b8a84;--line:#3b3b38}
+:root[data-theme=dark] .cmd button,:root[data-theme=dark] .seg button,:root[data-theme=dark] .btn{border-color:#55554f}
+:root[data-theme=dark] .cmd button:hover,:root[data-theme=dark] .cmd .views button.on,:root[data-theme=dark] .seg button.on{background:#3a2a20;border-color:#b0623a}
+:root[data-theme=dark] input[type=range]::-webkit-slider-thumb{background:#3a2a20;border-color:#b0623a}
+:root[data-theme=dark] input[type=range]::-moz-range-thumb{background:#3a2a20;border-color:#b0623a}
+:root[data-theme=dark] input[type=range]:active::-webkit-slider-thumb{background:#5a3a28}
+:root[data-theme=dark] input[type=text],:root[data-theme=dark] select{background:#2b2b29;color:var(--ink);border-color:#55554f}
+:root[data-theme=dark] #rainBtn{background:#1f2c38;border-color:#3f5a75}
+:root[data-theme=dark] #rainBtn.on{background:#2c4460;border-color:#6d8fb0}
+:root[data-theme=dark] #railGrip::after{background:#55554f}
+:root[data-theme=dark] .toast{background:#e6e5df;color:#1a1a18}
+:root[data-theme=dark] #tip{border-color:#b0623a}
 </style>
 </head>
 <body>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('coyote-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(_){}</script>
 <div id="app">
   <header>
     <span class="logo">coyote_mountain<b>_topo</b></span>
     <a href="index.html">studio</a>
     <a href="flight.html">flight</a>
     <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis · 0 reset zoom · wheel zooms, middle-drag pans</span>
+    <button class="theme" id="themeBtn" title="dark or light around the drawing; the paper stays paper">dark</button>
   </header>
   <div class="cmd"><span class="prompt">›</span><span class="hint" id="hint"></span><span class="views" id="views"><button data-v="top">top</button><button data-v="front">front</button><button data-v="back">back</button><button data-v="left">left</button><button data-v="right">right</button><button data-v="axon">axon</button><button data-v="persp" id="perspBtn">persp</button></span><button id="extents" title="refit the view (0)">zoom extents</button></div>
   <aside>
@@ -1522,7 +1538,7 @@ const TIPS = {
   kmlBtn: 'load a lot or property line from a kml, kmz or geojson file, and any image overlay a kmz carries; both stay pinned to their real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'g:1': 'the standard 150 × 100 grid', 'g:2': 'a 300 × 200 grid: cells half the size, four times the work per redraw. terrain refetches at the finer grid', 'ov:1': 'the image overlay from the kmz, pinned and rotated to its box: under the plan and on the model', 'ov:0': 'hide the overlay', 'trim:1': 'cut the model, the stl and the laser layers to the loaded property line; the plan keeps its context', 'trim:0': 'the whole rectangular site', 'road:1': 'mapped roads and paths: heavier lines for main roads, dashed for footpaths and tracks, draped on the model', 'road:0': 'hide the roads', 'bld:1': 'mapped building footprints: hatched on the plan, blocks on the model at their mapped height (one storey where none is mapped)', 'bld:0': 'hide the buildings', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
   reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label', 'x:up': 'contour numbers face uphill, the old drafting convention; off, they simply never read upside down', 'x:base': 'existing contours dashed wherever the ground has been graded, so proposed reads against existing',
   'p:month': 'month of the year for the sun study', 'p:hour': 'hour of the day for the sun study, solar time', 'p:rain': 'rain falling on the whole site in one storm; the runoff share says how much of it runs rather than soaks in', 'p:thr': 'how much upstream ground it takes to count as a stream', 'p:plow': 'distance between plow lines, measured on the ground', 'p:swale': 'vertical drop from one swale to the next', 'p:dam': 'wall height of the dam; the pond fills to its crest',
-  'p:place': 'a place name, or lat, lng. then press fetch', surveyBtn: 'load a drone survey elevation model (GeoTIFF: float or integer heights, in lat/lon, web mercator or UTM; deflate or LZW packed is fine). it replaces the public ground where it has coverage, blended at the edge, and stays on through refetches. drape its orthomosaic with the kml/kmz button', surveyClear: 'drop the survey and go back to the public ground', flightBtn: 'open the flight planner on this place: same width and units, and the lot boundary becomes the survey area', 'p:siteW': 'how wide a piece of the world to fetch. wider means coarser ground; it refetches when this changes', 'p:rot': 'turn the fetched area so a long feature lies along the sheet', 'p:aop': 'how strongly the satellite photo shows through',
+  'p:place': 'a place name, or lat, lng. then press fetch', surveyBtn: 'load a drone survey elevation model (GeoTIFF: float or integer heights, in lat/lon, web mercator or UTM; deflate or LZW packed is fine). it replaces the public ground where it has coverage, blended at the edge, and stays on through refetches. drape its orthomosaic with the kml/kmz button', surveyClear: 'drop the survey and go back to the public ground', themeBtn: 'dark or light around the drawing; the paper stays paper, so exports look the same either way', flightBtn: 'open the flight planner on this place: same width and units, and the lot boundary becomes the survey area', 'p:siteW': 'how wide a piece of the world to fetch. wider means coarser ground; it refetches when this changes', 'p:rot': 'turn the fetched area so a long feature lies along the sheet', 'p:aop': 'how strongly the satellite photo shows through',
   'p:unit': 'imperial or metric, everywhere: sheet, notes, exports', 'p:relief': 'height of the invented hills, low point to high point', 'p:interval': 'vertical spacing between contour lines; every fifth one is an index contour', 'p:hach': 'how many short downhill ticks between contours; 0 for none', 'p:ve': 'stretch heights so relief reads in the model and section; 1 is true',
   'p:mm': 'how much the site shrinks to become the object, and how wide it comes out', 'p:thick': 'thickness of the cardboard or plywood you will cut', 'p:sheet': 'the laser bed in mm; layers get nested onto sheets this size', 'p:ledge': 'hollow each layer, leaving a ledge this wide for the next one to sit on; 0 keeps them solid', 'p:paper': 'paper size for the drawing sheet set',
   'p:radius': () => S.brush === 'pen' ? 'width of new pen strokes' : S.brush === 'erase' ? 'how wide the eraser reaches' : 'brush size; it scales with the site width', 'p:strength': () => S.brush === 'pen' ? 'ink opacity of new pen strokes' : 'how hard each pass moves the ground',
@@ -2680,6 +2696,8 @@ setBrush('pen');
 })();
 surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseGeoTiff(rec.buf).then(sv => { sv.name = rec.name; S.survey = sv; if (S.world) applySurvey(true); toast('survey ground on: ' + rec.name); }).catch(() => {}); });   // a survey loaded in either tool follows you here
 })();
+{ const tb = document.getElementById('themeBtn'), lab = () => { tb.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; lab();   // dark or light chrome, remembered across the studio's pages; the drawing itself stays paper
+  tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
 </script>
 </body>
 </html>
