@@ -334,7 +334,7 @@ body.projector main::before{display:none}
   </aside>
   <div id="railGrip"></div>
   <div id="tip"></div>
-  <div id="aiPanel" hidden><div class="aiTop"><span id="aiTitle">painted</span><span style="flex:1"></span><button class="b" id="aiSave">save png</button><button class="b" id="aiAgain">again</button><button class="b" id="aiClose">close</button></div><img id="aiImg" alt=""><div class="aiNote" id="aiNote"></div></div>
+  <div id="aiPanel" hidden><div class="aiTop"><span id="aiTitle">painted</span><span style="flex:1"></span><button class="b" id="aiSave">save png</button><button class="b" id="aiAgain">again</button><button class="b" id="aiClose">close</button></div><div id="aiImgWrap"></div><div class="aiNote" id="aiNote"></div></div>
   <main>
     <canvas id="c"></canvas>
     <canvas id="pip"></canvas>
@@ -2077,7 +2077,7 @@ async function aiPaint() {
     if (!img) { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${AI.model}:generateContent`, { method: 'POST', headers: hdr, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/png', data: png } }].concat(ref ? [{ inlineData: { mimeType: 'image/jpeg', data: ref } }] : []) }], generationConfig: { responseModalities: ['IMAGE'] } }) }); j = await r.json().catch(() => null); img = findImg(j); }
     if (!img) { const msg = (j && j.error && j.error.message) || (j && JSON.stringify(j).match(/"text":"([^"]{0,200})/) || [])[1] || ('request failed ' + r.status); throw new Error(msg); }
     AI.last = `data:${img.mimeType || img.mime_type || 'image/png'};base64,${img.data}`;
-    const panel = document.getElementById('aiPanel'); document.getElementById('aiImg').src = AI.last; document.getElementById('aiTitle').textContent = `painted · ${AI.style} · ${AI.model}`; document.getElementById('aiNote').textContent = prompt; panel.hidden = false;
+    const panel = document.getElementById('aiPanel'); let im = document.getElementById('aiImg'); if (!im) { im = document.createElement('img'); im.id = 'aiImg'; im.alt = 'the painted view'; document.getElementById('aiImgWrap').appendChild(im); } im.src = AI.last;   // the image element exists only once there is a picture to show document.getElementById('aiTitle').textContent = `painted · ${AI.style} · ${AI.model}`; document.getElementById('aiNote').textContent = prompt; panel.hidden = false;
   } catch (e) { toast(String(e.message || e)); } finally { AI.busy = false; unbusy(); document.getElementById('aiBtn').disabled = false; }
 }
 document.getElementById('aiBtn').onclick = aiPaint; document.getElementById('aiAgain').onclick = aiPaint; document.getElementById('aiClose').onclick = () => { document.getElementById('aiPanel').hidden = true; };
