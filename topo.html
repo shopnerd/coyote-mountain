@@ -602,7 +602,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const light = (nx * lx + ny * ly + lz) / nl;
     let tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2), wpart = null, shore = null;
     let wet = false, tex = null;
-    if (mode === 'aerial' && !mini && !fast && ((S.aerial && aerialCache.canvas) || ovR)) tex = [i * AER, j * AER, step * AER, step * AER, light];
+    if (mode === 'aerial' && !fast && ((S.aerial && aerialCache.canvas) || ovR)) tex = [i * AER, j * AER, step * AER, step * AER, light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
     if (S.seaClip && wF) { const f = [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]], nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
       if (nw === 4) { tone = WTONE(light); wet = true; }
       else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
