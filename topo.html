@@ -1847,24 +1847,25 @@ function siteBox(lat, lon, pad) {         // lat/lon bounds of the (possibly rot
 function parseTiffF32(buf) {              // just enough tiff: uncompressed 32-bit float, tiled or stripped
   const dv = new DataView(buf), le = dv.getUint16(0, false) === 0x4949, u16 = o => dv.getUint16(o, le), u32 = o => dv.getUint32(o, le);
   if (u16(2) !== 42) throw new Error('not a tiff'); const ifd = u32(4), n = u16(ifd), tags = {};
-  for (let i = 0; i < n; i++) { const o = ifd + 2 + i * 12, tag = u16(o), type = u16(o + 2), cnt = u32(o + 4), sz = { 1: 1, 3: 2, 4: 4 }[type] || 1, src = cnt * sz <= 4 ? o + 8 : u32(o + 8), vals = [];
-    for (let k = 0; k < cnt; k++) vals.push(type === 3 ? u16(src + k * 2) : type === 4 ? u32(src + k * 4) : dv.getUint8(src + k)); tags[tag] = vals; }
+  for (let i = 0; i < n; i++) { const o = ifd + 2 + i * 12, tag = u16(o), type = u16(o + 2), cnt = u32(o + 4), sz = { 1: 1, 3: 2, 4: 4, 12: 8 }[type] || 1, src = cnt * sz <= 4 ? o + 8 : u32(o + 8), vals = [];
+    for (let k = 0; k < cnt; k++) vals.push(type === 3 ? u16(src + k * 2) : type === 4 ? u32(src + k * 4) : type === 12 ? dv.getFloat64(src + k * 8, le) : dv.getUint8(src + k)); tags[tag] = vals; }
   const w = tags[256][0], h = tags[257][0]; if ((tags[258] || [32])[0] !== 32 || (tags[339] || [3])[0] !== 3 || (tags[259] || [1])[0] !== 1) throw new Error('unexpected tiff layout');
   const out = new Float32Array(w * h);
   if (tags[322]) { const tw = tags[322][0], th = tags[323][0], ntx = Math.ceil(w / tw);
     tags[324].forEach((off, t) => { const tx = t % ntx, ty = Math.floor(t / ntx); for (let y = 0; y < th; y++) { const gy = ty * th + y; if (gy >= h) break; for (let x = 0; x < tw; x++) { const gx = tx * tw + x; if (gx >= w) break; out[gy * w + gx] = dv.getFloat32(off + (y * tw + x) * 4, le); } } }); }
   else { const rps = (tags[278] || [h])[0]; tags[273].forEach((off, si) => { const y0 = si * rps; for (let y = y0; y < Math.min(h, y0 + rps); y++) for (let x = 0; x < w; x++) out[y * w + x] = dv.getFloat32(off + ((y - y0) * w + x) * 4, le); }); }
-  return { w, h, data: out };
+  return { w, h, data: out, scale: tags[33550] || null, tie: tags[33922] || null };   // geotiff pixel scale + tie point: where the raster really sits (the server may widen the box to keep pixels square)
 }
 async function load3DEP(lat, lon) {       // usgs 3dep image service: the best available us elevation, resampled server-side to half a cell
-  const b = siteBox(lat, lon, 2), pxM = Math.max(1, cs() / 2), nx = Math.min(4000, Math.round((b.e - b.w) * 111320 * Math.cos(lat * D2R) / pxM)), ny = Math.min(4000, Math.round((b.n - b.s) * 111320 / pxM));
+  const b = siteBox(lat, lon, 2), pxM = Math.max(1, cs() / 2), sd = pxM / 111320, nx = Math.min(4000, Math.round((b.e - b.w) / sd)), ny = Math.min(4000, Math.round((b.n - b.s) / sd));   // square pixels in degrees, as the server likes them
   worldStatus('fetching usgs 3dep elevation…');
   const r = await fetch(`https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer/exportImage?bbox=${b.w},${b.s},${b.e},${b.n}&bboxSR=4326&imageSR=4326&size=${nx},${ny}&format=tiff&pixelType=F32&noData=-9999&interpolation=RSP_BilinearInterpolation&f=image`);
   if (!r.ok) throw new Error('3dep ' + r.status); const t = parseTiffF32(await r.arrayBuffer());
   const at = (x, y) => { const v = t.data[Math.max(0, Math.min(t.h - 1, y)) * t.w + Math.max(0, Math.min(t.w - 1, x))]; return v < -1000 || !isFinite(v) ? NaN : v; };
   const cub = (tt, a, b2, c, d) => b2 + .5 * tt * (c - a + tt * (2 * a - 5 * b2 + 4 * c - d + tt * (3 * (b2 - c) + d - a)));
+  const X0 = t.tie ? t.tie[3] : b.w, Y0 = t.tie ? t.tie[4] : b.n, SX = t.scale ? t.scale[0] : (b.e - b.w) / t.w, SY = t.scale ? t.scale[1] : (b.n - b.s) / t.h;
   let bad = 0;
-  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const [la, lo] = nodeLatLon(i, j, lat, lon), x = (lo - b.w) / (b.e - b.w) * t.w - .5, y = (b.n - la) / (b.n - b.s) * t.h - .5, x0 = Math.floor(x), y0 = Math.floor(y), u = x - x0, v = y - y0;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const [la, lo] = nodeLatLon(i, j, lat, lon), x = (lo - X0) / SX - .5, y = (Y0 - la) / SY - .5, x0 = Math.floor(x), y0 = Math.floor(y), u = x - x0, v = y - y0;
     const g = []; let mn = 1e9, mx = -1e9, sum = 0, cnt = 0; for (let r2 = -1; r2 <= 2; r2++) for (let c2 = -1; c2 <= 2; c2++) { const q = at(x0 + c2, y0 + r2); g.push(q); if (!isNaN(q)) { sum += q; cnt++; if (q < mn) mn = q; if (q > mx) mx = q; } }
     if (cnt < 8 || isNaN(g[5]) && isNaN(g[6]) && isNaN(g[9]) && isNaN(g[10])) { base[idx(i, j)] = -1; bad++; continue; }   // no data: the sea, or a gap; counts as water
     const mean = sum / cnt; for (let q = 0; q < 16; q++) if (isNaN(g[q])) g[q] = mean;
