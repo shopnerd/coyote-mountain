@@ -1464,11 +1464,11 @@ function drawPlant(c, st, toXY, k, dense) {
   if (pts.length < 3) return;
   const edge = dense ? densify(st.pts, .3) : pts;
   if (st.kind === 'shrub') { const s = fit(1.0, 9), R = resample(pts, s, true); let outward = 1; if (R.length > 1) { const a = R[0], b = R[1]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const d = Math.hypot(nx, ny) || 1; if (inPoly(pts, (a[0] + b[0]) / 2 + nx / d * s * .5, (a[1] + b[1]) / 2 + ny / d * s * .5)) outward = -1; }
-    scallop(c, pts, true, s, outward, toXY); c.lineWidth *= .75; pebbles(c, pts, fit(1.8, 14), fit(.14, 1.4), toXY, .3); c.globalAlpha = 1; return; }
+    scallop(c, pts, true, s, outward, toXY); c.lineWidth *= .5; pebbles(c, pts, fit(1.8, 14), fit(.14, 1.4), toXY, .3); c.globalAlpha = 1; return; }
   // gravel and paving: outline, then a fill clipped to the shape
-  c.beginPath(); edge.forEach((q, t) => { const p = toXY(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
+  c.lineWidth *= .7; c.beginPath(); edge.forEach((q, t) => { const p = toXY(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
   c.save(); c.clip();
-  c.lineWidth *= .8;
+  c.lineWidth *= .45;   // the fill is drawn lighter than the outline, like pen work
   if (st.kind === 'gravel') pebbles(c, pts, fit(.9, 8), fit(.14, 1.4), toXY, 1);
   else if (st.kind === 'paving') flagstones(c, pts, fit(1.4, 16), toXY);
   c.restore(); c.globalAlpha = 1;
