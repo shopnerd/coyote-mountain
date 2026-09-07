@@ -1054,14 +1054,15 @@ function plowField() {                    // furrow direction for every cell in 
   return (plowCache = { key, mask, tx, ty, acc: an.acc });
 }
 function stepRain() {   // drops run on the ground, not the water surface
-  const d = depressions(), dropVol = d.A * .025, pf = S.an.plow ? plowField() : null, chan = analyze().chan;
+  const d = depressions(), dropVol = rainMM(S.rainV) / 1000 * W * H * d.A / 3000, pf = S.an.plow ? plowField() : null, chan = analyze().chan;
   for (let q = 0; q < 5 && drops.length < 1400; q++) { let x = 0, y = 0, ok = false; for (let t = 0; t < 12 && !ok; t++) { x = 1 + Math.random() * (W - 3); y = 1 + Math.random() * (H - 3); ok = inTrim(x, y); } if (ok) drops.push({ x, y, age: 0, trail: [] }); }   // rain falls on the lot only when the model is trimmed
   const finish = dr => { rainStats.done++; };
   const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); finish(dr); drops.splice(q, 1); }; const db = damBasinGet();
   for (let q = drops.length - 1; q >= 0; q--) { const dr = drops[q]; dr.age++; dr.trail.push([dr.x, dr.y]); if (dr.trail.length > 14) dr.trail.shift();
     const n = idx(Math.round(dr.x), Math.round(dr.y)), c = d.comp[n]; if (isWater(n)) { rainStats.creek++; rainStats.run += (dr.run || 0) * cs(); finish(dr); drops.splice(q, 1); continue; }
     if (db && db.cells.length && db.mask[n] && sample(z, dr.x, dr.y) <= db.level + .002) { absorb(db, dr, q); continue; }   // caught behind the dam
-    if (c >= 0 && sample(z, dr.x, dr.y) <= d.comps[c].level + .002) { absorb(d.comps[c], dr, q); continue; }   // ran into a pool
+    const hz = sample(z, dr.x, dr.y); if (hz < (dr.low == null ? Infinity : dr.low) - 1e-4) { dr.low = hz; dr.stuck = 0; } else dr.stuck = (dr.stuck || 0) + 1;   // is the drop still going down?
+    if (c >= 0 && (hz <= d.comps[c].level + .05 || dr.stuck >= 3)) { absorb(d.comps[c], dr, q); continue; }   // ran into a pool, or is inside a hollow and no longer descending: it bounced across the bottom, so it belongs to the pool
     if (chan[n] && !dr.creek) { dr.creek = true; rainStats.creek++; rainStats.run += (dr.run || 0) * cs(); }
     const px0 = dr.x, py0 = dr.y;
     const g = grad(dr.x, dr.y), sl = Math.hypot(g[0], g[1]);
@@ -1103,7 +1104,7 @@ function drawRain() {
 }
 function rainText(pooled, db, forSheet) {
   const run = rainStats.creek ? rainStats.run / rainStats.creek : 0;
-  return `rain${S.rainPaused ? ' paused' : forSheet ? ' running' : ''} · ${drops.length} drops running · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · water runs ${fL(run, 0)} across the land before reaching a creek${S.an.plow ? ' (keyline plowing on)' : ''}${forSheet ? '' : ' · r stops · p pauses'}`;
+  return `rain${S.rainPaused ? ' paused' : forSheet ? ' running' : ''} · ${document.getElementById('o_rain').textContent} storm per 10 s · ${drops.length} drops · ${fV(pooled)} pooled${db && db.cap ? ' · dam pond ' + Math.round(db.vol / db.cap * 100) + '% full' : ''} · water runs ${fL(run, 0)} before reaching a creek${S.an.plow ? ' (keyline plowing on)' : ''}${forSheet ? '' : ' · r stops · p pauses'}`;
 }
 
 /* ---------- section ---------- */
