@@ -1450,7 +1450,7 @@ function flagstones(c, pts, sz, toXY) {              // crazy paving: a jittered
 }
 function drawPlant(c, st, toXY, k, dense) {
   const o0 = toXY(0, 0), o1 = toXY(1, 0), ppc = Math.hypot(o1[0] - o0[0], o1[1] - o0[1]) || 1, fit = (m, px) => Math.max(m / cs(), px / ppc);   // real size, but never finer than a few pixels
-  c.strokeStyle = PEN[st.color] || INK; c.fillStyle = c.strokeStyle; c.globalAlpha = Math.max(.85, st.a == null ? 1 : st.a); c.setLineDash([]); c.lineWidth = .85 * k * Math.max(.7, Math.min(1.4, st.w || 1)); c.lineJoin = 'round'; c.lineCap = 'round';
+  c.strokeStyle = PEN[st.color] || INK; c.fillStyle = c.strokeStyle; c.globalAlpha = st.a == null ? 1 : st.a; c.setLineDash([]); c.lineWidth = .9 * k * (st.w || 1);   // the stroke width and opacity sliders apply, as they do to ink c.lineJoin = 'round'; c.lineCap = 'round';
   const pts = st.pts.map(q => [q[0], q[1]]);
   if (st.kind === 'tree') { const r = st.r, n = Math.max(8, Math.min(16, Math.round(TAU * r / fit(1.2, 9)))), ring = [], a0 = hash(st.c[0], st.c[1], 1) * TAU;
     for (let t = 0; t < n; t++) { const a = a0 + t / n * TAU; ring.push([st.c[0] + Math.cos(a) * r, st.c[1] + Math.sin(a) * r]); }
