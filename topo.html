@@ -1949,7 +1949,7 @@ function waterDetect() {                  // sea (from the mapped coastline when
     const bk = new Map(), key = (i, j) => i * 100000 + j; for (let t = 0; t < coast.segs.length; t++) { const sg = coast.segs[t]; for (let i = Math.floor(Math.min(sg[0], sg[2])) - 1; i <= Math.ceil(Math.max(sg[0], sg[2])) + 1; i++) for (let j = Math.floor(Math.min(sg[1], sg[3])) - 1; j <= Math.ceil(Math.max(sg[1], sg[3])) + 1; j++) { const k = key(i, j); let l = bk.get(k); if (!l) bk.set(k, l = []); l.push(t); } }
     for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); let d = 1.5; const l = bk.get(key(i, j)); if (l) for (const t of l) d = Math.min(d, segDist(i, j, coast.segs[t])); wF[n] = waterMask[n] ? Math.max(.01, d) : -Math.max(.01, d); }
   } else {
-    for (let n = 0; n < N; n++) if (waterMask[n]) { const L = waterLevel[n], i = n % W, j = (n / W) | 0; wF[n] = Math.max(.2, Math.min(5, L - src[n]));
+    for (let n = 0; n < N; n++) if (waterMask[n]) { const L = waterLevel[n], i = n % W, j = (n / W) | 0; wF[n] = Math.max(1, Math.min(5, L - src[n]));   // a flat lake reads 0 inside; 1 m puts the shore partway to the rising cell instead of on the wet cell centres
       for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if ((!di && !dj) || !inB(ii, jj)) continue; const m = idx(ii, jj); if (!waterMask[m]) { const v = Math.min(-1e-4, L - src[m]); if (wF[m] === -1.5 || v > wF[m]) wF[m] = v; } } }
   }
   S.waterVer = (S.waterVer || 0) + 1; waterLoopCache.key = '';
@@ -1957,7 +1957,7 @@ function waterDetect() {                  // sea (from the mapped coastline when
 async function loadCoast(lat, lon) {      // openstreetmap coastline + lake polygons for the site, in grid coords; water is on the right of a coastline way
   S.coast = null; const b = siteBox(lat, lon, 1), q = `[out:json][timeout:20];(way["natural"="coastline"](${b.s},${b.w},${b.n},${b.e});way["natural"="water"](${b.s},${b.w},${b.n},${b.e});relation["natural"="water"](${b.s},${b.w},${b.n},${b.e}););out geom;`;
   let j = null; worldStatus('fetching the mapped shoreline…');
-  for (const host of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter']) { try { const ctrl = new AbortController(), tm = setTimeout(() => ctrl.abort(), 25000); const r = await fetch(host + '?data=' + encodeURIComponent(q), { signal: ctrl.signal }); clearTimeout(tm); if (r.ok) { j = await r.json(); break; } } catch (_) {} }
+  for (const host of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.osm.ch/api/interpreter']) { try { const ctrl = new AbortController(), tm = setTimeout(() => ctrl.abort(), 25000); const r = await fetch(host + '?data=' + encodeURIComponent(q), { signal: ctrl.signal }); clearTimeout(tm); if (r.ok) { j = await r.json(); break; } } catch (_) {} }
   if (!j || !j.elements) return;
   const segs = [], seeds = [], lakes = [], epsLat = .7 * cs() / 111320, epsLon = .7 * cs() / (111320 * Math.cos(lat * D2R));
   for (const el of j.elements) { if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) continue; const tags = el.tags || {}, g = el.geometry.map(pt => latLonToGrid(pt.lat, pt.lon));
