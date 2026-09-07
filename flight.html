@@ -114,6 +114,7 @@ canvas.pan{cursor:grab}
       <div class="seg" style="padding:0;margin-top:6px"><button id="surveyBtn" style="flex:2" title="load a drone survey elevation model (GeoTIFF from DroneDeploy, Pix4D, WebODM, Metashape; lat/lon, web mercator or UTM). it replaces the public ground where it has coverage and stays on through refetches. use the surface (dsm) file so trees and roofs count as ground to clear">drone survey dem</button><button id="surveyClear" style="display:none" title="drop the survey and go back to the public ground">clear</button></div>
       <div class="desc" id="surveyInfo" style="padding:0;display:none"></div>
       <input type="file" id="surveyFile" accept=".tif,.tiff,image/tiff" style="display:none">
+      <div class="seg" style="padding:0;margin-top:6px"><button id="topoBtn" style="flex:2" title="open the topo tool on this place: same width and units, and the survey area becomes the lot boundary there">open in topo</button></div>
       <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2" title="a polygon from Google Earth or a GIS export becomes the survey area">kml / kmz / geojson</button><button id="fitBtn" title="recentre the terrain on the survey area and refetch at a fitting width">fit terrain</button></div>
       <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="1" class="on">aerial photo</button><button data-ae="0">shaded relief</button></div>
       <div class="p" style="margin-top:4px"><label>units</label><select id="unit"><option value="ft">imperial · ft, ac, in/px</option><option value="m">metric · m, ha, cm/px</option></select></div>
@@ -584,6 +585,11 @@ async function fetchWorld(known, quiet) {
   } catch (e) { const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message)); const msg = blocked ? 'network blocked on this page. open the live site: coyotemountainfarm.com/flight.html' : String(e.message || e); worldStatus(msg); if (!quiet) toast(msg); }
   fetching = false; btn.disabled = false; btn.textContent = 'fetch terrain'; unbusy(); refresh();
 }
+const surveyStore = (() => {           // the loaded survey lives in the browser's database so the topo tool and the flight planner share it
+  const open = () => new Promise((res, rej) => { const r = indexedDB.open('coyote-studio', 1); r.onupgradeneeded = () => r.result.createObjectStore('survey'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+  const tx = async (mode, fn) => { try { const db = await open(); return await new Promise((res, rej) => { const t = db.transaction('survey', mode), rq = fn(t.objectStore('survey')); rq.onsuccess = () => res(rq.result); rq.onerror = () => rej(rq.error); }); } catch (_) { return null; } };
+  return { put: (name, buf) => tx('readwrite', s => s.put({ name, buf, at: Date.now() }, 'dem')), get: () => tx('readonly', s => s.get('dem')), del: () => tx('readwrite', s => s.delete('dem')) };
+})();
 function applySurvey(quiet) {             // survey heights replace the public ground where they exist, feathered over at least 20 m at the edge; a local-datum survey is lifted onto the public datum
   const sv = S.survey; if (!sv || !S.terrain) return; const N = W * H, val = new Float32Array(N), cov = new Uint8Array(N); let covered = 0, sumD = 0;
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j), [la, lo] = nodeLatLon(i, j, S.world.lat, S.world.lon), v = sv.sample(la, lo); if (Number.isNaN(v)) continue; val[n] = v; cov[n] = 1; covered++; sumD += base[n] - v; }
@@ -597,9 +603,14 @@ function applySurvey(quiet) {             // survey heights replace the public g
   if (!quiet) toast(`survey ground in · covers ${S.surveyPct}% of the site`);
 }
 $('surveyBtn').onclick = () => $('surveyFile').click();
+$('topoBtn').onclick = () => {           // hand this place to the topo tool: place, width, units, and the survey area as the lot
+  const u = new URL('topo.html', location.href), q = u.searchParams; q.set('lat', S.world.lat.toFixed(6)); q.set('lon', S.world.lon.toFixed(6)); q.set('w', S.siteW); q.set('u', S.unit); if (S.world.name) q.set('name', S.world.name.slice(0, 60));
+  if (S.closed && S.poly.length > 2) q.set('lot', S.poly.map(p => p[0].toFixed(5) + ',' + p[1].toFixed(5)).join(';'));
+  window.open(u.toString(), 'coyote-topo'); toast(S.closed && S.poly.length > 2 ? 'topo opened with the survey area as the lot' : 'topo opened on this place');
+};
 $('surveyFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (!S.terrain) { toast('fetch the terrain around the survey first, then load it'); return; }
-  busy('reading the survey'); try { const sv = await parseGeoTiff(await f.arrayBuffer()); sv.name = f.name.replace(/\.tiff?$/i, ''); S.survey = sv; applySurvey(false); } catch (err) { toast(String(err.message || err)); } finally { unbusy(); refresh(); } };
-$('surveyClear').onclick = () => { S.survey = null; S.surveyPct = 0; $('surveyInfo').style.display = 'none'; $('surveyClear').style.display = 'none'; if (S.terrain) fetchWorld(S.world, true); };
+  busy('reading the survey'); try { const buf = await f.arrayBuffer(), sv = await parseGeoTiff(buf); sv.name = f.name.replace(/\.tiff?$/i, ''); S.survey = sv; applySurvey(false); surveyStore.put(sv.name, buf); } catch (err) { toast(String(err.message || err)); } finally { unbusy(); refresh(); } };
+$('surveyClear').onclick = () => { S.survey = null; S.surveyPct = 0; surveyStore.del(); $('surveyInfo').style.display = 'none'; $('surveyClear').style.display = 'none'; if (S.terrain) fetchWorld(S.world, true); };
 $('fetch').onclick = () => fetchWorld();
 $('place').addEventListener('keydown', e => { if (e.key === 'Enter') fetchWorld(); });
 $('home').onclick = () => { $('place').value = HOME.lat + ', ' + HOME.lon; fetchWorld(HOME); };
@@ -746,6 +757,7 @@ function setRail(px) { px = Math.max(200, Math.min(Math.round(innerWidth * .45),
 { const g = $('railGrip'); let rd = null; g.addEventListener('pointerdown', e => { rd = { x: e.clientX, w: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--rail')) }; g.classList.add('on'); g.setPointerCapture(e.pointerId); }); g.addEventListener('pointermove', e => { if (rd) setRail(rd.w + e.clientX - rd.x); }); const up = () => { rd = null; g.classList.remove('on'); }; g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up); try { const r = +localStorage.getItem('rail'); if (r && innerWidth > 760) setRail(r); } catch (_) {} }
 addEventListener('resize', resize); resize(); syncUI(); updateHint(); requestAnimationFrame(frame);
 if (!openFromLink() && !restoreSession()) { $('place').value = HOME.lat + ', ' + HOME.lon; refresh(); fetchWorld(HOME, true); }
+surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseGeoTiff(rec.buf).then(sv => { sv.name = rec.name; S.survey = sv; if (S.terrain) { applySurvey(true); refresh(); } toast('survey ground on: ' + rec.name); }).catch(() => {}); });   // a survey loaded in either tool follows you here
 })();
 </script>
 </body>
