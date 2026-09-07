@@ -350,7 +350,7 @@ const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -438,7 +438,7 @@ function drawPlan() {                     // cached picture + live overlay; the 
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
-  if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.globalAlpha = st.a; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * st.w; ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+  if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.plant === 'tree' ? 'tree' : S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.globalAlpha = st.a; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * st.w; ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   // brush cursor
   if (S.ptr && S.mode === 'plan' && S.brush !== 'section' && S.brush !== 'pen' && S.brush !== 'erase') {
     const p = toSheet(S.ptr[0], S.ptr[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
@@ -1190,7 +1190,7 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function undo() { const u = undoStack.pop(); if (!u) { toast('nothing to undo'); return; }
   z.set(u.z); base.set(u.base); S.world = u.world; S.sec = u.sec; S.strokes = u.strokes || []; S.strokeVer++; S.terrainVer++; S.dirty = true; updateStats(); toast(`undo · ${undoStack.length} left`); }
 let drag = null, pinch = null; const pts = new Map();
@@ -1213,7 +1213,7 @@ cv.addEventListener('pointerdown', e => {
   if (S.mode !== 'plan') return;
   const g = toGrid(p[0], p[1]);
   snapshot();
-  if (S.brush === 'pen' && (S.penMode === 'line' || S.penMode === 'rect' || S.penMode === 'circle' || S.penMode === 'tree')) { drag = { kind: 'shape', p0: p, p1: null }; return; }
+  if (S.brush === 'pen' && (S.plant === 'tree' || S.penMode === 'line' || S.penMode === 'rect' || S.penMode === 'circle')) { drag = { kind: 'shape', p0: p, p1: null }; return; }
   if (S.brush === 'pen') { const st = { color: S.penColor, w: S.penW, a: S.penA, dash: S.penDash, pts: [[g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5]] }; S.strokes.push(st); drag = { kind: 'pen', st, last: p }; return; }
   if (S.brush === 'erase') { drag = { kind: 'erase' }; eraseAt(g); return; }
   if (S.brush === 'section') { S.sec = [g, g]; drag = { g, kind: 'section' }; S.dirty = true; return; }
@@ -1292,10 +1292,10 @@ function shapeFromDrag(mode, p0, p1) {   // primitives dragged out on the sheet
 function eraseAt(g) { const r = 8 / sheet.k; const before = S.strokes.length; S.strokes = S.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - g[0], q[1] - g[1]) < r)); if (S.strokes.length !== before) { S.strokeVer++; S.dirty = true; } }
 function endPointer(e) {
   if (S.lowQ) { S.lowQ = false; S.dirty = true; }
-  if (drag && drag.kind === 'shape') { const far = drag.p1 && Math.hypot(drag.p1[0] - drag.p0[0], drag.p1[1] - drag.p0[1]) > 4; if (S.penMode === 'tree') S.strokes.push(shapeFromDrag('tree', drag.p0, far ? drag.p1 : null)); else if (far) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); snapEnds(st); S.strokes.push(st); } S.strokeVer++; S.dirty = true; }
+  if (drag && drag.kind === 'shape') { const far = drag.p1 && Math.hypot(drag.p1[0] - drag.p0[0], drag.p1[1] - drag.p0[1]) > 4; if (S.plant === 'tree') S.strokes.push(shapeFromDrag('tree', drag.p0, far ? drag.p1 : null)); else if (far) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); if (!S.plant) snapEnds(st); S.strokes.push(applyPlant(st)); } S.strokeVer++; S.dirty = true; }
   if (drag && drag.kind === 'pen') { const st = drag.st; if (st.pts.length < 2) S.strokes.pop(); else { if (st.pts.length > 3) { const sm = st.pts.map((q, i) => i === 0 || i === st.pts.length - 1 ? q : [(st.pts[i - 1][0] + 2 * q[0] + st.pts[i + 1][0]) / 4, (st.pts[i - 1][1] + 2 * q[1] + st.pts[i + 1][1]) / 4, q[2]]); st.pts = sm; }
-      if (PLANT_KINDS.includes(S.penMode)) { st.kind = S.penMode; st.shape = false; }
-      else if (S.penMode === 'smart') { const rec = recognizeStroke(st); if (rec) { snapEnds(rec); S.strokes[S.strokes.length - 1] = rec; toast(rec.pts.length === 2 ? 'straightened' : rec.pts.length === 49 ? 'circle' : 'shape'); } else snapEnds(st); } }
+      if (S.penMode === 'smart') { const rec = recognizeStroke(st); if (rec) { if (!S.plant) snapEnds(rec); S.strokes[S.strokes.length - 1] = applyPlant(rec); if (!S.plant) toast(rec.pts.length === 2 ? 'straightened' : rec.pts.length === 49 ? 'circle' : 'shape'); } else { if (!S.plant) snapEnds(st); applyPlant(st); } }
+      else applyPlant(st); }
     S.strokeVer++; S.dirty = true; }
   pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
   if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt')) updateStats();
@@ -1320,7 +1320,7 @@ function readout(g) {
 const TIPS = {
   'm:plan': 'the drawing sheet: contours, hachures, your grading and pen sketch', 'm:model': 'the ground in 3d. orbit, sculpt, colour it, watch rain and sun', 'm:section': 'a cut through the ground along the A–B line: proposed over existing, cut and fill', 'm:analysis': 'where water goes: flow, catchments, flood, keyline, dam, rain, sun',
   'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'shows the A–B section line; drag a new one to cut a section',
-  'pm:tree': 'tap to plant a tree with a 20 ft canopy, or drag from the trunk to size it', 'pm:shrub': 'draw around a bed; on lift it closes into a scalloped shrub mass', 'pm:hedge': 'draw a line; it becomes a hedge row', 'pm:gravel': 'draw around an area; it fills with gravel stipple', 'pm:paving': 'draw around an area; it fills with flagstone paving',
+  'pm:tree': 'tap to plant a tree with a 20 ft canopy, or drag from the trunk to size it. click again for plain ink', 'pm:shrub': 'shrub mass: trace a bed, or use rect / circ for a clean one. click again for plain ink', 'pm:hedge': 'hedge row along a line, or around a rect / circ. click again for plain ink', 'pm:gravel': 'gravel stipple inside a traced or rect / circ area. click again for plain ink', 'pm:paving': 'flagstone paving inside a traced or rect / circ area. click again for plain ink',
   'pm:smart': 'freehand that tidies itself on lift: straight lines, circles, boxes, clean polylines', 'pm:free': 'freehand kept exactly as drawn', 'pm:line': 'drag a straight line', 'pm:rect': 'drag a rectangle corner to corner', 'pm:circle': 'drag a circle from its centre',
   'pc:ink': 'black pen', 'pc:ember': 'red pen', 'pc:water': 'blue pen', penDash: 'dashed strokes on or off', penClear: 'remove every pen stroke',
   'a:flow': 'blue lines where water runs, thicker with more ground feeding them', 'a:catch': 'each outlet\'s basin, tinted, with its area', 'a:ridge': 'dashed ember lines along the ridges', 'a:keys': 'keypoints: where a valley\'s steep upper slope eases, the classic small-dam site', 'a:keyline': 'the contour through the keypoint plus parallel plow lines in its catchment', 'a:swales': 'on-contour ditches stepping down from the keyline', 'a:dam': 'a dam at the keypoint or wherever you place it, with the pond it holds', 'a:flood': 'one storm\'s rain pooled in every hollow, worst case, no soak-in', 'a:sun': 'shadows at an hour, or sun hours per day, for the site\'s latitude', 'a:plow': 'rain follows the plow furrows: water drifts from the valley toward the ridges',
@@ -1373,7 +1373,7 @@ function hintText() {
   const nav = 'wheel zooms · middle or shift drag pans · 0 refits';
   let h = '';
   if (S.mode === 'plan') {
-    if (S.brush === 'pen') { const m = S.penMode; h = m === 'smart' ? 'pen · draw freehand; on lift a wobbly line straightens, a loop becomes a circle or box, corners become a clean polyline' : m === 'free' ? 'pen · draw freehand, kept as drawn' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : PLANT_HINT[m] || 'circle · drag from the centre outward'; h += ' · width, opacity, dashed in the rail · strokes drape onto the model'; }
+    if (S.brush === 'pen') { const m = S.penMode; h = m === 'smart' ? 'pen · draw freehand; on lift a wobbly line straightens, a loop becomes a circle or box, corners become a clean polyline' : m === 'free' ? 'pen · draw freehand, kept as drawn' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : 'circle · drag from the centre outward'; if (S.plant) h = S.plant === 'tree' ? PLANT_HINT.tree : PLANT_HINT[S.plant] + ' · ' + (m === 'smart' ? 'smart tidies the outline' : m === 'free' ? 'traced as drawn' : m + ' gives it a clean shape') + ' · click the plant again for plain ink'; h += ' · width, opacity, dashed in the rail · strokes drape onto the model'; }
     else if (S.brush === 'erase') h = 'eraser · drag across pen strokes to remove them';
     else if (S.brush === 'section') h = 'section · drag from A to B; the section view opens when you let go';
     else h = `${S.brush} · drag on the sheet to ${S.brush} the ground · radius and strength in the rail · undo ctrl+z`;
@@ -1399,7 +1399,17 @@ function setMode(m) {
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
 document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; setBrush(b.dataset.b); S.dirty = true; };
-document.getElementById('penMode').onclick = document.getElementById('plantRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.penMode = b.dataset.pm; document.querySelectorAll('#penMode button, #plantRow button').forEach(x => x.classList.toggle('on', x === b)); };
+document.getElementById('penMode').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.penMode = b.dataset.pm; document.querySelectorAll('#penMode button').forEach(x => x.classList.toggle('on', x === b)); };
+document.getElementById('plantRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.plant = S.plant === b.dataset.pm ? null : b.dataset.pm; document.querySelectorAll('#plantRow button').forEach(x => x.classList.toggle('on', x.dataset.pm === S.plant)); };   // click again to go back to plain ink
+function applyPlant(st) {                 // give a finished stroke its planting kind, from the plant row and the drawing mode that made it
+  const k = S.plant; if (!k || st.kind) return st;
+  const closedShape = st.shape && st.pts.length > 2 && Math.hypot(st.pts[0][0] - st.pts[st.pts.length - 1][0], st.pts[0][1] - st.pts[st.pts.length - 1][1]) < 1e-6, isLine = st.pts.length === 2;
+  st.shape = false; st.dash = false;
+  if (k === 'hedge') { st.kind = 'hedge'; st.closed = closedShape; }
+  else if (isLine) { st.kind = 'hedge'; }   // a line of shrubs, gravel or paving reads as a row
+  else st.kind = k;
+  return st;
+}
 const PEN = { ink: INK, ember: '#c8321e', water: '#3f6488' };
 document.getElementById('penRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'penDash') { S.penDash = !S.penDash; b.classList.toggle('on', S.penDash); return; } if (b.id === 'penClear') { if (S.strokes.length) { snapshot(); S.strokes = []; S.strokeVer++; S.dirty = true; toast('sketch cleared'); } return; } S.penColor = b.dataset.pc; document.querySelectorAll('#penRow button[data-pc]').forEach(x => x.classList.toggle('on', x === b)); };
 function densify(pts, maxStep) {           // add points so no gap is longer than maxStep cells (so the line can follow the ground)
@@ -1447,10 +1457,10 @@ function drawPlant(c, st, toXY, k, dense) {
     scallop(c, ring, true, TAU * r / n, -1, toXY, .66);   // the ring runs clockwise on screen, so its left normal points in; bulge the other way
     const ctr = toXY(st.c[0], st.c[1]); c.beginPath(); c.arc(ctr[0], ctr[1], Math.max(1.2, .05 * r * ppc), 0, TAU); c.fill();
     c.globalAlpha *= .45; c.beginPath(); for (let t = 0; t <= 24; t++) { const a = t / 24 * TAU, q = toXY(st.c[0] + Math.cos(a) * r * .4, st.c[1] + Math.sin(a) * r * .4); t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); } c.stroke(); c.globalAlpha = 1; return; }
-  if (st.kind === 'hedge') { const w = fit(1.0, 8), s = fit(.8, 7), R = resample(pts, s, false); if (R.length < 2) return; const L = [], Rt = [];
-    for (let i = 0; i < R.length; i++) { const a = R[Math.max(0, i - 1)], b = R[Math.min(R.length - 1, i + 1)]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const d = Math.hypot(nx, ny) || 1; nx /= d; ny /= d; L.push([R[i][0] + nx * w / 2, R[i][1] + ny * w / 2]); Rt.push([R[i][0] - nx * w / 2, R[i][1] - ny * w / 2]); }
-    scallop(c, L, false, s, 1, toXY); scallop(c, Rt, false, s, -1, toXY);
-    c.beginPath(); for (const [a, b] of [[L[0], Rt[0]], [L[L.length - 1], Rt[Rt.length - 1]]]) { const p = toXY(a[0], a[1]), q = toXY(b[0], b[1]); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); } c.stroke(); c.globalAlpha = 1; return; }
+  if (st.kind === 'hedge') { const cl = !!st.closed, w = fit(1.0, 8), s = fit(.8, 7), R = resample(cl ? pts.slice(0, -1) : pts, s, cl); if (R.length < 2) return; const L = [], Rt = [], N = R.length;
+    for (let i = 0; i < N; i++) { const a = cl ? R[(i - 1 + N) % N] : R[Math.max(0, i - 1)], b = cl ? R[(i + 1) % N] : R[Math.min(N - 1, i + 1)]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const d = Math.hypot(nx, ny) || 1; nx /= d; ny /= d; L.push([R[i][0] + nx * w / 2, R[i][1] + ny * w / 2]); Rt.push([R[i][0] - nx * w / 2, R[i][1] - ny * w / 2]); }
+    scallop(c, L, cl, s, 1, toXY); scallop(c, Rt, cl, s, -1, toXY);
+    if (!cl) { c.beginPath(); for (const [a, b] of [[L[0], Rt[0]], [L[L.length - 1], Rt[Rt.length - 1]]]) { const p = toXY(a[0], a[1]), q = toXY(b[0], b[1]); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); } c.stroke(); } c.globalAlpha = 1; return; }
   if (pts.length < 3) return;
   const edge = dense ? densify(st.pts, .3) : pts;
   if (st.kind === 'shrub') { const s = fit(1.0, 9), R = resample(pts, s, true); let outward = 1; if (R.length > 1) { const a = R[0], b = R[1]; let nx = -(b[1] - a[1]), ny = b[0] - a[0]; const d = Math.hypot(nx, ny) || 1; if (inPoly(pts, (a[0] + b[0]) / 2 + nx / d * s * .5, (a[1] + b[1]) / 2 + ny / d * s * .5)) outward = -1; }
@@ -1982,7 +1992,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', base: r3(base), z: r3(z), world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
