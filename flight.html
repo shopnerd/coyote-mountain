@@ -108,6 +108,14 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
 :root[data-theme=dark] #railGrip::after{background:#55554f}
 :root[data-theme=dark] .toast{background:#e6e5df;color:#1a1a18}
 :root[data-theme=dark] #tip{border-color:#b0623a}
+#tourSpot{position:fixed;z-index:60;pointer-events:none;border:2px solid var(--accent);border-radius:4px;box-shadow:0 0 0 9999px rgba(20,20,18,.32);display:none;transition:left .25s,top .25s,width .25s,height .25s}
+#tourCard{position:fixed;z-index:61;width:300px;max-width:calc(100vw - 24px);background:var(--paper);color:var(--ink);border:1px solid var(--accent);border-radius:3px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:12px;line-height:1.5;display:none}
+#tourCard.show{display:block}
+#tourCard .row{display:flex;align-items:center;gap:6px;margin-top:10px}
+#tourCard .n{color:var(--ink3);font-size:10px;flex:1}
+#tourCard .b{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:11px;padding:4px 10px;border-radius:3px;cursor:pointer}
+#tourCard .b.next{border-color:var(--accent);background:var(--accent);color:#fff}
+#tourCard .b:disabled{opacity:.4;cursor:default}
 </style>
 </head>
 <body>
@@ -117,6 +125,7 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
     <a class="logo" href="index.html" style="text-decoration:none;color:inherit">coyote_mountain<b>_flight</b></a>
     <a href="topo.html">topo</a>
     <span class="read" id="read">click to draw the survey area · double-click closes it · wheel zooms · right-drag pans · 0 refits</span>
+    <button class="theme" id="tourBtn" title="a two-minute guided tour on a sample site; your own plan comes back after">tour</button>
     <button class="theme" id="themeBtn" title="dark or light around the drawing; the paper stays paper">dark</button>
   </header>
   <div class="cmd"><span class="prompt">›</span><span class="hint" id="hint"></span><button id="extents" title="refit the view (0)">zoom extents</button></div>
@@ -773,6 +782,43 @@ function setRail(px) { px = Math.max(200, Math.min(Math.round(innerWidth * .45),
 addEventListener('resize', resize); resize(); syncUI(); updateHint(); requestAnimationFrame(frame);
 if (!openFromLink() && !restoreSession()) { $('place').value = HOME.lat + ', ' + HOME.lon; refresh(); fetchWorld(HOME, true); }
 surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseGeoTiff(rec.buf).then(sv => { sv.name = rec.name; S.survey = sv; if (S.terrain) { applySurvey(true); refresh(); } toast('survey ground on: ' + rec.name); }).catch(() => {}); });   // a survey loaded in either tool follows you here
+
+const TOUR_KEY = 'coyote-tour-flight';
+const followUI = () => document.querySelectorAll('#followRow button').forEach(x => x.classList.toggle('on', (x.dataset.f === '1') === S.follow));
+const TOUR_SETUP = async () => { S.poly = []; S.closed = false; S.takeoff = null; S.follow = true; S.drone = 'mini-2'; syncUI(); followUI(); $('place').value = HOME.lat + ', ' + HOME.lon; await fetchWorld(HOME, true); };
+const TOUR_RESTORE = saved => { loadProject(saved); followUI(); fetchWorld(S.world, true); };
+const TOUR = [
+  { el: '#drone', text: 'terrain first: place, fetch, home, the same as the topo tool. then pick the aircraft; its sensor and rated flight time drive every number below.' },
+  { el: '#tools', text: 'click the corners of the survey area on the photo and double-click to close it, or load a kml. here is a sample area.', do: async () => { const m = 150; S.poly = [fromEnu(-m, -m), fromEnu(m, -m), fromEnu(m, m), fromEnu(-m, m)]; S.closed = true; setTool('draw'); refresh(); } },
+  { el: () => $('agl').closest('.p'), text: 'height above ground and the two overlaps set the line spacing, the photo spacing, the ground sample size, photo count, time and batteries. drag them and watch the rail.' },
+  { text: 'the strip under the map is the profile along the whole route: black is the ground, ember is the drone holding its height above it. every line climbs and descends with the hill.' },
+  { el: '#followRow', text: 'fixed altitude is what a plain waypoint mission does: one height above takeoff. on this hill it flies into the slope, and the warnings below say so. terrain following is the fix.', do: async () => { S.follow = false; followUI(); refresh(); } },
+  { el: '#tools', text: 'takeoff: pick the tool and click where you will launch from. every altitude in the exports is relative to that spot. one placed for you.', do: async () => { S.follow = true; followUI(); S.takeoff = fromEnu(-220, -220); refresh(); } },
+  { el: '#surveyBtn', text: 'load your own drone survey so trees and roofs count as ground to clear. it stays on through refetches and follows you to the topo tool.' },
+  { el: '.actions', text: 'exports: kml and geojson for maps, litchi csv for the older aircraft, dji fly kmz for the newer ones; the drone line in the rail says which flies yours. open in topo hands the area back. that is the tour.' },
+];
+
+/* ---------- guided tour: a spotlight and a card that walk through the tool on a sample site, then hand the project back ---------- */
+let tour = null, tourIntro = false;
+const tourEls = (() => { const card = document.createElement('div'); card.id = 'tourCard'; card.innerHTML = '<div class="t"></div><div class="row"><span class="n"></span><button class="b back">back</button><button class="b next">next</button><button class="b skip">skip</button></div>'; const spot = document.createElement('div'); spot.id = 'tourSpot'; document.body.append(spot, card); return { card, spot }; })();
+const tourEl = st => !st.el ? null : typeof st.el === 'function' ? st.el() : document.querySelector(st.el);
+function tourPlace() { if (!tour) return; const st = TOUR[tour.i], el = tourEl(st), { card, spot } = tourEls; if (el) { el.scrollIntoView({ block: 'nearest' }); const r = el.getBoundingClientRect(); spot.style.display = ''; spot.style.left = (r.left - 6) + 'px'; spot.style.top = (r.top - 6) + 'px'; spot.style.width = (r.width + 12) + 'px'; spot.style.height = (r.height + 12) + 'px'; } else spot.style.display = 'none';
+  const cw = card.offsetWidth, ch = card.offsetHeight, rail = document.querySelector('aside').getBoundingClientRect(); let x, y;
+  if (el && innerWidth > 760) { const r = el.getBoundingClientRect(), inRail = r.left < rail.right - 2; x = inRail ? rail.right + 14 : Math.min(innerWidth - cw - 12, Math.max(12, r.left)); y = inRail ? Math.max(48, Math.min(innerHeight - ch - 12, r.top)) : (r.bottom + 12 + ch < innerHeight ? r.bottom + 12 : Math.max(48, r.top - ch - 12)); }
+  else { x = (innerWidth - cw) / 2; y = innerHeight - ch - 24; }
+  card.style.left = x + 'px'; card.style.top = y + 'px'; }
+async function tourGo(i) { if (!tour) return; if (i < 0) i = 0; if (i >= TOUR.length) { tourEnd(true); return; } tour.i = i; const st = TOUR[i]; try { if (st.do) await st.do(); } catch (_) {} if (!tour) return;
+  tourEls.card.querySelector('.t').textContent = st.text; tourEls.card.querySelector('.n').textContent = (i + 1) + ' of ' + TOUR.length; tourEls.card.querySelector('.next').textContent = i === TOUR.length - 1 ? 'done' : 'next'; tourEls.card.querySelector('.back').disabled = i === 0; tourEls.card.classList.add('show'); requestAnimationFrame(() => requestAnimationFrame(tourPlace)); }
+async function tourStart() { if (tour) return; tourIntroClose(); tour = { i: 0, saved: snapshotProject() }; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} try { await TOUR_SETUP(); } catch (_) {} tourGo(0); }
+function tourEnd(finished) { if (!tour) return; const saved = tour.saved; tour = null; tourEls.card.classList.remove('show'); tourEls.spot.style.display = 'none'; try { TOUR_RESTORE(saved); } catch (_) {} toast(finished ? 'tour done · your project is back' : 'tour skipped · your project is back'); }
+function tourIntroClose() { if (!tourIntro) return; tourIntro = false; const c = tourEls.card; c.classList.remove('show'); c.querySelector('.back').style.display = ''; c.querySelector('.skip').textContent = 'skip'; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} }
+tourEls.card.querySelector('.next').onclick = () => tourIntro ? tourStart() : tourGo(tour.i + 1); tourEls.card.querySelector('.back').onclick = () => tourGo(tour.i - 1); tourEls.card.querySelector('.skip').onclick = () => tourIntro ? tourIntroClose() : tourEnd(false);
+addEventListener('resize', () => tourPlace()); document.querySelector('aside').addEventListener('scroll', () => tourPlace());
+addEventListener('keydown', e => { if (!tour) return; if (e.key === 'Escape') tourEnd(false); else if (e.key === 'ArrowRight') tourGo(tour.i + 1); else if (e.key === 'ArrowLeft') tourGo(tour.i - 1); else return; e.preventDefault(); e.stopPropagation(); }, true);
+document.getElementById('tourBtn').onclick = tourStart;
+setTimeout(() => { let seen = null; try { seen = localStorage.getItem(TOUR_KEY); } catch (_) {} if (seen || tour) return; tourIntro = true; const c = tourEls.card;   // first visit: offer, never force
+  c.querySelector('.t').textContent = 'new here? a two-minute tour shows the tool on a sample site, then hands your own work back.'; c.querySelector('.n').textContent = ''; c.querySelector('.back').style.display = 'none'; c.querySelector('.next').textContent = 'start the tour'; c.querySelector('.skip').textContent = 'no thanks'; tourEls.spot.style.display = 'none'; c.classList.add('show');
+  c.style.left = ((innerWidth - c.offsetWidth) / 2) + 'px'; c.style.top = (innerHeight - c.offsetHeight - 24) + 'px'; }, 2500);
 })();
 { const tb = document.getElementById('themeBtn'), lab = () => { tb.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; lab();   // dark or light chrome, remembered across the studio's pages; the drawing itself stays paper
   tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
