@@ -517,7 +517,7 @@ function drawPlanBase() {
   ctx.beginPath(); ctx.moveTo(0, 10); ctx.lineTo(0, -6); ctx.moveTo(-3, -2); ctx.lineTo(0, -6); ctx.lineTo(3, -2); ctx.stroke(); ctx.restore(); ctx.textBaseline = 'top';
   drawStrokes(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k))); drawBoundary(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false);
   // section line: shown only while the section tool is selected
-  if (S.sec && S.brush === 'section') drawSectionLine();
+  if (S.sec && (S.brush === 'section' || S.noFoot)) drawSectionLine();   // on the drawing sheet the A–B line is always shown
 }
 let contourCache = { key: '' };
 function contours() {                     // every contour level as linked polylines in grid coords, cached until the ground or the interval changes
