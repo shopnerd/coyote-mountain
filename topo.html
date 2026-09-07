@@ -583,8 +583,8 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), tm = trimMask(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
-  const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
-  const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
+  const scale = zoom * Math.min(w, h) / (modelFrame().fitW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
+  const MF = modelFrame(); const proj = (i, j, zz) => { const X = (i - MF.ci) * s, Y = (j - MF.cj) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
     const dv = y1 * sp + Z * cp, f = S.cam.persp ? PD / Math.max(PD * .15, PD - dv) : 1; return [ox + x1 * scale * f, oy + (y1 * cp - Z * sp) * scale * f, dv]; };
   const tin = (i, j) => { if (!tm) return true; if (i < 0 || j < 0 || i > W - 2 || j > H - 2) return false; return !!tm.tiles[Math.min(H - 2, j + (step >> 1)) * (W - 1) + Math.min(W - 2, i + (step >> 1))]; };
@@ -685,8 +685,8 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
 /* ---------- camera + picking (screen point -> grid node on the surface) ---------- */
 function camera(w = S.w, h = S.h) {
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
-  const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
+  const s = cs(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, scale = zoom * Math.min(w, h) / (modelFrame().fitW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;   // same frame as the drawing, so picks land where the ground is drawn
+  const MF = modelFrame(); const proj = (i, j, zz) => { const X = (i - MF.ci) * s, Y = (j - MF.cj) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; const dv = y1 * sp + Z * cp, f = S.cam.persp ? PD / Math.max(PD * .15, PD - dv) : 1; return [ox + x1 * scale * f, oy + (y1 * cp - Z * sp) * scale * f, dv]; };
   return { proj, scale, s };
 }
@@ -725,8 +725,8 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
-  const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
-  const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
+  const scale = zoom * Math.min(w, h) / (modelFrame().fitW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
+  const MF = modelFrame(); const proj = (i, j, zz) => { const X = (i - MF.ci) * s, Y = (j - MF.cj) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; const dv = y1 * sp + Z * cp, f = S.cam.persp ? PD / Math.max(PD * .15, PD - dv) : 1; return [ox + x1 * scale * f, oy + (y1 * cp - Z * sp) * scale * f, dv]; };
   const layers = steppedLayers();
   // base slab under everything
@@ -1895,6 +1895,12 @@ function trimMask() {                     // null when not trimming; else { tile
   for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) tiles[j * (W - 1) + i] = inside(i + .5, j + .5) ? 1 : 0;
   trimCache = { key, tiles, nodes }; return trimCache;
 }
+function modelFrame() {                   // where the model's centre sits and how wide it is: the site, or the trimmed lot's bounding box
+  const tm = trimMask(); if (!tm) return { ci: (W - 1) / 2, cj: (H - 1) / 2, fitW: S.siteW };
+  if (!tm.frame) { let i0 = 1e9, j0 = 1e9, i1 = -1, j1 = -1; for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) if (tm.tiles[j * (W - 1) + i]) { if (i < i0) i0 = i; if (j < j0) j0 = j; if (i > i1) i1 = i; if (j > j1) j1 = j; }
+    if (i1 < 0) tm.frame = { ci: (W - 1) / 2, cj: (H - 1) / 2, fitW: S.siteW }; else tm.frame = { ci: (i0 + i1 + 1) / 2, cj: (j0 + j1 + 1) / 2, fitW: Math.max(i1 - i0 + 1, (j1 - j0 + 1) * (W - 1) / (H - 1)) * cs() * 1.06 }; }
+  return tm.frame;
+}
 function trimField() {                    // the display surface with every node outside the lot dropped far below any contour, so layer loops stop at the line
   const tm = trimMask(); zdisp(); if (!tm) return zv; const key = zvKey + '|' + trimCache.key; if (trimFieldCache.key === key) return trimFieldCache.f;
   const f = new Float32Array(W * H); for (let n = 0; n < W * H; n++) f[n] = tm.nodes[n] ? zv[n] : -1e9; trimFieldCache = { key, f }; return f;
@@ -2292,14 +2298,15 @@ function drawingSheet() { zdisp();         // one sheet: plan over analysis at t
   const ty = PH - m - tb + gap; o.strokeRect(inner.x + .5, ty + .5, inner.w - 1, tb - gap - 1);
   const cols = [inner.x, inner.x + inner.w * .34, inner.x + inner.w * .62, inner.x + inner.w * .84, inner.x + inner.w];
   for (let q = 1; q < 4; q++) { o.beginPath(); o.moveTo(cols[q] + .5, ty); o.lineTo(cols[q] + .5, ty + tb - gap); o.stroke(); }
-  const cell = (q, lines) => { o.textAlign = 'left'; o.textBaseline = 'top'; let yy = ty + 10; lines.forEach((ln, i) => { o.fillStyle = i ? INK : INK2; o.font = `${i ? 600 : 400} ${i ? 15 : 11}px ${fam}`; o.letterSpacing = i ? '0px' : '2px'; o.fillText(ln, cols[q] + 12, yy); yy += i ? 20 : 15; }); o.letterSpacing = '0px'; };
+  const fitTxt = (t, maxW) => { if (o.measureText(t).width <= maxW) return t; while (t.length > 1 && o.measureText(t + '…').width > maxW) t = t.slice(0, -1); return t + '…'; };
+  const cell = (q, lines) => { o.textAlign = 'left'; o.textBaseline = 'top'; let yy = ty + 10; const maxW = cols[q + 1] - cols[q] - 24 - (q === 3 ? 44 : 0); lines.forEach((ln, i) => { o.fillStyle = i ? INK : INK2; o.font = `${i ? 600 : 400} ${i ? 15 : 11}px ${fam}`; o.letterSpacing = i ? '0px' : '2px'; o.fillText(fitTxt(ln, maxW), cols[q] + 12, yy); yy += i ? 20 : 15; }); o.letterSpacing = '0px'; };
   const site = S.world ? S.world.name : 'sketch site', where = S.world ? `${S.world.lat.toFixed(5)}, ${S.world.lon.toFixed(5)}` : 'no real location';
   cell(0, ['PROJECT', site, where]);
   cell(1, ['SCALE', sc.label + (isFt() ? ' · 1:' + sc.ratio.toLocaleString() : ''), `contour interval ${fL(interval(), 2)} · index every ${fL(interval() * 5, 2)}`]);
   cell(2, ['DATUM', `elevations in ${isFt() ? 'ft' : 'm'} above sea level`, S.world ? (S.world.src === '3dep' ? 'USGS 3DEP elevation' : 'elevation tiles ~30 m or finer') + (S.coast && S.coast.segs.length ? ' · shoreline: openstreetmap' : '') : 'invented ground']);
   cell(3, ['SHEET', '1 of 1 · ' + new Date().toISOString().slice(0, 10), 'coyote mountain studio']);
   // compass in the title block, turned with the site
-  const nx = cols[3] - 40, ny = ty + (tb - gap) / 2; o.save(); o.translate(nx, ny); o.rotate(-S.rot * D2R); o.strokeStyle = INK; o.fillStyle = INK; o.lineWidth = .9;
+  const nx = cols[4] - 34, ny = ty + (tb - gap) / 2; o.save(); o.translate(nx, ny); o.rotate(-S.rot * D2R); o.strokeStyle = INK; o.fillStyle = INK; o.lineWidth = .9;
   o.beginPath(); o.arc(0, 0, 17, 0, TAU); o.stroke(); o.lineWidth = .6; o.beginPath(); for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2; o.moveTo(Math.cos(a) * 13, Math.sin(a) * 13); o.lineTo(Math.cos(a) * 17, Math.sin(a) * 17); } o.stroke();
   o.beginPath(); o.moveTo(0, -15); o.lineTo(4, 0); o.lineTo(0, 12); o.lineTo(-4, 0); o.closePath(); o.lineWidth = .9; o.stroke(); o.beginPath(); o.moveTo(0, -15); o.lineTo(4, 0); o.lineTo(0, 0); o.closePath(); o.fill();
   o.font = `600 11px ${fam}`; o.textAlign = 'center'; o.textBaseline = 'bottom'; o.fillText('N', 0, -20); o.restore();
