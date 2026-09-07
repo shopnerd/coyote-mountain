@@ -146,7 +146,7 @@ canvas.orbit{cursor:grab}
         <button data-b="raise" class="on">raise</button><button data-b="lower">lower</button>
         <button data-b="smooth">smooth</button><button data-b="flatten">flatten</button>
         <button data-b="pen" class="planOnly" title="freehand pen: draws on the plan and drapes over the 3d ground">pen</button><button data-b="erase" class="planOnly" title="drag over pen strokes to remove them">eraser</button>
-        <button data-b="grade" class="planOnly" title="set an exact grade between two points">grade a→b</button><button data-b="section" class="planOnly">section line</button>
+        <button data-b="grade" class="planOnly" title="set an exact grade between two points">grade a→b</button><button data-b="spot" class="planOnly" title="tap to place a spot elevation">spot</button><button data-b="section" class="planOnly">section line</button>
       </div>
       <div class="seg" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">red</button><button data-pc="water">blue</button><button id="penDash">dash</button><button id="penClear" title="remove every pen stroke">clear</button></div>
       <div class="seg" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circ</button></div>
@@ -155,8 +155,10 @@ canvas.orbit{cursor:grab}
         <div class="p" title="brush size scales with the site width"><label><span id="l_radius">radius</span><output id="o_radius">4.0 m</output></label><input type="range" id="radius" min="1" max="100" step="1" value="50"></div>
         <div class="p"><label><span id="l_strength">strength</span><output id="o_strength">50</output></label><input type="range" id="strength" min="5" max="100" step="5" value="50"></div>
         <div class="p" id="gradeRow" style="display:none"><label>grade<output id="o_grade">2% fall A→B</output></label><input type="range" id="grade" min="-30" max="30" step=".5" value="2"></div>
+        <div class="p" id="sideRow" style="display:none"><label>side slopes<output id="o_side">3:1</output></label><input type="range" id="side" min="1" max="6" step=".5" value="3"></div>
         <div class="p"><label>hachures<output id="o_hach">15</output></label><input type="range" id="hach" min="0" max="100" step="5" value="15"></div>
         <div class="seg" id="labelRow" style="padding:0;margin-top:6px"><button data-l="1" class="on">labels</button><button data-l="0">no labels</button></div>
+        <div class="seg" id="annoRow" style="padding:0;margin-top:6px"><button data-x="up" title="contour numbers face uphill, the drafting convention">read uphill</button><button data-x="base" class="on" title="existing contours dashed wherever the ground has been graded">existing dashed</button></div>
         <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="1">aerial photo</button><button data-ae="0" class="on">no photo</button></div>
         <div class="p" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
       </div>
@@ -256,7 +258,7 @@ canvas.orbit{cursor:grab}
       <input type="file" id="openFile" accept=".json,application/json" style="display:none">
       <button class="btn" id="png">save png</button>
       <button class="btn" id="stl">export stl</button>
-      <button class="btn" id="laser">export laser</button>
+      <div style="display:flex;gap:6px"><button class="btn" id="laser" style="flex:1">export laser</button><button class="btn" id="laserDxf" title="the same cut file as DXF, for laser software that prefers it">dxf</button></div>
       <button class="btn primary wide" id="sheetBtn">drawing sheet · pdf + png</button>
     </div>
   </aside>
@@ -325,7 +327,7 @@ function linkSegs(segs) {   // screen-space fragments -> polylines (arrays of [x
     const pts = back.concat([[segs[n][0], segs[n][1]]], fwd); if (pts.length > 1) polys.push(pts); }
   return polys;
 }
-function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [[x1,y1,x2,y2], ...])
+function contourLabels(c, groups, spacing, rotate, uphill) {   // groups: Map(level -> [[x1,y1,x2,y2], ...]); uphill(m) gives the on-screen uphill direction at a point, for labels that read uphill
   c.font = font(10.5, 600); c.textAlign = 'center'; c.textBaseline = 'middle'; const placed = [];
   for (const [lv, segs] of groups) {
     const txt = fL(lv, 2).replace(/ (m|ft)$/, ''), tw = c.measureText(txt).width + 8;
@@ -337,16 +339,31 @@ function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [
       for (let k = 0; k < n; k++) {
         const d = (k + .5) * L / n, m = at(d), a = at(d - tw / 2), b = at(d + tw / 2);
         if (placed.some(q => Math.hypot(m[0] - q[0], m[1] - q[1]) < spacing * .45)) continue; placed.push(m);
-        let ang = rotate ? Math.atan2(b[1] - a[1], b[0] - a[0]) : 0; if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI;
+        let ang = rotate ? Math.atan2(b[1] - a[1], b[0] - a[0]) : 0;
+        if (uphill) { const u = uphill(m); if (u && Math.sin(ang) * u[0] - Math.cos(ang) * u[1] < 0) ang += Math.PI; }   // the top of the numbers faces uphill
+        else { if (ang > Math.PI / 2) ang -= Math.PI; if (ang < -Math.PI / 2) ang += Math.PI; }   // else just never upside down
         c.save(); c.translate(m[0], m[1]); c.rotate(ang); c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, 0, .5); c.fillStyle = INK; c.fillText(txt, 0, .5); c.restore();
       }
     }
   }
 }
 function haloText(c, txt, x, y, color) { if (!S.labels) return; c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, x, y); c.fillStyle = color; c.fillText(txt, x, y); }
-function spotLabels(c, toXY) {   // high and low points of the proposed grade
+let gradedCache = { key: '' };
+function gradedFeatures() {               // each graded mound's crown and each graded hollow's invert, biggest six of each
+  const key = S.terrainVer + '|' + W; if (gradedCache.key === key) return gradedCache;
+  const N = W * H, seen = new Int8Array(N), crowns = [], inverts = [];
+  for (let n0 = 0; n0 < N; n0++) { const d0 = z[n0] - base[n0]; if (seen[n0] || Math.abs(d0) < .05) continue; const sign = d0 > 0 ? 1 : -1, stack = [n0]; seen[n0] = 1; let cells = 0, best = n0;
+    while (stack.length) { const n = stack.pop(); cells++; if (sign > 0 ? z[n] > z[best] : z[n] < z[best]) best = n; const i = n % W, j = (n / W) | 0;
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (!seen[m] && (z[m] - base[m]) * sign > .05) { seen[m] = 1; stack.push(m); } } }
+    if (cells >= 8) (sign > 0 ? crowns : inverts).push({ n: best, cells }); }
+  crowns.sort((a, b) => b.cells - a.cells); inverts.sort((a, b) => b.cells - a.cells);
+  gradedCache = { key, crowns: crowns.slice(0, 6), inverts: inverts.slice(0, 6) }; return gradedCache;
+}
+function spotLabels(c, toXY) {   // high and low points of the proposed grade, plus the crown of each graded mound and the invert of each graded hollow
   let mi = 0, ma = 0; for (let n = 1; n < W * H; n++) { if (zv[n] > zv[ma]) ma = n; if (zv[n] < zv[mi]) mi = n; }
-  c.font = font(10.5, 600); c.textAlign = 'left'; c.textBaseline = 'middle';
+  const gf = gradedFeatures(); c.font = font(10, 600); c.textAlign = 'left'; c.textBaseline = 'middle';
+  for (const [list, word] of [[gf.crowns, 'crown'], [gf.inverts, 'invert']]) for (const f of list) { if (f.n === ma || f.n === mi) continue; const p = toXY(f.n % W, Math.floor(f.n / W), zv[f.n]); c.fillStyle = ACC; c.beginPath(); c.arc(p[0], p[1], 2, 0, TAU); c.fill(); haloText(c, `${word} ${fL(zv[f.n], 2)}`, p[0] + 7, p[1] + .5, ACC); }
+  c.font = font(10.5, 600);
   for (const [n, glyph] of [[ma, '▲'], [mi, '▼']]) { const p = toXY(n % W, Math.floor(n / W), zv[n]); const txt = glyph + ' ' + fL(zv[n], 2); const tw = c.measureText(txt).width + 6;
     c.fillStyle = ACC; c.beginPath(); c.arc(p[0], p[1], 2.5, 0, TAU); c.fill(); c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, p[0] + 8, p[1] + .5); c.fillStyle = ACC; c.fillText(txt, p[0] + 8, p[1] + .5); }
 }
@@ -375,7 +392,7 @@ let base = new Float32Array(W * H);     // existing grade, m
 let z = new Float32Array(W * H);        // proposed grade, m
 let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z;   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, gradeV: 2, gline: null, strip: 0, swell: .2, runoff: .7, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, gradeV: 2, sideV: 3, gline: null, labelUp: false, showBase: true, strip: 0, swell: .2, runoff: .7, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -417,14 +434,15 @@ function gradeTarget(a, b) {              // the line's length, end elevations a
   const len = Math.hypot(b[0] - a[0], b[1] - a[1]) * cs(), zA = sample(z, a[0], a[1]), zB = zA - S.gradeV / 100 * len;
   return { len, zA, zB, txt: S.gradeV === 0 ? 'level' : tz(Math.abs(S.gradeV).toFixed(1)) + '% ' + (S.gradeV > 0 ? 'fall' : 'rise') };
 }
-function applyGrade(a, b) {               // set the ground along A→B to an exact grade, full strength down the centre, feathering out to the brush radius
-  const t = gradeTarget(a, b), R = Math.max(1, S.radius / cs()), core = R * .5, sig = R * .25, dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy || 1;
-  const i0 = Math.max(0, Math.floor(Math.min(a[0], b[0]) - R)), i1 = Math.min(W - 1, Math.ceil(Math.max(a[0], b[0]) + R)), j0 = Math.max(0, Math.floor(Math.min(a[1], b[1]) - R)), j1 = Math.min(H - 1, Math.ceil(Math.max(a[1], b[1]) + R));
-  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-    const u = Math.max(0, Math.min(1, ((i - a[0]) * dx + (j - a[1]) * dy) / L2)), px = a[0] + dx * u, py = a[1] + dy * u, d = Math.hypot(i - px, j - py); if (d > R) continue;
-    const wgt = d <= core ? 1 : Math.exp(-((d - core) ** 2) / (2 * sig * sig)), n = idx(i, j); z[n] += (t.zA + (t.zB - t.zA) * u - z[n]) * wgt;
+function applyGrade(a, b) {               // set the ground along A→B to an exact grade: flat across the half width, then side slopes that run until they meet the ground
+  const t = gradeTarget(a, b), R = Math.max(1, S.radius / cs()), sl = 1 / S.sideV, s = cs(), dx = b[0] - a[0], dy = b[1] - a[1], L2 = dx * dx + dy * dy || 1; let i0 = W, i1 = -1, j0 = H, j1 = -1;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const u = Math.max(0, Math.min(1, ((i - a[0]) * dx + (j - a[1]) * dy) / L2)), px = a[0] + dx * u, py = a[1] + dy * u, d = Math.hypot(i - px, j - py), n = idx(i, j), tz = t.zA + (t.zB - t.zA) * u; let nz;
+    if (d <= R) nz = tz;
+    else { const dd = (d - R) * s; if (z[n] < tz) { nz = tz - dd * sl; if (nz <= z[n]) continue; } else { nz = tz + dd * sl; if (nz >= z[n]) continue; } }   // fill slopes down, cut slopes up, each stopping where it daylights
+    z[n] = nz; if (i < i0) i0 = i; if (i > i1) i1 = i; if (j < j0) j0 = j; if (j > j1) j1 = j;
   }
-  S.terrainVer++; contourDirty(i0 - 1, j0 - 1, i1, j1); return t;
+  S.terrainVer++; if (i1 >= 0) contourDirty(i0 - 1, j0 - 1, i1 + 1, j1 + 1); return t;
 }
 function drawGradeLine() {                // the A→B line while it is being dragged, with the grade it will set
   const [ga, gb] = S.gline, a = toSheet(ga[0], ga[1]), b = toSheet(gb[0], gb[1]), t = gradeTarget(ga, gb), wpx = Math.max(2, S.radius / cs() * sheet.k);
@@ -506,17 +524,34 @@ function drawBuildings2D(c, toXY, k) {   // hatched footprints with an ink outli
 }
 let planShot = { key: '' };
 function drawPlan() {                     // cached picture + live overlay; the picture is redrawn only when something on it changes
-  const key = [S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot].join('|');
+  const key = [S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase].join('|');
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
   if (S.gline && drag && drag.kind === 'grade') drawGradeLine();
   if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.plant === 'tree' ? 'tree' : S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.globalAlpha = st.a; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * st.w; ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   // brush cursor
-  if (S.ptr && S.mode === 'plan' && S.brush !== 'section' && S.brush !== 'pen' && S.brush !== 'erase') {
+  if (S.ptr && S.mode === 'plan' && S.brush !== 'section' && S.brush !== 'pen' && S.brush !== 'erase' && S.brush !== 'spot') {
     const p = toSheet(S.ptr[0], S.ptr[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.arc(p[0], p[1], S.radius / cs() * k, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
   }
+}
+let baseCC = { key: '' };
+function baseContours() {                 // the existing ground's contours, only through cells that have been graded (plus one cell around), as flat segments in grid coords
+  const iv = interval(), key = S.terrainVer + '|' + iv + '|' + W; if (baseCC.key === key) return baseCC;
+  const CW = W - 1, CH = H - 1, dis = new Uint8Array(CW * CH), out = new Uint8Array(CW * CH); let lo = Infinity, hi = -Infinity;
+  for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) { const n = idx(i, j); if (Math.abs(z[n] - base[n]) > .02 || Math.abs(z[n + 1] - base[n + 1]) > .02 || Math.abs(z[n + W] - base[n + W]) > .02 || Math.abs(z[n + W + 1] - base[n + W + 1]) > .02) dis[j * CW + i] = 1; }
+  for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) { if (!dis[j * CW + i]) continue; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < CW && jj < CH) out[jj * CW + ii] = 1; } }
+  const segs = [];
+  for (let j = 0; j < CH; j++) for (let i = 0; i < CW; i++) { if (!out[j * CW + i]) continue; const n = idx(i, j), a = base[n], b = base[n + 1], c = base[n + W + 1], d = base[n + W], mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d);
+    for (let lv = Math.ceil(mn / iv) * iv; lv <= mx; lv += iv) { const tmp = []; isoSegs(a, b, c, d, lv, tmp); for (let t = 0; t < tmp.length; t += 4) segs.push([i + tmp[t], j + tmp[t + 1], i + tmp[t + 2], j + tmp[t + 3], isIndex(lv)]); } }
+  baseCC = { key, segs }; return baseCC;
+}
+function drawBaseContours() {             // dashed, lighter, under the proposed contours: the grading convention for existing grade
+  const { segs } = baseContours(); if (!segs.length) return; const k = sheet.k;
+  ctx.save(); ctx.strokeStyle = INK2; ctx.setLineDash([4, 3]); ctx.lineCap = 'butt';
+  for (const pass of [0, 1]) { ctx.lineWidth = pass ? 1.1 : .6; ctx.globalAlpha = pass ? .7 : .55; ctx.beginPath(); for (const sg of segs) { if ((sg[4] ? 1 : 0) !== pass) continue; ctx.moveTo(sheet.x + sg[0] * k, sheet.y + sg[1] * k); ctx.lineTo(sheet.x + sg[2] * k, sheet.y + sg[3] * k); } ctx.stroke(); }
+  ctx.restore();
 }
 function drawPlanBase() {
   ctx.clearRect(0, 0, S.w, S.h);
@@ -539,6 +574,7 @@ function drawPlanBase() {
     }
     ctx.stroke(); ctx.globalAlpha = 1;
   }
+  if (S.showBase) drawBaseContours();
   drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt'))); drawWater(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false, .55); drawRoads(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false); drawBuildings2D(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
@@ -607,7 +643,7 @@ function drawContours(alpha, labels) {
       groups.set(L.lv, sp); }
     ctx.stroke(); }
   ctx.globalAlpha = 1;
-  if (labels) { contourLabels(ctx, groups, 240, true); spotLabels(ctx, (i, j) => toSheet(i, j)); }
+  if (labels) { contourLabels(ctx, groups, 240, true, S.labelUp ? m => { const g = toGrid(m[0], m[1]), gr = grad(g[0], g[1]), p0 = toSheet(g[0], g[1]), p1 = toSheet(g[0] + gr[0], g[1] + gr[1]); return [p1[0] - p0[0], p1[1] - p0[1]]; } : null); spotLabels(ctx, (i, j) => toSheet(i, j)); }
 }
 function niceBar(v) { const p = Math.pow(10, Math.floor(Math.log10(v))), n = v / p; return (n < 1.5 ? 1 : n < 3.5 ? 2 : n < 7.5 ? 5 : 10) * p; }
 const osmShown = () => !!(S.coast && (S.coast.segs.length || (S.showBld && S.coast.blds && S.coast.blds.length) || (S.showRoads && S.coast.roads && S.coast.roads.length)));
@@ -740,7 +776,7 @@ function pick(px, py) {
 }
 
 function drawDam3D(c, proj) {             // the dam wall and the pond it holds, on the model
-  const an = analyze(), dp = damAt(), pool = damPool(an, dp[0], dp[1], S.damH), L = pool.crest;
+  const an = analyzeSoon(), dp = damAt(), pool = damPool(an, dp[0], dp[1], S.damH), L = pool.crest;
   if (pool.cells.length && !S.rain) { c.fillStyle = WATER; c.globalAlpha = .55; fillPool(c, poolLoops(pool.cells, L), proj, L); c.globalAlpha = 1; }
   const kn = pool.kn, ki = kn % W, kj = (kn / W) | 0, dn = an.down[kn]; let fx = 0, fy = 1; if (dn >= 0) { fx = dn % W - ki; fy = ((dn / W) | 0) - kj; const m = Math.hypot(fx, fy) || 1; fx /= m; fy /= m; }
   const half = Math.max(2.5, Math.min(9, Math.sqrt(pool.cells.length) * .45)), px = -fy, py = fx;   // wall runs across the flow
@@ -831,9 +867,8 @@ function findPonds(filled, thrCells) {     // connected pools where the filled s
 }
 function accumulate(field, down) { const N = W * H, order = new Uint32Array(N); for (let n = 0; n < N; n++) order[n] = n; order.sort((a, b) => field[b] - field[a]);
   const acc = new Float32Array(N).fill(1); for (const n of order) if (down[n] >= 0) acc[down[n]] += acc[n]; return { acc, order }; }
-function analyze() {
-  const key = S.terrainVer + '|' + S.thrV + '|' + S.siteW; if (ana.key === key) return ana;
-  const N = W * H, A = cs() * cs(), thrCells = Math.max(3, thrArea(S.thrV) / A);
+function analyzeCore(thrCells) {          // everything the water analysis knows, from z alone; pure, so a worker can run it with the same globals
+  const N = W * H, A = cs() * cs();
   const filled = fillPits(z), down = d8(filled), { acc, order } = accumulate(filled, down), ponds = findPonds(filled, thrCells);
   const inv = new Float32Array(N); for (let n = 0; n < N; n++) inv[n] = -z[n]; const invF = fillPits(inv);
   const downR = d8(invF), accR = accumulate(invF, downR).acc;
@@ -855,9 +890,25 @@ function analyze() {
     if (bi < 0 || bs < .03) continue; const kn = path[bi]; keypoints.push({ i: kn % W, j: (kn / W) | 0, n: kn, z: z[kn], acc: acc[kn], slope: bs });
   }
   keypoints.sort((a, b) => b.acc - a.acc); keypoints.splice(12);
-  ana = { key, down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order, filled, chan };
-  if (S.keyAuto || !S.keyPt) S.keyPt = keypoints.length ? [keypoints[0].i, keypoints[0].j] : null;
-  return ana;
+  return { down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order, filled, chan };
+}
+const anaKey = () => S.terrainVer + '|' + S.thrV + '|' + S.siteW;
+function anaAccept(key, r) { ana = Object.assign({ key, stale: false }, r); if (S.keyAuto || !S.keyPt) S.keyPt = ana.keypoints.length ? [ana.keypoints[0].i, ana.keypoints[0].j] : null; }
+function analyze() {                      // fresh, right now, on this thread
+  const key = anaKey(); if (ana.key === key) { ana.stale = false; return ana; }
+  anaAccept(key, analyzeCore(Math.max(3, thrArea(S.thrV) / (cs() * cs())))); return ana;
+}
+let anaWorker = null, anaPending = null;   // the same analysis in a worker: the drawing keeps the last answer (marked stale) while the new one computes, so grading never freezes the page
+try { const src = 'let W, H, z, CS = 1; const idx = (i, j) => j * W + i, cs = () => CS;\n' + [d8, fillPits, findPonds, accumulate, analyzeCore].map(f => f.toString()).join('\n') + '\nonmessage = e => { const d = e.data; W = d.W; H = d.H; z = d.z; CS = d.cs; const r = analyzeCore(d.thrCells); postMessage({ key: d.key, r }, [r.down.buffer, r.acc.buffer, r.downR.buffer, r.accR.buffer, r.label.buffer, r.order.buffer, r.filled.buffer, r.chan.buffer]); };';
+  anaWorker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+  anaWorker.onmessage = e => { anaPending = null; const key = anaKey(); if (e.data.key === key) { anaAccept(key, e.data.r); dep.key = ''; S.dirty = true; } else analyzeSoon(); };
+  anaWorker.onerror = () => { anaWorker = null; anaPending = null; S.dirty = true; };
+} catch (_) { anaWorker = null; }
+function analyzeSoon() {                  // the current answer if it is fresh; else the last one, flagged stale, while a worker computes the new one
+  const key = anaKey(); if (ana.key === key) { ana.stale = false; return ana; }
+  if (!anaWorker || !ana.filled) return analyze();
+  if (anaPending !== key) { anaPending = key; anaWorker.postMessage({ key, W, H, z: z.slice(), cs: cs(), thrCells: Math.max(3, thrArea(S.thrV) / (cs() * cs())) }); }
+  ana.stale = true; return ana;
 }
 function smoothPoly(poly, win) {          // resample to ~3 px and box-smooth over win px
   if (poly.length < 3) return poly; const res = [poly[0]];
@@ -974,7 +1025,7 @@ function floodSim(an, rainM) {           // fill every depression with the rain 
   floodCache = { key, water, pools }; return floodCache;
 }
 function drawAnalysis() {
-  ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = analyze(), { down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order } = an;
+  ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = S.noFoot ? analyze() : analyzeSoon(), { down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order } = an;
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
   const aerialOn = drawAerial(); drawOverlay();
   const cellXY = n => toSheet(n % W, (n / W) | 0);
@@ -1033,7 +1084,7 @@ function drawAnalysis() {
     ctx.strokeStyle = ACC; ctx.lineWidth = 7; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke();
     ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(p[0] - fy * half, p[1] + fx * half); ctx.lineTo(p[0] + fy * half, p[1] - fx * half); ctx.stroke(); ctx.lineCap = 'butt';
     ctx.font = font(10.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-    const txt = `dam site · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`, tw = ctx.measureText(txt).width + 8; let lx = p[0] + fy * half + 8; const ly = p[1] - fx * half - 14; if (lx + tw > sheet.x + sheet.w) lx = p[0] - fy * half - tw - 4;
+    const txt = `dam site · ${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored · illustrative`, tw = ctx.measureText(txt).width + 8; let lx = p[0] + fy * half + 8; const ly = p[1] - fx * half - 14; if (lx + tw > sheet.x + sheet.w) lx = p[0] - fy * half - tw - 4;
     haloText(ctx, txt, lx, ly + .5, INK); }
   if (flood) { ctx.font = font(10.5, 600); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
     for (const pl of flood.pools.slice(0, 5)) { const p = toSheet(pl.ci, pl.cj); const txt = `pool · ${fBig(pl.area)} · ${fL(pl.depth, 1)} deep · ${pl.overflow > 0 ? 'full, overflowing ' + fV(pl.overflow) : Math.round(pl.full * 100) + '% full'}`, tw = ctx.measureText(txt).width + 8;
@@ -1049,7 +1100,7 @@ function drawAnalysis() {
   ctx.fillStyle = INK2; ctx.font = font(11); ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   const fy = Math.min(sheet.y + sheet.h + 6, S.h - 32), fx = Math.max(sheet.x, 8);
   if (sunNote) ctx.fillText(sunNote, fx, fy + 14);
-  const foot2 = `${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ', ' + Math.round(S.runoff * 100) + '% runoff · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : ''}${osmShown() ? ' · map data © OpenStreetMap contributors' : ''}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`;
+  const foot2 = `${an.stale ? 'updating · ' : ''}${flood ? 'storm of ' + document.getElementById('o_rain').textContent + ', ' + Math.round(S.runoff * 100) + '% runoff · ' + flood.pools.length + ' pool' + (flood.pools.length === 1 ? '' : 's') + ' · ' : ''}analysis · streams from ${fBig(thrArea(S.thrV))} of catchment · ${outlets.length} catchment${outlets.length === 1 ? '' : 's'} · ${ponds.length} pond${ponds.length === 1 ? '' : 's'} · ${keypoints.length} keypoint${keypoints.length === 1 ? '' : 's'} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment · blue water, dashed ember ridges${aerialOn ? ' · imagery Esri, Maxar, Earthstar Geographics' : ''}${osmShown() ? ' · map data © OpenStreetMap contributors' : ''}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`;
   if (aerialOn || PV.zoom > 1) { ctx.fillStyle = 'rgba(240,240,236,.88)'; ctx.fillRect(fx - 4, fy - 2, ctx.measureText(foot2).width + 8, 15); ctx.fillStyle = INK2; }
   ctx.fillText(foot2, fx, fy);
 }
@@ -1057,13 +1108,13 @@ function drawAnalysis() {
 /* ---------- rain: drops run downhill over a cached picture of the model ---------- */
 const drops = []; let modelShot = { key: '', canvas: null }, dep = { key: '' }, damBasin = { key: '' };
 function damBasinGet() {                  // the ground behind the dam, as a basin the rain can fill
-  if (!S.an.dam || !damAt()) return null; const dp = damAt(), an = analyze(), key = [an.key, dp[0], dp[1], S.damH].join('|'); if (damBasin.key === key) return damBasin;
+  if (!S.an.dam || !damAt()) return null; const dp = damAt(), an = analyzeSoon(), key = [an.key, dp[0], dp[1], S.damH].join('|'); if (damBasin.key === key) return damBasin;
   const pool = damPool(an, dp[0], dp[1], S.damH), cells = pool.cells.slice().sort((a, b) => z[a] - z[b]), mask = new Uint8Array(W * H); for (const n of cells) mask[n] = 1;
   damBasin = { key, cells, mask, spill: pool.crest, cap: pool.vol, vol: 0, level: cells.length ? z[cells[0]] : pool.crest }; return damBasin;
 }
 function depressions() {                  // hollows of the ground, each with a capacity and a current water volume
   if (drag && drag.kind === 'sculpt' && dep.comps) return dep;   // mid-stroke: keep the pools as they are; the ground is settled on release
-  const an = analyze(); if (dep.key === an.key) return dep;
+  const an = analyzeSoon(); if (dep.key === an.key) return dep;
   const N = W * H, filled = an.filled, comp = new Int32Array(N).fill(-1), comps = [];
   for (let n0 = 0; n0 < N; n0++) { if (comp[n0] >= 0 || filled[n0] - z[n0] < .01) continue; const id = comps.length, cells = [n0]; comp[n0] = id; const stack = [n0];
     while (stack.length) { const n = stack.pop(), ci = n % W, cj = (n / W) | 0; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = ci + di, jj = cj + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (comp[m] < 0 && filled[m] - z[m] >= .01) { comp[m] = id; cells.push(m); stack.push(m); } } }
@@ -1088,7 +1139,7 @@ function modelFrame() {                   // the model rendered once, reused whi
 }
 let plowCache = { key: '' }, rainStats = { done: 0, creek: 0, run: 0 };
 function plowField() {                    // furrow direction for every cell in the plowed band beside the keyline
-  if (!S.keyPt) return null; const an = analyze(), key = [an.key, S.keyPt[0], S.keyPt[1], S.plowV, sheet.k].join('|'); if (plowCache.key === key) return plowCache;
+  if (!S.keyPt) return null; const an = analyzeSoon(), key = [an.key, S.keyPt[0], S.keyPt[1], S.plowV, sheet.k].join('|'); if (plowCache.key === key) return plowCache;
   const { poly } = keylineFor(S.keyPt[0], S.keyPt[1]); if (!poly || poly.length < 4) return (plowCache = { key, mask: null });
   const dpx = Math.max(2.5, plowFor(S.plowV) / cs() * sheet.k), band = Math.min(40, Math.floor(160 / dpx) + 4) * dpx / sheet.k;   // same band the plan draws, in cells
   const base = smoothPoly(poly, Math.max(dpx, 8)).map(pt => toGrid(pt[0], pt[1])), N = W * H, mask = new Uint8Array(N), tx = new Float32Array(N), ty = new Float32Array(N);
@@ -1126,7 +1177,7 @@ function stepRain() {   // drops run on the ground, not the water surface
 }
 let sheetShot = { key: '', canvas: null };
 function analysisFrame() {                // the analysis sheet rendered once, reused while the rain moves
-  const key = [S.terrainVer, JSON.stringify(S.an), S.thrV, S.plowV, S.swaleV, S.damH, S.rainV, S.runoff, S.month, S.hour, S.sunMode, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.unit, S.labels, S.aerial, S.aop, aerialCache.status, sheet.x, sheet.y, sheet.k, S.w, S.h, S.rain, S.strokeVer].join('|');
+  const key = [S.terrainVer, ana.key, ana.stale, JSON.stringify(S.an), S.thrV, S.plowV, S.swaleV, S.damH, S.rainV, S.runoff, S.month, S.hour, S.sunMode, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.unit, S.labels, S.aerial, S.aop, aerialCache.status, sheet.x, sheet.y, sheet.k, S.w, S.h, S.rain, S.strokeVer].join('|');
   if (sheetShot.key !== key) { drawAnalysis(); const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); sheetShot = { key, canvas: off }; }
   return sheetShot.canvas;
 }
@@ -1306,7 +1357,7 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, sec: S.sec ? [S.sec[0].slice(), S.sec[1].slice()] : null, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function setGrid(f, quiet) {              // rebuild the ground at 150f × 100f; everything in grid coords is rescaled; terrain refetches
   const nw = Math.round(150 * f), nh = Math.round(100 * f); if (nw === W && nh === H) return; const k = nw / W;
   W = nw; H = nh; base = new Float32Array(W * H); z = new Float32Array(W * H); zv = z; zvKey = ''; rawBase = null; waterMask = null; waterLevel = null; wF = null; S.hasSea = S.hasWater = false; S.coast = null;
@@ -1334,7 +1385,7 @@ cv.addEventListener('pointerdown', e => {
     if (btn === 1 || e.shiftKey) { drag = { p, kind: 'pan' }; S.lowQ = true; return; }
     if (btn === 2 && e.ctrlKey) { drag = { p, kind: 'zoom', at: p }; S.lowQ = true; return; }
     if (btn === 2) { drag = { p, kind: 'orbit' }; S.lowQ = true; return; }
-    if (S.sculpt) { const g = pick(p[0], p[1]); if (!g) return; snapshot(); const kind = S.brush === 'section' || S.brush === 'grade' ? 'raise' : S.brush; drag = { g, kind: 'sculpt', brush: kind, z0: z[idx(g[0], g[1])] }; dab(g[0], g[1], kind, drag.z0); S.pick = g; S.dirty = true; return; }
+    if (S.sculpt) { const g = pick(p[0], p[1]); if (!g) return; snapshot(); const kind = S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' ? 'raise' : S.brush; drag = { g, kind: 'sculpt', brush: kind, z0: z[idx(g[0], g[1])] }; dab(g[0], g[1], kind, drag.z0); S.pick = g; S.dirty = true; return; }
     drag = { p, kind: 'orbit' }; S.lowQ = true; return; }
   if ((S.mode === 'plan' || S.mode === 'analysis') && (e.button === 1 || e.shiftKey)) { drag = { p, kind: 'planpan' }; return; }
   if (S.mode === 'analysis') { const g = toGrid(p[0], p[1]); if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) return;
@@ -1349,6 +1400,7 @@ cv.addEventListener('pointerdown', e => {
   if (S.brush === 'erase') { drag = { kind: 'erase' }; eraseAt(g); return; }
   if (S.brush === 'section') { S.sec = [g, g]; drag = { g, kind: 'section' }; S.dirty = true; return; }
   if (S.brush === 'grade') { S.gline = [g, g]; drag = { g, kind: 'grade' }; S.dirty = true; return; }
+  if (S.brush === 'spot') { S.strokes.push(spotAt(g)); S.strokeVer++; S.dirty = true; toast('spot elevation ' + fL(sample(zv, g[0], g[1]), 2) + ' · eraser removes it'); return; }
   drag = { g, kind: 'brush', z0: sample(z, g[0], g[1]) }; dab(g[0], g[1], S.brush, drag.z0); S.dirty = true;
 });
 cv.addEventListener('pointermove', e => {
@@ -1432,7 +1484,7 @@ function endPointer(e) {
     S.strokeVer++; S.dirty = true; }
   pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
   if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt')) updateStats();
-  if (drag && drag.kind === 'grade') { const [a, b] = S.gline; if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 2) { const r = applyGrade(a, b); updateStats(); toast(`graded ${fL(r.len, 0)} at ${r.txt} · A ${fL(r.zA, 2)} → B ${fL(r.zB, 2)}`); } S.gline = null; }
+  if (drag && drag.kind === 'grade') { const [a, b] = S.gline; if (Math.hypot(b[0] - a[0], b[1] - a[1]) >= 2) { const r = applyGrade(a, b); updateStats(); S.strokes.push(spotAt(a), spotAt(b), { kind: 'slope', color: 'ink', w: 1, a: 1, c: a.slice(), pts: [[a[0], a[1], .5], [b[0], b[1], .5]], pct: S.gradeV }); S.strokeVer++; toast(`graded ${fL(r.len, 0)} at ${r.txt} · A ${fL(r.zA, 2)} → B ${fL(r.zB, 2)}`); } S.gline = null; }
   if (drag && drag.kind === 'section') { const [a, b] = S.sec; if (Math.hypot(b[0] - a[0], b[1] - a[1]) < 3) S.sec = null; else { setMode('section'); toast('section cut. back to plan to redraw it'); } }
   drag = null; S.dirty = true;
 }
@@ -1453,7 +1505,7 @@ function readout(g) {
 /* ---------- floating descriptions on dwell ---------- */
 const TIPS = {
   'm:plan': 'the drawing sheet: contours, hachures, your grading and pen sketch', 'm:model': 'the ground in 3d. orbit, sculpt, colour it, watch rain and sun', 'm:section': 'a cut through the ground along the A–B line: proposed over existing, cut and fill', 'm:analysis': 'where water goes: flow, catchments, flood, keyline, dam, rain, sun',
-  'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'shows the A–B section line; drag a new one to cut a section', 'b:grade': 'exact grade: drag A to B and the ground between is set to the fall in the rail, starting from the ground at A; radius is the width', 'p:grade': 'percent fall from A to B along the grade line; negative rises, 0 makes it level', 'p:strip': 'topsoil taken off every disturbed area before grading and set aside; reported separately from cut and fill', 'p:swell': 'how much dug earth bulks up when loose; the haul volume uses it', 'p:runoff': 'the share of storm rain that runs over the ground; the rest soaks in. flood and rain volumes use it',
+  'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'shows the A–B section line; drag a new one to cut a section', 'b:spot': 'tap to place a spot elevation that follows the ground as you grade; the grade tool places its own at A and B with a slope arrow', 'b:grade': 'exact grade: drag A to B and the ground between is set to the fall in the rail, starting from the ground at A; radius is the width', 'p:grade': 'percent fall from A to B along the grade line; negative rises, 0 makes it level', 'p:side': 'how the sides of the graded strip meet the ground: 3:1 is three across for one down. fill slopes down, cut slopes up, until they daylight', 'p:strip': 'topsoil taken off every disturbed area before grading and set aside; reported separately from cut and fill', 'p:swell': 'how much dug earth bulks up when loose; the haul volume uses it', 'p:runoff': 'the share of storm rain that runs over the ground; the rest soaks in. flood and rain volumes use it',
   'pm:tree': 'tap to plant a tree with a 20 ft canopy, or drag from the trunk to size it. click again for plain ink', 'pm:shrub': 'shrub mass: trace a bed, or use rect / circ for a clean one. click again for plain ink', 'pm:hedge': 'hedge row along a line, or around a rect / circ. click again for plain ink', 'pm:gravel': 'gravel stipple inside a traced or rect / circ area. click again for plain ink', 'pm:paving': 'flagstone paving inside a traced or rect / circ area. click again for plain ink',
   'pm:smart': 'freehand that tidies itself on lift: straight lines, circles, boxes, clean polylines', 'pm:free': 'freehand kept exactly as drawn', 'pm:line': 'drag a straight line', 'pm:rect': 'drag a rectangle corner to corner', 'pm:circle': 'drag a circle from its centre',
   'pc:ink': 'black pen', 'pc:ember': 'red pen', 'pc:water': 'blue pen', penDash: 'dashed strokes on or off', penClear: 'remove every pen stroke',
@@ -1469,7 +1521,7 @@ const TIPS = {
   'p:unit': 'imperial or metric, everywhere: sheet, notes, exports', 'p:relief': 'height of the invented hills, low point to high point', 'p:interval': 'vertical spacing between contour lines; every fifth one is an index contour', 'p:hach': 'how many short downhill ticks between contours; 0 for none', 'p:ve': 'stretch heights so relief reads in the model and section; 1 is true',
   'p:mm': 'how much the site shrinks to become the object, and how wide it comes out', 'p:thick': 'thickness of the cardboard or plywood you will cut', 'p:sheet': 'the laser bed in mm; layers get nested onto sheets this size', 'p:ledge': 'hollow each layer, leaving a ledge this wide for the next one to sit on; 0 keeps them solid', 'p:paper': 'paper size for the drawing sheet set',
   'p:radius': () => S.brush === 'pen' ? 'width of new pen strokes' : S.brush === 'erase' ? 'how wide the eraser reaches' : 'brush size; it scales with the site width', 'p:strength': () => S.brush === 'pen' ? 'ink opacity of new pen strokes' : 'how hard each pass moves the ground',
-  shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', newProj: 'start over: a blank flat sheet with default settings, nothing kept (undo brings it back)', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'one drawing sheet: plan over analysis at the same standard scale, with the model, section and notes down the side; every analysis layer that is on and the rain as it stands. pdf at true paper size plus a png', laser: 'cardboard layers nested on sheets for the laser cutter', 'v:top': 'straight down, north up; orbit again to tilt', 'v:front': 'from the south at eye level: an elevation with the buildings', 'v:back': 'from the north at eye level', 'v:left': 'from the west at eye level', 'v:right': 'from the east at eye level', 'v:axon': 'a 45° corner at the isometric tilt', 'v:persp': 'switch between parallel projection (measurable) and perspective (as the eye sees it)', extents: 'refit the view (0)'
+  shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', newProj: 'start over: a blank flat sheet with default settings, nothing kept (undo brings it back)', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'one drawing sheet: plan over analysis at the same standard scale, with the model, section and notes down the side; every analysis layer that is on and the rain as it stands. pdf at true paper size plus a png', laserDxf: 'the same laser file as a DXF in millimetres: layers CUT (red), ENGRAVE (blue), MATERIAL (yellow); for laser software that takes DXF better than SVG', laser: 'cardboard layers nested on sheets for the laser cutter', 'v:top': 'straight down, north up; orbit again to tilt', 'v:front': 'from the south at eye level: an elevation with the buildings', 'v:back': 'from the north at eye level', 'v:left': 'from the west at eye level', 'v:right': 'from the east at eye level', 'v:axon': 'a 45° corner at the isometric tilt', 'v:persp': 'switch between parallel projection (measurable) and perspective (as the eye sees it)', extents: 'refit the view (0)'
 };
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
@@ -1510,9 +1562,10 @@ function hintText() {
     if (S.brush === 'pen') { const m = S.penMode; h = m === 'smart' ? 'pen · draw freehand; on lift a wobbly line straightens, a loop becomes a circle or box, corners become a clean polyline' : m === 'free' ? 'pen · draw freehand, kept as drawn' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : 'circle · drag from the centre outward'; if (S.plant) h = S.plant === 'tree' ? PLANT_HINT.tree : PLANT_HINT[S.plant] + ' · ' + (m === 'smart' ? 'smart tidies the outline' : m === 'free' ? 'traced as drawn' : m + ' gives it a clean shape') + ' · click the plant again for plain ink'; h += ' · width, opacity, dashed in the rail · strokes drape onto the model'; }
     else if (S.brush === 'erase') h = 'eraser · drag across pen strokes to remove them';
     else if (S.brush === 'section') h = 'section · drag from A to B; the section view opens when you let go';
-    else if (S.brush === 'grade') h = 'grade · drag from A to B; the ground between is set to the rail grade, starting from A, as wide as the radius · undo ctrl+z';
+    else if (S.brush === 'spot') h = 'spot · tap the sheet to place a spot elevation; it reads the ground live · eraser removes it';
+    else if (S.brush === 'grade') h = 'grade · drag from A to B; the strip between is set to the rail grade from the ground at A, flat across the half width, side slopes daylighting into the ground · undo ctrl+z';
     else h = `${S.brush} · drag on the sheet to ${S.brush} the ground · radius and strength in the rail · undo ctrl+z`;
-  } else if (S.mode === 'model') h = S.sculpt ? `sculpt · left drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' ? 'raises' : S.brush + 's'} the ground under the cursor · right drag orbits · m stepped · surface colour in the rail` : 'model · left or right drag orbits · ctrl+right drag zooms · double-click refits · m stepped · sculpt switch in the rail';
+  } else if (S.mode === 'model') h = S.sculpt ? `sculpt · left drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' ? 'raises' : S.brush + 's'} the ground under the cursor · right drag orbits · m stepped · surface colour in the rail` : 'model · left or right drag orbits · ctrl+right drag zooms · double-click refits · m stepped · sculpt switch in the rail';
   else if (S.mode === 'section') h = 'section · drag a new A–B line in plan view · vertical exaggeration in the rail';
   else h = S.tapMode === 'dam' ? 'analysis · tap the sheet to place the dam; tap a keypoint to put it there · dam height in the rail' : 'analysis · tap a keypoint or any spot to set the keyline · "tap: dam" places the dam · layers in the rail · r rain';
   if (S.rain) h += S.rainPaused ? ' · rain paused, p resumes' : ' · rain running, p pauses, r stops';
@@ -1530,7 +1583,7 @@ document.getElementById('extents').onclick = () => { planReset(); if (S.mode ===
 /* ---------- rail ---------- */
 const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints, keyline, rain and sun. the model view shows whatever is running here.', plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
 function setMode(m) {
-  if (m === 'model' && S.mode !== 'model' && (S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade')) { S.planBrush = S.brush; setBrush('raise'); }   // the model sculpts; pen tools wait for the plan
+  if (m === 'model' && S.mode !== 'model' && (S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot')) { S.planBrush = S.brush; setBrush('raise'); }   // the model sculpts; pen tools wait for the plan
   else if (m !== 'model' && S.mode === 'model' && S.planBrush) { setBrush(S.planBrush); S.planBrush = null; }
   document.querySelectorAll('#brushes .planOnly').forEach(b => b.style.display = m === 'model' ? 'none' : '');
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
@@ -1588,7 +1641,16 @@ function flagstones(c, pts, sz, toXY) {              // crazy paving: a jittered
     for (let t = 0; t < 4; t++) { const v = q[t], p = toXY(cx + (v[0] - cx) * .9, cy + (v[1] - cy) * .9); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); } c.closePath(); }
   c.stroke();
 }
+const spotAt = g => ({ kind: 'spot', color: 'ink', w: 1, a: 1, c: [g[0], g[1]], pts: [[g[0], g[1], .5]] });   // reads the live ground, so it follows later grading
+function drawAnno(c, st, toXY, k) {       // spot elevations and slope arrows, in ink, the way a grading plan shows them
+  c.setLineDash([]); c.globalAlpha = 1; c.lineWidth = 1 * k; c.strokeStyle = INK; c.fillStyle = INK; c.font = font(10.5, 600); c.textBaseline = 'middle';
+  if (st.kind === 'spot') { const [i, j] = st.c, p = toXY(i, j, sample(zv, i, j) + .05); c.beginPath(); c.moveTo(p[0] - 4, p[1]); c.lineTo(p[0] + 4, p[1]); c.moveTo(p[0], p[1] - 4); c.lineTo(p[0], p[1] + 4); c.stroke(); c.textAlign = 'left'; haloText(c, fL(sample(zv, i, j), 2), p[0] + 7, p[1] - 7, INK); return; }
+  const [a, b] = st.pts, A = toXY(a[0], a[1], sample(zv, a[0], a[1]) + .05), B = toXY(b[0], b[1], sample(zv, b[0], b[1]) + .05), dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+  c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(B[0], B[1]); c.moveTo(B[0] - ux * 8 - uy * 4, B[1] - uy * 8 + ux * 4); c.lineTo(B[0], B[1]); c.lineTo(B[0] - ux * 8 + uy * 4, B[1] - uy * 8 - ux * 4); c.stroke();   // arrow points downhill, A to B
+  c.textAlign = 'center'; haloText(c, (st.pct === 0 ? 'level' : tz(Math.abs(st.pct).toFixed(1)) + '%'), (A[0] + B[0]) / 2 - uy * 9, (A[1] + B[1]) / 2 + ux * 9, INK);
+}
 function drawPlant(c, st, toXY, k, dense) {
+  if (st.kind === 'spot' || st.kind === 'slope') { drawAnno(c, st, toXY, k); return; }
   const o0 = toXY(0, 0), o1 = toXY(1, 0), ppc = Math.hypot(o1[0] - o0[0], o1[1] - o0[1]) || 1, fit = (m, px) => Math.max(m / cs(), px / ppc);   // real size, but never finer than a few pixels
   c.strokeStyle = PEN[st.color] || INK; c.fillStyle = c.strokeStyle; c.globalAlpha = st.a == null ? 1 : st.a; c.setLineDash([]); c.lineWidth = .9 * k * (st.w || 1);   // the stroke width and opacity sliders apply, as they do to ink c.lineJoin = 'round'; c.lineCap = 'round';
   const pts = st.pts.map(q => [q[0], q[1]]);
@@ -1645,6 +1707,7 @@ bind('radius', v => S.brush === 'pen' ? tz(penWidth(v).toFixed(1)) + ' px' : fL(
 bind('strength', v => S.brush === 'pen' ? v + '%' : v, v => { S.strength = v; S.penA = v / 100; });
 bind('strip', v => v === 0 ? 'none' : (isFt() ? tz((v / 25.4).toFixed(1)) + ' in' : v + ' mm'), v => { S.strip = v / 1000; if (S.earth) updateStats(); });
 bind('swell', v => v + '%', v => { S.swell = v / 100; if (S.earth) updateStats(); });
+bind('side', v => tz(v.toFixed(1)) + ':1 · ' + Math.round(100 / v) + '%', v => S.sideV = v);
 bind('grade', v => v === 0 ? 'level A→B' : tz(Math.abs(v).toFixed(1)) + '% ' + (v > 0 ? 'fall' : 'rise') + ' A→B', v => S.gradeV = v);
 bind('siteW', v => fL(v, 0), v => { S.siteW = v; PD = v * 2.2; ['radius', 'thr', 'mm'].forEach(id => { const el = document.getElementById(id); if (el && el.oninput) el.dispatchEvent(new Event('input')); }); updateStats(); });
 document.getElementById('siteW').addEventListener('change', () => { if (document.getElementById('plow').oninput) autoPlow(); sheetInfo(); });
@@ -1674,7 +1737,7 @@ try { const u = localStorage.getItem('unit'); if (u === 'm' || u === 'ft') { S.u
 document.getElementById('unit').onchange = e => { S.unit = e.target.value; setTimeout(sheetInfo, 0); try { localStorage.setItem('unit', S.unit); } catch (_) {} relabels.forEach(f => f()); if (S.world) autoInterval(); updateStats(); S.dirty = true; if (S.mode === 'plan' && S.ptr) readout(S.ptr); };
 document.getElementById('sheet').onchange = e => { S.sheet = e.target.value.split('x').map(Number); layersInfo(); };
 document.getElementById('fetch').onclick = () => fetchWorld();
-function setBrush(b) { S.brush = b; S.gline = null; document.getElementById('gradeRow').style.display = b === 'grade' ? '' : 'none'; document.getElementById('l_radius').textContent = b === 'pen' ? 'stroke width' : 'radius'; document.getElementById('l_strength').textContent = b === 'pen' ? 'opacity' : 'strength'; if (typeof relabels !== 'undefined') relabels.forEach(f => f()); document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; document.getElementById('plantRow').style.display = b === 'pen' ? '' : 'none'; }
+function setBrush(b) { S.brush = b; S.gline = null; document.getElementById('gradeRow').style.display = document.getElementById('sideRow').style.display = b === 'grade' ? '' : 'none'; document.getElementById('l_radius').textContent = b === 'pen' ? 'stroke width' : b === 'grade' ? 'half width' : 'radius'; document.getElementById('l_strength').textContent = b === 'pen' ? 'opacity' : 'strength'; if (typeof relabels !== 'undefined') relabels.forEach(f => f()); document.querySelectorAll('#brushes button').forEach(x => x.classList.toggle('on', x.dataset.b === b)); document.getElementById('penRow').style.display = (b === 'pen' || b === 'erase') ? '' : 'none'; document.getElementById('penMode').style.display = b === 'pen' ? '' : 'none'; document.getElementById('plantRow').style.display = b === 'pen' ? '' : 'none'; }
 function setInterval1ft() { const list = isFt() ? INTERVALS_FT : INTERVALS, want = isFt() ? 1 / FT : .5; let k = 0; for (let q = 0; q < list.length; q++) if (Math.abs(list[q] - want) < Math.abs(list[k] - want)) k = q; const el = document.getElementById('interval'); el.value = k; el.dispatchEvent(new Event('input')); }
 async function goHome(quiet) {
   try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr, true); undoStack.length = 0; worldStatus(''); if (!quiet) toast('home'); return; } } catch (_) {}
@@ -1722,11 +1785,14 @@ const rainMM = v => 2 + 198 * (v / 100) ** 2;
 bind('rain', v => isFt() ? tz((rainMM(v) / 25.4).toFixed(2)) + ' in' : Math.round(rainMM(v)) + ' mm', v => S.rainV = v);
 document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); showSun();
   S.dirty = true; };
+document.getElementById('annoRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.x === 'up') S.labelUp = !S.labelUp; else S.showBase = !S.showBase; annoUI(); S.dirty = true; };
+function annoUI() { document.querySelectorAll('#annoRow button').forEach(b => b.classList.toggle('on', b.dataset.x === 'up' ? S.labelUp : S.showBase)); }
 document.getElementById('labelRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.labels = b.dataset.l === '1'; document.querySelectorAll('#labelRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 document.getElementById('sculptRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sculpt = b.dataset.k === 'sculpt'; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.pick = null; S.dirty = true; toast(S.sculpt ? 'left drag sculpts · right drag orbits · middle drag pans' : 'left drag orbits'); };
 
 document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetchWorld(); };
 document.getElementById('laser').onclick = () => runBusy('cutting the layers', () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); });
+document.getElementById('laserDxf').onclick = () => runBusy('cutting the layers', () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.dxf], { type: 'application/dxf' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.dxf`); });
 document.getElementById('reseed').onclick = () => { snapshot(); S.world = null; rawBase = null; S.coast = null; S.hasSea = S.seaClip = S.hasWater = false; waterMask = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
 document.getElementById('reset').onclick = () => { snapshot(); resetGrading(); toast('grading reset to existing'); };
 document.getElementById('wipe').onclick = () => { snapshot(); S.strokes = []; S.strokeVer++; base.fill(0); S.world = null; rawBase = null; S.coast = null; S.boundary = null; boundaryCache.key = ''; S.trim = false; S.hasSea = S.seaClip = S.hasWater = false; waterMask = null; groundControls(); S.sec = null; worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
@@ -1820,7 +1886,7 @@ function layersInfo() {
   el.textContent = `${n + 1} layers · ${fL(dz, 2)} of grade per sheet · stack ${fS((n + 1) * S.thick)} tall`;
   el.style.color = n + 1 > 80 ? 'var(--accent)' : '';
 }
-function laserSVG() { zdisp();
+function laserSVG() { zdisp(); const ents = [];   // every drawn thing is also kept as an entity {layer, pts, closed | text} in sheet mm, y down, for the DXF twin
   const F = trimField(), { lo, dz, n, gu } = layerPlan(), [sw, sh] = S.sheet, margin = 10, gap = 6, ledgeC = S.ledge / gu, HAIR = '0.0254';
   const modelW = (W - 1) * gu, modelH = (H - 1) * gu;
   if (modelW > sw - 2 * margin || modelH > sh - 2 * margin) { toast(`model ${modelW.toFixed(0)} × ${modelH.toFixed(0)} mm does not fit the sheet`); return null; }
@@ -1858,15 +1924,18 @@ function laserSVG() { zdisp();
   // nest biggest pieces first, in rows, onto as few sheets as possible
   const order = layers.map((L, q) => q).sort((a, b) => (layers[b].bb[2] - layers[b].bb[0]) * (layers[b].bb[3] - layers[b].bb[1]) - (layers[a].bb[2] - layers[a].bb[0]) * (layers[a].bb[3] - layers[a].bb[1]));
   let x = margin, y = margin, rowH = 0, sheetN = 0, body = '', sheetBody = '', trimmed = 0;
-  const flush = () => { if (sheetBody) body += `<g id="sheet-${sheetN + 1}" transform="translate(0,${(sheetN * (sh + 20)).toFixed(1)})"><g id="material-outline-${sheetN + 1}"><rect x="0" y="0" width="${sw}" height="${sh}" fill="none" stroke="#ffff00" stroke-width="${HAIR}"/><text x="3" y="${sh - 3}" font-size="3.5" font-family="monospace" fill="#ffff00">sheet ${sheetN + 1} of @N@ · material ${sw} × ${sh} × ${S.thick} mm · yellow = material outline, hide or skip before cutting</text></g>${sheetBody}</g>`; sheetBody = ''; };
+  const flush = () => { if (sheetBody) { const sy0 = sheetN * (sh + 20); ents.push({ layer: 'MATERIAL', pts: [[0, sy0], [sw, sy0], [sw, sy0 + sh], [0, sy0 + sh]], closed: true }, { layer: 'MATERIAL', text: `sheet ${sheetN + 1} · ${sw} x ${sh} x ${S.thick} mm`, x: 3, y: sy0 + sh - 3, h: 3, left: true }); } if (sheetBody) body += `<g id="sheet-${sheetN + 1}" transform="translate(0,${(sheetN * (sh + 20)).toFixed(1)})"><g id="material-outline-${sheetN + 1}"><rect x="0" y="0" width="${sw}" height="${sh}" fill="none" stroke="#ffff00" stroke-width="${HAIR}"/><text x="3" y="${sh - 3}" font-size="3.5" font-family="monospace" fill="#ffff00">sheet ${sheetN + 1} of @N@ · material ${sw} × ${sh} × ${S.thick} mm · yellow = material outline, hide or skip before cutting</text></g>${sheetBody}</g>`; sheetBody = ''; };
   for (const q of order) {
     const L = layers[q], bw = L.bb[2] - L.bb[0], bh = L.bb[3] - L.bb[1];
     if (x + bw > sw - margin) { x = margin; y += rowH + gap; rowH = 0; }
     if (y + bh > sh - margin) { flush(); sheetN++; x = margin; y = margin; rowH = 0; }
     const ox = x - L.bb[0], oy = y - L.bb[1], next = layers[q + 1];
-    let blue = ''; if (next) { const t = trimBlue(next.loops, L.loops.concat(L.holes)); trimmed += t.dropped; if (t.runs.length) blue = `<path d="${openPath(t.runs, ox, oy)}" fill="none" stroke="#0000ff" stroke-width="${HAIR}"/>`; }
+    const sy0 = sheetN * (sh + 20), mm = (l, cl) => l.map(([x, y]) => [x * gu + ox, y * gu + oy + sy0]);
+    let blue = ''; if (next) { const t = trimBlue(next.loops, L.loops.concat(L.holes)); trimmed += t.dropped; if (t.runs.length) { blue = `<path d="${openPath(t.runs, ox, oy)}" fill="none" stroke="#0000ff" stroke-width="${HAIR}"/>`; for (const r of t.runs) ents.push({ layer: 'ENGRAVE', pts: mm(r), closed: false }); } }
+    for (const l of L.loops.concat(L.holes)) ents.push({ layer: 'CUT', pts: mm(l), closed: true });
     let label = ''; if (L.spot) { const num = `${L.i + 1}/${layers.length}`, elev = fL(L.level, 0), fs = Math.max(1.6, Math.min(4.5, 2 * L.spot.d / (.65 * Math.max(num.length, .62 * elev.length)))), sx = (L.spot.i * gu + ox).toFixed(2), sy = L.spot.j * gu + oy;
-      label = `<text x="${sx}" y="${(sy + fs * .1).toFixed(2)}" font-size="${fs.toFixed(2)}" font-weight="bold" font-family="monospace" fill="#0000ff" text-anchor="middle">${num}</text><text x="${sx}" y="${(sy + fs * .9).toFixed(2)}" font-size="${(fs * .6).toFixed(2)}" font-family="monospace" fill="#0000ff" text-anchor="middle">${elev}</text>`; }
+      label = `<text x="${sx}" y="${(sy + fs * .1).toFixed(2)}" font-size="${fs.toFixed(2)}" font-weight="bold" font-family="monospace" fill="#0000ff" text-anchor="middle">${num}</text><text x="${sx}" y="${(sy + fs * .9).toFixed(2)}" font-size="${(fs * .6).toFixed(2)}" font-family="monospace" fill="#0000ff" text-anchor="middle">${elev}</text>`;
+      ents.push({ layer: 'ENGRAVE', text: num, x: +sx, y: sy + fs * .1 + sy0, h: fs * .8 }, { layer: 'ENGRAVE', text: elev, x: +sx, y: sy + fs * .9 + sy0, h: fs * .48 }); }
     sheetBody += `<g id="layer-${L.i + 1}">${blue}${label}<path d="${path(L.loops, ox, oy)}${path(L.holes, ox, oy)}" fill="none" stroke="#ff0000" stroke-width="${HAIR}" fill-rule="evenodd"/></g>`;
     x += bw + gap; rowH = Math.max(rowH, bh);
   }
@@ -1880,7 +1949,21 @@ function laserSVG() { zdisp();
 ${body}
 </svg>`;
   toast(`${layers.length} layers on ${sheets} sheet${sheets > 1 ? 's' : ''}${trimmed ? ' · alignment lines trimmed off cuts' : ''}`);
-  return { svg, layers: layers.length, sheets };
+  return { svg, dxf: dxfFrom(ents, totalH), layers: layers.length, sheets };
+}
+function dxfFrom(ents, totalH) {          // a plain R12 DXF in millimetres: CUT red, ENGRAVE blue, MATERIAL yellow; y flipped so the sheet reads the same way up as the SVG
+  const f = v => (+v).toFixed(3), Y = y => f(totalH - y), o = [];
+  o.push('0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n9\n$INSUNITS\n70\n4\n9\n$EXTMIN\n10\n0\n20\n0\n9\n$EXTMAX\n10\n' + f(S.sheet[0]) + '\n20\n' + f(totalH) + '\n0\nENDSEC');
+  o.push('0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLTYPE\n70\n1\n0\nLTYPE\n2\nCONTINUOUS\n70\n0\n3\nSolid line\n72\n65\n73\n0\n40\n0\n0\nENDTAB\n0\nTABLE\n2\nLAYER\n70\n3');
+  for (const [name, col] of [['CUT', 1], ['ENGRAVE', 5], ['MATERIAL', 2]]) o.push('0\nLAYER\n2\n' + name + '\n70\n0\n62\n' + col + '\n6\nCONTINUOUS');
+  o.push('0\nENDTAB\n0\nENDSEC\n0\nSECTION\n2\nENTITIES');
+  for (const e of ents) {
+    if (e.text) { o.push('0\nTEXT\n8\n' + e.layer + '\n10\n' + f(e.x) + '\n20\n' + Y(e.y) + '\n30\n0\n40\n' + f(e.h) + '\n1\n' + e.text.replace(/[^\x20-\x7e]/g, '') + (e.left ? '' : '\n72\n1\n11\n' + f(e.x) + '\n21\n' + Y(e.y) + '\n31\n0')); continue; }
+    o.push('0\nPOLYLINE\n8\n' + e.layer + '\n66\n1\n70\n' + (e.closed ? 1 : 0) + '\n10\n0\n20\n0\n30\n0');
+    for (const [x, y] of e.pts) o.push('0\nVERTEX\n8\n' + e.layer + '\n10\n' + f(x) + '\n20\n' + Y(y) + '\n30\n0');
+    o.push('0\nSEQEND\n8\n' + e.layer);
+  }
+  o.push('0\nENDSEC\n0\nEOF\n'); return o.join('\n');
 }
 
 /* ---------- aerial photo, resampled into the (possibly rotated) site frame ---------- */
@@ -2318,6 +2401,7 @@ function analysisNotes(rain) {             // what the analysis sheet shows, in 
   if (S.an.keyline && S.keyPt) { const { lv } = keylineFor(S.keyPt[0], S.keyPt[1]); L.push(['KEYLINE', `keyline at ${fL(lv, 1)} · plow lines every ${fL(plowFor(S.plowV), 1)} within the keypoint's catchment`]); }
   if (S.an.swales && S.keyPt) L.push(['SWALES', `on contour, stepping ${fL(swaleDrop(S.swaleV), 1)} down from the keyline · berm on the downhill side`]);
   if (S.an.dam && damAt()) { const dp = damAt(), pool = damPool(an, dp[0], dp[1], S.damH); L.push(['DAM', `${fL(S.damH, 1)} wall · pond ${fBig(pool.area)} · ${fV(pool.vol)} stored`]); }
+  L.push(['METHOD', `flow by steepest descent on pit-filled ground · cells ${fL(cs(), cs() < 10 ? 1 : 0)} across · no soils or land cover · storm ${document.getElementById('o_rain').textContent}, ${Math.round(S.runoff * 100)}% runoff · for exploring a site, not for engineering`]);
   if (S.earth && S.earth.dist > 0) L.push(['EARTHWORK', earthText()]);
   if (S.an.flood) { const fl = floodSim(an, rainMM(S.rainV) / 1000); L.push(['FLOOD', `storm of ${document.getElementById('o_rain').textContent}, ${Math.round(S.runoff * 100)}% runs off · ${fl.pools.length} pool${fl.pools.length === 1 ? '' : 's'}` + fl.pools.slice(0, 3).map(pl => ` · ${fBig(pl.area)}, ${fL(pl.depth, 1)} deep, ${pl.overflow > 0 ? 'overflowing' : Math.round(pl.full * 100) + '% full'}`).join('')]); }
   if (S.an.sun) L.push(['SUN', sunImage().note || (S.sunMode === 'hours' ? 'hours of direct sun per day' : 'shadows at one hour')]);
@@ -2418,10 +2502,10 @@ document.getElementById('sheetBtn').onclick = () => runBusy('drawing the sheet',
 setTimeout(sheetInfo, 0);
 
 /* ---------- project file + session memory ---------- */
-const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise', 'grade', 'strip', 'swell', 'runoff'];
+const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise', 'grade', 'strip', 'swell', 'runoff', 'side'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, labelUp: S.labelUp, showBase: S.showBase, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
@@ -2432,7 +2516,7 @@ function loadProject(pr, fromHome) {
   rawBase = pr.world ? base.slice() : null; S.coast = pr.coast && (pr.coast.segs || pr.coast.blds || pr.coast.roads) ? Object.assign({ segs: [], seeds: [], lakes: [], blds: [], roads: [] }, pr.coast) : null; S.showBld = pr.showBld !== false; S.showRoads = pr.showRoads !== false; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
   if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
   S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = ''; S.trim = !!pr.trim; setOverlay(pr.overlay && pr.overlay.src ? Object.assign({}, pr.overlay) : null); S.overlayOn = pr.overlayOn !== false;
-  S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; S.aerial = !!pr.aerial; S.aerialM = pr.aerialM === undefined ? !!pr.aerial : !!pr.aerialM; if (pr.cam) Object.assign(S.cam, pr.cam); document.getElementById('perspBtn').classList.toggle('on', !!S.cam.persp); if (pr.sheet) S.sheet = pr.sheet;
+  S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; S.labelUp = !!pr.labelUp; S.showBase = pr.showBase !== false; annoUI(); S.aerial = !!pr.aerial; S.aerialM = pr.aerialM === undefined ? !!pr.aerial : !!pr.aerialM; if (pr.cam) Object.assign(S.cam, pr.cam); document.getElementById('perspBtn').classList.toggle('on', !!S.cam.persp); if (pr.sheet) S.sheet = pr.sheet;
   if (pr.unit === 'm' || pr.unit === 'ft') { S.unit = pr.unit; document.getElementById('unit').value = pr.unit; }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
   for (const id of SLIDERS) { if (id === 'relief') continue; const el = document.getElementById(id); if (el.oninput) el.oninput({ target: el }); }
