@@ -113,7 +113,7 @@ canvas.orbit{cursor:grab}
     <a href="index.html">studio</a>
     <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis · 0 reset zoom · wheel zooms, middle-drag pans</span>
   </header>
-  <div class="cmd"><span class="prompt">›</span><span class="hint" id="hint"></span><button id="extents" title="refit the view (0)">zoom extents</button></div>
+  <div class="cmd"><span class="prompt">›</span><span class="hint" id="hint"></span><button id="axon">axon</button><button id="topView">top</button><button id="extents" title="refit the view (0)">zoom extents</button></div>
   <aside>
     <div class="sec">view</div>
     <div id="modes">
@@ -1407,7 +1407,7 @@ const TIPS = {
   'p:unit': 'imperial or metric, everywhere: sheet, notes, exports', 'p:relief': 'height of the invented hills, low point to high point', 'p:interval': 'vertical spacing between contour lines; every fifth one is an index contour', 'p:hach': 'how many short downhill ticks between contours; 0 for none', 'p:ve': 'stretch heights so relief reads in the model and section; 1 is true',
   'p:mm': 'how much the site shrinks to become the object, and how wide it comes out', 'p:thick': 'thickness of the cardboard or plywood you will cut', 'p:sheet': 'the laser bed in mm; layers get nested onto sheets this size', 'p:ledge': 'hollow each layer, leaving a ledge this wide for the next one to sit on; 0 keeps them solid', 'p:paper': 'paper size for the drawing sheet set',
   'p:radius': () => S.brush === 'pen' ? 'width of new pen strokes' : S.brush === 'erase' ? 'how wide the eraser reaches' : 'brush size; it scales with the site width', 'p:strength': () => S.brush === 'pen' ? 'ink opacity of new pen strokes' : 'how hard each pass moves the ground',
-  shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'one drawing sheet: plan over analysis at the same standard scale, with the model, section and notes down the side; every analysis layer that is on and the rain as it stands. pdf at true paper size plus a png', laser: 'cardboard layers nested on sheets for the laser cutter', extents: 'refit the view (0)'
+  shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'one drawing sheet: plan over analysis at the same standard scale, with the model, section and notes down the side; every analysis layer that is on and the rain as it stands. pdf at true paper size plus a png', laser: 'cardboard layers nested on sheets for the laser cutter', axon: 'the model from a 45° corner at the isometric tilt; opens the model view if needed', topView: 'the model straight from above, north up; orbit again to tilt it', extents: 'refit the view (0)'
 };
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
@@ -1457,6 +1457,9 @@ function hintText() {
   return h + ' · ' + nav;
 }
 function updateHint() { if (busyMsg) return; const h = hintText(); if (h !== lastHint) { lastHint = h; document.getElementById('hint').textContent = h; } }
+const setView = (yaw, pitch, name) => { if (S.mode !== 'model') setMode('model'); S.cam.yaw = yaw; S.cam.pitch = pitch; S.cam.pan.x = S.cam.pan.y = 0; S.dirty = true; toast(name); };
+document.getElementById('axon').onclick = () => setView(Math.PI / 4, .6155, 'axonometric · 45° corner, isometric tilt');
+document.getElementById('topView').onclick = () => setView(0, 0, 'top · straight down, north up');
 document.getElementById('extents').onclick = () => { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } toast('view refitted'); };
 
 /* ---------- rail ---------- */
