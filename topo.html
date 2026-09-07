@@ -128,8 +128,7 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('coyote-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(_){}</script>
 <div id="app">
   <header>
-    <span class="logo">coyote_mountain<b>_topo</b></span>
-    <a href="index.html">studio</a>
+    <a class="logo" href="index.html" style="text-decoration:none;color:inherit">coyote_mountain<b>_topo</b></a>
     <a href="flight.html">flight</a>
     <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis · 0 reset zoom · wheel zooms, middle-drag pans</span>
     <button class="theme" id="themeBtn" title="dark or light around the drawing; the paper stays paper">dark</button>

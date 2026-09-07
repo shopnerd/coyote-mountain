@@ -114,8 +114,7 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('coyote-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(_){}</script>
 <div id="app">
   <header>
-    <span class="logo">coyote_mountain<b>_flight</b></span>
-    <a href="index.html">studio</a>
+    <a class="logo" href="index.html" style="text-decoration:none;color:inherit">coyote_mountain<b>_flight</b></a>
     <a href="topo.html">topo</a>
     <span class="read" id="read">click to draw the survey area · double-click closes it · wheel zooms · right-drag pans · 0 refits</span>
     <button class="theme" id="themeBtn" title="dark or light around the drawing; the paper stays paper">dark</button>
