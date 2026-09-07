@@ -185,11 +185,12 @@ canvas.orbit{cursor:grab}
     <div class="params">
       <div class="p"><label>place or lat, lng</label><input type="text" id="place" placeholder="place name or lat, lng" autocomplete="off"></div>
       <div class="seg" style="padding:0;margin-bottom:6px"><button id="fetch" style="flex:2">fetch terrain</button><button id="home" title="Encino Solo">home</button></div>
-      <div class="p"><label>site width · area to fetch<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="3000" step="10" value="60"></div>
+      <div class="p"><label>site width · area to fetch<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="20000" step="10" value="60"></div>
       <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
       <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / geojson</button><button id="kmlClear">clear</button></div>
-      <div class="seg" style="padding:0;margin-top:6px;display:none" id="seaRow"><button data-sea="1" class="on">sea level clip</button><button data-sea="0">raw sea floor</button></div>
+      <div class="seg" style="padding:0;margin-top:6px;display:none" id="seaRow"><button data-sea="1" class="on">water</button><button data-sea="0">raw ground</button></div>
+      <div class="p" id="riseRow" style="display:none"><label>sea level rise<output id="o_rise">0 ft</output></label><input type="range" id="rise" min="0" max="10" step=".25" value="0"></div>
       <input type="file" id="kmlFile" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml,application/geo+json" style="display:none">
       <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
     </div>
@@ -262,9 +263,9 @@ const ramp = (stops, t) => { t = Math.max(0, Math.min(1, t)) * (stops.length - 1
 const rgb = (c, k = 1) => `rgb(${Math.round(c[0] * k)},${Math.round(c[1] * k)},${Math.round(c[2] * k)})`;
 const ELEV = ['#a9bfa5', '#e6dcbb', '#c9a58f', '#8f6a55'], SLOPE = ['#ebeae4', '#e2c3a8', '#C96B3A', '#6b2f14'];
 const ASPECT = ['#9db3c6', '#a3bfae', '#d7a98d', '#b6afdc', '#9db3c6'];   // N, E, S, W, N (muted)
+const WTONE = light => rgb([176, 196, 212], .9 + .1 * light);
 function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   const shade = .78 + .22 * light;
-  if (S.seaClip && mode !== 'aerial' && zavg <= 0 && isSea(idx(Math.max(0, Math.min(W - 1, Math.round(gi))), Math.max(0, Math.min(H - 1, Math.round(gj)))))) return rgb([176, 196, 212], .9 + .1 * light);
   if (mode === 'sun') { const su = sunImage(); const i0 = Math.max(0, Math.min(W - 1, Math.floor(gi))), j0 = Math.max(0, Math.min(H - 1, Math.floor(gj))), i1 = Math.min(W - 1, i0 + 1), j1 = Math.min(H - 1, j0 + 1);
     let r = 0, g = 0, b = 0; for (const n of [idx(i0, j0), idx(i1, j0), idx(i0, j1), idx(i1, j1)]) { r += su.data[n * 4]; g += su.data[n * 4 + 1]; b += su.data[n * 4 + 2]; } return rgb([r / 4, g / 4, b / 4], .9 + .1 * light); }
   if (mode === 'aerial') { const ae = S.world ? aerialImage() : null; if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
@@ -323,9 +324,9 @@ function contourLabels(c, groups, spacing, rotate) {   // groups: Map(level -> [
 }
 function haloText(c, txt, x, y, color) { if (!S.labels) return; c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, x, y); c.fillStyle = color; c.fillText(txt, x, y); }
 function spotLabels(c, toXY) {   // high and low points of the proposed grade
-  let mi = 0, ma = 0; for (let n = 1; n < W * H; n++) { if (z[n] > z[ma]) ma = n; if (z[n] < z[mi]) mi = n; }
+  let mi = 0, ma = 0; for (let n = 1; n < W * H; n++) { if (zv[n] > zv[ma]) ma = n; if (zv[n] < zv[mi]) mi = n; }
   c.font = font(10.5, 600); c.textAlign = 'left'; c.textBaseline = 'middle';
-  for (const [n, glyph] of [[ma, '▲'], [mi, '▼']]) { const p = toXY(n % W, Math.floor(n / W), z[n]); const txt = glyph + ' ' + fL(z[n], 2); const tw = c.measureText(txt).width + 6;
+  for (const [n, glyph] of [[ma, '▲'], [mi, '▼']]) { const p = toXY(n % W, Math.floor(n / W), zv[n]); const txt = glyph + ' ' + fL(zv[n], 2); const tw = c.measureText(txt).width + 6;
     c.fillStyle = ACC; c.beginPath(); c.arc(p[0], p[1], 2.5, 0, TAU); c.fill(); c.lineJoin = 'round'; c.strokeStyle = 'rgba(240,240,236,.9)'; c.lineWidth = 3; c.strokeText(txt, p[0] + 8, p[1] + .5); c.fillStyle = ACC; c.fillText(txt, p[0] + 8, p[1] + .5); }
 }
 const INTERVALS = [0.1, 0.25, 0.5, 1, 2, 5, 10];
@@ -351,8 +352,9 @@ const fbm = (x, y, s) => noise(x, y, s) * .55 + noise(x * 2.1, y * 2.1, s + 1) *
 const W = 150, H = 100;                 // grid nodes; site aspect 3:2
 const base = new Float32Array(W * H);   // existing grade, m
 const z = new Float32Array(W * H);      // proposed grade, m
+let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z;   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, seaClip: false, hasSea: false, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -434,14 +436,9 @@ let fontScale = 1;
 function font(px, weight) { return `${weight || 400} ${px * fontScale}px ${getComputedStyle(document.body).fontFamily}`; }
 
 /* ---------- plan ---------- */
-function drawSea() {                      // flat water where the clipped ground sits at sea level
-  if (!S.seaClip) return; const k = sheet.k, off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d'), img = o.createImageData(W, H), d = img.data, c = hex2('#8fb0c8'); let any = false;
-  for (let n = 0; n < W * H; n++) if (isSea(n)) { d[n * 4] = c[0]; d[n * 4 + 1] = c[1]; d[n * 4 + 2] = c[2]; d[n * 4 + 3] = 70; any = true; }
-  if (!any) return; o.putImageData(img, 0, 0); ctx.imageSmoothingEnabled = false; ctx.drawImage(off, sheet.x - k / 2, sheet.y - k / 2, W * k, H * k); ctx.imageSmoothingEnabled = true;
-}
 let planShot = { key: '' };
 function drawPlan() {                     // cached picture + live overlay; the picture is redrawn only when something on it changes
-  const key = [S.terrainVer, S.strokeVer, S.seaClip, sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom].join('|');
+  const key = [S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom].join('|');
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
@@ -456,7 +453,7 @@ function drawPlanBase() {
   ctx.clearRect(0, 0, S.w, S.h);
   const k = sheet.k, [lo, hi] = range(z), iv = interval();
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
-  const aerialOn = drawAerial(); drawSea();
+  const aerialOn = drawAerial();
   // hachures: strands that run downslope, length by steepness
   if (S.hach > 0) {
     const step = Math.max(2, Math.round(8 - S.hach / 20)), maxLen = 10;
@@ -473,7 +470,7 @@ function drawPlanBase() {
     }
     ctx.stroke(); ctx.globalAlpha = 1;
   }
-  drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt')));
+  drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt'))); drawWater(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false, .55);
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   if (!S.noFoot) {
@@ -494,26 +491,27 @@ function drawPlanBase() {
 }
 let contourCache = { key: '' };
 function contours() {                     // every contour level as linked polylines in grid coords, cached until the ground or the interval changes
-  const iv = interval(), key = S.terrainVer + '|' + iv;
+  zdisp(); const iv = interval(), key = S.terrainVer + '|' + iv + '|' + (S.waterVer || 0) + S.seaClip;
   if (contourCache.key === key) return contourCache;
-  const [lo, hi] = range(z), N = (W - 1) * (H - 1), cmin = new Float32Array(N), cmax = new Float32Array(N);
-  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { const a = z[idx(i, j)], b = z[idx(i + 1, j)], c = z[idx(i + 1, j + 1)], d = z[idx(i, j + 1)], q = j * (W - 1) + i; cmin[q] = Math.min(a, b, c, d); cmax[q] = Math.max(a, b, c, d); }
+  const [lo, hi] = range(zv), N = (W - 1) * (H - 1), cmin = new Float32Array(N), cmax = new Float32Array(N);
+  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { const a = zv[idx(i, j)], b = zv[idx(i + 1, j)], c = zv[idx(i + 1, j + 1)], d = zv[idx(i, j + 1)], q = j * (W - 1) + i; cmin[q] = Math.min(a, b, c, d); cmax[q] = Math.max(a, b, c, d); }
   const levels = [];
   for (let lv = Math.ceil(lo / iv) * iv; lv <= hi; lv += iv) {
     const segs = [];
     for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { const q = j * (W - 1) + i; if (lv < cmin[q] || lv > cmax[q]) continue;
-      const tmp = []; isoSegs(z[idx(i, j)], z[idx(i + 1, j)], z[idx(i + 1, j + 1)], z[idx(i, j + 1)], lv, tmp);
+      const tmp = []; isoSegs(zv[idx(i, j)], zv[idx(i + 1, j)], zv[idx(i + 1, j + 1)], zv[idx(i, j + 1)], lv, tmp);
       for (let t = 0; t < tmp.length; t += 4) segs.push([i + tmp[t], j + tmp[t + 1], i + tmp[t + 2], j + tmp[t + 3], q]); }
     if (segs.length) { const index = isIndex(lv); levels.push({ lv, index, segs, polys: null }); }   // linked into polylines only when labels need them
   }
   contourCache = { key, iv, levels, cmin, cmax }; return contourCache;
 }
 function contourDirty(i0, j0, i1, j1) {   // a brush dab changed nodes in this rect: patch the cached contours there instead of rebuilding every level
-  const C = contourCache; if (C.key !== (S.terrainVer - 1) + '|' + C.iv || !C.levels.length) return;
+  if (zv !== z) for (let j = Math.max(0, j0); j <= Math.min(H - 1, j1 + 1); j++) for (let i = Math.max(0, i0); i <= Math.min(W - 1, i1 + 1); i++) { const n = idx(i, j); zv[n] = isWater(n) ? Math.max(z[n], waterLevel[n]) : z[n]; }
+  const C = contourCache; if (C.key !== (S.terrainVer - 1) + '|' + C.iv + '|' + (S.waterVer || 0) + S.seaClip || !C.levels.length) return;
   i0 = Math.max(0, i0); j0 = Math.max(0, j0); i1 = Math.min(W - 2, i1); j1 = Math.min(H - 2, j1); if (i1 < i0 || j1 < j0) return;
   let lo = 1e9, hi = -1e9, olo = 1e9, ohi = -1e9;
   for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const q = j * (W - 1) + i; if (C.cmin[q] < olo) olo = C.cmin[q]; if (C.cmax[q] > ohi) ohi = C.cmax[q]; }   // the rect's range before the dab
-  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const a = z[idx(i, j)], b = z[idx(i + 1, j)], c = z[idx(i + 1, j + 1)], d = z[idx(i, j + 1)], q = j * (W - 1) + i; C.cmin[q] = Math.min(a, b, c, d); C.cmax[q] = Math.max(a, b, c, d); if (C.cmin[q] < lo) lo = C.cmin[q]; if (C.cmax[q] > hi) hi = C.cmax[q]; }
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const a = zv[idx(i, j)], b = zv[idx(i + 1, j)], c = zv[idx(i + 1, j + 1)], d = zv[idx(i, j + 1)], q = j * (W - 1) + i; C.cmin[q] = Math.min(a, b, c, d); C.cmax[q] = Math.max(a, b, c, d); if (C.cmin[q] < lo) lo = C.cmin[q]; if (C.cmax[q] > hi) hi = C.cmax[q]; }
   // levels that only now exist (the brush pushed the ground past the top or bottom contour) are added empty; their segments come from the rect below
   for (let lv = C.levels[0].lv - C.iv; lv >= Math.ceil(lo / C.iv) * C.iv - 1e-9; lv -= C.iv) C.levels.unshift({ lv, index: isIndex(lv), segs: [], polys: null });
   for (let lv = C.levels[C.levels.length - 1].lv + C.iv; lv <= hi + 1e-9; lv += C.iv) C.levels.push({ lv, index: isIndex(lv), segs: [], polys: null });
@@ -522,10 +520,10 @@ function contourDirty(i0, j0, i1, j1) {   // a brush dab changed nodes in this r
   for (const L of C.levels) { if (L.lv < rlo || L.lv > rhi) continue;   // only levels that cross the rect, before or after
     const keep = []; for (const sg of L.segs) if (!inRect(sg[4])) keep.push(sg);
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { const q = j * (W - 1) + i; if (L.lv < C.cmin[q] || L.lv > C.cmax[q]) continue;
-      const tmp = []; isoSegs(z[idx(i, j)], z[idx(i + 1, j)], z[idx(i + 1, j + 1)], z[idx(i, j + 1)], L.lv, tmp);
+      const tmp = []; isoSegs(zv[idx(i, j)], zv[idx(i + 1, j)], zv[idx(i + 1, j + 1)], zv[idx(i, j + 1)], L.lv, tmp);
       for (let t = 0; t < tmp.length; t += 4) keep.push([i + tmp[t], j + tmp[t + 1], i + tmp[t + 2], j + tmp[t + 3], q]); }
     L.segs = keep; L.polys = null; }
-  C.key = S.terrainVer + '|' + C.iv;
+  C.key = S.terrainVer + '|' + C.iv + '|' + (S.waterVer || 0) + S.seaClip;
 }
 function drawContours(alpha, labels) {
   const { levels } = contours(), k = sheet.k, groups = new Map();
@@ -555,7 +553,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   const fast = S.lowQ && !mini; if (fast) step = Math.max(step, 2);   // while the camera moves: every second cell, no labels; full quality on release
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
+  const s = cs(), [lo, hi] = range(zv), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
   const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
@@ -564,25 +562,30 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   const lx = -.5, ly = -.4, lz = .77;  // light from upper left
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
     const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
-    const za = z[idx(i, j)], zb = z[idx(i2, j)], zc = z[idx(i2, j2)], zd = z[idx(i, j2)];
+    const za = zv[idx(i, j)], zb = zv[idx(i2, j)], zc = zv[idx(i2, j2)], zd = zv[idx(i, j2)];
     const P = [proj(i, j, za), proj(i2, j, zb), proj(i2, j2, zc), proj(i, j2, zd)];
     const gc = grad(i + step / 2, j + step / 2), gx = gc[0], gy = gc[1], nx = -gx * S.ve, ny = -gy * S.ve; const nl = Math.hypot(nx, ny, 1);
     const light = (nx * lx + ny * ly + lz) / nl;
-    const tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2);
+    let tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2), wpart = null, shore = null;
+    if (S.seaClip && wF && mode !== 'aerial') { const f = [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]], nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
+      if (nw === 4) tone = WTONE(light);
+      else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
+        for (let k = 0; k < 4; k++) { const k2 = (k + 1) % 4; if (f[k] >= 0) poly.push([cn[k][0], cn[k][1], zs[k]]); if ((f[k] >= 0) !== (f[k2] >= 0)) { const t = f[k] / (f[k] - f[k2]), q = [cn[k][0] + (cn[k2][0] - cn[k][0]) * t, cn[k][1] + (cn[k2][1] - cn[k][1]) * t, zs[k] + (zs[k2] - zs[k]) * t]; poly.push(q); cross.push(q); } }
+        wpart = poly.map(q => proj(i + q[0] * step, j + q[1] * step, q[2])); if (cross.length >= 2) shore = cross.map(q => proj(i + q[0] * step, j + q[1] * step, q[2] + .02)); } }
     const lines = [];
     const mn = Math.min(za, zb, zc, zd), mx = Math.max(za, zb, zc, zd);
     for (let lv = Math.ceil(mn / iv) * iv; lv <= mx; lv += iv) {
       const tmp = []; isoSegs(za, zb, zc, zd, lv, tmp);
       for (let q = 0; q < tmp.length; q += 4) lines.push([proj(i + tmp[q] * step, j + tmp[q + 1] * step, lv), proj(i + tmp[q + 2] * step, j + tmp[q + 3] * step, lv), isIndex(lv), lv]);
     }
-    items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines });
+    items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines, wpart, shore });
   }
   // base outline first, so the model covers it
   c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
   [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
   // walls of the base slab: one polygon per side, drawn far to near before the surface
   const walls = [];
-  const side = (nodes) => { const top = nodes.map(([i, j]) => proj(i, j, z[idx(i, j)])), bot = nodes.map(([i, j]) => proj(i, j, baseZ));
+  const side = (nodes) => { const top = nodes.map(([i, j]) => proj(i, j, zv[idx(i, j)])), bot = nodes.map(([i, j]) => proj(i, j, baseZ));
     walls.push({ d: top.reduce((a, p) => a + p[2], 0) / top.length, P: top.concat(bot.reverse()) }); };
   const north = [], south = [], west = [], east = [];
   for (let i = 0; i < W; i += step) { north.push([Math.min(i, W - 1), 0]); south.push([Math.min(i, W - 1), H - 1]); }
@@ -596,8 +599,8 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     wl.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
   items.sort((a, b) => a.d - b.d);
   // tiles are filled with a hair of outset instead of being stroked (half the canvas calls); contour lines are batched in runs of near-equal depth
-  const OUT = .4, ln = [], li = [];
-  const flushLines = () => { c.strokeStyle = INK;
+  const OUT = .4, ln = [], li = [], ls = [];
+  const flushLines = () => { if (ls.length) { c.strokeStyle = '#4f7391'; c.lineWidth = 1; c.globalAlpha = .9; c.beginPath(); for (let q = 0; q < ls.length; q++) { const l = ls[q]; c.moveTo(l[0][0], l[0][1]); for (let t = 1; t < l.length; t++) c.lineTo(l[t][0], l[t][1]); } c.stroke(); ls.length = 0; } c.strokeStyle = INK;
     if (ln.length) { c.lineWidth = .6; c.globalAlpha = .7; c.beginPath(); for (let q = 0; q < ln.length; q++) { const l = ln[q]; c.moveTo(l[0][0], l[0][1]); c.lineTo(l[1][0], l[1][1]); } c.stroke(); ln.length = 0; }
     if (li.length) { c.lineWidth = 1.2; c.globalAlpha = .9; c.beginPath(); for (let q = 0; q < li.length; q++) { const l = li[q]; c.moveTo(l[0][0], l[0][1]); c.lineTo(l[1][0], l[1][1]); } c.stroke(); li.length = 0; }
     c.globalAlpha = 1; };
@@ -607,11 +610,12 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     c.fillStyle = it.tone; c.beginPath();
     for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1, x = p[0] + dx / d * OUT, y = p[1] + dy / d * OUT; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
     c.closePath(); c.fill();
+    if (it.wpart) { c.fillStyle = WTONE(.6); c.beginPath(); it.wpart.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); if (it.shore) ls.push(it.shore); }
     for (const l of it.lines) (l[2] ? li : ln).push(l);
     if (++run >= 48) { flushLines(); run = 0; }
   }
   flushLines();
-  drawStrokes(c, (i, j) => proj(i, j, sample(z, i, j) + .04), mini ? .7 : 1, true); drawBoundary(c, (i, j) => proj(i, j, sample(z, i, j) + .05), mini ? .7 : 1, true);
+  drawStrokes(c, (i, j) => proj(i, j, sample(zv, i, j) + .04), mini ? .7 : 1, true); drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   if (S.labels && !mini && !fast) {
     const groups = new Map(), dmed = items.length ? items[Math.floor(items.length * .45)].d : 0;
@@ -622,7 +626,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   if (!mini && mode === 'sun') { c.fillStyle = INK2; c.font = font(10.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(sunCache.note || '', w - 14, h - 10); }
   if (!mini && mode === 'aerial') { c.fillStyle = INK2; c.font = font(10.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(S.world ? (aerialCache.canvas ? 'imagery Esri, Maxar, Earthstar Geographics' : (aerialCache.status || 'loading photo')) : 'fetch real terrain to get a photo', w - 14, h - 10); }
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
-  if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
+  if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], zv[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
   if (mini) return; c.fillText(w < 1150 ? `model · ${S.ve}x vertical · right drag orbit · wheel zoom · double-click reset` : `model · ${S.ve}x vertical · right drag orbit · middle or shift drag pan · ctrl+right drag zoom · wheel zoom · double-click reset · r rain`, 14, h - 10);
 }
 
@@ -668,7 +672,7 @@ function steppedLayers() {
 function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const s = cs(), [lo, hi] = range(z), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
+  const s = cs(), [lo, hi] = range(zv), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
   const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
@@ -692,10 +696,10 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
-  drawStrokes(c, (i, j) => proj(i, j, sample(z, i, j) + .04), mini ? .7 : 1, true); drawBoundary(c, (i, j) => proj(i, j, sample(z, i, j) + .05), mini ? .7 : 1, true);
+  drawStrokes(c, (i, j) => proj(i, j, sample(zv, i, j) + .04), mini ? .7 : 1, true); drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
-  if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], z[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
+  if (S.sculpt && S.pick && !mini) { const { proj, scale } = camera(w, h); const q = proj(S.pick[0], S.pick[1], zv[idx(S.pick[0], S.pick[1])]); c.strokeStyle = ACC; c.lineWidth = 1.2; c.setLineDash([3, 3]); c.beginPath(); c.arc(q[0], q[1], S.radius * scale, 0, TAU); c.stroke(); c.setLineDash([]); }
   if (mini) return; c.fillText(w < 1150 ? `stepped stack · ${layers.length} layers of ${fS(S.thick)} · right drag orbit` : `stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
 }
 
@@ -875,7 +879,7 @@ function floodSim(an, rainM) {           // fill every depression with the rain 
 function drawAnalysis() {
   ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = analyze(), { down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order } = an;
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
-  const aerialOn = drawAerial(); drawSea();
+  const aerialOn = drawAerial();
   const cellXY = n => toSheet(n % W, (n / W) | 0);
   let sunNote = '';
   if (S.an.sun) { const su = sunImage(); sunNote = su.note; ctx.imageSmoothingEnabled = false; ctx.drawImage(su.canvas, sheet.x - k / 2, sheet.y - k / 2, W * k, H * k); ctx.imageSmoothingEnabled = true; }
@@ -893,7 +897,7 @@ function drawAnalysis() {
   if (S.an.flood) { flood = floodSim(an, rainMM(S.rainV) / 1000);
     for (const pl of flood.pools) { ctx.fillStyle = WATER; ctx.globalAlpha = .3 + .45 * Math.min(1, pl.depth / 1.5); fillPool(ctx, pl.loops, (i, j) => toSheet(i, j), pl.level); }
     ctx.globalAlpha = 1; }
-  drawContours(.3, false);
+  drawContours(.3, false); drawWater(ctx, (i, j) => toSheet(i, j), 1, false, .45);
   if (S.an.flow) { ctx.strokeStyle = WATER; ctx.lineCap = 'round';
     for (let n = 0; n < W * H; n++) { if (down[n] < 0 || acc[n] < thrCells * .2) continue; const a = cellXY(n), b = cellXY(down[n]);
       ctx.lineWidth = .5 + 1.6 * Math.log10(acc[n] / thrCells + 1); ctx.globalAlpha = acc[n] >= thrCells ? .9 : .4; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
@@ -993,13 +997,13 @@ function plowField() {                    // furrow direction for every cell in 
     if (bq < 0 || Math.sqrt(bd) > band) continue; const a = pts[Math.max(0, bq - 1)], b = pts[Math.min(pts.length - 1, bq + 1)]; let vx = b[0] - a[0], vy = b[1] - a[1]; const L = Math.hypot(vx, vy) || 1; mask[n] = 1; tx[n] = vx / L; ty[n] = vy / L; }
   return (plowCache = { key, mask, tx, ty, acc: an.acc });
 }
-function stepRain() {
+function stepRain() {   // drops run on the ground, not the water surface
   const d = depressions(), dropVol = d.A * .025, pf = S.an.plow ? plowField() : null, chan = analyze().chan;
   for (let q = 0; q < 5 && drops.length < 1400; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0, trail: [] });
   const finish = dr => { rainStats.done++; };
   const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); finish(dr); drops.splice(q, 1); }; const db = damBasinGet();
   for (let q = drops.length - 1; q >= 0; q--) { const dr = drops[q]; dr.age++; dr.trail.push([dr.x, dr.y]); if (dr.trail.length > 14) dr.trail.shift();
-    const n = idx(Math.round(dr.x), Math.round(dr.y)), c = d.comp[n]; if (isSea(n)) { rainStats.creek++; rainStats.run += (dr.run || 0) * cs(); finish(dr); drops.splice(q, 1); continue; }
+    const n = idx(Math.round(dr.x), Math.round(dr.y)), c = d.comp[n]; if (isWater(n)) { rainStats.creek++; rainStats.run += (dr.run || 0) * cs(); finish(dr); drops.splice(q, 1); continue; }
     if (db && db.cells.length && db.mask[n] && sample(z, dr.x, dr.y) <= db.level + .002) { absorb(db, dr, q); continue; }   // caught behind the dam
     if (c >= 0 && sample(z, dr.x, dr.y) <= d.comps[c].level + .002) { absorb(d.comps[c], dr, q); continue; }   // ran into a pool
     if (chan[n] && !dr.creek) { dr.creek = true; rainStats.creek++; rainStats.run += (dr.run || 0) * cs(); }
@@ -1048,35 +1052,37 @@ function rainText(pooled, db, forSheet) {
 
 /* ---------- section ---------- */
 function sectionProfile(n) {
-  const [a, b] = S.sec, L = Math.hypot(b[0] - a[0], b[1] - a[1]) * cs(), prop = [], ex = [];
-  for (let q = 0; q <= n; q++) { const t = q / n, gx = a[0] + (b[0] - a[0]) * t, gy = a[1] + (b[1] - a[1]) * t; prop.push(sample(z, gx, gy)); ex.push(sample(base, gx, gy)); }
-  return { L, prop, ex };
+  zdisp(); const [a, b] = S.sec, L = Math.hypot(b[0] - a[0], b[1] - a[1]) * cs(), prop = [], ex = [], gnd = [];
+  for (let q = 0; q <= n; q++) { const t = q / n, gx = a[0] + (b[0] - a[0]) * t, gy = a[1] + (b[1] - a[1]) * t; prop.push(sample(zv, gx, gy)); gnd.push(sample(z, gx, gy)); ex.push(sample(base, gx, gy)); }
+  return { L, prop, ex, gnd };
 }
 function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {
   c.clearRect(0, 0, w, h);
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'center'; c.textBaseline = 'middle';
   if (!S.sec) { c.fillText('no section yet. in plan, pick "draw section line a to b" and drag across the sheet.', w / 2, h / 2); return; }
-  const n = 240, { L, prop, ex } = sectionProfile(n), iv = interval();
-  const lo = Math.min(...prop, ...ex), hi = Math.max(...prop, ...ex);
+  const n = 240, { L, prop, ex, gnd } = sectionProfile(n), iv = interval();
+  const lo = Math.min(...gnd, ...ex), hi = Math.max(...gnd, ...ex, ...prop);
   const mL = mini ? 40 : 64, mR = mini ? 16 : 30, mB = mini ? 34 : 60, pw = w - mL - mR;
   let pxm = pw / L, ph = (hi - lo) * pxm * S.ve, vs = S.ve;
   if (ph > h - 50 - mB) { vs = (h - 50 - mB) / ((hi - lo) * pxm); ph = h - 50 - mB; }
   const mT = Math.max(50, (h - ph - mB) / 2);
   const ground = mT + ph + 6, X = q => mL + q / n * pw, Y = v => ground - (v - lo) * pxm * vs;
   // earth below proposed: hatch
-  c.save(); c.beginPath(); c.moveTo(X(0), ground + 30); prop.forEach((v, q) => c.lineTo(X(q), Y(v))); c.lineTo(X(n), ground + 30); c.closePath(); c.clip();
+  c.save(); c.beginPath(); c.moveTo(X(0), ground + 30); gnd.forEach((v, q) => c.lineTo(X(q), Y(v))); c.lineTo(X(n), ground + 30); c.closePath(); c.clip();
   c.strokeStyle = INK; c.globalAlpha = .28; c.lineWidth = .6; c.beginPath();
   for (let x = mL - 400; x < w; x += 9) { c.moveTo(x, mT - 20); c.lineTo(x + 400, ground + 60); } c.stroke(); c.restore(); c.globalAlpha = 1;
-  // cut and fill bands between existing and proposed
+  // water: a band between the ground and the water surface
+  { let on = false; c.fillStyle = '#9dbad2'; c.globalAlpha = .6; for (let q = 0; q <= n; q++) { const w = prop[q] > gnd[q] + .01; if (w && !on) { c.beginPath(); c.moveTo(X(q), Y(prop[q])); on = true; } if (on) c.lineTo(X(q), Y(prop[q])); if (on && (!w || q === n)) { for (let t = q; t >= 0 && (t === q || prop[t] > gnd[t] + .01); t--) c.lineTo(X(t), Y(gnd[t])); c.closePath(); c.fill(); on = false; } } c.globalAlpha = 1; }
+  // cut and fill bands between existing and proposed ground
   let cutA = 0, fillA = 0; const dx = L / n;
   for (let q = 0; q < n; q++) {
-    const d0 = prop[q] - ex[q], d1 = prop[q + 1] - ex[q + 1]; const area = (d0 + d1) / 2 * dx; if (area > 0) fillA += area; else cutA -= area;
-    c.beginPath(); c.moveTo(X(q), Y(ex[q])); c.lineTo(X(q + 1), Y(ex[q + 1])); c.lineTo(X(q + 1), Y(prop[q + 1])); c.lineTo(X(q), Y(prop[q])); c.closePath();
+    const d0 = gnd[q] - ex[q], d1 = gnd[q + 1] - ex[q + 1]; const area = (d0 + d1) / 2 * dx; if (area > 0) fillA += area; else cutA -= area;
+    c.beginPath(); c.moveTo(X(q), Y(ex[q])); c.lineTo(X(q + 1), Y(ex[q + 1])); c.lineTo(X(q + 1), Y(gnd[q + 1])); c.lineTo(X(q), Y(gnd[q])); c.closePath();
     c.fillStyle = area > 0 ? 'rgba(201,107,58,.28)' : 'rgba(42,42,40,.16)'; c.fill();
   }
   // existing dashed, proposed solid
   c.strokeStyle = INK2; c.lineWidth = 1; c.setLineDash([5, 4]); c.beginPath(); ex.forEach((v, q) => q ? c.lineTo(X(q), Y(v)) : c.moveTo(X(q), Y(v))); c.stroke(); c.setLineDash([]);
-  c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); prop.forEach((v, q) => q ? c.lineTo(X(q), Y(v)) : c.moveTo(X(q), Y(v))); c.stroke();
+  c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); gnd.forEach((v, q) => q ? c.lineTo(X(q), Y(v)) : c.moveTo(X(q), Y(v))); c.stroke();
   // datum axis with elevation ticks
   c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL, Y(lo) + 2); c.lineTo(mL, Y(hi) - 8); c.stroke();
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'right'; c.textBaseline = 'middle';
@@ -1103,7 +1109,7 @@ function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {
 
 /* ---------- loop ---------- */
 function frame(now) {
-  tickSun(now || performance.now()); updateHint();
+  tickSun(now || performance.now()); updateHint(); zdisp();
   if ((S.mode === 'model' || S.mode === 'analysis') && S.rain) { if (!S.rainPaused) stepRain(); drawRain(); S.dirty = false; drawPip(); }
   else if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel(ctx, S.w, S.h, 1)); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); if (busyFrames > 0 && --busyFrames === 0) unbusy(); }
   requestAnimationFrame(frame);
@@ -1335,7 +1341,7 @@ const TIPS = {
   's:hour': 'shade the ground for one month and hour, with cast shadows', 's:hours': 'colour the ground by hours of direct sun in a day', playDay: 'sweep the hour from dawn to dusk', playYear: 'sweep the months at this hour',
   'c:paper': 'plain paper tones', 'c:elevation': 'green low to ember high', 'c:slope': 'paper flat to ember steep', 'c:aspect': 'which way each slope faces', 'c:aerial': 'the satellite photo on the ground', 'c:sun': 'sun shading on the ground', 's:smooth': 'the ground as a continuous surface', 's:stepped': 'the ground as the cardboard stack you would cut',
   'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush',
-  kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'sea:1': 'the ocean in the elevation tiles is coarse bathymetry; flatten everything below sea level to 0 and treat it as water', 'sea:0': 'keep the fetched sea floor as it came (for places genuinely below sea level)', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
+  kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
   reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label',
   'p:month': 'month of the year for the sun study', 'p:hour': 'hour of the day for the sun study, solar time', 'p:rain': 'rain falling on the whole site in one storm, no soak-in', 'p:thr': 'how much upstream ground it takes to count as a stream', 'p:plow': 'distance between plow lines, measured on the ground', 'p:swale': 'vertical drop from one swale to the next', 'p:dam': 'wall height of the dam; the pond fills to its crest',
   'p:place': 'a place name, or lat, lng. then press fetch', 'p:siteW': 'how wide a piece of the world to fetch. wider means coarser ground; it refetches when this changes', 'p:rot': 'turn the fetched area so a long feature lies along the sheet', 'p:aop': 'how strongly the satellite photo shows through',
@@ -1589,9 +1595,9 @@ document.getElementById('sculptRow').onclick = e => { const b = e.target.closest
 
 document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetchWorld(); };
 document.getElementById('laser').onclick = () => runBusy('cutting the layers', () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); });
-document.getElementById('reseed').onclick = () => { snapshot(); S.world = null; rawBase = null; S.hasSea = S.seaClip = false; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
+document.getElementById('reseed').onclick = () => { snapshot(); S.world = null; rawBase = null; S.hasSea = S.seaClip = S.hasWater = false; waterMask = null; worldStatus('noise terrain. fetch pulls 30 m elevation data at the site width below.'); S.seed = Math.floor(Math.random() * 1e6); buildExisting(); resetGrading(); toast('new existing grade'); };
 document.getElementById('reset').onclick = () => { snapshot(); resetGrading(); toast('grading reset to existing'); };
-document.getElementById('wipe').onclick = () => { snapshot(); S.strokes = []; S.strokeVer++; base.fill(0); S.world = null; rawBase = null; S.hasSea = S.seaClip = false; S.sec = null; worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
+document.getElementById('wipe').onclick = () => { snapshot(); S.strokes = []; S.strokeVer++; base.fill(0); S.world = null; rawBase = null; S.hasSea = S.seaClip = S.hasWater = false; waterMask = null; S.sec = null; worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
 document.getElementById('png').onclick = () => {
   const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height; const o = out.getContext('2d');
   o.fillStyle = PAPER; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0);
@@ -1602,9 +1608,9 @@ function dl(href, name) { const a = document.createElement('a'); a.href = href; 
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1600); }
 
 /* ---------- binary stl: surface + walls + bottom, in mm ---------- */
-function stl() {
-  const k = S.mm / S.siteW, [lo] = range(z), baseT = 3, s = cs() * k;
-  const X = i => i * s, Y = j => (H - 1 - j) * s, Z = n => (z[n] - lo) * S.ve * k + baseT;
+function stl() { zdisp();
+  const k = S.mm / S.siteW, [lo] = range(zv), baseT = 3, s = cs() * k;
+  const X = i => i * s, Y = j => (H - 1 - j) * s, Z = n => (zv[n] - lo) * S.ve * k + baseT;
   const tris = [];
   const T = (a, b, c) => tris.push(a, b, c);
   for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) {
@@ -1627,7 +1633,7 @@ function stl() {
 }
 
 /* ---------- laser: contour stack out of cardboard ---------- */
-function layerLoops(level, field = z) {   // closed loops (grid coords) around everything at or above level
+function layerLoops(level, field = zv) {   // closed loops (grid coords) around everything at or above level
   const PW = W + 2, PH = H + 2, F = new Float32Array(PW * PH).fill(level - 1);
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) F[(j + 1) * PW + i + 1] = field[idx(i, j)];
   const segs = [];
@@ -1664,11 +1670,11 @@ function distIn(mask) {                   // chamfer distance (cells) from each 
   return D;
 }
 function insetLoops(level, ledgeCells) {   // loops of the region at/above level, shrunk inward by ledgeCells
-  const mask = new Uint8Array(W * H); for (let n = 0; n < W * H; n++) mask[n] = z[n] >= level ? 1 : 0;
+  const mask = new Uint8Array(W * H); for (let n = 0; n < W * H; n++) mask[n] = zv[n] >= level ? 1 : 0;
   return layerLoops(ledgeCells, distIn(mask)).filter(l => l.length > 8);
 }
-function layerPlan() {
-  const k = S.mm / S.siteW, [lo, hi] = range(z), dz = S.thick / (k * S.ve), n = Math.floor((hi - lo) / dz + 1e-9);
+function layerPlan() { zdisp();
+  const k = S.mm / S.siteW, [lo, hi] = range(zv), dz = S.thick / (k * S.ve), n = Math.floor((hi - lo) / dz + 1e-9);
   return { k, lo, hi, dz, n, gu: cs() * k };
 }
 function footInfo() {                      // the printed object: width x depth x height at this scale
@@ -1681,7 +1687,7 @@ function layersInfo() {
   el.textContent = `${n + 1} layers · ${fL(dz, 2)} of grade per sheet · stack ${fS((n + 1) * S.thick)} tall`;
   el.style.color = n + 1 > 80 ? 'var(--accent)' : '';
 }
-function laserSVG() {
+function laserSVG() { zdisp();
   const { lo, dz, n, gu } = layerPlan(), [sw, sh] = S.sheet, margin = 10, gap = 6, ledgeC = S.ledge / gu, HAIR = '0.0254';
   const modelW = (W - 1) * gu, modelH = (H - 1) * gu;
   if (modelW > sw - 2 * margin || modelH > sh - 2 * margin) { toast(`model ${modelW.toFixed(0)} × ${modelH.toFixed(0)} mm does not fit the sheet`); return null; }
@@ -1691,7 +1697,7 @@ function laserSVG() {
     const level = lo + i * dz, loops = layerLoops(level); if (!loops.length) continue;
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const l of loops) for (const [x, y] of l) { if (x < x0) x0 = x; if (y < y0) y0 = y; if (x > x1) x1 = x; if (y > y1) y1 = y; }
-    const mask = new Uint8Array(W * H); for (let q = 0; q < W * H; q++) mask[q] = z[q] >= level ? 1 : 0;
+    const mask = new Uint8Array(W * H); for (let q = 0; q < W * H; q++) mask[q] = zv[q] >= level ? 1 : 0;
     layers.push({ i, level, loops, holes: [], mask, bb: [x0 * gu, y0 * gu, x1 * gu, y1 * gu] });
   }
   const pickMax = D => { let best = -1, bd = 0; for (let c = 0; c < W * H; c++) if (D[c] > bd) { bd = D[c]; best = c; } return best >= 0 ? { i: best % W, j: (best / W) | 0, d: bd * gu } : null; };
@@ -1808,7 +1814,7 @@ document.getElementById('kmlClear').onclick = () => { S.boundary = null; boundar
 
 /* ---------- world: real elevation for any place ---------- */
 function worldStatus(msg) { document.getElementById('worldStatus').textContent = msg; groundControls(); }
-function groundControls() { const real = !!S.world; document.getElementById('seaRow').style.display = S.hasSea ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
+function groundControls() { const real = !!S.world; document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
 function nodeLatLon(i, j, lat, lon) { const sx = (i - (W - 1) / 2) * cs(), sy = ((H - 1) / 2 - j) * cs(), t = S.rot * D2R, dx = sx * Math.cos(t) + sy * Math.sin(t), dy = -sx * Math.sin(t) + sy * Math.cos(t); return [lat + dy / 111320, lon + dx / (111320 * Math.cos(lat * D2R))]; }
 function loadImage(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => rej(new Error('tile blocked')); im.src = url; }); }
 async function loadTerrarium(lat, lon) {
@@ -1845,16 +1851,58 @@ function autoInterval() { const [lo, hi] = range(base), list = isFt() ? INTERVAL
   const el = document.getElementById('interval'); if (+el.value !== k) { el.value = k; el.dispatchEvent(new Event('input')); } }
 const HOME = { lat: 32.015109, lon: -116.777769, name: 'Encino Solo', siteW: 1000 };
 let rawBase = null;                       // the ground as fetched, before any sea clip
-function seaDetect() {                    // after a fetch: remember the raw ground, and clip if a real share of it is at or below sea level
-  rawBase = base.slice(); let below = 0, hi = -1e9; for (let n = 0; n < W * H; n++) { if (rawBase[n] <= 0) below++; if (rawBase[n] > hi) hi = rawBase[n]; }
-  S.hasSea = below >= W * H * .02 && hi > 0; S.seaClip = S.hasSea; applySea();
+function waterDetect() {                  // from the fetched ground: the sea (≤ 0, grown through anything ≤ the sea rise), and flat lakes above it
+  const N = W * H; waterMask = new Uint8Array(N); waterLevel = new Float32Array(N); S.hasSea = false; S.hasWater = false; if (!rawBase) return;
+  const src = rawBase, rise = S.seaRise || 0, q = [];
+  for (let n = 0; n < N; n++) if (src[n] <= 0) { waterMask[n] = 1; waterLevel[n] = rise; q.push(n); }
+  S.hasSea = q.length > 0;
+  while (q.length) { const n = q.pop(), i = n % W, j = (n / W) | 0;   // bathtub: the sea climbs onto land that is below the raised level and connected to it
+    for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (!waterMask[m] && src[m] <= rise) { waterMask[m] = 1; waterLevel[m] = rise; q.push(m); } } }
+  const flat = new Uint8Array(N);          // lakes: the tiles carry them as perfectly flat patches
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); if (waterMask[n] || src[n] <= 0) continue; let mn = 1e9, mx = -1e9;
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const v = src[idx(Math.max(0, Math.min(W - 1, i + di)), Math.max(0, Math.min(H - 1, j + dj)))]; if (v < mn) mn = v; if (v > mx) mx = v; }
+    if (mx - mn < .02) flat[n] = 1; }
+  const seen = new Uint8Array(N);
+  for (let n0 = 0; n0 < N; n0++) { if (!flat[n0] || seen[n0]) continue; const comp = [n0]; seen[n0] = 1; let sum = 0;
+    for (let t = 0; t < comp.length; t++) { const n = comp[t], i = n % W, j = (n / W) | 0; sum += src[n];
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (flat[m] && !seen[m]) { seen[m] = 1; comp.push(m); } } }
+    if (comp.length >= 30) { const lv = sum / comp.length; for (const n of comp) { waterMask[n] = 1; waterLevel[n] = lv; } } }
+  for (let n = 0; n < N; n++) if (waterMask[n]) { S.hasWater = true; break; }
+  wF = new Float32Array(N).fill(-1);       // wet cells: how far the water stands above the raw ground (clamped); dry neighbours: how far the land rises above the water
+  for (let n = 0; n < N; n++) if (waterMask[n]) { const L = waterLevel[n], i = n % W, j = (n / W) | 0; wF[n] = Math.max(.2, Math.min(5, L - src[n]));
+    for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if ((!di && !dj) || ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (!waterMask[m]) { const v = Math.min(-1e-4, L - src[m]); if (wF[m] === -1 || v > wF[m]) wF[m] = v; } } }
+  S.waterVer = (S.waterVer || 0) + 1; waterLoopCache.key = '';
 }
-function applySea() {                     // base = raw, clipped at 0 when the clip is on; grading deltas ride along
-  if (!rawBase) return; for (let n = 0; n < W * H; n++) { const nb = S.seaClip ? Math.max(0, rawBase[n]) : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
-  S.terrainVer++; S.dirty = true; updateStats(); groundControls();
+function seaDetect() {                    // after a fetch: remember the raw ground, find the water, clip the sea floor
+  rawBase = base.slice(); waterDetect(); S.seaClip = S.hasWater; applySea();
 }
-const isSea = n => S.seaClip && base[n] <= 0 && z[n] <= 0;
-document.getElementById('seaRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.seaClip = b.dataset.sea === '1'; applySea(); toast(S.seaClip ? 'sea flattened to sea level' : 'raw sea floor'); };
+function applySea() {                     // base = raw, with the sea floor clipped to 0 when water is on; grading deltas ride along
+  if (!rawBase) return; for (let n = 0; n < W * H; n++) { const nb = S.seaClip && rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
+  S.terrainVer++; S.waterVer = (S.waterVer || 0) + 1; S.dirty = true; updateStats(); groundControls();
+}
+const isWater = n => !!(S.seaClip && waterMask && waterMask[n] && z[n] <= waterLevel[n] + .01);   // ground graded up out of the water is land again
+const isSea = isWater;
+// zv (declared with z): what the views show — the ground, with water cells lifted to their water level
+function zdisp() {
+  const key = S.terrainVer + '|' + (S.waterVer || 0) + '|' + S.seaClip;
+  if (zvKey === key) return zv; zvKey = key;
+  if (!S.seaClip || !waterMask || !S.hasWater) { zv = z; return zv; }
+  if (zv === z) zv = new Float32Array(W * H);
+  for (let n = 0; n < W * H; n++) zv[n] = isWater(n) ? Math.max(z[n], waterLevel[n]) : z[n];
+  return zv;
+}
+function waterLoops() {                   // shorelines: loops around the water cells, in grid coords
+  const key = (S.waterVer || 0) + '|' + S.terrainVer + '|' + S.seaClip; if (waterLoopCache.key === key) return waterLoopCache.loops;
+  let loops = []; if (S.seaClip && wF && S.hasWater) loops = layerLoops(0, wF);   // the zero line of the shoreline field: smooth, between cell centres
+  waterLoopCache = { key, loops }; return loops;
+}
+function drawWater(c, toXY, k, dense, alpha) {   // flat blue water with a shoreline, through any projection (on the model the surface is already lifted, so this is the tint and the edge)
+  const loops = waterLoops(); if (!loops.length) return;
+  c.save(); c.beginPath(); for (const l of loops) { const P = dense ? densify(l.map(q => [q[0], q[1], .5]), .3) : l; P.forEach((q, t) => { const p = toXY(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); }
+  c.fillStyle = '#9dbad2'; c.globalAlpha = alpha; c.fill('evenodd'); c.globalAlpha = 1; c.strokeStyle = '#4f7391'; c.lineWidth = .9 * k; c.stroke(); c.restore();
+}
+document.getElementById('seaRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.seaClip = b.dataset.sea === '1'; applySea(); toast(S.seaClip ? 'water shown flat at its level' : 'raw ground, no water'); };
+bind('rise', v => fL(v, 1), v => { S.seaRise = v; if (rawBase) { waterDetect(); S.waterVer++; S.dirty = true; } });
 let fetching = false;
 async function fetchWorld(known, quiet) {
   if (fetching) return; const btn = document.getElementById('fetch');
@@ -1886,7 +1934,7 @@ async function fetchWorld(known, quiet) {
 }
 
 /* ---------- drawing sheet: plan at a standard scale, section, model, title block ---------- */
-const SCALES_FT = [10, 20, 30, 40, 50, 60, 80, 100, 200, 300, 400, 500, 600, 800, 1000, 2000], SCALES_M = [100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000];
+const SCALES_FT = [10, 20, 30, 40, 50, 60, 80, 100, 200, 300, 400, 500, 600, 800, 1000, 2000, 3000, 4000, 5000, 6000, 8000, 10000], SCALES_M = [100, 200, 250, 500, 1000, 2000, 2500, 5000, 10000, 20000, 25000, 50000, 100000, 200000];
 function pickScale(boxWpx, boxHpx, dpi) {   // largest standard scale at which the whole site fits the plan box
   const siteW = S.siteW, siteH = S.siteW * (H - 1) / (W - 1), pad = .92;
   if (isFt()) { for (const F of SCALES_FT) { const ppm = dpi / (F * .3048); if (siteW * ppm <= boxWpx * pad && siteH * ppm <= boxHpx * pad) return { ppm, label: `1 in = ${F} ft`, ratio: Math.round(F * 12), unitM: F * .3048, unitLabel: v => Math.round(v / .3048) + ' ft' }; } const F = SCALES_FT.at(-1); return { ppm: dpi / (F * .3048), label: `1 in = ${F} ft`, ratio: F * 12, unitM: F * .3048, unitLabel: v => Math.round(v / .3048) + ' ft' }; }
@@ -1920,7 +1968,7 @@ function analysisNotes(rain) {             // what the analysis sheet shows, in 
   L.push(['NOTE', `figures are indicative: ${S.world ? 'elevation data about 30 m (10 m in the US)' : 'invented ground'} on ${fL(cs(), 0)} cells; areas and volumes rounded to two figures`]);
   return L;
 }
-function drawingSheet() {                  // one sheet: plan over analysis at the same scale on the left; model, section and notes down the right
+function drawingSheet() { zdisp();         // one sheet: plan over analysis at the same scale on the left; model, section and notes down the right
   const [pw_, ph_] = document.getElementById('paper').value.split('x').map(Number), dpi = 100, PW = Math.round(pw_ * dpi), PH = Math.round(ph_ * dpi), fam = getComputedStyle(document.body).fontFamily;
   const m = .5 * dpi, tb = 1.3 * dpi, gap = .25 * dpi;                                  // margins, title block, gutter
   const inner = { x: m, y: m, w: PW - 2 * m, h: PH - 2 * m - tb };
@@ -2007,7 +2055,7 @@ document.getElementById('sheetBtn').onclick = () => runBusy('drawing the sheet',
 setTimeout(sheetInfo, 0);
 
 /* ---------- project file + session memory ---------- */
-const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop'];
+const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
   return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
@@ -2017,7 +2065,7 @@ function loadProject(pr, fromHome) {
   if (fromHome) S.homeSaved = pr.saved || '';
   if (!pr || pr.app !== 'coyote-topo' || !pr.base || pr.base.length !== W * H) throw new Error('not a coyote topo file');
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
-  rawBase = pr.world ? base.slice() : null; { let below = 0, hi = -1e9; if (rawBase) for (let n = 0; n < W * H; n++) { if (rawBase[n] <= 0) below++; if (rawBase[n] > hi) hi = rawBase[n]; } S.hasSea = !!rawBase && below >= W * H * .02 && hi > 0; S.seaClip = S.hasSea && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = Math.max(0, rawBase[n]); z[n] += nb - base[n]; base[n] = nb; } }
+  rawBase = pr.world ? base.slice() : null; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
   if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
   S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = '';
   S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
