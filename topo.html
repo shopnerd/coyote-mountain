@@ -277,7 +277,7 @@ function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   const shade = .78 + .22 * light;
   if (mode === 'sun') { const su = sunImage(); const i0 = Math.max(0, Math.min(W - 1, Math.floor(gi))), j0 = Math.max(0, Math.min(H - 1, Math.floor(gj))), i1 = Math.min(W - 1, i0 + 1), j1 = Math.min(H - 1, j0 + 1);
     let r = 0, g = 0, b = 0; for (const n of [idx(i0, j0), idx(i1, j0), idx(i0, j1), idx(i1, j1)]) { r += su.data[n * 4]; g += su.data[n * 4 + 1]; b += su.data[n * 4 + 2]; } return rgb([r / 4, g / 4, b / 4], .9 + .1 * light); }
-  if (mode === 'aerial') { const ae = S.aerial && S.world ? aerialImage() : overlayRaster(); if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
+  if (mode === 'aerial') { const ae = S.aerialM && S.world ? aerialImage() : overlayRaster(); if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
     const cx = Math.round(gi * AER), cy = Math.round(gj * AER), hh = AER >> 1; let r = 0, g = 0, b = 0, n = 0; for (let y = cy - hh; y < cy + hh; y++) for (let x = cx - hh; x < cx + hh; x++) { if (x < 0 || y < 0 || x >= ae.rw || y >= ae.rh) continue; const q = (y * ae.rw + x) * 4; if (!ae.data[q + 3]) continue; r += ae.data[q]; g += ae.data[q + 1]; b += ae.data[q + 2]; n++; }
     return n ? rgb([r / n, g / n, b / n], .85 + .2 * light) : TONES[1]; }
   if (mode === 'cutfill') { const n = idx(Math.max(0, Math.min(W - 1, Math.round(gi))), Math.max(0, Math.min(H - 1, Math.round(gj)))), d = z[n] - base[n]; if (d > .05) return rgb(mix('#ebeae4', '#C96B3A', Math.min(1, d / 2)), shade); if (d < -.05) return rgb(mix('#ebeae4', '#6e6d68', Math.min(1, -d / 2)), shade); }
@@ -367,7 +367,7 @@ let base = new Float32Array(W * H);     // existing grade, m
 let z = new Float32Array(W * H);        // proposed grade, m
 let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z;   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -589,7 +589,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
     const dv = y1 * sp + Z * cp, f = S.cam.persp ? PD / Math.max(PD * .15, PD - dv) : 1; return [ox + x1 * scale * f, oy + (y1 * cp - Z * sp) * scale * f, dv]; };
   const tin = (i, j) => { if (!tm) return true; if (i < 0 || j < 0 || i > W - 2 || j > H - 2) return false; return !!tm.tiles[Math.min(H - 2, j + (step >> 1)) * (W - 1) + Math.min(W - 2, i + (step >> 1))]; };
-  const ovR = overlayRaster(), items = [], iv = interval(), mode = (S.aerial || ovR) && S.colorMode !== 'sun' ? 'aerial' : S.colorMode;   // the photo wins whenever it is on, except under a sun study
+  const ovR = overlayRaster(), items = [], iv = interval(), mode = (S.aerialM || ovR) && S.colorMode !== 'sun' ? 'aerial' : S.colorMode;   // the model photo wins whenever it is on, except under a sun study
   const lx = -.5, ly = -.4, lz = .77;  // light from upper left
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
     if (tm && !tin(i, j)) continue;
@@ -603,7 +603,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const light = (nx * lx + ny * ly + lz) / nl;
     let tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2), wpart = null, shore = null;
     let wet = false, tex = null;
-    if (mode === 'aerial' && !fast && ((S.aerial && aerialCache.canvas) || ovR)) tex = [i * AER, j * AER, step * AER, step * AER, light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
+    if (mode === 'aerial' && !fast && ((S.aerialM && aerialCache.canvas) || ovR)) tex = [i * AER, j * AER, step * AER, step * AER, light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
     if (S.seaClip && wF) { const f = [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]], nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
       if (nw === 4) { tone = WTONE(light); wet = true; }
       else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
@@ -654,7 +654,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const P = it.P, cx = (P[0][0] + P[1][0] + P[2][0] + P[3][0]) * .25, cyy = (P[0][1] + P[1][1] + P[2][1] + P[3][1]) * .25;
     if (it.tex) {   // the photo patch mapped onto the tile: unit square -> the tile's projected corners (affine on three corners); the tile is first filled with its average colour so the fourth corner's miss never shows white
       c.fillStyle = it.tone; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1; if (k) c.lineTo(p[0] + dx / d * OUT, p[1] + dy / d * OUT); else c.moveTo(p[0] + dx / d * OUT, p[1] + dy / d * OUT); } c.closePath(); c.fill();
-      const t = it.tex; c.save(); c.transform(P[1][0] - P[0][0], P[1][1] - P[0][1], P[3][0] - P[0][0], P[3][1] - P[0][1], P[0][0], P[0][1]); if (S.aerial && aerialCache.canvas) c.drawImage(aerialCache.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); if (ovR) { c.globalAlpha = .85; c.drawImage(ovR.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); c.globalAlpha = 1; } c.restore();
+      const t = it.tex; c.save(); c.transform(P[1][0] - P[0][0], P[1][1] - P[0][1], P[3][0] - P[0][0], P[3][1] - P[0][1], P[0][0], P[0][1]); if (S.aerialM && aerialCache.canvas) c.drawImage(aerialCache.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); if (ovR) { c.globalAlpha = .85; c.drawImage(ovR.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); c.globalAlpha = 1; } c.restore();
       const sh = Math.max(0, Math.min(.5, (1 - t[4]) * .45)); if (sh > .02) { c.fillStyle = `rgba(20,24,20,${sh.toFixed(3)})`; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k]; if (k) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); } c.closePath(); c.fill(); } }
     else { c.fillStyle = it.tone; c.beginPath();
       for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1, x = p[0] + dx / d * OUT, y = p[1] + dy / d * OUT; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
@@ -1035,7 +1035,7 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerial, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
@@ -1181,7 +1181,7 @@ const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw 
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 let pipShot = { key: '', canvas: null };
 function pipFrame() {                     // the 3d preview drawn once (camera already swapped in by drawPip), reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerial, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
   if (pipShot.key !== key) { const now = performance.now(); if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt') && pipShot.canvas) return pipShot.canvas;
     const off = document.createElement('canvas'); off.width = Math.max(1, Math.round(pw * dpr)); off.height = Math.max(1, Math.round(ph * dpr)); const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0); o.fillStyle = PAPER; o.fillRect(0, 0, pw, ph);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, pw, ph, 3, true); pipShot = { key, canvas: off, t: now }; }
@@ -1483,7 +1483,7 @@ function setMode(m) {
   else if (m !== 'model' && S.mode === 'model' && S.planBrush) { setBrush(S.planBrush); S.planBrush = null; }
   document.querySelectorAll('#brushes .planOnly').forEach(b => b.style.display = m === 'model' ? 'none' : '');
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
-  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null;
+  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null; aerialUI();
   cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
@@ -1599,9 +1599,13 @@ const setSiteW = (v, silent) => { const el = document.getElementById('siteW'); e
 document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
 bind('rot', v => v + '°', v => S.rot = v);
 bind('aop', v => v + '%', v => S.aop = v / 100);
-document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.aerial = b.dataset.ae === '1'; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
-  if (S.aerial && S.overlay && S.overlayOn) { S.overlayOn = false; groundControls(); toast('photo on · the overlay is hidden; the two would cover each other'); }
-  if (S.aerial && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
+const aeKey = () => S.mode === 'model' ? 'aerialM' : 'aerial';   // the plan and the model each keep their own photo switch
+function aerialUI() { const on = !!S[aeKey()]; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === on)); document.getElementById('aerialOp').style.display = on && S.mode !== 'model' ? '' : 'none'; }
+function aerialOff() { S.aerial = S.aerialM = false; aerialUI(); }
+document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; const on = b.dataset.ae === '1'; S[aeKey()] = on; aerialUI();
+  if (on && S.overlay && S.overlayOn) { S.overlayOn = false; groundControls(); toast('photo on · the overlay is hidden; the two would cover each other'); }
+  else if (S.world) toast((on ? 'photo on' : 'photo off') + (S.mode === 'model' ? ' · model view' : ' · plan view'));
+  if (on && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
 document.getElementById('rot').onchange = () => { if (S.world) fetchWorld(S.world); };
 document.getElementById('dblW').onclick = () => setSiteW(S.siteW * 2);
 bind('relief', v => fL(v, 1), v => { S.relief = v; if (S.world) { toast('real terrain loaded. new existing returns to noise'); return; } buildExisting(); resetGrading(); });
@@ -1621,7 +1625,7 @@ function setInterval1ft() { const list = isFt() ? INTERVALS_FT : INTERVALS, want
 async function goHome(quiet) {
   try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) { const pr = await r.json(); loadProject(pr, true); undoStack.length = 0; worldStatus(''); if (!quiet) toast('home'); return; } } catch (_) {}
   document.getElementById('place').value = HOME.lat + ', ' + HOME.lon; setSiteW(HOME.siteW, true); autoPlow(); document.getElementById('rot').value = 0; document.getElementById('rot').dispatchEvent(new Event('input'));
-  S.aerial = false; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '0')); document.getElementById('aerialOp').style.display = 'none';
+  aerialOff();
   if (S.colorMode === 'aerial') { S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'paper')); }
   setBrush('pen'); await fetchWorld({ lat: HOME.lat, lon: HOME.lon, name: HOME.name }, quiet); setInterval1ft();
 }
@@ -1634,7 +1638,7 @@ document.getElementById('rainBtn').onclick = () => setRain(!S.rain);
 document.getElementById('tapRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tapMode = b.dataset.t; document.querySelectorAll('#tapRow button').forEach(x => x.classList.toggle('on', x === b)); };
 document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]);
   if (b.dataset.a === 'plow') { rainStats = { done: 0, creek: 0, run: 0 }; for (const dr of drops) { dr.creek = false; dr.run = 0; } }
-  if (b.dataset.a === 'sun') { S.colorMode = S.an.sun ? 'sun' : (S.aerial ? 'aerial' : 'paper'); document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === S.colorMode)); }
+  if (b.dataset.a === 'sun') { S.colorMode = S.an.sun ? 'sun' : 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === S.colorMode)); }
   showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none'; S.dirty = true; };
 function showSun() { document.getElementById('sunSec').style.display = ((S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun')) ? '' : 'none'; }
 document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sunMode = b.dataset.s; if (S.sunMode === 'hours') busy('counting sun hours', 2); b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
@@ -1934,7 +1938,7 @@ function parseOverlays(text) {            // kml GroundOverlay → [{href, north
   return out;
 }
 function setOverlay(ov) {                 // ov: {src dataURL, north, south, east, west, rot} or null
-  S.overlay = ov; ovCache = { key: '' }; if (ov) { const im = new Image(); im.onload = () => { ov.img = im; S.dirty = true; }; im.src = ov.src; } S.overlayOn = !!ov; if (ov && S.aerial) { S.aerial = false; document.querySelectorAll('#aerialRow button').forEach(x => x.classList.toggle('on', x.dataset.ae === '0')); document.getElementById('aerialOp').style.display = 'none'; } S.strokeVer++; S.dirty = true; groundControls();
+  S.overlay = ov; ovCache = { key: '' }; if (ov) { const im = new Image(); im.onload = () => { ov.img = im; S.dirty = true; }; im.src = ov.src; } S.overlayOn = !!ov; if (ov && (S.aerial || S.aerialM)) aerialOff(); S.strokeVer++; S.dirty = true; groundControls();
 }
 async function loadBoundaryFile(f) {
   const buf = await f.arrayBuffer(), u8 = new Uint8Array(buf); let text, images = new Map();
@@ -2176,7 +2180,7 @@ function drawWater(c, toXY, k, dense, alpha) {   // flat blue water with a shore
   c.fillStyle = '#9dbad2'; c.globalAlpha = alpha; c.fill('evenodd'); c.globalAlpha = 1; c.strokeStyle = '#4f7391'; c.lineWidth = .9 * k; c.stroke(); c.restore();
 }
 document.getElementById('ovRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.overlayOn = b.dataset.ov === '1'; S.strokeVer++; S.dirty = true; groundControls();
-  if (S.overlayOn && S.aerial) { S.aerial = false; document.querySelectorAll('#aerialRow button').forEach(x => x.classList.toggle('on', x.dataset.ae === '0')); document.getElementById('aerialOp').style.display = 'none'; toast('overlay on · the photo is off; the two would cover each other'); } };
+  if (S.overlayOn && (S.aerial || S.aerialM)) { aerialOff(); toast('overlay on · the photo is off; the two would cover each other'); } };
 document.getElementById('trimRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.trim = b.dataset.trim === '1'; S.terrainVer++; S.dirty = true; groundControls(); updateStats(); toast(S.trim ? 'model trimmed to the lot' : 'full site'); };
 document.getElementById('roadRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showRoads = b.dataset.road === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('bldRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showBld = b.dataset.bld === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
@@ -2344,7 +2348,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
@@ -2355,7 +2359,7 @@ function loadProject(pr, fromHome) {
   rawBase = pr.world ? base.slice() : null; S.coast = pr.coast && (pr.coast.segs || pr.coast.blds || pr.coast.roads) ? Object.assign({ segs: [], seeds: [], lakes: [], blds: [], roads: [] }, pr.coast) : null; S.showBld = pr.showBld !== false; S.showRoads = pr.showRoads !== false; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
   if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
   S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = ''; S.trim = !!pr.trim; setOverlay(pr.overlay && pr.overlay.src ? Object.assign({}, pr.overlay) : null); S.overlayOn = pr.overlayOn !== false;
-  S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); document.getElementById('perspBtn').classList.toggle('on', !!S.cam.persp); if (pr.sheet) S.sheet = pr.sheet;
+  S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; S.aerial = !!pr.aerial; S.aerialM = pr.aerialM === undefined ? !!pr.aerial : !!pr.aerialM; if (pr.cam) Object.assign(S.cam, pr.cam); document.getElementById('perspBtn').classList.toggle('on', !!S.cam.persp); if (pr.sheet) S.sheet = pr.sheet;
   if (pr.unit === 'm' || pr.unit === 'ft') { S.unit = pr.unit; document.getElementById('unit').value = pr.unit; }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
   for (const id of SLIDERS) { if (id === 'relief') continue; const el = document.getElementById(id); if (el.oninput) el.oninput({ target: el }); }
@@ -2363,7 +2367,7 @@ function loadProject(pr, fromHome) {
   document.getElementById('place').value = pr.place || ''; document.getElementById('sheet').value = (S.sheet || [300, 450]).join('x');
   document.querySelectorAll('#anaLayers button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none';
   document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode)); document.querySelectorAll('#modelStyle button').forEach(b => b.classList.toggle('on', b.dataset.s === S.modelStyle));
-  document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === S.aerial)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
+  document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); aerialUI();
   if (S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
   relabels.forEach(f => f()); worldStatus(''); if (typeof sheetInfo === 'function') setTimeout(sheetInfo, 0); S.terrainVer++; updateStats(); S.dirty = true;
 }
