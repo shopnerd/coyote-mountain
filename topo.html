@@ -191,13 +191,14 @@ canvas.orbit{cursor:grab}
       <div class="p"><label>site width · area to fetch<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="20000" step="10" value="60"></div>
       <div class="seg" style="padding:0"><button id="halfW" title="zoom in: half the site width">½ width</button><button id="dblW" title="zoom out: double the site width">2× width</button></div>
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
-      <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / geojson</button><button id="kmlClear">clear</button></div>
+      <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / kmz / geojson</button><button id="kmlClear">clear</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="seaRow"><button data-sea="1" class="on">water</button><button data-sea="0">raw ground</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="roadRow"><button data-road="1" class="on">roads</button><button data-road="0">no roads</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="bldRow"><button data-bld="1" class="on">buildings</button><button data-bld="0">no buildings</button></div>
       <div class="p" id="riseRow" style="display:none"><label>sea level rise<output id="o_rise">0 ft</output></label><input type="range" id="rise" min="0" max="10" step=".25" value="0"></div>
+      <div class="seg" style="padding:0;margin-top:6px;display:none" id="ovRow"><button data-ov="1" class="on">overlay</button><button data-ov="0">no overlay</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="trimRow"><button data-trim="1">trim to lot</button><button data-trim="0" class="on">full site</button></div>
-      <input type="file" id="kmlFile" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml,application/geo+json" style="display:none">
+      <input type="file" id="kmlFile" accept=".kml,.kmz,.geojson,.json,application/vnd.google-earth.kml+xml,application/vnd.google-earth.kmz,application/geo+json" style="display:none">
       <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
     </div>
 
@@ -275,7 +276,7 @@ function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   const shade = .78 + .22 * light;
   if (mode === 'sun') { const su = sunImage(); const i0 = Math.max(0, Math.min(W - 1, Math.floor(gi))), j0 = Math.max(0, Math.min(H - 1, Math.floor(gj))), i1 = Math.min(W - 1, i0 + 1), j1 = Math.min(H - 1, j0 + 1);
     let r = 0, g = 0, b = 0; for (const n of [idx(i0, j0), idx(i1, j0), idx(i0, j1), idx(i1, j1)]) { r += su.data[n * 4]; g += su.data[n * 4 + 1]; b += su.data[n * 4 + 2]; } return rgb([r / 4, g / 4, b / 4], .9 + .1 * light); }
-  if (mode === 'aerial') { const ae = S.world ? aerialImage() : null; if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
+  if (mode === 'aerial') { const ae = S.aerial && S.world ? aerialImage() : overlayRaster(); if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
     const cx = Math.round(gi * AER), cy = Math.round(gj * AER), hh = AER >> 1; let r = 0, g = 0, b = 0, n = 0; for (let y = cy - hh; y < cy + hh; y++) for (let x = cx - hh; x < cx + hh; x++) { if (x < 0 || y < 0 || x >= ae.rw || y >= ae.rh) continue; const q = (y * ae.rw + x) * 4; if (!ae.data[q + 3]) continue; r += ae.data[q]; g += ae.data[q + 1]; b += ae.data[q + 2]; n++; }
     return n ? rgb([r / n, g / n, b / n], .85 + .2 * light) : TONES[1]; }
   if (mode === 'cutfill') { const n = idx(Math.max(0, Math.min(W - 1, Math.round(gi))), Math.max(0, Math.min(H - 1, Math.round(gj)))), d = z[n] - base[n]; if (d > .05) return rgb(mix('#ebeae4', '#C96B3A', Math.min(1, d / 2)), shade); if (d < -.05) return rgb(mix('#ebeae4', '#6e6d68', Math.min(1, -d / 2)), shade); }
@@ -365,7 +366,7 @@ let base = new Float32Array(W * H);     // existing grade, m
 let z = new Float32Array(W * H);        // proposed grade, m
 let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z;   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -466,7 +467,7 @@ function drawBuildings2D(c, toXY, k) {   // hatched footprints with an ink outli
 }
 let planShot = { key: '' };
 function drawPlan() {                     // cached picture + live overlay; the picture is redrawn only when something on it changes
-  const key = [S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom].join('|');
+  const key = [S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom].join('|');
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
@@ -481,7 +482,7 @@ function drawPlanBase() {
   ctx.clearRect(0, 0, S.w, S.h);
   const k = sheet.k, [lo, hi] = range(z), iv = interval();
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
-  const aerialOn = drawAerial();
+  const aerialOn = drawAerial(); drawOverlay();
   // hachures: strands that run downslope, length by steepness
   if (S.hach > 0) {
     const step = Math.max(2, Math.round(8 - S.hach / 20)), maxLen = 10;
@@ -587,7 +588,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
     const dv = y1 * sp + Z * cp, f = S.cam.persp ? PD / Math.max(PD * .15, PD - dv) : 1; return [ox + x1 * scale * f, oy + (y1 * cp - Z * sp) * scale * f, dv]; };
   const tin = (i, j) => { if (!tm) return true; if (i < 0 || j < 0 || i > W - 2 || j > H - 2) return false; return !!tm.tiles[Math.min(H - 2, j + (step >> 1)) * (W - 1) + Math.min(W - 2, i + (step >> 1))]; };
-  const items = [], iv = interval(), mode = S.aerial && S.colorMode !== 'sun' ? 'aerial' : S.colorMode;   // the photo wins whenever it is on, except under a sun study
+  const ovR = overlayRaster(), items = [], iv = interval(), mode = (S.aerial || ovR) && S.colorMode !== 'sun' ? 'aerial' : S.colorMode;   // the photo wins whenever it is on, except under a sun study
   const lx = -.5, ly = -.4, lz = .77;  // light from upper left
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
     if (tm && !tin(i, j)) continue;
@@ -601,7 +602,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const light = (nx * lx + ny * ly + lz) / nl;
     let tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2), wpart = null, shore = null;
     let wet = false, tex = null;
-    if (mode === 'aerial' && !mini && !fast && aerialCache.canvas) tex = [i * AER, j * AER, step * AER, step * AER, light];
+    if (mode === 'aerial' && !mini && !fast && ((S.aerial && aerialCache.canvas) || ovR)) tex = [i * AER, j * AER, step * AER, step * AER, light];
     if (S.seaClip && wF) { const f = [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]], nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
       if (nw === 4) { tone = WTONE(light); wet = true; }
       else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
@@ -652,7 +653,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const P = it.P, cx = (P[0][0] + P[1][0] + P[2][0] + P[3][0]) * .25, cyy = (P[0][1] + P[1][1] + P[2][1] + P[3][1]) * .25;
     if (it.tex) {   // the photo patch mapped onto the tile: unit square -> the tile's projected corners (affine on three corners); the tile is first filled with its average colour so the fourth corner's miss never shows white
       c.fillStyle = it.tone; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1; if (k) c.lineTo(p[0] + dx / d * OUT, p[1] + dy / d * OUT); else c.moveTo(p[0] + dx / d * OUT, p[1] + dy / d * OUT); } c.closePath(); c.fill();
-      const t = it.tex; c.save(); c.transform(P[1][0] - P[0][0], P[1][1] - P[0][1], P[3][0] - P[0][0], P[3][1] - P[0][1], P[0][0], P[0][1]); c.drawImage(aerialCache.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); c.restore();
+      const t = it.tex; c.save(); c.transform(P[1][0] - P[0][0], P[1][1] - P[0][1], P[3][0] - P[0][0], P[3][1] - P[0][1], P[0][0], P[0][1]); if (S.aerial && aerialCache.canvas) c.drawImage(aerialCache.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); if (ovR) { c.globalAlpha = .85; c.drawImage(ovR.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); c.globalAlpha = 1; } c.restore();
       const sh = Math.max(0, Math.min(.5, (1 - t[4]) * .45)); if (sh > .02) { c.fillStyle = `rgba(20,24,20,${sh.toFixed(3)})`; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k]; if (k) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); } c.closePath(); c.fill(); } }
     else { c.fillStyle = it.tone; c.beginPath();
       for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1, x = p[0] + dx / d * OUT, y = p[1] + dy / d * OUT; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
@@ -933,7 +934,7 @@ function floodSim(an, rainM) {           // fill every depression with the rain 
 function drawAnalysis() {
   ctx.clearRect(0, 0, S.w, S.h); const k = sheet.k, an = analyze(), { down, acc, downR, accR, label, outlets, keypoints, ponds, thrCells, A, order } = an;
   ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.fillRect(sheet.x, sheet.y, sheet.w, sheet.h);
-  const aerialOn = drawAerial();
+  const aerialOn = drawAerial(); drawOverlay();
   const cellXY = n => toSheet(n % W, (n / W) | 0);
   let sunNote = '';
   if (S.an.sun) { const su = sunImage(); sunNote = su.note; ctx.imageSmoothingEnabled = false; ctx.drawImage(su.canvas, sheet.x - k / 2, sheet.y - k / 2, W * k, H * k); ctx.imageSmoothingEnabled = true; }
@@ -1033,7 +1034,7 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerial, S.cam.persp, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerial, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
@@ -1179,7 +1180,7 @@ const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw 
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 let pipShot = { key: '', canvas: null };
 function pipFrame() {                     // the 3d preview drawn once (camera already swapped in by drawPip), reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerial, S.cam.persp, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerial, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
   if (pipShot.key !== key) { const now = performance.now(); if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt') && pipShot.canvas) return pipShot.canvas;
     const off = document.createElement('canvas'); off.width = Math.max(1, Math.round(pw * dpr)); off.height = Math.max(1, Math.round(ph * dpr)); const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0); o.fillStyle = PAPER; o.fillRect(0, 0, pw, ph);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, pw, ph, 3, true); pipShot = { key, canvas: off, t: now }; }
@@ -1410,7 +1411,7 @@ const TIPS = {
   's:hour': 'shade the ground for one month and hour, with cast shadows', 's:hours': 'colour the ground by hours of direct sun in a day', playDay: 'sweep the hour from dawn to dusk', playYear: 'sweep the months at this hour',
   'c:paper': 'plain paper tones', 'c:elevation': 'green low to ember high', 'c:slope': 'paper flat to ember steep', 'c:aspect': 'which way each slope faces', 'c:cutfill': 'where your grading sits above the existing ground (ember) or below it (grey); full tone at 2 m', 'c:sun': 'sun shading on the ground', 's:smooth': 'the ground as a continuous surface', 's:stepped': 'the ground as the cardboard stack you would cut',
   'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush',
-  kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'g:1': 'the standard 150 × 100 grid', 'g:2': 'a 300 × 200 grid: cells half the size, four times the work per redraw. terrain refetches at the finer grid', 'trim:1': 'cut the model, the stl and the laser layers to the loaded property line; the plan keeps its context', 'trim:0': 'the whole rectangular site', 'road:1': 'mapped roads and paths: heavier lines for main roads, dashed for footpaths and tracks, draped on the model', 'road:0': 'hide the roads', 'bld:1': 'mapped building footprints: hatched on the plan, blocks on the model at their mapped height (one storey where none is mapped)', 'bld:0': 'hide the buildings', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
+  kmlBtn: 'load a lot or property line from a kml, kmz or geojson file, and any image overlay a kmz carries; both stay pinned to their real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'g:1': 'the standard 150 × 100 grid', 'g:2': 'a 300 × 200 grid: cells half the size, four times the work per redraw. terrain refetches at the finer grid', 'ov:1': 'the image overlay from the kmz, pinned and rotated to its box: under the plan and on the model', 'ov:0': 'hide the overlay', 'trim:1': 'cut the model, the stl and the laser layers to the loaded property line; the plan keeps its context', 'trim:0': 'the whole rectangular site', 'road:1': 'mapped roads and paths: heavier lines for main roads, dashed for footpaths and tracks, draped on the model', 'road:0': 'hide the roads', 'bld:1': 'mapped building footprints: hatched on the plan, blocks on the model at their mapped height (one storey where none is mapped)', 'bld:0': 'hide the buildings', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
   reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label',
   'p:month': 'month of the year for the sun study', 'p:hour': 'hour of the day for the sun study, solar time', 'p:rain': 'rain falling on the whole site in one storm, no soak-in', 'p:thr': 'how much upstream ground it takes to count as a stream', 'p:plow': 'distance between plow lines, measured on the ground', 'p:swale': 'vertical drop from one swale to the next', 'p:dam': 'wall height of the dam; the pond fills to its crest',
   'p:place': 'a place name, or lat, lng. then press fetch', 'p:siteW': 'how wide a piece of the world to fetch. wider means coarser ground; it refetches when this changes', 'p:rot': 'turn the fetched area so a long feature lies along the sheet', 'p:aop': 'how strongly the satellite photo shows through',
@@ -1421,7 +1422,7 @@ const TIPS = {
 };
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
-  else key = el.id && TIPS[el.id] ? el.id : d.v ? 'v:' + d.v : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.road ? 'road:' + d.road : d.trim ? 'trim:' + d.trim : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
+  else key = el.id && TIPS[el.id] ? el.id : d.v ? 'v:' + d.v : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.road ? 'road:' + d.road : d.trim ? 'trim:' + d.trim : d.ov ? 'ov:' + d.ov : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
   const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.title || ''; }
 const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
 function showTip(el) { const t = tipFor(el); if (!t) return; showTipAt(t, el.getBoundingClientRect()); }
@@ -1847,6 +1848,18 @@ async function buildAerial(key, ppc = 12) {
     const q = ((Math.floor(y) - ty * 256) * 256 + (Math.floor(x) - tx * 256)) * 4; d[m * 4] = t[q]; d[m * 4 + 1] = t[q + 1]; d[m * 4 + 2] = t[q + 2]; d[m * 4 + 3] = 255; }
   oc2.putImageData(img, 0, 0); aerialCache.canvas = out; aerialCache.data = d; aerialCache.rw = RW; aerialCache.rh = RH; aerialCache.status = 'ready'; S.dirty = true;
 }
+let ovCache = { key: '' };
+function overlayRaster() {                // the overlay image drawn into the site frame at AER px per cell (its box is a rotated rectangle, so one affine does it)
+  const ov = S.overlay; if (!ov || !ov.img || !S.world || !S.overlayOn) return null;
+  const key = [ov.src.length, ov.north, ov.south, ov.east, ov.west, ov.rot, S.world.lat, S.world.lon, S.siteW, S.rot, W, AER].join('|'); if (ovCache.key === key) return ovCache;
+  const RW = AER * (W - 1), RH = AER * (H - 1), c = document.createElement('canvas'); c.width = RW; c.height = RH; const o = c.getContext('2d');
+  const clat = (ov.north + ov.south) / 2, clon = (ov.east + ov.west) / 2, kx = 111320 * Math.cos(clat * D2R), ky = 111320, th = (ov.rot || 0) * D2R;
+  const corner = (lon, lat) => { const dx = (lon - clon) * kx, dy = (lat - clat) * ky, rx = dx * Math.cos(th) - dy * Math.sin(th), ry = dx * Math.sin(th) + dy * Math.cos(th), g = latLonToGrid(clat + ry / ky, clon + rx / kx); return [g[0] * AER, g[1] * AER]; };
+  const A = corner(ov.west, ov.north), B = corner(ov.east, ov.north), D = corner(ov.west, ov.south), iw = ov.img.naturalWidth, ih = ov.img.naturalHeight;
+  o.setTransform((B[0] - A[0]) / iw, (B[1] - A[1]) / iw, (D[0] - A[0]) / ih, (D[1] - A[1]) / ih, A[0], A[1]); o.drawImage(ov.img, 0, 0); o.setTransform(1, 0, 0, 1, 0, 0);
+  ovCache = { key, canvas: c, data: o.getImageData(0, 0, RW, RH).data, rw: RW, rh: RH }; return ovCache;
+}
+function drawOverlay() { const ov = overlayRaster(); if (!ov) return false; ctx.save(); ctx.globalAlpha = .8; ctx.imageSmoothingEnabled = true; ctx.drawImage(ov.canvas, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); return true; }
 function drawAerial() {
   if (!S.aerial || !S.world) return false; const ae = aerialImage(); if (!ae || !ae.canvas) return false;
   ctx.save(); ctx.globalAlpha = S.aop; ctx.imageSmoothingEnabled = true; ctx.drawImage(ae.canvas, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); return true;
@@ -1897,12 +1910,43 @@ function drawBoundary(c, toXY, k, dense) {
     const p = toXY(ci, cj); c.font = font(10.5, 600); c.textAlign = 'center'; c.textBaseline = 'middle'; haloText(c, 'lot · ' + fBig(boundaryArea(b)), p[0], p[1], INK); }
 }
 document.getElementById('kmlBtn').onclick = () => { if (!S.world) { toast('fetch real terrain first, then load the boundary'); return; } document.getElementById('kmlFile').click(); };
-document.getElementById('kmlFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { const b = parseBoundary(rd.result); if (!b.length) throw new Error('no coordinates found in that file'); S.boundary = b; boundaryCache.key = ''; S.strokeVer++; S.dirty = true; groundControls(); toast(`boundary loaded · ${b.length} line${b.length === 1 ? '' : 's'}`); } catch (err) { toast(String(err.message || err)); } }; rd.readAsText(f); e.target.value = ''; };
-document.getElementById('kmlClear').onclick = () => { S.boundary = null; boundaryCache.key = ''; S.trim = false; S.strokeVer++; S.terrainVer++; S.dirty = true; groundControls(); };
+async function unzip(buf) {               // stored and deflated entries of a zip (kmz) → Map(name → bytes)
+  const dv = new DataView(buf), u8 = new Uint8Array(buf); let eocd = -1; for (let i = buf.byteLength - 22; i >= Math.max(0, buf.byteLength - 70000); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('not a zip'); const n = dv.getUint16(eocd + 10, true); let p = dv.getUint32(eocd + 16, true); const out = new Map(), dec = new TextDecoder();
+  for (let k = 0; k < n; k++) { if (dv.getUint32(p, true) !== 0x02014b50) break; const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), fnLen = dv.getUint16(p + 28, true), exLen = dv.getUint16(p + 30, true), cmLen = dv.getUint16(p + 32, true), lho = dv.getUint32(p + 42, true), name = dec.decode(u8.subarray(p + 46, p + 46 + fnLen));
+    const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true), data = u8.slice(start, start + csize); p += 46 + fnLen + exLen + cmLen;
+    if (method === 0) out.set(name, data); else if (method === 8) { const ds = new DecompressionStream('deflate-raw'), w = ds.writable.getWriter(); w.write(data); w.close(); out.set(name, new Uint8Array(await new Response(ds.readable).arrayBuffer())); } }
+  return out;
+}
+function parseOverlays(text) {            // kml GroundOverlay → [{href, north, south, east, west, rot}]
+  const doc = new DOMParser().parseFromString(text, 'text/xml'), out = [];
+  for (const g of doc.getElementsByTagName('GroundOverlay')) { const t = tag => { const el = g.getElementsByTagName(tag)[0]; return el ? el.textContent.trim() : null; }; const box = g.getElementsByTagName('LatLonBox')[0]; if (!box) continue;
+    const num = tag => { const el = box.getElementsByTagName(tag)[0]; return el ? +el.textContent : NaN; }; const o = { href: t('href'), north: num('north'), south: num('south'), east: num('east'), west: num('west'), rot: num('rotation') || 0 };
+    if ([o.north, o.south, o.east, o.west].every(isFinite)) out.push(o); }
+  return out;
+}
+function setOverlay(ov) {                 // ov: {src dataURL, north, south, east, west, rot} or null
+  S.overlay = ov; ovCache = { key: '' }; if (ov) { const im = new Image(); im.onload = () => { ov.img = im; S.dirty = true; }; im.src = ov.src; } S.overlayOn = !!ov; S.strokeVer++; S.dirty = true; groundControls();
+}
+async function loadBoundaryFile(f) {
+  const buf = await f.arrayBuffer(), u8 = new Uint8Array(buf); let text, images = new Map();
+  if (u8[0] === 0x50 && u8[1] === 0x4b) { const z = await unzip(buf); const kmlName = [...z.keys()].find(n => /\.kml$/i.test(n)); if (!kmlName) throw new Error('no kml inside that kmz'); text = new TextDecoder().decode(z.get(kmlName)); for (const [n, bytes] of z) if (/\.(jpe?g|png|gif|webp)$/i.test(n)) images.set(n, bytes); }
+  else text = new TextDecoder().decode(u8);
+  let lines = 0; try { const b = parseBoundary(text); if (b.length) { S.boundary = b; boundaryCache.key = ''; lines = b.length; } } catch (_) {}
+  let ovs = 0; const found = text.trim()[0] === '{' ? [] : parseOverlays(text);
+  for (const o of found) { let src = null; const key = [...images.keys()].find(n => n === o.href || n.endsWith('/' + o.href) || decodeURIComponent(o.href || '').endsWith(n));
+    if (key) { const ext = key.split('.').pop().toLowerCase(), mime = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : ext === 'webp' ? 'image/webp' : 'image/jpeg'; src = await new Promise(res => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.readAsDataURL(new Blob([images.get(key)], { type: mime })); }); }
+    else if (/^https?:/.test(o.href || '')) src = o.href;   // an outside image: works only if that server allows it
+    if (src) { setOverlay({ src, north: o.north, south: o.south, east: o.east, west: o.west, rot: o.rot }); ovs++; break; } }
+  if (!lines && !ovs) throw new Error('no boundary or image overlay found in that file');
+  S.strokeVer++; S.dirty = true; groundControls(); toast(`${lines ? lines + ' boundary line' + (lines === 1 ? '' : 's') : ''}${lines && ovs ? ' · ' : ''}${ovs ? 'image overlay loaded' : ''}`);
+}
+document.getElementById('kmlFile').onchange = e => { const f = e.target.files[0]; if (!f) return; loadBoundaryFile(f).catch(err => toast(String(err.message || err))); e.target.value = ''; };
+document.getElementById('kmlClear').onclick = () => { S.boundary = null; boundaryCache.key = ''; S.trim = false; setOverlay(null); S.strokeVer++; S.terrainVer++; S.dirty = true; groundControls(); };
 
 /* ---------- world: real elevation for any place ---------- */
 function worldStatus(msg) { document.getElementById('worldStatus').textContent = msg; groundControls(); }
-function groundControls() { const real = !!S.world; { const has = !!(S.boundary && S.boundary.some(b => b.closed && b.pts.length > 2)); document.getElementById('trimRow').style.display = has ? '' : 'none'; if (!has) S.trim = false; document.querySelectorAll('#trimRow button').forEach(b => b.classList.toggle('on', (b.dataset.trim === '1') === S.trim)); } document.getElementById('roadRow').style.display = S.coast && S.coast.roads && S.coast.roads.length ? '' : 'none'; document.querySelectorAll('#roadRow button').forEach(b => b.classList.toggle('on', (b.dataset.road === '1') === S.showRoads)); document.getElementById('bldRow').style.display = S.coast && S.coast.blds && S.coast.blds.length ? '' : 'none'; document.querySelectorAll('#bldRow button').forEach(b => b.classList.toggle('on', (b.dataset.bld === '1') === S.showBld)); document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
+function groundControls() { const real = !!S.world; document.getElementById('ovRow').style.display = S.overlay ? '' : 'none'; document.querySelectorAll('#ovRow button').forEach(b => b.classList.toggle('on', (b.dataset.ov === '1') === S.overlayOn)); { const has = !!(S.boundary && S.boundary.some(b => b.closed && b.pts.length > 2)); document.getElementById('trimRow').style.display = has ? '' : 'none'; if (!has) S.trim = false; document.querySelectorAll('#trimRow button').forEach(b => b.classList.toggle('on', (b.dataset.trim === '1') === S.trim)); } document.getElementById('roadRow').style.display = S.coast && S.coast.roads && S.coast.roads.length ? '' : 'none'; document.querySelectorAll('#roadRow button').forEach(b => b.classList.toggle('on', (b.dataset.road === '1') === S.showRoads)); document.getElementById('bldRow').style.display = S.coast && S.coast.blds && S.coast.blds.length ? '' : 'none'; document.querySelectorAll('#bldRow button').forEach(b => b.classList.toggle('on', (b.dataset.bld === '1') === S.showBld)); document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
 function nodeLatLon(i, j, lat, lon) { const sx = (i - (W - 1) / 2) * cs(), sy = ((H - 1) / 2 - j) * cs(), t = S.rot * D2R, dx = sx * Math.cos(t) + sy * Math.sin(t), dy = -sx * Math.sin(t) + sy * Math.cos(t); return [lat + dy / 111320, lon + dx / (111320 * Math.cos(lat * D2R))]; }
 function loadImage(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => rej(new Error('tile blocked')); im.src = url; }); }
 const SRC_NOTE = { '3dep': 'USGS 3DEP elevation: lidar where it has been flown, 10 m elsewhere', tiles: 'elevation tiles: the best public source for this place, 30 m or finer', opentopo: 'opentopodata, about 30 m' };
@@ -2123,6 +2167,7 @@ function drawWater(c, toXY, k, dense, alpha) {   // flat blue water with a shore
   c.save(); c.beginPath(); for (const l of loops) { const P = dense ? densify(l.map(q => [q[0], q[1], .5]), .3) : l; P.forEach((q, t) => { const p = toXY(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); }
   c.fillStyle = '#9dbad2'; c.globalAlpha = alpha; c.fill('evenodd'); c.globalAlpha = 1; c.strokeStyle = '#4f7391'; c.lineWidth = .9 * k; c.stroke(); c.restore();
 }
+document.getElementById('ovRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.overlayOn = b.dataset.ov === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('trimRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.trim = b.dataset.trim === '1'; S.terrainVer++; S.dirty = true; groundControls(); updateStats(); toast(S.trim ? 'model trimmed to the lot' : 'full site'); };
 document.getElementById('roadRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showRoads = b.dataset.road === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('bldRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showBld = b.dataset.bld === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
@@ -2289,7 +2334,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
@@ -2299,7 +2344,7 @@ function loadProject(pr, fromHome) {
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
   rawBase = pr.world ? base.slice() : null; S.coast = pr.coast && (pr.coast.segs || pr.coast.blds || pr.coast.roads) ? Object.assign({ segs: [], seeds: [], lakes: [], blds: [], roads: [] }, pr.coast) : null; S.showBld = pr.showBld !== false; S.showRoads = pr.showRoads !== false; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
   if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
-  S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = ''; S.trim = !!pr.trim;
+  S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = ''; S.trim = !!pr.trim; setOverlay(pr.overlay && pr.overlay.src ? Object.assign({}, pr.overlay) : null); S.overlayOn = pr.overlayOn !== false;
   S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); document.getElementById('perspBtn').classList.toggle('on', !!S.cam.persp); if (pr.sheet) S.sheet = pr.sheet;
   if (pr.unit === 'm' || pr.unit === 'ft') { S.unit = pr.unit; document.getElementById('unit').value = pr.unit; }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
@@ -2318,6 +2363,7 @@ function shareLink() {
   if (!S.world) { toast('fetch real terrain first; the link carries a place, not a sketch'); return; }
   const u = new URL(location.href); u.search = ''; u.hash = ''; const q = u.searchParams;
   q.set('lat', S.world.lat.toFixed(6)); q.set('lon', S.world.lon.toFixed(6)); q.set('w', S.siteW); if (S.rot) q.set('rot', S.rot); q.set('iv', S.ivl); q.set('u', S.unit); q.set('an', Object.keys(S.an).filter(k => S.an[k]).join(',')); if (S.world.name) q.set('name', S.world.name.slice(0, 60));
+  if (S.boundary) { const lot = S.boundary.filter(b => b.closed).map(b => b.pts.map(p => p[0].toFixed(5) + ',' + p[1].toFixed(5)).join(';')).join('|'); if (lot && lot.length < 6000) { q.set('lot', lot); if (S.trim) q.set('trim', '1'); } }
   const link = u.toString(); const ok = () => toast('link copied · it opens this place with these settings');
   if (navigator.clipboard) navigator.clipboard.writeText(link).then(ok, () => prompt('copy this link', link)); else prompt('copy this link', link);
 }
@@ -2331,6 +2377,7 @@ async function openFromLink() {           // ?lat=&lon=&w=&rot=&iv=&u=&an=&name=
   document.getElementById('place').value = lat + ', ' + lon; setBrush('pen');
   await fetchWorld({ lat, lon, name: q.get('name') || `${lat.toFixed(4)}, ${lon.toFixed(4)}` }, true);
   if (q.has('iv')) { const el = document.getElementById('interval'); el.value = +q.get('iv'); el.dispatchEvent(new Event('input')); }
+  if (q.get('lot')) { const polys = q.get('lot').split('|').map(s => ({ closed: true, pts: s.split(';').map(t => t.split(',').map(Number)).filter(a => a.length === 2 && a.every(isFinite)) })).filter(b => b.pts.length > 2); if (polys.length) { S.boundary = polys; boundaryCache.key = ''; S.trim = q.get('trim') === '1'; S.strokeVer++; S.terrainVer++; groundControls(); } }
   toast('opened from a shared link'); return true;
 }
 document.getElementById('openProj').onclick = () => document.getElementById('openFile').click();
