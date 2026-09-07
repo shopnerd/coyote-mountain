@@ -116,9 +116,13 @@ class Handler(BaseHTTPRequestHandler):
             while os.path.exists(f'frame-{k}.bin'): k += 1
             with open(f'frame-{k}.bin', 'wb') as f: f.write(json.dumps({'w': w, 'h': h}).encode() + b'\n' + fr)
             self._send(200, 'text/plain', f'frame-{k}.bin'.encode())
-        else: self._send(404, 'text/plain', b'/info /depth /snap')
+        else:   # the tool itself, served from the folder above this script, so the sandbox runs offline from http://localhost:8787/topo.html
+            name = self.path.split('?')[0].lstrip('/') or 'index.html'; root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))); full = os.path.normpath(os.path.join(root, name))
+            if not full.startswith(root) or not os.path.isfile(full) or not name.split('.')[-1] in ('html', 'json', 'md', 'py', 'txt'): return self._send(404, 'text/plain', b'/info /depth /snap, or topo.html')
+            ctype = {'html': 'text/html; charset=utf-8', 'json': 'application/json', 'md': 'text/plain; charset=utf-8'}.get(name.split('.')[-1], 'text/plain')
+            with open(full, 'rb') as f: self._send(200, ctype, f.read())
 
 threading.Thread(target={'k4a': run_k4a, 'fake': run_fake, 'replay': run_replay}[A.mode], daemon=True).start()
-print(f'sandbox bridge · mode {A.mode} · http://localhost:{A.port}/depth · ctrl+c stops')
+print(f'sandbox bridge · mode {A.mode} · open http://localhost:{A.port}/topo.html · frames at /depth · ctrl+c stops')
 try: ThreadingHTTPServer(('127.0.0.1', A.port), Handler).serve_forever()
 except KeyboardInterrupt: pass

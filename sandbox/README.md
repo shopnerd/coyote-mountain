@@ -7,7 +7,7 @@ Two pieces:
 
 - `bridge.py` reads the camera and serves depth frames on `http://localhost:8787`. It is the only thing that knows
   about the hardware. Python 3.9 or newer plus numpy; nothing else.
-- The topo tool at `coyotemountainfarm.com/topo.html` (or the local `topo.html`) does everything else: floor
+- The topo tool, served by the bridge at `http://localhost:8787/topo.html`, does everything else: floor
   calibration, contours, hydrology, the cut-and-fill wash, and the projector window with a four-corner keystone.
 
 ## Camera: Orbbec Femto Bolt
@@ -35,7 +35,8 @@ projector and learn the controls. `GET /snap` saves the current frame; `--mode r
 
 ## In the topo tool
 
-1. Open the topo tool, press **new** for a blank sheet, set the site width to what the box should stand for.
+1. Open **http://localhost:8787/topo.html**. The bridge serves the tool itself, so the whole sandbox runs on one
+   machine with no internet. Press **new** for a blank sheet, set the site width to what the box should stand for.
 2. Press **sandbox · live**. The rail shows the frame size and the floor height. Flatten the sand and press
    **calibrate floor** once. **flip x** / **flip y** if the projection is mirrored. **box width** is the real width the
    camera sees; **height gain** exaggerates the sand.
