@@ -111,6 +111,9 @@ canvas.pan{cursor:grab}
       <div class="p"><label>place or lat, lng</label><input type="text" id="place" placeholder="place name or lat, lng" autocomplete="off"></div>
       <div class="seg" style="padding:0;margin-bottom:6px"><button id="fetch" style="flex:2">fetch terrain</button><button id="home" title="Encino Solo">home</button></div>
       <div class="p"><label>site width · area to fetch<output id="o_siteW">800 m</output></label><input type="range" id="siteW" min="100" max="6000" step="50" value="800"></div>
+      <div class="seg" style="padding:0;margin-top:6px"><button id="surveyBtn" style="flex:2" title="load a drone survey elevation model (GeoTIFF from DroneDeploy, Pix4D, WebODM, Metashape; lat/lon, web mercator or UTM). it replaces the public ground where it has coverage and stays on through refetches. use the surface (dsm) file so trees and roofs count as ground to clear">drone survey dem</button><button id="surveyClear" style="display:none" title="drop the survey and go back to the public ground">clear</button></div>
+      <div class="desc" id="surveyInfo" style="padding:0;display:none"></div>
+      <input type="file" id="surveyFile" accept=".tif,.tiff,image/tiff" style="display:none">
       <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2" title="a polygon from Google Earth or a GIS export becomes the survey area">kml / kmz / geojson</button><button id="fitBtn" title="recentre the terrain on the survey area and refetch at a fitting width">fit terrain</button></div>
       <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="1" class="on">aerial photo</button><button data-ae="0">shaded relief</button></div>
       <div class="p" style="margin-top:4px"><label>units</label><select id="unit"><option value="ft">imperial · ft, ac, in/px</option><option value="m">metric · m, ha, cm/px</option></select></div>
@@ -168,8 +171,8 @@ canvas.pan{cursor:grab}
       <button class="btn" id="png">save png</button>
       <button class="btn" id="kmlOut" title="the survey area, the flight path with absolute altitudes, every waypoint and photo point; opens in Google Earth">export kml</button>
       <button class="btn" id="geoOut" title="the same plan as geojson for QGIS or any GIS">geojson</button>
-      <button class="btn" id="litchiOut" title="waypoint mission for the Litchi app: Mavic Pro and 2, Air 2 and 2S, Mini 1, 2 and SE. Litchi Pilot covers the newer bodies, check its list first. altitudes relative to takeoff, photo every photo-spacing metres">litchi csv</button>
-      <button class="btn" id="wpmlOut" title="DJI's own WPML mission file (kmz). official on the Enterprise line with Pilot 2; on consumer drones it takes an unofficial import. altitudes relative to takeoff">dji wpml</button>
+      <button class="btn" id="litchiOut" title="waypoint mission for classic Litchi: Mavic Pro and 2, Air 2 and 2S, Mini 1, 2 and SE. Mini 3 family flies from Litchi Pilot; Mavic 3 and newer from DJI Fly or Litchi Hub, use the kmz. altitudes relative to takeoff, a photo every photo-spacing metres">litchi csv</button>
+      <button class="btn" id="wpmlOut" title="DJI's WPML mission file (kmz), the format DJI Fly imports on the Mavic 3, Air 3 and Mini 4 Pro and Litchi Hub passes through. experimental: written to DJI's published format, not yet flown on a real aircraft. altitudes relative to takeoff">dji fly kmz</button>
     </div>
   </aside>
   <div id="railGrip"></div>
@@ -190,20 +193,23 @@ const HOME = { lat: 32.015109, lon: -116.777769, name: 'Encino Solo' };
 /* ---------- aircraft: sensor sizes and DJI's stated 35 mm-equivalent focal lengths; the real focal length is derived from those ---------- */
 const DRONES = [
   { id: 'mavic-pro', name: 'Mavic Pro', sw: 6.17, sh: 4.55, px: 4000, py: 3000, eq: 28, min: 27 },
-  { id: 'mavic-pro-plat', name: 'Mavic Pro Platinum', sw: 6.17, sh: 4.55, px: 4000, py: 3000, eq: 28, min: 30 },
+  { id: 'mavic-pro-plat', name: 'Mavic Pro Platinum', sw: 6.17, sh: 4.55, px: 4000, py: 3000, eq: 26, min: 30 },
   { id: 'mavic-2-pro', name: 'Mavic 2 Pro', sw: 13.2, sh: 8.8, px: 5472, py: 3648, eq: 28, min: 31 },
   { id: 'mavic-2-zoom', name: 'Mavic 2 Zoom (wide)', sw: 6.17, sh: 4.55, px: 4000, py: 3000, eq: 24, min: 31 },
-  { id: 'mavic-air-2', name: 'Mavic Air 2', sw: 6.4, sh: 4.8, px: 4000, py: 3000, eq: 24, min: 34 },
+  { id: 'mavic-air-2', name: 'Mavic Air 2 · 12 MP mode', sw: 6.4, sh: 4.8, px: 4000, py: 3000, eq: 24, min: 34 },
   { id: 'air-2s', name: 'Air 2S', sw: 13.2, sh: 8.8, px: 5472, py: 3648, eq: 22, min: 31 },
-  { id: 'mavic-3', name: 'Mavic 3 / Classic / Pro (wide)', sw: 17.3, sh: 13.0, px: 5280, py: 3956, eq: 24, min: 46 },
+  { id: 'mavic-3', name: 'Mavic 3 / Classic', sw: 17.3, sh: 13.0, px: 5280, py: 3956, eq: 24, min: 46 },
+  { id: 'mavic-3-pro', name: 'Mavic 3 Pro (wide)', sw: 17.3, sh: 13.0, px: 5280, py: 3956, eq: 24, min: 43 },
   { id: 'mini', name: 'Mini / Mini SE', sw: 6.17, sh: 4.55, px: 4000, py: 3000, eq: 24, min: 30 },
   { id: 'mini-2', name: 'Mini 2 / Mini 2 SE', sw: 6.17, sh: 4.55, px: 4000, py: 3000, eq: 24, min: 31 },
-  { id: 'mini-3', name: 'Mini 3', sw: 9.6, sh: 7.2, px: 4032, py: 3024, eq: 24, min: 38 },
-  { id: 'mini-3-pro', name: 'Mini 3 Pro', sw: 9.6, sh: 7.2, px: 4032, py: 3024, eq: 24, min: 34 },
-  { id: 'mini-4-pro', name: 'Mini 4 Pro', sw: 9.6, sh: 7.2, px: 4032, py: 3024, eq: 24, min: 34 },
+  { id: 'mini-3', name: 'Mini 3 · 12 MP mode', sw: 9.6, sh: 7.2, px: 4032, py: 3024, eq: 24, min: 38 },
+  { id: 'mini-3-pro', name: 'Mini 3 Pro · 12 MP mode', sw: 9.6, sh: 7.2, px: 4032, py: 3024, eq: 24, min: 34 },
+  { id: 'mini-4-pro', name: 'Mini 4 Pro · 12 MP mode', sw: 9.6, sh: 7.2, px: 4032, py: 3024, eq: 24, min: 34 },
   { id: 'custom', name: 'custom…', sw: 13.2, sh: 8.8, px: 5472, py: 3648, eq: 28, min: 30 },
 ];
-const LITCHI = new Set(['mavic-pro', 'mavic-pro-plat', 'mavic-2-pro', 'mavic-2-zoom', 'mavic-air-2', 'air-2s', 'mini', 'mini-2']);
+const LITCHI = new Set(['mavic-pro', 'mavic-pro-plat', 'mavic-2-pro', 'mavic-2-zoom', 'mavic-air-2', 'air-2s', 'mini', 'mini-2']);   // classic litchi flies these from the csv
+const PILOT = new Set(['mini-3', 'mini-3-pro', 'mini-4-pro']), FLY = new Set(['mavic-3', 'mavic-3-pro', 'mini-4-pro']);   // litchi pilot; dji fly waypoints (also via litchi hub)
+const missionRoute = id => LITCHI.has(id) ? 'litchi csv' : id === 'custom' ? '' : (PILOT.has(id) && FLY.has(id)) ? 'dji fly kmz, or litchi pilot' : PILOT.has(id) ? 'litchi pilot' : FLY.has(id) ? 'dji fly kmz (or litchi hub)' : 'dji fly kmz';
 const RESERVE = .7;                        // usable share of the rated flight time: wind, the climb out and the flight home come off the top
 
 /* ---------- state ---------- */
@@ -244,9 +250,9 @@ function lawn(P, hd, spacing, ext) {      // parallel passes across the polygon 
   const span = vmax - vmin, count = Math.max(1, Math.ceil(span / spacing - 1e-6)), v0 = vmin + (span - (count - 1) * spacing) / 2, out = [];
   for (let k = 0; k < count; k++) { const v = v0 + k * spacing, us = [];
     for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length], vp = vs[i], vq = vs[(i + 1) % P.length]; if ((vp <= v) === (vq <= v)) continue; const t = (v - vp) / (vq - vp), x = p[0] + (q[0] - p[0]) * t, y = p[1] + (q[1] - p[1]) * t; us.push(x * d[0] + y * d[1]); }
-    if (us.length < 2) continue; const ua = Math.min(...us) - ext, ub = Math.max(...us) + ext;
-    const A = [n[0] * v + d[0] * ua, n[1] * v + d[1] * ua], B = [n[0] * v + d[0] * ub, n[1] * v + d[1] * ub];
-    out.push(out.length % 2 ? [B, A] : [A, B]); }
+    if (us.length < 2) continue; us.sort((p, q) => p - q); const segs = [];
+    for (let m = 0; m + 1 < us.length; m += 2) { if (us[m + 1] - us[m] < 1) continue; const ua = us[m] - ext, ub = us[m + 1] + ext; segs.push([[n[0] * v + d[0] * ua, n[1] * v + d[1] * ua], [n[0] * v + d[0] * ub, n[1] * v + d[1] * ub]]); }   // inside runs only: crossings pair up along the line
+    if (!segs.length) continue; if (k % 2) segs.reverse(); for (const sg of segs) out.push(k % 2 ? [sg[1], sg[0]] : sg); }
   return out;
 }
 function simplify(pts, tol) {             // douglas-peucker on [t, alt]; keeps both ends
@@ -259,7 +265,7 @@ function simplify(pts, tol) {             // douglas-peucker on [t, alt]; keeps 
 
 /* ---------- the plan ---------- */
 let plan = null;
-function drone() { const d = S.drone === 'custom' ? S.custom : DRONES.find(q => q.id === S.drone); return Object.assign({}, d, { fx: d.sw * d.eq / 36 }); }
+function drone() { const d = S.drone === 'custom' ? S.custom : DRONES.find(q => q.id === S.drone); return Object.assign({}, d, { fx: d.eq * Math.hypot(d.sw, d.sh) / Math.hypot(36, 24) }); }   // 35 mm equivalents are quoted on the frame diagonal
 function buildPlan() {
   plan = null; const P = S.poly.map(p => enu(p[0], p[1])); if (!S.closed || P.length < 3) return;
   const d = drone(), agl = S.agl, footW = d.sw / d.fx * agl, footH = d.sh / d.fx * agl, gsd = d.sw * agl / (d.fx * d.px);
@@ -267,7 +273,7 @@ function buildPlan() {
   let passes = lawn(P, hd, sLine, footH / 2);
   if (S.cross) { let second = lawn(P, (hd + 90) % 180, sLine, footH / 2); if (passes.length && second.length) { const end = passes[passes.length - 1][1], d1 = Math.hypot(second[0][0][0] - end[0], second[0][0][1] - end[1]), last = second[second.length - 1], d2 = Math.hypot(last[1][0] - end[0], last[1][1] - end[1]); if (d2 < d1) second = second.reverse().map(s => [s[1], s[0]]); } passes = passes.concat(second); }
   const tk = S.takeoff ? enu(S.takeoff[0], S.takeoff[1]) : centroid(P), g0 = groundAt(tk[0], tk[1]);
-  const step = Math.max(1, Math.min(10, cs() / 2)), tol = Math.max(1.5, agl * .08), legs = [], wps = [], photos = [];
+  const step = Math.max(1, Math.min(10, cs() / 2)), tol = Math.max(.5, Math.min(1, agl * .015)), legs = [], wps = [], photos = [];   // waypoints keep the flight within this of the wanted height over the ground
   let dist = 0, off = 0, aglMin = 1e9, aglMax = -1e9, altMax = -1e9, outside = false, prev = null;
   passes.forEach(([a, b], li) => {
     const L = Math.hypot(b[0] - a[0], b[1] - a[1]), heading = ((Math.atan2(b[0] - a[0], b[1] - a[1]) / D2R) + 360) % 360, at = t => [a[0] + (b[0] - a[0]) * t / L, a[1] + (b[1] - a[1]) * t / L];
@@ -282,7 +288,7 @@ function buildPlan() {
   const home = legs.length ? Math.hypot(legs[0].a[0] - tk[0], legs[0].a[1] - tk[1]) + Math.hypot(prev[0] - tk[0], prev[1] - tk[1]) : 0;
   const turns = Math.max(0, legs.length - 1), time = (dist + home) / S.speed + turns * 4 + 2 * (altMax - g0) / 3;   // 4 s per turn, climb and descent at 3 m/s
   const usable = d.min * 60 * RESERVE, batteries = Math.max(1, Math.ceil(time / usable));
-  plan = { d, agl, footW, footH, gsd, sLine, sPhoto, hd, legs, wps, photos, tk, g0, dist, home, time, batteries, usable, aglMin, aglMax, altMax, relMax: altMax - g0, outside, interval: sPhoto / S.speed, area: polyArea(P), perim: polyPerim(P) };
+  plan = { d, agl, footW, footH, gsd, sLine, sPhoto, hd, tol, legs, wps, photos, tk, g0, dist, home, time, batteries, usable, aglMin, aglMax, altMax, relMax: altMax - g0, outside, interval: sPhoto / S.speed, area: polyArea(P), perim: polyPerim(P) };
 }
 function refresh() { buildPlan(); showStats(); S.dirty = true; saveSession(); }
 function showStats() {
@@ -295,10 +301,12 @@ function showStats() {
   $('s_dist').textContent = fD(p.dist + p.home); $('s_lines').textContent = p.legs.length + ' · ' + p.wps.length; $('s_aglr').textContent = p.legs.length ? fL(p.aglMin) + ' – ' + fL(p.aglMax) : '—'; $('s_rel').textContent = fL(p.relMax);
   $('s_rel').parentElement.classList.toggle('hot', p.relMax > 120); $('s_aglr').parentElement.classList.toggle('hot', p.aglMax > 121.92 || p.aglMin < p.agl * .6);
   note(`each photo covers ${fL(p.footW)} × ${fL(p.footH)} of ground · lines ${fL(p.sLine, 1)} apart · a photo every ${fL(p.sPhoto, 1)} (${p.interval.toFixed(1)} s at ${S.speed} m/s)`);
+  if (S.follow && S.terrain) note(`terrain following holds ${fL(p.agl)} over the ground within ${fL(p.tol, 1)}, with ${p.wps.length} waypoints`);
   note(`${fT(p.time)} in the air against ${Math.round(p.usable / 60)} min usable per battery (${Math.round(RESERVE * 100)}% of the ${p.d.min} min rating)`);
   if (!S.terrain) note('flat ground assumed: fetch terrain to plan the climbs and descents.', true);
+  else if (S.survey && S.surveyPct) note(`heights from your drone survey over ${S.surveyPct}% of the site${/dsm|surface/i.test(S.survey.name) ? ', trees and roofs included' : ': if this is the ground file, trees and roofs are not in it'}.`);
   if (p.outside) note('the area runs off the fetched terrain: press fit terrain.', true);
-  if (p.aglMax > 121.92) note(`up to ${fL(p.aglMax)} over the ground: above the 400 ft FAA ceiling.` + (S.follow ? '' : ' follow terrain, or lower the altitude.'), true);
+  if (p.aglMax > 121.92) note(`up to ${fL(p.aglMax)} over the ground: above the 400 ft ceiling the FAA and Mexico's AFAC both set; that needs an authorization.` + (S.follow ? '' : ' follow terrain, or lower the altitude.'), true);
   if (p.aglMin <= 0) note(`the ground rises ${fL(-p.aglMin)} above the flight altitude: this mission flies into the hill. ${S.follow ? 'raise the altitude.' : 'follow terrain, or take off from higher ground.'}`, true);
   else if (!S.follow && S.terrain && p.aglMin < p.agl * .6) { const fo = 100 * (1 - p.sPhoto / (p.footH * p.aglMin / p.agl)), so = 100 * (1 - p.sLine / (p.footW * p.aglMin / p.agl)); note(`the ground rises to ${fL(p.aglMin)} under the drone: front overlap falls to ${Math.round(fo)}%, side to ${Math.round(so)}%, and the ground sample coarsens to ${fG(p.gsd * p.aglMin / p.agl)} there. follow terrain fixes this.`, true); }
   else if (p.aglMin < 15) note(`only ${fL(p.aglMin)} of clearance at the tightest point: trees and structures are not in the terrain data.`, true);
@@ -465,6 +473,66 @@ const SRC_NOTE = { '3dep': 'USGS 3DEP elevation', tiles: 'elevation tiles, 30 m 
 const IN_US = (lat, lon) => { if ((lat > 51 && lat < 72 && lon > -180 && lon < -129) || (lat > 18.5 && lat < 22.5 && lon > -161 && lon < -154)) return true; if (!(lat > 24.3 && lat < 49.6 && lon > -125 && lon < -66.5)) return false;
   const mex = lon < -114.7 ? 32.5 : lon < -106.5 ? 31.3 : lon < -104 ? 31.0 : lon < -101 ? 29.5 : lon < -99 ? 27.5 : 26.0; if (lat < mex) return false; const can = lon < -123.1 ? 48.3 : lon < -95 ? 49.0 : lon < -83 ? 48.0 : lon < -74 ? 45.0 : 45.3; return lat < can; };
 function siteBox(lat, lon, pad) { let s = 90, n = -90, w = 180, e = -180; for (const [i, j] of [[0, 0], [W - 1, 0], [0, H - 1], [W - 1, H - 1]]) { const [la, lo] = nodeLatLon(i, j, lat, lon); s = Math.min(s, la); n = Math.max(n, la); w = Math.min(w, lo); e = Math.max(e, lo); } const mLat = pad * cs() / 111320, mLon = pad * cs() / (111320 * Math.cos(lat * D2R)); return { s: s - mLat, n: n + mLat, w: w - mLon, e: e + mLon }; }
+function lzwDecode(src, outLen) {         // tiff lzw: msb-first codes, early change
+  const out = new Uint8Array(outLen); let op = 0, bitPos = 0, codeLen = 9; const CLEAR = 256, EOI = 257; let dict = [], prev = null;
+  const reset = () => { dict = []; for (let i = 0; i < 256; i++) dict.push(Uint8Array.of(i)); dict.push(null, null); codeLen = 9; prev = null; };
+  const read = () => { let v = 0; for (let k = 0; k < codeLen; k++) { const byte = src[bitPos >> 3]; if (byte === undefined) return EOI; v = (v << 1) | ((byte >> (7 - (bitPos & 7))) & 1); bitPos++; } return v; };
+  reset();
+  for (;;) { const code = read(); if (code === EOI) break; if (code === CLEAR) { reset(); continue; }
+    let entry; if (code < dict.length) { entry = dict[code]; if (prev) { const e = new Uint8Array(prev.length + 1); e.set(prev); e[prev.length] = entry[0]; dict.push(e); } }
+    else { const e = new Uint8Array(prev.length + 1); e.set(prev); e[prev.length] = prev[0]; dict.push(e); entry = e; }
+    if (op + entry.length > outLen) { out.set(entry.subarray(0, outLen - op), op); break; } out.set(entry, op); op += entry.length; prev = entry;
+    if (dict.length + 1 >= (1 << codeLen) && codeLen < 12) codeLen++; }
+  return out;
+}
+async function inflateRaw(bytes, tryZlib) {   // deflate as tiff stores it (zlib wrapped), falling back to raw
+  try { const ds = new DecompressionStream(tryZlib ? 'deflate' : 'deflate-raw'), w = ds.writable.getWriter(); w.write(bytes); w.close(); return new Uint8Array(await new Response(ds.readable).arrayBuffer()); }
+  catch (e) { if (tryZlib) return inflateRaw(bytes, false); throw e; }
+}
+async function parseGeoTiff(buf) {        // one-band elevation geotiff from survey software: tiled or stripped, none/deflate/lzw, predictor 2 or 3, int or float samples, plus enough georef to place it
+  const dv = new DataView(buf), le = dv.getUint16(0, false) === 0x4949, u16 = o => dv.getUint16(o, le), u32 = o => dv.getUint32(o, le);
+  if (u16(2) !== 42) throw new Error('not a tiff (bigtiff is not supported: export a smaller area)'); const ifd = u32(4), n = u16(ifd), tags = {};
+  for (let i = 0; i < n; i++) { const o = ifd + 2 + i * 12, tag = u16(o), type = u16(o + 4 - 2), cnt = u32(o + 4), sz = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 11: 4, 12: 8 }[type] || 1, src = cnt * sz <= 4 ? o + 8 : u32(o + 8), vals = [];
+    if (type === 2) { let str = ''; for (let k = 0; k < cnt; k++) { const ch = dv.getUint8(src + k); if (ch) str += String.fromCharCode(ch); } tags[tag] = str; continue; }
+    for (let k = 0; k < cnt; k++) vals.push(type === 3 ? u16(src + k * 2) : type === 4 ? u32(src + k * 4) : type === 12 ? dv.getFloat64(src + k * 8, le) : type === 11 ? dv.getFloat32(src + k * 4, le) : dv.getUint8(src + k)); tags[tag] = vals; }
+  const w = tags[256][0], h = tags[257][0], bits = (tags[258] || [32])[0], fmt = (tags[339] || [1])[0], comp = (tags[259] || [1])[0], pred = (tags[317] || [1])[0], bands = (tags[277] || [1])[0], bpp = bits / 8 * bands;
+  if (bands !== 1 && !(bands >= 3 && bits === 8)) throw new Error('expected a one-band elevation tiff, got ' + bands + ' bands');
+  if (bands >= 3) throw new Error('that tiff is a picture (RGB), not heights. export the elevation model as a raw GeoTIFF');
+  if (![1, 5, 8, 32946].includes(comp)) throw new Error('tiff compression ' + comp + ' is not supported (use none, deflate or lzw)');
+  const nodataStr = tags[42113], nodata = nodataStr !== undefined ? parseFloat(nodataStr) : null, out = new Float32Array(w * h).fill(NaN);
+  const readVal = (view, o) => fmt === 3 ? (bits === 64 ? view.getFloat64(o, le) : view.getFloat32(o, le)) : fmt === 2 ? (bits === 16 ? view.getInt16(o, le) : bits === 32 ? view.getInt32(o, le) : view.getInt8(o)) : (bits === 16 ? view.getUint16(o, le) : bits === 32 ? view.getUint32(o, le) : view.getUint8(o));
+  const unpredict = (bytes, rowW, rows) => {   // undo horizontal differencing (2) or the floating-point byte shuffle (3), row by row
+    const bpsm = bits / 8;
+    if (pred === 2) { const v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength); for (let y = 0; y < rows; y++) { const r0 = y * rowW * bpsm; for (let x = 1; x < rowW; x++) { const o = r0 + x * bpsm, po = o - bpsm; if (fmt === 3) { if (bits === 32) v.setFloat32(o, v.getFloat32(o, le) + v.getFloat32(po, le), le); else v.setFloat64(o, v.getFloat64(o, le) + v.getFloat64(po, le), le); } else if (bits === 16) v.setUint16(o, (v.getUint16(o, le) + v.getUint16(po, le)) & 0xffff, le); else if (bits === 32) v.setUint32(o, (v.getUint32(o, le) + v.getUint32(po, le)) >>> 0, le); else bytes[o] = (bytes[o] + bytes[po]) & 255; } } return bytes; }
+    if (pred === 3) { const res = new Uint8Array(bytes.length), rowB = rowW * bpsm; for (let y = 0; y < rows; y++) { const r0 = y * rowB; for (let k = 1; k < rowB; k++) bytes[r0 + k] = (bytes[r0 + k] + bytes[r0 + k - 1]) & 255; for (let x = 0; x < rowW; x++) for (let b = 0; b < bpsm; b++) res[r0 + x * bpsm + (le ? bpsm - 1 - b : b)] = bytes[r0 + b * rowW + x]; } return res; }
+    return bytes; };
+  const decode = async (off, cnt, rowW, rows) => { let bytes = new Uint8Array(buf, off, cnt); if (comp === 5) bytes = lzwDecode(bytes, rowW * rows * bpp); else if (comp === 8 || comp === 32946) bytes = await inflateRaw(bytes, true); else bytes = bytes.slice(); return unpredict(bytes, rowW, rows); };
+  if (tags[322]) { const tw = tags[322][0], th = tags[323][0], ntx = Math.ceil(w / tw); for (let t = 0; t < tags[324].length; t++) { if (!tags[325][t]) continue; const bytes = await decode(tags[324][t], tags[325][t], tw, th), v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength), tx = t % ntx, ty = Math.floor(t / ntx);
+      for (let y = 0; y < th; y++) { const gy = ty * th + y; if (gy >= h) break; for (let x = 0; x < tw; x++) { const gx = tx * tw + x; if (gx >= w) break; out[gy * w + gx] = readVal(v, (y * tw + x) * bpp); } } } }
+  else { const rps = (tags[278] || [h])[0]; for (let si = 0; si < tags[273].length; si++) { const y0 = si * rps, rows = Math.min(rps, h - y0), bytes = await decode(tags[273][si], tags[279][si], w, rows), v = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      for (let y = 0; y < rows; y++) for (let x = 0; x < w; x++) out[(y0 + y) * w + x] = readVal(v, (y * w + x) * bpp); } }
+  if (nodata !== null && !Number.isNaN(nodata)) for (let q = 0; q < out.length; q++) if (out[q] === nodata || (Math.abs(nodata) > 1e30 && Math.abs(out[q]) > 1e30)) out[q] = NaN;
+  // georef: pixel <-> model, and model <-> lat/lon
+  const keys = tags[34735] || [], gk = {}; for (let k = 4; k + 3 < keys.length; k += 4) gk[keys[k]] = keys[k + 3];
+  let A; if (tags[34264]) { const m = tags[34264]; A = { a: m[0], b: m[1], c: m[3], d: m[4], e: m[5], f: m[7] }; }
+  else if (tags[33550] && tags[33922]) { const sc = tags[33550], tp = tags[33922]; A = { a: sc[0], b: 0, c: tp[3] - tp[0] * sc[0], d: 0, e: -sc[1], f: tp[4] + tp[1] * sc[1] }; }
+  else throw new Error('that tiff has no georeference (no tie point or transform)');
+  const det = A.a * A.e - A.b * A.d, inv = (X, Y) => [(A.e * (X - A.c) - A.b * (Y - A.f)) / det, (-A.d * (X - A.c) + A.a * (Y - A.f)) / det];
+  const model = gk[1024] || 2, epsg = gk[3072] || gk[2048] || (model === 2 ? 4326 : 0), ascii = tags[34737] || '';
+  let fwd, crs;   // lat/lon -> model coords
+  if (model === 2 || epsg === 4326 || epsg === 4269 || /GCS|WGS 84\|/.test(ascii) && !/UTM|Mercator/.test(ascii)) { fwd = (la, lo) => [lo, la]; crs = 'lat/lon'; }
+  else if (epsg === 3857 || epsg === 900913 || epsg === 3785 || /Pseudo-Mercator|Web Mercator/i.test(ascii)) { const R = 6378137; fwd = (la, lo) => [R * lo * D2R, R * Math.log(Math.tan(Math.PI / 4 + la * D2R / 2))]; crs = 'web mercator'; }
+  else { let zone = 0, north = true; if (epsg >= 32601 && epsg <= 32660) zone = epsg - 32600; else if (epsg >= 32701 && epsg <= 32760) { zone = epsg - 32700; north = false; } else if (epsg >= 26901 && epsg <= 26923) zone = epsg - 26900; else { const m = ascii.match(/UTM zone (\d+)([NS])/i); if (m) { zone = +m[1]; north = m[2].toUpperCase() === 'N'; } }
+    if (!zone) throw new Error('unknown map projection in that tiff (epsg ' + epsg + '). export it in lat/lon, web mercator or UTM');
+    const a = 6378137, f1 = 1 / 298.257223563, e2 = f1 * (2 - f1), k0 = .9996, lon0 = (zone * 6 - 183) * D2R, ep2 = e2 / (1 - e2);
+    fwd = (la, lo) => { const phi = la * D2R, dl = lo * D2R - lon0, N = a / Math.sqrt(1 - e2 * Math.sin(phi) ** 2), T = Math.tan(phi) ** 2, C = ep2 * Math.cos(phi) ** 2, Aa = Math.cos(phi) * dl;
+      const M = a * ((1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 ** 3 / 256) * phi - (3 * e2 / 8 + 3 * e2 * e2 / 32 + 45 * e2 ** 3 / 1024) * Math.sin(2 * phi) + (15 * e2 * e2 / 256 + 45 * e2 ** 3 / 1024) * Math.sin(4 * phi) - (35 * e2 ** 3 / 3072) * Math.sin(6 * phi));
+      const x = k0 * N * (Aa + (1 - T + C) * Aa ** 3 / 6 + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * Aa ** 5 / 120) + 500000, y = k0 * (M + N * Math.tan(phi) * (Aa * Aa / 2 + (5 - T + 9 * C + 4 * C * C) * Aa ** 4 / 24 + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * Aa ** 6 / 720)) + (north ? 0 : 1e7); return [x, y]; }; crs = 'utm ' + zone + (north ? 'N' : 'S'); }
+  const px = (la, lo) => inv(...fwd(la, lo));   // -> [col, row] with fractions
+  const cx = inv(A.c + A.a * w / 2, A.f + A.e * h / 2); const [cX, cY] = [A.c + A.a * w / 2, A.f + A.e * h / 2];
+  const cellM = crs === 'lat/lon' ? Math.abs(A.e) * 111320 : crs === 'web mercator' ? Math.abs(A.a) * Math.cos(2 * Math.atan(Math.exp(cY / 6378137)) - Math.PI / 2) : Math.abs(A.a);
+  return { w, h, data: out, px, crs, cellM, sample: (la, lo) => { const [c, r] = px(la, lo); if (c < 0 || r < 0 || c > w - 1 || r > h - 1) return NaN; const i = Math.min(w - 2, Math.floor(c)), j = Math.min(h - 2, Math.floor(r)), u = c - i, v = r - j, a = out[j * w + i], b = out[j * w + i + 1], cc = out[(j + 1) * w + i], d = out[(j + 1) * w + i + 1]; if (Number.isNaN(a) || Number.isNaN(b) || Number.isNaN(cc) || Number.isNaN(d)) { const near = out[Math.round(r) * w + Math.round(c)]; return near; } return a + (b - a) * u + (cc - a) * v + (a - b - cc + d) * u * v; } };
+}
 function parseTiffF32(buf) {
   const dv = new DataView(buf), le = dv.getUint16(0, false) === 0x4949, u16 = o => dv.getUint16(o, le), u32 = o => dv.getUint32(o, le); if (u16(2) !== 42) throw new Error('not a tiff'); const ifd = u32(4), n = u16(ifd), tags = {};
   for (let i = 0; i < n; i++) { const o = ifd + 2 + i * 12, tag = u16(o), type = u16(o + 2), cnt = u32(o + 4), sz = { 1: 1, 3: 2, 4: 4, 12: 8 }[type] || 1, src = cnt * sz <= 4 ? o + 8 : u32(o + 8), vals = []; for (let k = 0; k < cnt; k++) vals.push(type === 3 ? u16(src + k * 2) : type === 4 ? u32(src + k * 4) : type === 12 ? dv.getFloat64(src + k * 8, le) : dv.getUint8(src + k)); tags[tag] = vals; }
@@ -511,11 +579,27 @@ async function fetchWorld(known, quiet) {
     if (lat === undefined) { worldStatus('finding the place…'); const r = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent($('place').value.trim())); const j = await r.json(); if (!j.length) throw new Error('no place found. try "lat, lng"'); lat = +j[0].lat; lon = +j[0].lon; name = j[0].display_name.split(',').slice(0, 2).join(','); }
     S.world = { lat, lon, name }; let src = null; if (IN_US(lat, lon)) { try { await load3DEP(lat, lon); src = '3dep'; } catch (e) { src = null; } }
     if (!src) { try { await loadTerrarium(lat, lon); src = 'tiles'; } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); src = 'opentopo'; } }
-    S.src = src; S.terrain = true; terrainVer++; let lo = 1e9, hi = -1e9; for (let n = 0; n < W * H; n++) { if (base[n] < lo) lo = base[n]; if (base[n] > hi) hi = base[n]; }
-    worldStatus(`${name} · ${fL(lo)} to ${fL(hi)} above sea level · ${fL(S.siteW)} wide · ${SRC_NOTE[src]}${cs() > 15 ? ' · coarse: each cell is ' + fL(cs()) + ' across' : ''}`); if (!quiet) toast('terrain loaded'); if (!S.poly.length) viewReset();
+    S.src = src; S.terrain = true; terrainVer++; if (S.survey) applySurvey(true); let lo = 1e9, hi = -1e9; for (let n = 0; n < W * H; n++) { if (base[n] < lo) lo = base[n]; if (base[n] > hi) hi = base[n]; }
+    worldStatus(`${name} · ${fL(lo)} to ${fL(hi)} above sea level · ${fL(S.siteW)} wide · ${SRC_NOTE[src]}${S.survey && S.surveyPct ? ' · drone survey ground over it' : ''}${cs() > 15 ? ' · coarse: each cell is ' + fL(cs()) + ' across' : ''}`); if (!quiet) toast('terrain loaded'); if (!S.poly.length) viewReset();
   } catch (e) { const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message)); const msg = blocked ? 'network blocked on this page. open the live site: coyotemountainfarm.com/flight.html' : String(e.message || e); worldStatus(msg); if (!quiet) toast(msg); }
   fetching = false; btn.disabled = false; btn.textContent = 'fetch terrain'; unbusy(); refresh();
 }
+function applySurvey(quiet) {             // survey heights replace the public ground where they exist, feathered over at least 20 m at the edge; a local-datum survey is lifted onto the public datum
+  const sv = S.survey; if (!sv || !S.terrain) return; const N = W * H, val = new Float32Array(N), cov = new Uint8Array(N); let covered = 0, sumD = 0;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j), [la, lo] = nodeLatLon(i, j, S.world.lat, S.world.lon), v = sv.sample(la, lo); if (Number.isNaN(v)) continue; val[n] = v; cov[n] = 1; covered++; sumD += base[n] - v; }
+  if (!covered) { if (!quiet) toast('the survey does not overlap this site'); S.surveyPct = 0; return; }
+  const shift = sumD / covered, lift = Math.abs(shift) > 15 ? shift : 0, dist = new Float32Array(N).fill(1e9), q = []; for (let n = 0; n < N; n++) if (!cov[n]) { dist[n] = 0; q.push(n); }
+  for (let t = 0; t < q.length; t++) { const n = q[t], i = n % W, j = (n / W) | 0; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (dist[m] > dist[n] + 1) { dist[m] = dist[n] + 1; q.push(m); } } }
+  const feather = Math.max(6, 20 / cs()); for (let n = 0; n < N; n++) { if (!cov[n]) continue; const wgt = Math.min(1, dist[n] / feather); base[n] = base[n] * (1 - wgt) + (val[n] + lift) * wgt; }
+  terrainVer++; S.surveyPct = Math.round(100 * covered / N); S.surveyLift = lift;
+  $('surveyInfo').style.display = ''; $('surveyClear').style.display = '';
+  $('surveyInfo').textContent = `${sv.name} · ${sv.crs} · ${sv.cellM < 1 ? Math.round(sv.cellM * 100) + ' cm' : fL(sv.cellM, 1)} pixels · covers ${S.surveyPct}% of the site` + (lift ? ` · lifted ${fL(lift, 1)} onto the public datum` : '');
+  if (!quiet) toast(`survey ground in · covers ${S.surveyPct}% of the site`);
+}
+$('surveyBtn').onclick = () => $('surveyFile').click();
+$('surveyFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (!S.terrain) { toast('fetch the terrain around the survey first, then load it'); return; }
+  busy('reading the survey'); try { const sv = await parseGeoTiff(await f.arrayBuffer()); sv.name = f.name.replace(/\.tiff?$/i, ''); S.survey = sv; applySurvey(false); } catch (err) { toast(String(err.message || err)); } finally { unbusy(); refresh(); } };
+$('surveyClear').onclick = () => { S.survey = null; S.surveyPct = 0; $('surveyInfo').style.display = 'none'; $('surveyClear').style.display = 'none'; if (S.terrain) fetchWorld(S.world, true); };
 $('fetch').onclick = () => fetchWorld();
 $('place').addEventListener('keydown', e => { if (e.key === 'Enter') fetchWorld(); });
 $('home').onclick = () => { $('place').value = HOME.lat + ', ' + HOME.lon; fetchWorld(HOME); };
@@ -550,7 +634,7 @@ $('kmlBtn').onclick = () => $('kmlFile').click(); $('kmlFile').onchange = e => {
 /* ---------- aircraft and flight controls ---------- */
 const sel = $('drone'); DRONES.forEach(d => { const o = document.createElement('option'); o.value = d.id; o.textContent = d.name; sel.appendChild(o); });
 function droneUI() { sel.value = S.drone; $('customSec').style.display = S.drone === 'custom' ? '' : 'none'; const d = drone(); if (S.drone === 'custom') { $('c_sw').value = d.sw; $('c_sh').value = d.sh; $('c_px').value = d.px; $('c_py').value = d.py; $('c_eq').value = d.eq; $('c_min').value = d.min; }
-  $('droneInfo').textContent = `${d.sw} × ${d.sh} mm sensor · ${d.px} × ${d.py} px · ${d.eq} mm equivalent (${(2 * Math.atan(d.sw / 2 / d.fx) / D2R).toFixed(0)}° wide) · ${d.min} min rated` + (LITCHI.has(S.drone) ? ' · litchi' : S.drone === 'custom' ? '' : ' · litchi pilot or dji wpml'); }
+  $('droneInfo').textContent = `${d.sw} × ${d.sh} mm sensor · ${d.px} × ${d.py} px · ${d.eq} mm equivalent (${(2 * Math.atan(d.sw / 2 / d.fx) / D2R).toFixed(0)}° wide) · ${d.min} min rated` + (missionRoute(S.drone) ? ' · flies from ' + missionRoute(S.drone) : ''); }
 sel.onchange = () => { S.drone = sel.value; droneUI(); refresh(); };
 for (const [id, key] of [['c_sw', 'sw'], ['c_sh', 'sh'], ['c_px', 'px'], ['c_py', 'py'], ['c_eq', 'eq'], ['c_min', 'min']]) $(id).oninput = e => { const v = parseFloat(e.target.value); if (isFinite(v) && v > 0) { S.custom[key] = v; droneUI(); refresh(); } };
 function aglUI() { const el = $('agl'); if (isFt()) { el.min = 30; el.max = 400; el.step = 5; el.value = Math.round(S.agl * FT / 5) * 5; } else { el.min = 10; el.max = 120; el.step = 1; el.value = Math.round(S.agl); } $('o_agl').textContent = fL(S.agl); }
@@ -599,7 +683,7 @@ function geoOut() {
   dl(URL.createObjectURL(new Blob([JSON.stringify(fc)], { type: 'application/geo+json' })), `flight-${slug()}.geojson`);
 }
 function litchiOut() {
-  if (!needPlan()) return; const p = plan; if (p.wps.length > 99) toast(`${p.wps.length} waypoints: litchi takes 99. exporting anyway`);
+  if (!needPlan()) return; const p = plan; const warn = []; if (!LITCHI.has(S.drone) && S.drone !== 'custom') warn.push(`classic litchi does not fly the ${p.d.name}: use ${missionRoute(S.drone)}`); if (p.wps.length > 99) warn.push(`${p.wps.length} waypoints, litchi takes 99`); if (warn.length) toast(warn.join(' · ') + ' · exporting anyway');
   const head = ['latitude', 'longitude', 'altitude(m)', 'heading(deg)', 'curvesize(m)', 'rotationdir', 'gimbalmode', 'gimbalpitchangle']; for (let i = 1; i <= 15; i++) head.push('actiontype' + i, 'actionparam' + i); head.push('altitudemode', 'speed(m/s)', 'poi_latitude', 'poi_longitude', 'poi_altitude(m)', 'poi_altitudemode', 'photo_timeinterval', 'photo_distinterval');
   const rows = p.wps.map(w => { const ll = wpLL(w), r = [ll[0].toFixed(7), ll[1].toFixed(7), Math.max(2, w.rel).toFixed(1), Math.round(w.heading), 0, 0, 2, S.pitch]; for (let i = 0; i < 15; i++) r.push(-1, 0); r.push(0, S.speed, 0, 0, 0, 0, -1, p.sPhoto.toFixed(2)); return r.join(','); });
   dl(URL.createObjectURL(new Blob([head.join(',') + '\n' + rows.join('\n') + '\n'], { type: 'text/csv' })), `flight-${slug()}-litchi.csv`);
