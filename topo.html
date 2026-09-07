@@ -113,7 +113,7 @@ canvas.orbit{cursor:grab}
     <a href="index.html">studio</a>
     <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis · 0 reset zoom · wheel zooms, middle-drag pans</span>
   </header>
-  <div class="cmd"><span class="prompt">›</span><span class="hint" id="hint"></span><button id="axon">axon</button><button id="topView">top</button><button id="extents" title="refit the view (0)">zoom extents</button></div>
+  <div class="cmd"><span class="prompt">›</span><span class="hint" id="hint"></span><button id="axon">axon</button><button id="topView">top</button><button id="frontView">front</button><button id="extents" title="refit the view (0)">zoom extents</button></div>
   <aside>
     <div class="sec">view</div>
     <div id="modes">
@@ -1407,7 +1407,7 @@ const TIPS = {
   'p:unit': 'imperial or metric, everywhere: sheet, notes, exports', 'p:relief': 'height of the invented hills, low point to high point', 'p:interval': 'vertical spacing between contour lines; every fifth one is an index contour', 'p:hach': 'how many short downhill ticks between contours; 0 for none', 'p:ve': 'stretch heights so relief reads in the model and section; 1 is true',
   'p:mm': 'how much the site shrinks to become the object, and how wide it comes out', 'p:thick': 'thickness of the cardboard or plywood you will cut', 'p:sheet': 'the laser bed in mm; layers get nested onto sheets this size', 'p:ledge': 'hollow each layer, leaving a ledge this wide for the next one to sit on; 0 keeps them solid', 'p:paper': 'paper size for the drawing sheet set',
   'p:radius': () => S.brush === 'pen' ? 'width of new pen strokes' : S.brush === 'erase' ? 'how wide the eraser reaches' : 'brush size; it scales with the site width', 'p:strength': () => S.brush === 'pen' ? 'ink opacity of new pen strokes' : 'how hard each pass moves the ground',
-  shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'one drawing sheet: plan over analysis at the same standard scale, with the model, section and notes down the side; every analysis layer that is on and the rain as it stands. pdf at true paper size plus a png', laser: 'cardboard layers nested on sheets for the laser cutter', axon: 'the model from a 45° corner at the isometric tilt; opens the model view if needed', topView: 'the model straight from above, north up; orbit again to tilt it', extents: 'refit the view (0)'
+  shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'one drawing sheet: plan over analysis at the same standard scale, with the model, section and notes down the side; every analysis layer that is on and the rain as it stands. pdf at true paper size plus a png', laser: 'cardboard layers nested on sheets for the laser cutter', axon: 'the model from a 45° corner at the isometric tilt; opens the model view if needed', topView: 'the model straight from above, north up; orbit again to tilt it', frontView: 'the model from the south at eye level: an elevation with the buildings', extents: 'refit the view (0)'
 };
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
@@ -1460,6 +1460,7 @@ function updateHint() { if (busyMsg) return; const h = hintText(); if (h !== las
 const setView = (yaw, pitch, name) => { if (S.mode !== 'model') setMode('model'); S.cam.yaw = yaw; S.cam.pitch = pitch; S.cam.pan.x = S.cam.pan.y = 0; S.dirty = true; toast(name); };
 document.getElementById('axon').onclick = () => setView(Math.PI / 4, .6155, 'axonometric · 45° corner, isometric tilt');
 document.getElementById('topView').onclick = () => setView(0, 0, 'top · straight down, north up');
+document.getElementById('frontView').onclick = () => setView(0, 1.55, 'front elevation · from the south');
 document.getElementById('extents').onclick = () => { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } toast('view refitted'); };
 
 /* ---------- rail ---------- */
@@ -2173,7 +2174,7 @@ function drawingSheet() { zdisp();         // one sheet: plan over analysis at t
   const inner = { x: m, y: m, w: PW - 2 * m, h: PH - 2 * m - tb };
   const L = { x: inner.x, w: inner.w * .62 - gap / 2 }, R = { x: inner.x + inner.w * .62 + gap / 2, w: inner.w * .38 - gap / 2 };
   const half = (inner.h - gap) / 2, planBox = { x: L.x, y: inner.y, w: L.w, h: half }, anaBox = { x: L.x, y: inner.y + half + gap, w: L.w, h: half };
-  const rh = (inner.h - 2 * gap), modelBox = { x: R.x, y: inner.y, w: R.w, h: rh * .38 }, secBox = { x: R.x, y: inner.y + rh * .38 + gap, w: R.w, h: rh * .27 }, notesBox = { x: R.x, y: inner.y + rh * .65 + 2 * gap, w: R.w, h: rh * .35 };
+  const rh = (inner.h - 3 * gap), modelBox = { x: R.x, y: inner.y, w: R.w, h: rh * .32 }, secBox = { x: R.x, y: inner.y + rh * .32 + gap, w: R.w, h: rh * .21 }, elevBox = { x: R.x, y: inner.y + rh * .53 + 2 * gap, w: R.w, h: rh * .17 }, notesBox = { x: R.x, y: inner.y + rh * .70 + 3 * gap, w: R.w, h: rh * .30 };
   const sc = pickScale(planBox.w, planBox.h - 60, dpi), k = sc.ppm * cs();
   const TRACE = '#f6f2e8';   // warm trace tone for the sheet
   const viewCanvas = (box, fn) => { const c = document.createElement('canvas'); c.width = Math.round(box.w); c.height = Math.round(box.h); const o = c.getContext('2d'); o.fillStyle = TRACE; o.fillRect(0, 0, c.width, c.height); const fs0 = fontScale; fontScale = 1.3; fn(o, c.width, c.height); fontScale = fs0; return c; };
@@ -2184,6 +2185,9 @@ function drawingSheet() { zdisp();         // one sheet: plan over analysis at t
     { box: anaBox, title: 'ANALYSIS · ' + sc.label + (S.rain ? ' · rain as it stands' : ''), canvas: renderPlanAt(k, Math.round(anaBox.w), Math.round(anaBox.h), () => { drawAnalysis(); if (S.rain) drawRainOverlay(ctx, (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; }, S.w, S.h, false); ctx.fillStyle = TRACE; ctx.fillRect(0, sheet.y + sheet.h + 2, S.w, S.h); }) },
     { box: modelBox, title: 'MODEL · analysis layers' + (S.rain ? ' · rain' : ''), canvas: viewCanvas(modelBox, (o2, w, h) => { drawModel(o2, w, h, 1, false); if (S.rain) rain = drawRainOverlay(o2, camera(w, h).proj, w, h, true); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) },
     { box: secBox, title: 'SECTION A–A · vertical ' + S.ve + '×', canvas: viewCanvas(secBox, (o2, w, h) => drawSection(o2, w, h, false)) },
+    { box: elevBox, title: 'ELEVATION · from the south · vertical ' + S.ve + '×', canvas: viewCanvas(elevBox, (o2, w, h) => {   // the model seen from the south at eye level, fitted to the box: ground profile, water, roads and buildings
+      const keep = { cam: S.cam, labels: S.labels, lowQ: S.lowQ }; S.cam = { yaw: 0, pitch: 1.55, zoom: (w - 24) * 1.25 / Math.min(w, h), pan: { x: 0, y: 0 } }; S.labels = false; S.lowQ = false;
+      try { drawModel(o2, w, h, 1, false); } finally { S.cam = keep.cam; S.labels = keep.labels; S.lowQ = keep.lowQ; } o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) },
     { box: notesBox, title: 'NOTES', canvas: null }];
   for (const v of views) if (v.canvas) o.drawImage(v.canvas, v.box.x, v.box.y);
   // notes
