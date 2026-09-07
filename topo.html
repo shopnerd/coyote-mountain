@@ -1599,6 +1599,7 @@ document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
 bind('rot', v => v + '°', v => S.rot = v);
 bind('aop', v => v + '%', v => S.aop = v / 100);
 document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.aerial = b.dataset.ae === '1'; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
+  if (S.aerial && S.overlay && S.overlayOn) { S.overlayOn = false; groundControls(); toast('photo on · the overlay is hidden; the two would cover each other'); }
   if (S.aerial && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
 document.getElementById('rot').onchange = () => { if (S.world) fetchWorld(S.world); };
 document.getElementById('dblW').onclick = () => setSiteW(S.siteW * 2);
@@ -1926,7 +1927,7 @@ function parseOverlays(text) {            // kml GroundOverlay → [{href, north
   return out;
 }
 function setOverlay(ov) {                 // ov: {src dataURL, north, south, east, west, rot} or null
-  S.overlay = ov; ovCache = { key: '' }; if (ov) { const im = new Image(); im.onload = () => { ov.img = im; S.dirty = true; }; im.src = ov.src; } S.overlayOn = !!ov; S.strokeVer++; S.dirty = true; groundControls();
+  S.overlay = ov; ovCache = { key: '' }; if (ov) { const im = new Image(); im.onload = () => { ov.img = im; S.dirty = true; }; im.src = ov.src; } S.overlayOn = !!ov; if (ov && S.aerial) { S.aerial = false; document.querySelectorAll('#aerialRow button').forEach(x => x.classList.toggle('on', x.dataset.ae === '0')); document.getElementById('aerialOp').style.display = 'none'; } S.strokeVer++; S.dirty = true; groundControls();
 }
 async function loadBoundaryFile(f) {
   const buf = await f.arrayBuffer(), u8 = new Uint8Array(buf); let text, images = new Map();
@@ -2167,7 +2168,8 @@ function drawWater(c, toXY, k, dense, alpha) {   // flat blue water with a shore
   c.save(); c.beginPath(); for (const l of loops) { const P = dense ? densify(l.map(q => [q[0], q[1], .5]), .3) : l; P.forEach((q, t) => { const p = toXY(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); }
   c.fillStyle = '#9dbad2'; c.globalAlpha = alpha; c.fill('evenodd'); c.globalAlpha = 1; c.strokeStyle = '#4f7391'; c.lineWidth = .9 * k; c.stroke(); c.restore();
 }
-document.getElementById('ovRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.overlayOn = b.dataset.ov === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
+document.getElementById('ovRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.overlayOn = b.dataset.ov === '1'; S.strokeVer++; S.dirty = true; groundControls();
+  if (S.overlayOn && S.aerial) { S.aerial = false; document.querySelectorAll('#aerialRow button').forEach(x => x.classList.toggle('on', x.dataset.ae === '0')); document.getElementById('aerialOp').style.display = 'none'; toast('overlay on · the photo is off; the two would cover each other'); } };
 document.getElementById('trimRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.trim = b.dataset.trim === '1'; S.terrainVer++; S.dirty = true; groundControls(); updateStats(); toast(S.trim ? 'model trimmed to the lot' : 'full site'); };
 document.getElementById('roadRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showRoads = b.dataset.road === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('bldRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showBld = b.dataset.bld === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
