@@ -270,7 +270,7 @@ function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   if (mode === 'sun') { const su = sunImage(); const i0 = Math.max(0, Math.min(W - 1, Math.floor(gi))), j0 = Math.max(0, Math.min(H - 1, Math.floor(gj))), i1 = Math.min(W - 1, i0 + 1), j1 = Math.min(H - 1, j0 + 1);
     let r = 0, g = 0, b = 0; for (const n of [idx(i0, j0), idx(i1, j0), idx(i0, j1), idx(i1, j1)]) { r += su.data[n * 4]; g += su.data[n * 4 + 1]; b += su.data[n * 4 + 2]; } return rgb([r / 4, g / 4, b / 4], .9 + .1 * light); }
   if (mode === 'aerial') { const ae = S.world ? aerialImage() : null; if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
-    const cx = Math.round(gi * 6), cy = Math.round(gj * 6); let r = 0, g = 0, b = 0, n = 0; for (let y = cy - 3; y < cy + 3; y++) for (let x = cx - 3; x < cx + 3; x++) { if (x < 0 || y < 0 || x >= ae.rw || y >= ae.rh) continue; const q = (y * ae.rw + x) * 4; if (!ae.data[q + 3]) continue; r += ae.data[q]; g += ae.data[q + 1]; b += ae.data[q + 2]; n++; }
+    const cx = Math.round(gi * AER), cy = Math.round(gj * AER), hh = AER >> 1; let r = 0, g = 0, b = 0, n = 0; for (let y = cy - hh; y < cy + hh; y++) for (let x = cx - hh; x < cx + hh; x++) { if (x < 0 || y < 0 || x >= ae.rw || y >= ae.rh) continue; const q = (y * ae.rw + x) * 4; if (!ae.data[q + 3]) continue; r += ae.data[q]; g += ae.data[q + 1]; b += ae.data[q + 2]; n++; }
     return n ? rgb([r / n, g / n, b / n], .85 + .2 * light) : TONES[1]; }
   if (mode === 'elevation') return rgb(ramp(ELEV, (zavg - lo) / Math.max(1e-6, hi - lo)), shade);
   const sl = Math.hypot(gx, gy);
@@ -568,8 +568,10 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const gc = grad(i + step / 2, j + step / 2), gx = gc[0], gy = gc[1], nx = -gx * S.ve, ny = -gy * S.ve; const nl = Math.hypot(nx, ny, 1);
     const light = (nx * lx + ny * ly + lz) / nl;
     let tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2), wpart = null, shore = null;
-    if (S.seaClip && wF && mode !== 'aerial') { const f = [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]], nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
-      if (nw === 4) tone = WTONE(light);
+    let wet = false, tex = null;
+    if (mode === 'aerial' && !mini && !fast && aerialCache.canvas) tex = [i * AER, j * AER, step * AER, step * AER, light];
+    if (S.seaClip && wF) { const f = [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]], nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
+      if (nw === 4) { tone = WTONE(light); wet = true; }
       else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
         for (let k = 0; k < 4; k++) { const k2 = (k + 1) % 4; if (f[k] >= 0) poly.push([cn[k][0], cn[k][1], zs[k]]); if ((f[k] >= 0) !== (f[k2] >= 0)) { const t = f[k] / (f[k] - f[k2]), q = [cn[k][0] + (cn[k2][0] - cn[k][0]) * t, cn[k][1] + (cn[k2][1] - cn[k][1]) * t, zs[k] + (zs[k2] - zs[k]) * t]; poly.push(q); cross.push(q); } }
         wpart = poly.map(q => proj(i + q[0] * step, j + q[1] * step, q[2])); if (cross.length >= 2) shore = cross.map(q => proj(i + q[0] * step, j + q[1] * step, q[2] + .02)); } }
@@ -579,7 +581,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
       const tmp = []; isoSegs(za, zb, zc, zd, lv, tmp);
       for (let q = 0; q < tmp.length; q += 4) lines.push([proj(i + tmp[q] * step, j + tmp[q + 1] * step, lv), proj(i + tmp[q + 2] * step, j + tmp[q + 3] * step, lv), isIndex(lv), lv]);
     }
-    items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines, wpart, shore });
+    items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines, wpart, shore, tex: wet ? null : tex });
   }
   // base outline first, so the model covers it
   c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
@@ -608,9 +610,12 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   let run = 0;
   for (const it of items) {
     const P = it.P, cx = (P[0][0] + P[1][0] + P[2][0] + P[3][0]) * .25, cyy = (P[0][1] + P[1][1] + P[2][1] + P[3][1]) * .25;
-    c.fillStyle = it.tone; c.beginPath();
-    for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1, x = p[0] + dx / d * OUT, y = p[1] + dy / d * OUT; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
-    c.closePath(); c.fill();
+    if (it.tex) {   // the photo patch mapped onto the tile: unit square -> the tile's projected corners (affine on three corners; the fourth lands within a hair)
+      const t = it.tex; c.save(); c.transform(P[1][0] - P[0][0], P[1][1] - P[0][1], P[3][0] - P[0][0], P[3][1] - P[0][1], P[0][0], P[0][1]); c.drawImage(aerialCache.canvas, t[0], t[1], t[2], t[3], -.03, -.03, 1.06, 1.06); c.restore();
+      const sh = Math.max(0, Math.min(.5, (1 - t[4]) * .45)); if (sh > .02) { c.fillStyle = `rgba(20,24,20,${sh.toFixed(3)})`; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k]; if (k) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); } c.closePath(); c.fill(); } }
+    else { c.fillStyle = it.tone; c.beginPath();
+      for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1, x = p[0] + dx / d * OUT, y = p[1] + dy / d * OUT; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
+      c.closePath(); c.fill(); }
     if (it.wpart) { c.fillStyle = WTONE(.6); c.beginPath(); it.wpart.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); if (it.shore) ls.push(it.shore); }
     for (const l of it.lines) (l[2] ? li : ln).push(l);
     if (++run >= 48) { flushLines(); run = 0; }
@@ -1773,14 +1778,16 @@ function aerialImage() {
   if (aerialCache.key === key) return aerialCache;
   aerialCache = { key, status: 'loading', canvas: null }; buildAerial(key).catch(e => { aerialCache.status = 'aerial unavailable: ' + (e.message || e); S.dirty = true; }); return aerialCache;
 }
-async function buildAerial(key) {
-  const { lat, lon } = S.world, RW = 6 * (W - 1), RH = 6 * (H - 1);           // 6 photo pixels per grid cell
-  const Zm = Math.max(3, Math.min(18, Math.ceil(Math.log2(156543.03 * Math.cos(lat * D2R) / (cs() / 6))))), n = 2 ** Zm;
+let AER = 12;                              // photo pixels per grid cell
+async function buildAerial(key, ppc = 12) {
+  const { lat, lon } = S.world, RW = ppc * (W - 1), RH = ppc * (H - 1);
+  const Zm = Math.max(3, Math.min(18, Math.ceil(Math.log2(156543.03 * Math.cos(lat * D2R) / (cs() / ppc))))), n = 2 ** Zm;
   const px = (la, lo) => [(lo + 180) / 360 * n * 256, (1 - Math.log(Math.tan(la * D2R) + 1 / Math.cos(la * D2R)) / Math.PI) / 2 * n * 256];
   const P = new Float64Array(RW * RH * 2); let tx0 = 1e12, ty0 = 1e12, tx1 = -1, ty1 = -1;
-  for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const [la, lo] = nodeLatLon(x / 6, y / 6, lat, lon), q = px(la, lo), m = (y * RW + x) * 2; P[m] = q[0]; P[m + 1] = q[1];
+  for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const [la, lo] = nodeLatLon(x / ppc, y / ppc, lat, lon), q = px(la, lo), m = (y * RW + x) * 2; P[m] = q[0]; P[m + 1] = q[1];
     tx0 = Math.min(tx0, Math.floor(q[0] / 256)); ty0 = Math.min(ty0, Math.floor(q[1] / 256)); tx1 = Math.max(tx1, Math.floor(q[0] / 256)); ty1 = Math.max(ty1, Math.floor(q[1] / 256)); }
-  const cols = tx1 - tx0 + 1, count = cols * (ty1 - ty0 + 1); if (count > 64) throw new Error('site too large for photo tiles');
+  const cols = tx1 - tx0 + 1, count = cols * (ty1 - ty0 + 1); if (count > 110 && ppc > 6) return buildAerial(key, 6); if (count > 110) throw new Error('site too large for photo tiles');
+  AER = ppc;
   const tiles = new Map(), oc = document.createElement('canvas'); oc.width = oc.height = 256; const o = oc.getContext('2d', { willReadFrequently: true });
   await Promise.all(Array.from({ length: count }, (_, q) => { const tx = tx0 + q % cols, ty = ty0 + Math.floor(q / cols);
     return loadImage(`https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${Zm}/${ty}/${tx}`).then(im => { o.drawImage(im, 0, 0); tiles.set(tx + '/' + ty, o.getImageData(0, 0, 256, 256).data); }).catch(() => {}); }));
@@ -1856,22 +1863,33 @@ function parseTiffF32(buf) {              // just enough tiff: uncompressed 32-b
   else { const rps = (tags[278] || [h])[0]; tags[273].forEach((off, si) => { const y0 = si * rps; for (let y = y0; y < Math.min(h, y0 + rps); y++) for (let x = 0; x < w; x++) out[y * w + x] = dv.getFloat32(off + ((y - y0) * w + x) * 4, le); }); }
   return { w, h, data: out, scale: tags[33550] || null, tie: tags[33922] || null };   // geotiff pixel scale + tie point: where the raster really sits (the server may widen the box to keep pixels square)
 }
-async function load3DEP(lat, lon) {       // usgs 3dep image service: the best available us elevation, resampled server-side to half a cell
-  const b = siteBox(lat, lon, 2), pxM = Math.max(1, cs() / 2), sd = pxM / 111320, nx = Math.min(4000, Math.round((b.e - b.w) / sd)), ny = Math.min(4000, Math.round((b.n - b.s) / sd));   // square pixels in degrees, as the server likes them
-  worldStatus('fetching usgs 3dep elevation…');
-  const r = await fetch(`https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer/exportImage?bbox=${b.w},${b.s},${b.e},${b.n}&bboxSR=4326&imageSR=4326&size=${nx},${ny}&format=tiff&pixelType=F32&noData=-9999&interpolation=RSP_BilinearInterpolation&f=image`);
-  if (!r.ok) throw new Error('3dep ' + r.status); const t = parseTiffF32(await r.arrayBuffer());
-  const at = (x, y) => { const v = t.data[Math.max(0, Math.min(t.h - 1, y)) * t.w + Math.max(0, Math.min(t.w - 1, x))]; return v < -1000 || !isFinite(v) ? NaN : v; };
+async function imageServerSampler(url, lat, lon, pxM, label) {   // fetch a float32 raster for the site from an arcgis image service; returns a bicubic sampler over the grid
+  const b = siteBox(lat, lon, 2), sd = Math.max(1, pxM) / 111320, nx = Math.min(4000, Math.round((b.e - b.w) / sd)), ny = Math.min(4000, Math.round((b.n - b.s) / sd));   // square pixels in degrees, as the servers like them
+  worldStatus(label);
+  const r = await fetch(`${url}/exportImage?bbox=${b.w},${b.s},${b.e},${b.n}&bboxSR=4326&imageSR=4326&size=${nx},${ny}&format=tiff&pixelType=F32&noData=-9999&interpolation=RSP_BilinearInterpolation&f=image`);
+  if (!r.ok) throw new Error(label + ' ' + r.status); const t = parseTiffF32(await r.arrayBuffer());
+  const at = (x, y) => { const v = t.data[Math.max(0, Math.min(t.h - 1, y)) * t.w + Math.max(0, Math.min(t.w - 1, x))]; return v < -9000 || !isFinite(v) ? NaN : v; };
   const cub = (tt, a, b2, c, d) => b2 + .5 * tt * (c - a + tt * (2 * a - 5 * b2 + 4 * c - d + tt * (3 * (b2 - c) + d - a)));
   const X0 = t.tie ? t.tie[3] : b.w, Y0 = t.tie ? t.tie[4] : b.n, SX = t.scale ? t.scale[0] : (b.e - b.w) / t.w, SY = t.scale ? t.scale[1] : (b.n - b.s) / t.h;
-  let bad = 0;
-  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const [la, lo] = nodeLatLon(i, j, lat, lon), x = (lo - X0) / SX - .5, y = (Y0 - la) / SY - .5, x0 = Math.floor(x), y0 = Math.floor(y), u = x - x0, v = y - y0;
+  return (i, j) => {                       // NaN where the service has nothing
+    const [la, lo] = nodeLatLon(i, j, lat, lon), x = (lo - X0) / SX - .5, y = (Y0 - la) / SY - .5, x0 = Math.floor(x), y0 = Math.floor(y), u = x - x0, v = y - y0;
     const g = []; let mn = 1e9, mx = -1e9, sum = 0, cnt = 0; for (let r2 = -1; r2 <= 2; r2++) for (let c2 = -1; c2 <= 2; c2++) { const q = at(x0 + c2, y0 + r2); g.push(q); if (!isNaN(q)) { sum += q; cnt++; if (q < mn) mn = q; if (q > mx) mx = q; } }
-    if (cnt < 8 || isNaN(g[5]) && isNaN(g[6]) && isNaN(g[9]) && isNaN(g[10])) { base[idx(i, j)] = -1; bad++; continue; }   // no data: the sea, or a gap; counts as water
+    if (cnt < 8 || (isNaN(g[5]) && isNaN(g[6]) && isNaN(g[9]) && isNaN(g[10]))) return NaN;
     const mean = sum / cnt; for (let q = 0; q < 16; q++) if (isNaN(g[q])) g[q] = mean;
     const rows = []; for (let r2 = 0; r2 < 4; r2++) rows.push(cub(u, g[r2 * 4], g[r2 * 4 + 1], g[r2 * 4 + 2], g[r2 * 4 + 3]));
-    base[idx(i, j)] = Math.max(mn, Math.min(mx, cub(v, rows[0], rows[1], rows[2], rows[3]))); }
+    return Math.max(mn, Math.min(mx, cub(v, rows[0], rows[1], rows[2], rows[3])));
+  };
+}
+async function load3DEP(lat, lon) {       // usgs 3dep: the best available us elevation, resampled server-side to half a cell; no data (the sea, or a gap) counts as water
+  const sm = await imageServerSampler('https://elevation.nationalmap.gov/arcgis/rest/services/3DEPElevation/ImageServer', lat, lon, cs() / 2, 'fetching usgs 3dep elevation…');
+  let bad = 0; for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const v = sm(i, j); if (isNaN(v)) { base[idx(i, j)] = -1; bad++; } else base[idx(i, j)] = v; }
   if (bad > W * H * .9) throw new Error('3dep has no data here');
+}
+async function loadBathy(lat, lon) {      // noaa global relief mosaic (gebco plus finer coastal models where they exist): the sea floor under cells the land source left at sea level
+  let seaCells = 0; for (let n = 0; n < W * H; n++) if (base[n] <= .05) seaCells++; if (seaCells < W * H * .005) return false;
+  const sm = await imageServerSampler('https://gis.ngdc.noaa.gov/arcgis/rest/services/DEM_mosaics/DEM_global_mosaic/ImageServer', lat, lon, cs() / 2, 'fetching the sea floor…');
+  let got = 0; for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); if (base[n] > .05) continue; const v = sm(i, j); if (!isNaN(v) && v < base[n]) { base[n] = v; got++; } }
+  return got > 0;
 }
 async function loadTerrarium(lat, lon) {
   const Z0 = Math.max(2, Math.min(15, Math.ceil(Math.log2(156543.03 * Math.cos(lat * D2R) / cs()))));
@@ -1888,10 +1906,13 @@ async function loadTerrarium(lat, lon) {
   await Promise.all(Array.from({ length: count }, (_, q) => { const tx = tx0 + q % cols, ty = ty0 + Math.floor(q / cols);
     return loadImage(`https://s3.amazonaws.com/elevation-tiles-prod/terrarium/${Zm}/${tx}/${ty}.png`).then(im => { o.clearRect(0, 0, 256, 256); o.drawImage(im, 0, 0); tiles.set(tx + '/' + ty, o.getImageData(0, 0, 256, 256).data); }); }));
   const at = (x, y) => { const tx = Math.floor(x / 256), ty = Math.floor(y / 256), d = tiles.get(tx + '/' + ty); if (!d) return 0;
-    const q = ((y - ty * 256) * 256 + (x - tx * 256)) * 4; return d[q] * 256 + d[q + 1] + d[q + 2] / 256 - 32768; };
+    const q = ((y - ty * 256) * 256 + (x - tx * 256)) * 4, v = d[q] * 256 + d[q + 1] + d[q + 2] / 256 - 32768; return v < -11000 ? NaN : v; };   // (0,0,0) pixels are no data, not the Mariana Trench
   const cub = (t, a, b, c, d) => b + .5 * t * (c - a + t * (2 * a - 5 * b + 4 * c - d + t * (3 * (b - c) + d - a)));   // catmull-rom: smooth between data pixels, passes through them
   for (let m = 0; m < W * H; m++) { const x = P[m * 2], y = P[m * 2 + 1], x0 = Math.floor(x), y0 = Math.floor(y), u = x - x0, v = y - y0;
-    const rows = []; let mn = 1e9, mx = -1e9; for (let r = -1; r <= 2; r++) { const a = at(x0 - 1, y0 + r), b = at(x0, y0 + r), c = at(x0 + 1, y0 + r), d = at(x0 + 2, y0 + r); mn = Math.min(mn, a, b, c, d); mx = Math.max(mx, a, b, c, d); rows.push(cub(u, a, b, c, d)); }
+    const g = []; let mn = 1e9, mx = -1e9, sum = 0, cnt = 0; for (let r = -1; r <= 2; r++) for (let c2 = -1; c2 <= 2; c2++) { const q = at(x0 + c2, y0 + r); g.push(q); if (!isNaN(q)) { sum += q; cnt++; if (q < mn) mn = q; if (q > mx) mx = q; } }
+    if (cnt < 8 || (isNaN(g[5]) && isNaN(g[6]) && isNaN(g[9]) && isNaN(g[10]))) { base[m] = -1; continue; }   // no data here: call it sea
+    const mean = sum / cnt; for (let q = 0; q < 16; q++) if (isNaN(g[q])) g[q] = mean;
+    const rows = []; for (let r = 0; r < 4; r++) rows.push(cub(u, g[r * 4], g[r * 4 + 1], g[r * 4 + 2], g[r * 4 + 3]));
     base[m] = Math.max(mn, Math.min(mx, cub(v, rows[0], rows[1], rows[2], rows[3]))); }   // clamped to the 4x4 neighbourhood: no overshoot spikes where coarse sea floor meets land
 }
 async function loadOpenTopo(lat, lon) {
@@ -1925,7 +1946,7 @@ function waterDetect() {                  // sea (from the mapped coastline when
     for (let n = 0; n < N; n++) if (waterMask[n]) { waterMask[n] = 2; S.hasSea = true; }   // 2 = mapped water: the line is trusted over the elevation data
     for (const poly of coast.lakes) { const cells = []; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const g of poly) { x0 = Math.min(x0, g[0]); y0 = Math.min(y0, g[1]); x1 = Math.max(x1, g[0]); y1 = Math.max(y1, g[1]); }
       for (let j = Math.max(0, Math.floor(y0)); j <= Math.min(H - 1, Math.ceil(y1)); j++) for (let i = Math.max(0, Math.floor(x0)); i <= Math.min(W - 1, Math.ceil(x1)); i++) if (!waterMask[idx(i, j)] && inPoly(poly, i, j)) cells.push(idx(i, j));
-      if (!cells.length) continue; const vals = cells.map(n => src[n]).sort((a, b) => a - b), lv = vals[vals.length >> 1]; for (const n of cells) { waterMask[n] = 2; waterLevel[n] = lv; } }
+      if (!cells.length) continue; const rim = poly.filter(g => g[0] >= 0 && g[1] >= 0 && g[0] <= W - 1 && g[1] <= H - 1).map(g => sample(src, g[0], g[1])).sort((a, b) => a - b), vals = cells.map(n => src[n]).sort((a, b) => a - b), lv = rim.length >= 3 ? rim[rim.length >> 1] : vals[vals.length >> 1]; for (const n of cells) { waterMask[n] = 2; waterLevel[n] = lv; } }
   } else {
     for (let n = 0; n < N; n++) if (src[n] <= 0) { waterMask[n] = 1; }
     cleanWater(waterMask, 0); for (let n = 0; n < N; n++) if (waterMask[n]) S.hasSea = true;
@@ -2033,10 +2054,11 @@ async function fetchWorld(known, quiet) {
     }
     let src = null; if (IN_US(lat, lon)) { try { await load3DEP(lat, lon); src = '3dep'; } catch (e) { src = null; } }
     if (!src) { try { await loadTerrarium(lat, lon); src = 'tiles'; } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); src = 'opentopo'; } }
-    S.world = { lat, lon, name, src }; try { await loadCoast(lat, lon); } catch (e) { S.coast = null; }
+    let bathy = false; try { bathy = await loadBathy(lat, lon); } catch (e) { bathy = false; }
+    S.world = { lat, lon, name, src, bathy }; try { await loadCoast(lat, lon); } catch (e) { S.coast = null; }
     resetGrading(); seaDetect(); if (typeof sheetInfo === 'function') setTimeout(sheetInfo, 0); const [lo, hi] = range(base);
     autoInterval();
-    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide · ${SRC_NOTE[S.world.src] || SRC_NOTE.tiles}${S.coast && S.coast.segs.length ? ' · shoreline from openstreetmap' : ''}. change site width to zoom; it refetches.`); toast('real terrain loaded');
+    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide · ${SRC_NOTE[S.world.src] || SRC_NOTE.tiles}${S.world.bathy ? ' · sea floor from noaa' : ''}${S.coast && S.coast.segs.length ? ' · shoreline from openstreetmap' : ''}. change site width to zoom; it refetches.`); toast('real terrain loaded');
   } catch (e) {
     const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message));
     const msg = blocked ? 'network blocked on this page. open the live site: shopnerd.github.io/coyote-mountain/topo.html' : String(e.message || e);
