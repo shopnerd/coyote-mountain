@@ -683,10 +683,11 @@ function geoOut() {
   dl(URL.createObjectURL(new Blob([JSON.stringify(fc)], { type: 'application/geo+json' })), `flight-${slug()}.geojson`);
 }
 function litchiOut() {
-  if (!needPlan()) return; const p = plan; const warn = []; if (!LITCHI.has(S.drone) && S.drone !== 'custom') warn.push(`classic litchi does not fly the ${p.d.name}: use ${missionRoute(S.drone)}`); if (p.wps.length > 99) warn.push(`${p.wps.length} waypoints, litchi takes 99`); if (warn.length) toast(warn.join(' · ') + ' · exporting anyway');
+  if (!needPlan()) return; const p = plan; const warn = []; if (!LITCHI.has(S.drone) && S.drone !== 'custom') warn.push(`classic litchi does not fly the ${p.d.name}: use ${missionRoute(S.drone)}`); if (p.wps.length > 99) warn.push(`${p.wps.length} waypoints, litchi takes 99`); 
   const head = ['latitude', 'longitude', 'altitude(m)', 'heading(deg)', 'curvesize(m)', 'rotationdir', 'gimbalmode', 'gimbalpitchangle']; for (let i = 1; i <= 15; i++) head.push('actiontype' + i, 'actionparam' + i); head.push('altitudemode', 'speed(m/s)', 'poi_latitude', 'poi_longitude', 'poi_altitude(m)', 'poi_altitudemode', 'photo_timeinterval', 'photo_distinterval');
   const rows = p.wps.map(w => { const ll = wpLL(w), r = [ll[0].toFixed(7), ll[1].toFixed(7), Math.max(2, w.rel).toFixed(1), Math.round(w.heading), 0, 0, 2, S.pitch]; for (let i = 0; i < 15; i++) r.push(-1, 0); r.push(0, S.speed, 0, 0, 0, 0, -1, p.sPhoto.toFixed(2)); return r.join(','); });
   dl(URL.createObjectURL(new Blob([head.join(',') + '\n' + rows.join('\n') + '\n'], { type: 'text/csv' })), `flight-${slug()}-litchi.csv`);
+  if (warn.length) setTimeout(() => toast(warn.join(' · ') + ' · exported anyway'), 900);
 }
 const CRC = (() => { const t = new Int32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c; } return b => { let c = -1; for (let i = 0; i < b.length; i++) c = t[(c ^ b[i]) & 255] ^ (c >>> 8); return (c ^ -1) >>> 0; }; })();
 function zipStore(files) {                // a plain stored zip: [{name, data: Uint8Array}]
