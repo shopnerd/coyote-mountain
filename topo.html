@@ -123,7 +123,7 @@ canvas.orbit{cursor:grab}
     <div class="desc" id="desc"></div>
     <div class="seg" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped</button></div>
     <div class="desc" id="colorLbl" style="display:none;padding-bottom:2px">surface color</div>
-    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="aerial" title="photo on the model. 'no aerial' in the world section clears it too">aerial</button><button data-c="sun">sun</button></div>
+    <div class="seg wrap" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button><button data-c="cutfill">cut · fill</button><button data-c="sun">sun</button></div>
     <div id="sunSec" style="display:none">
         <div class="seg" style="margin-top:6px"><button data-s="hour" class="on">shadows</button><button data-s="hours">sun hours</button></div>
         <div class="params" style="padding-top:6px">
@@ -190,6 +190,7 @@ canvas.orbit{cursor:grab}
       <div class="p" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
       <div class="seg" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / geojson</button><button id="kmlClear">clear</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="seaRow"><button data-sea="1" class="on">water</button><button data-sea="0">raw ground</button></div>
+      <div class="seg" style="padding:0;margin-top:6px;display:none" id="roadRow"><button data-road="1" class="on">roads</button><button data-road="0">no roads</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="bldRow"><button data-bld="1" class="on">buildings</button><button data-bld="0">no buildings</button></div>
       <div class="p" id="riseRow" style="display:none"><label>sea level rise<output id="o_rise">0 ft</output></label><input type="range" id="rise" min="0" max="10" step=".25" value="0"></div>
       <input type="file" id="kmlFile" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml,application/geo+json" style="display:none">
@@ -273,6 +274,7 @@ function surfaceColor(mode, zavg, gx, gy, light, lo, hi, gi, gj) {
   if (mode === 'aerial') { const ae = S.world ? aerialImage() : null; if (!ae || !ae.data) return TONES[Math.max(0, Math.min(3, Math.floor((1 - light) * 5)))];
     const cx = Math.round(gi * AER), cy = Math.round(gj * AER), hh = AER >> 1; let r = 0, g = 0, b = 0, n = 0; for (let y = cy - hh; y < cy + hh; y++) for (let x = cx - hh; x < cx + hh; x++) { if (x < 0 || y < 0 || x >= ae.rw || y >= ae.rh) continue; const q = (y * ae.rw + x) * 4; if (!ae.data[q + 3]) continue; r += ae.data[q]; g += ae.data[q + 1]; b += ae.data[q + 2]; n++; }
     return n ? rgb([r / n, g / n, b / n], .85 + .2 * light) : TONES[1]; }
+  if (mode === 'cutfill') { const n = idx(Math.max(0, Math.min(W - 1, Math.round(gi))), Math.max(0, Math.min(H - 1, Math.round(gj)))), d = z[n] - base[n]; if (d > .05) return rgb(mix('#ebeae4', '#C96B3A', Math.min(1, d / 2)), shade); if (d < -.05) return rgb(mix('#ebeae4', '#6e6d68', Math.min(1, -d / 2)), shade); }
   if (mode === 'elevation') return rgb(ramp(ELEV, (zavg - lo) / Math.max(1e-6, hi - lo)), shade);
   const sl = Math.hypot(gx, gy);
   if (mode === 'slope') return rgb(ramp(SLOPE, sl / .6), shade);
@@ -286,6 +288,9 @@ function drawLegend(c, w, h, mode, lo, hi) {
     c.strokeStyle = INK2; c.lineWidth = .8; c.strokeRect(x, y, 120, 10); c.fillStyle = INK2; c.textAlign = 'left';
     c.fillText(mode === 'elevation' ? fL(lo, 1) : '0%', x, y + 20); c.textAlign = 'right'; c.fillText(mode === 'elevation' ? fL(hi, 1) : '60%+', x + 120, y + 20);
     c.textAlign = 'center'; c.fillText(mode === 'elevation' ? 'elevation' : 'slope', x + 60, y - 9);
+  } else if (mode === 'cutfill') {
+    c.fillStyle = rgb(mix('#ebeae4', '#C96B3A', 1)); c.fillRect(x, y, 24, 10); c.fillStyle = rgb(mix('#ebeae4', '#6e6d68', 1)); c.fillRect(x + 64, y, 24, 10); c.strokeStyle = INK2; c.lineWidth = .8; c.strokeRect(x, y, 24, 10); c.strokeRect(x + 64, y, 24, 10);
+    c.fillStyle = INK2; c.textAlign = 'left'; c.fillText('fill', x + 30, y + 5); c.fillText('cut', x + 94, y + 5); c.textAlign = 'center'; c.fillText('grading vs existing · full tone at ' + fL(2, 0), x + 60, y - 9);
   } else if (mode === 'aspect') {
     const cx = x + 60, cy = y - 10, r = 18; for (let q = 0; q < 72; q++) { const a0 = q / 72 * TAU, a1 = (q + 1) / 72 * TAU; c.fillStyle = rgb(ramp(ASPECT, q / 72)); c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, r, a0 - Math.PI / 2, a1 - Math.PI / 2); c.closePath(); c.fill(); }
     c.fillStyle = INK2; c.textAlign = 'center'; c.fillText('N', cx, cy - r - 8); c.fillText('S', cx, cy + r + 8); c.textAlign = 'left'; c.fillText('E', cx + r + 4, cy); c.textAlign = 'right'; c.fillText('W', cx - r - 4, cy);
@@ -356,7 +361,7 @@ let base = new Float32Array(W * H);     // existing grade, m
 let z = new Float32Array(W * H);        // proposed grade, m
 let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z;   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -438,6 +443,16 @@ let fontScale = 1;
 function font(px, weight) { return `${weight || 400} ${px * fontScale}px ${getComputedStyle(document.body).fontFamily}`; }
 
 /* ---------- plan ---------- */
+function drawRoads(c, toXY, k, dense) {   // roads by class, paths dashed; through any projection
+  const R = S.showRoads && S.coast && S.coast.roads; if (!R || !R.length) return;
+  const style = [[2.2, .95, []], [1.6, .9, []], [1.0, .85, []], [.7, .8, [4 * k, 3 * k]]];
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'round'; c.strokeStyle = INK2;
+  for (let cls = 0; cls < 4; cls++) { const st = style[cls]; c.lineWidth = st[0] * k; c.globalAlpha = st[1]; c.setLineDash(st[2]); c.beginPath();
+    for (const r of R) { if (r.c !== cls) continue; const P = dense ? densify(r.pts.map(q => [q[0], q[1], .5]), .3) : r.pts; let pen = false;
+      for (const q of P) { const inside = q[0] >= -1 && q[1] >= -1 && q[0] <= W && q[1] <= H; if (!inside) { pen = false; continue; } const p = toXY(q[0], q[1]); pen ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); pen = true; } }
+    c.stroke(); }
+  c.restore();
+}
 function drawBuildings2D(c, toXY, k) {   // hatched footprints with an ink outline
   const B = S.showBld && S.coast && S.coast.blds; if (!B || !B.length) return;
   const h = document.createElement('canvas'); h.width = h.height = 6; const o = h.getContext('2d'); o.strokeStyle = INK; o.lineWidth = .7; o.beginPath(); o.moveTo(-1, 7); o.lineTo(7, -1); o.stroke();
@@ -479,7 +494,7 @@ function drawPlanBase() {
     }
     ctx.stroke(); ctx.globalAlpha = 1;
   }
-  drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt'))); drawWater(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false, .55); drawBuildings2D(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
+  drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt'))); drawWater(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false, .55); drawRoads(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false); drawBuildings2D(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   if (!S.noFoot) {
@@ -567,7 +582,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
     return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
-  const items = [], iv = interval(), mode = S.colorMode;
+  const items = [], iv = interval(), mode = S.aerial && S.colorMode !== 'sun' ? 'aerial' : S.colorMode;   // the photo wins whenever it is on, except under a sun study
   const lx = -.5, ly = -.4, lz = .77;  // light from upper left
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
     const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
@@ -636,6 +651,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     if (++run >= 48) { flushLines(); run = 0; }
   }
   flushLines();
+  drawRoads(c, (i, j) => proj(i, j, sample(zv, i, j) + .03), mini ? .7 : 1, true);
   drawStrokes(c, (i, j) => proj(i, j, sample(zv, i, j) + .04), mini ? .7 : 1, true); drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   if (S.labels && !mini && !fast) {
@@ -918,7 +934,7 @@ function drawAnalysis() {
   if (S.an.flood) { flood = floodSim(an, rainMM(S.rainV) / 1000);
     for (const pl of flood.pools) { ctx.fillStyle = WATER; ctx.globalAlpha = .3 + .45 * Math.min(1, pl.depth / 1.5); fillPool(ctx, pl.loops, (i, j) => toSheet(i, j), pl.level); }
     ctx.globalAlpha = 1; }
-  drawContours(.3, false); drawWater(ctx, (i, j) => toSheet(i, j), 1, false, .45); drawBuildings2D(ctx, (i, j) => toSheet(i, j), 1);
+  drawContours(.3, false); drawWater(ctx, (i, j) => toSheet(i, j), 1, false, .45); drawRoads(ctx, (i, j) => toSheet(i, j), 1, false); drawBuildings2D(ctx, (i, j) => toSheet(i, j), 1);
   if (S.an.flow) { ctx.strokeStyle = WATER; ctx.lineCap = 'round';
     for (let n = 0; n < W * H; n++) { if (down[n] < 0 || acc[n] < thrCells * .2) continue; const a = cellXY(n), b = cellXY(down[n]);
       ctx.lineWidth = .5 + 1.6 * Math.log10(acc[n] / thrCells + 1); ctx.globalAlpha = acc[n] >= thrCells ? .9 : .4; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
@@ -1000,7 +1016,7 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerial, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
@@ -1146,7 +1162,7 @@ const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw 
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 let pipShot = { key: '', canvas: null };
 function pipFrame() {                     // the 3d preview drawn once (camera already swapped in by drawPip), reused while the rain moves
-  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerial, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
   if (pipShot.key !== key) { const now = performance.now(); if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt') && pipShot.canvas) return pipShot.canvas;
     const off = document.createElement('canvas'); off.width = Math.max(1, Math.round(pw * dpr)); off.height = Math.max(1, Math.round(ph * dpr)); const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0); o.fillStyle = PAPER; o.fillRect(0, 0, pw, ph);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, pw, ph, 3, true); pipShot = { key, canvas: off, t: now }; }
@@ -1375,9 +1391,9 @@ const TIPS = {
   'a:flow': 'blue lines where water runs, thicker with more ground feeding them', 'a:catch': 'each outlet\'s basin, tinted, with its area', 'a:ridge': 'dashed ember lines along the ridges', 'a:keys': 'keypoints: where a valley\'s steep upper slope eases, the classic small-dam site', 'a:keyline': 'the contour through the keypoint plus parallel plow lines in its catchment', 'a:swales': 'on-contour ditches stepping down from the keyline', 'a:dam': 'a dam at the keypoint or wherever you place it, with the pond it holds', 'a:flood': 'one storm\'s rain pooled in every hollow, worst case, no soak-in', 'a:sun': 'shadows at an hour, or sun hours per day, for the site\'s latitude', 'a:plow': 'rain follows the plow furrows: water drifts from the valley toward the ridges',
   't:key': 'a tap on the sheet sets the keyline point', 't:dam': 'a tap on the sheet places the dam', rainBtn: 'animated raindrops running downhill and pooling, here and on the model (r)', rainPause: 'freeze the drops and pools (p)',
   's:hour': 'shade the ground for one month and hour, with cast shadows', 's:hours': 'colour the ground by hours of direct sun in a day', playDay: 'sweep the hour from dawn to dusk', playYear: 'sweep the months at this hour',
-  'c:paper': 'plain paper tones', 'c:elevation': 'green low to ember high', 'c:slope': 'paper flat to ember steep', 'c:aspect': 'which way each slope faces', 'c:aerial': 'the satellite photo on the ground', 'c:sun': 'sun shading on the ground', 's:smooth': 'the ground as a continuous surface', 's:stepped': 'the ground as the cardboard stack you would cut',
+  'c:paper': 'plain paper tones', 'c:elevation': 'green low to ember high', 'c:slope': 'paper flat to ember steep', 'c:aspect': 'which way each slope faces', 'c:cutfill': 'where your grading sits above the existing ground (ember) or below it (grey); full tone at 2 m', 'c:sun': 'sun shading on the ground', 's:smooth': 'the ground as a continuous surface', 's:stepped': 'the ground as the cardboard stack you would cut',
   'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush',
-  kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'g:1': 'the standard 150 × 100 grid', 'g:2': 'a 300 × 200 grid: cells half the size, four times the work per redraw. terrain refetches at the finer grid', 'bld:1': 'mapped building footprints: hatched on the plan, blocks on the model at their mapped height (one storey where none is mapped)', 'bld:0': 'hide the buildings', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
+  kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'g:1': 'the standard 150 × 100 grid', 'g:2': 'a 300 × 200 grid: cells half the size, four times the work per redraw. terrain refetches at the finer grid', 'road:1': 'mapped roads and paths: heavier lines for main roads, dashed for footpaths and tracks, draped on the model', 'road:0': 'hide the roads', 'bld:1': 'mapped building footprints: hatched on the plan, blocks on the model at their mapped height (one storey where none is mapped)', 'bld:0': 'hide the buildings', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
   reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label',
   'p:month': 'month of the year for the sun study', 'p:hour': 'hour of the day for the sun study, solar time', 'p:rain': 'rain falling on the whole site in one storm, no soak-in', 'p:thr': 'how much upstream ground it takes to count as a stream', 'p:plow': 'distance between plow lines, measured on the ground', 'p:swale': 'vertical drop from one swale to the next', 'p:dam': 'wall height of the dam; the pond fills to its crest',
   'p:place': 'a place name, or lat, lng. then press fetch', 'p:siteW': 'how wide a piece of the world to fetch. wider means coarser ground; it refetches when this changes', 'p:rot': 'turn the fetched area so a long feature lies along the sheet', 'p:aop': 'how strongly the satellite photo shows through',
@@ -1388,7 +1404,7 @@ const TIPS = {
 };
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
-  else key = el.id && TIPS[el.id] ? el.id : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
+  else key = el.id && TIPS[el.id] ? el.id : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.road ? 'road:' + d.road : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
   const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.title || ''; }
 const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
 function showTip(el) { const t = tipFor(el); if (!t) return; showTipAt(t, el.getBoundingClientRect()); }
@@ -1560,9 +1576,6 @@ document.getElementById('halfW').onclick = () => setSiteW(S.siteW / 2);
 bind('rot', v => v + '°', v => S.rot = v);
 bind('aop', v => v + '%', v => S.aop = v / 100);
 document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.aerial = b.dataset.ae === '1'; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
-  const setColor = c => { S.colorMode = c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === c)); showSun(); };
-  if (!S.aerial && S.colorMode === 'aerial') setColor('paper');
-  if (S.aerial) setColor('aerial');
   if (S.aerial && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
 document.getElementById('rot').onchange = () => { if (S.world) fetchWorld(S.world); };
 document.getElementById('dblW').onclick = () => setSiteW(S.siteW * 2);
@@ -1624,7 +1637,6 @@ bind('dam', v => fL(v, 1), v => S.damH = v);
 const rainMM = v => 2 + 198 * (v / 100) ** 2;
 bind('rain', v => isFt() ? tz((rainMM(v) / 25.4).toFixed(2)) + ' in' : Math.round(rainMM(v)) + ' mm', v => S.rainV = v);
 document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); showSun();
-  if (S.colorMode === 'aerial' && !S.aerial) { S.aerial = true; document.querySelectorAll('#aerialRow button').forEach(x => x.classList.toggle('on', x.dataset.ae === '1')); document.getElementById('aerialOp').style.display = ''; }
   S.dirty = true; };
 document.getElementById('labelRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.labels = b.dataset.l === '1'; document.querySelectorAll('#labelRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 document.getElementById('sculptRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sculpt = b.dataset.k === 'sculpt'; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.pick = null; S.dirty = true; toast(S.sculpt ? 'left drag sculpts · right drag orbits · middle drag pans' : 'left drag orbits'); };
@@ -1852,7 +1864,7 @@ document.getElementById('kmlClear').onclick = () => { S.boundary = null; boundar
 
 /* ---------- world: real elevation for any place ---------- */
 function worldStatus(msg) { document.getElementById('worldStatus').textContent = msg; groundControls(); }
-function groundControls() { const real = !!S.world; document.getElementById('bldRow').style.display = S.coast && S.coast.blds && S.coast.blds.length ? '' : 'none'; document.querySelectorAll('#bldRow button').forEach(b => b.classList.toggle('on', (b.dataset.bld === '1') === S.showBld)); document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
+function groundControls() { const real = !!S.world; document.getElementById('roadRow').style.display = S.coast && S.coast.roads && S.coast.roads.length ? '' : 'none'; document.querySelectorAll('#roadRow button').forEach(b => b.classList.toggle('on', (b.dataset.road === '1') === S.showRoads)); document.getElementById('bldRow').style.display = S.coast && S.coast.blds && S.coast.blds.length ? '' : 'none'; document.querySelectorAll('#bldRow button').forEach(b => b.classList.toggle('on', (b.dataset.bld === '1') === S.showBld)); document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
 function nodeLatLon(i, j, lat, lon) { const sx = (i - (W - 1) / 2) * cs(), sy = ((H - 1) / 2 - j) * cs(), t = S.rot * D2R, dx = sx * Math.cos(t) + sy * Math.sin(t), dy = -sx * Math.sin(t) + sy * Math.cos(t); return [lat + dy / 111320, lon + dx / (111320 * Math.cos(lat * D2R))]; }
 function loadImage(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => rej(new Error('tile blocked')); im.src = url; }); }
 const SRC_NOTE = { '3dep': 'USGS 3DEP elevation: lidar where it has been flown, 10 m elsewhere', tiles: 'elevation tiles: the best public source for this place, 30 m or finer', opentopo: 'opentopodata, about 30 m' };
@@ -1903,7 +1915,7 @@ async function load3DEP(lat, lon) {       // usgs 3dep: the best available us el
 async function loadBathy(lat, lon) {      // noaa global relief mosaic (gebco plus finer coastal models where they exist): the sea floor under cells the land source left at sea level
   let seaCells = 0; for (let n = 0; n < W * H; n++) if (base[n] <= .05) seaCells++; if (seaCells < W * H * .005) return false;
   const sm = await imageServerSampler('https://gis.ngdc.noaa.gov/arcgis/rest/services/DEM_mosaics/DEM_global_mosaic/ImageServer', lat, lon, cs() / 2, 'fetching the sea floor…');
-  let got = 0; for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); if (base[n] > .05) continue; const v = sm(i, j); if (!isNaN(v) && v < base[n]) { base[n] = v; got++; } }
+  let got = 0; for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); if (base[n] > 3) continue; const v = sm(i, j); if (!isNaN(v) && v <= .05) { base[n] = v; got++; } }   // noaa's own land/sea line decides; the tiles' ocean can read a few metres high
   return got > 0;
 }
 async function loadTerrarium(lat, lon) {
@@ -1929,6 +1941,7 @@ async function loadTerrarium(lat, lon) {
     const mean = sum / cnt; for (let q = 0; q < 16; q++) if (isNaN(g[q])) g[q] = mean;
     const rows = []; for (let r = 0; r < 4; r++) rows.push(cub(u, g[r * 4], g[r * 4 + 1], g[r * 4 + 2], g[r * 4 + 3]));
     base[m] = Math.max(mn, Math.min(mx, cub(v, rows[0], rows[1], rows[2], rows[3]))); }   // clamped to the 4x4 neighbourhood: no overshoot spikes where coarse sea floor meets land
+  for (let m = 0; m < W * H; m++) if (base[m] < -30) base[m] = -1;   // the tiles' ocean is not a sea floor (blocky, with rogue pixels); noaa supplies depth
 }
 async function loadOpenTopo(lat, lon) {
   const GW = 40, GH = 27, pts = []; for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) pts.push(nodeLatLon(i / (GW - 1) * (W - 1), j / (GH - 1) * (H - 1), lat, lon));
@@ -1953,10 +1966,10 @@ function waterDetect() {                  // sea (from the mapped coastline when
   if (coast) {
     const bar = new Uint8Array(N);          // the coastline and lake edges as walls the flood cannot cross
     for (const sg of coast.segs) { const L = Math.hypot(sg[2] - sg[0], sg[3] - sg[1]), st = Math.max(1, Math.ceil(L * 2)); for (let t = 0; t <= st; t++) { const i = Math.round(sg[0] + (sg[2] - sg[0]) * t / st), j = Math.round(sg[1] + (sg[3] - sg[1]) * t / st); if (inB(i, j)) bar[idx(i, j)] = 1; } }
-    for (const [i, j] of coast.seeds) { if (!inB(i, j) || bar[idx(i, j)] || waterMask[idx(i, j)] || src[idx(i, j)] > .5) continue;
+    for (const sd of coast.seeds) { let i = -1, j = -1; for (let t = 0; t + 1 < sd.length; t += 2) { if (inB(sd[t], sd[t + 1]) && !bar[idx(sd[t], sd[t + 1])]) { i = sd[t]; j = sd[t + 1]; break; } } if (i < 0 || waterMask[idx(i, j)] || src[idx(i, j)] > 3) continue;   // first candidate off the coast line; tile oceans carry a few metres of noise at the shore
       const comp = [idx(i, j)]; waterMask[idx(i, j)] = 1; let high = 0;
-      for (let t = 0; t < comp.length; t++) { const n = comp[t], ci = n % W, cj = (n / W) | 0; if (src[n] > 2) high++; for (const [di, dj] of NB4) { const ii = ci + di, jj = cj + dj; if (!inB(ii, jj)) continue; const m = idx(ii, jj); if (!waterMask[m] && !bar[m]) { waterMask[m] = 1; comp.push(m); } } }
-      if (high > comp.length * .15) for (const n of comp) waterMask[n] = 0; }   // that was land: the seed sat on the wrong bank of a narrow inlet
+      for (let t = 0; t < comp.length; t++) { const n = comp[t], ci = n % W, cj = (n / W) | 0; if (src[n] > 5) high++; for (const [di, dj] of NB4) { const ii = ci + di, jj = cj + dj; if (!inB(ii, jj)) continue; const m = idx(ii, jj); if (!waterMask[m] && !bar[m] && src[m] <= 3) { waterMask[m] = 1; comp.push(m); } } }   // the sea stays below 3 m even through a gap in the mapped line
+      if (high > comp.length * .25) for (const n of comp) waterMask[n] = 0; }   // that was land: the seed sat on the wrong bank of a narrow inlet
     for (let n = 0; n < N; n++) if (bar[n] && !waterMask[n]) { const i = n % W, j = (n / W) | 0; let wet = 0; for (const [di, dj] of NB4) { const ii = i + di, jj = j + dj; if (inB(ii, jj) && waterMask[idx(ii, jj)] && !bar[idx(ii, jj)]) wet++; } if (wet >= 2) waterMask[n] = 2; }
     for (let n = 0; n < N; n++) if (waterMask[n]) { waterMask[n] = 2; S.hasSea = true; }   // 2 = mapped water: the line is trusted over the elevation data
     for (const poly of coast.lakes) { const cells = []; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const g of poly) { x0 = Math.min(x0, g[0]); y0 = Math.min(y0, g[1]); x1 = Math.max(x1, g[0]); y1 = Math.max(y1, g[1]); }
@@ -1995,11 +2008,11 @@ async function loadCoast(lat, lon) {      // openstreetmap coastline + lake poly
   let j = null; worldStatus('fetching the mapped shoreline…');
   for (const host of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.osm.ch/api/interpreter']) { try { const ctrl = new AbortController(), tm = setTimeout(() => ctrl.abort(), 25000); const r = await fetch(host + '?data=' + encodeURIComponent(q), { signal: ctrl.signal }); clearTimeout(tm); if (r.ok) { j = await r.json(); break; } } catch (_) {} }
   if (!j || !j.elements) return;
-  const segs = [], seeds = [], lakes = [], epsLat = .7 * cs() / 111320, epsLon = .7 * cs() / (111320 * Math.cos(lat * D2R));
+  const segs = [], seeds = [], lakes = [];
   for (const el of j.elements) { if (el.type !== 'way' || !el.geometry || el.geometry.length < 2) continue; const tags = el.tags || {}, g = el.geometry.map(pt => latLonToGrid(pt.lat, pt.lon));
     if (tags.natural === 'coastline') { for (let k = 1; k < g.length; k++) { segs.push([g[k - 1][0], g[k - 1][1], g[k][0], g[k][1]]);
-        const a = el.geometry[k - 1], c = el.geometry[k], dlon = c.lon - a.lon, dlat = c.lat - a.lat, L = Math.hypot(dlon / epsLon, dlat / epsLat) || 1;   // right-hand side of the way = water
-        const sp = latLonToGrid((a.lat + c.lat) / 2 - dlon / L * epsLat, (a.lon + c.lon) / 2 + dlat / L * epsLon); seeds.push([Math.round(sp[0]), Math.round(sp[1])]); } }
+        const a = g[k - 1], c = g[k], dx = c[0] - a[0], dy = c[1] - a[1], L = Math.hypot(dx, dy) || 1, nx = -dy / L, ny = dx / L;   // right-hand side of the way = water; grid y runs south, so the right normal is (-dy, dx)
+        const sd = []; for (const f of [1, 2.3, 3.6]) sd.push(Math.round((a[0] + c[0]) / 2 + nx * f), Math.round((a[1] + c[1]) / 2 + ny * f)); seeds.push(sd); } }   // three candidates stepping out from the line, so one clears the rasterised coast
     else if (tags.natural === 'water' && !/river|stream|canal|drain|ditch|tidal/.test((tags.water || '') + ' ' + (tags.tidal || '')) && g.length > 3) { const closed = Math.hypot(g[0][0] - g[g.length - 1][0], g[0][1] - g[g.length - 1][1]) < 1e-6; if (!closed) continue;
       lakes.push(g); for (let k = 1; k < g.length; k++) segs.push([g[k - 1][0], g[k - 1][1], g[k][0], g[k][1]]); } }
   for (const el of j.elements) { if (el.type !== 'relation' || !el.members) continue; const tags = el.tags || {}; if (tags.natural !== 'water' || /river|stream|canal|tidal/.test((tags.water || '') + ' ' + (tags.tidal || ''))) continue;
@@ -2016,17 +2029,21 @@ function bldHeight(tags) {                // metres: mapped height, else storeys
   const lv = parseFloat(tags['building:levels']); if (isFinite(lv) && lv > 0) return lv * 3.2 + .8; return 4;
 }
 async function loadBuildings(lat, lon) {  // closed building ways (and multipolygon outers) inside the site, in grid coords, with a height
-  if (S.siteW > 8000) return;              // a city-sized site would be tens of thousands of footprints
-  const b = siteBox(lat, lon, 0), q = `[out:json][timeout:20];(way["building"](${b.s},${b.w},${b.n},${b.e});relation["building"]["type"="multipolygon"](${b.s},${b.w},${b.n},${b.e}););out geom;`;
+  if (S.siteW > 15000) return; const b = siteBox(lat, lon, 0), bb = `(${b.s},${b.w},${b.n},${b.e})`;
+  const q = S.siteW > 8000 ? `[out:json][timeout:20];(way["highway"~"^(motorway|trunk|primary|secondary|tertiary)"]${bb};);out geom;`   // a city-sized site: main roads only
+    : `[out:json][timeout:20];(way["building"]${bb};relation["building"]["type"="multipolygon"]${bb};way["highway"]${bb};);out geom;`;
   let j = null; worldStatus('fetching building footprints…');
   for (const host of ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://overpass.osm.ch/api/interpreter']) { try { const ctrl = new AbortController(), tm = setTimeout(() => ctrl.abort(), 25000); const r = await fetch(host + '?data=' + encodeURIComponent(q), { signal: ctrl.signal }); clearTimeout(tm); if (r.ok) { j = await r.json(); break; } } catch (_) {} }
-  if (!j || !j.elements) return; const blds = [], near = (a, c) => Math.hypot(a[0] - c[0], a[1] - c[1]) < .05;
+  if (!j || !j.elements) return; const blds = [], roads = [], near = (a, c) => Math.hypot(a[0] - c[0], a[1] - c[1]) < .05;
+  const RANK = h => /^(motorway|trunk|primary)/.test(h) ? 0 : /^(secondary|tertiary)/.test(h) ? 1 : /^(path|footway|cycleway|track|bridleway|steps|pedestrian)/.test(h) ? 3 : 2;
   const add = (g, tags) => { if (g.length < 4) return; if (g.every(q => q[0] < -1 || q[1] < -1 || q[0] > W || q[1] > H)) return; blds.push({ pts: g.slice(0, -1).map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100]), h: Math.round(bldHeight(tags) * 10) / 10 }); };
-  for (const el of j.elements) { const tags = el.tags || {}; if (!tags.building) continue;
+  for (const el of j.elements) { const tags = el.tags || {};
+    if (tags.highway && el.type === 'way' && el.geometry && el.geometry.length > 1 && !/^(proposed|construction|abandoned|razed)/.test(tags.highway)) { const g = el.geometry.map(pt => latLonToGrid(pt.lat, pt.lon)); if (!g.every(q => q[0] < -1 || q[1] < -1 || q[0] > W || q[1] > H)) roads.push({ pts: g.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100]), c: RANK(tags.highway) }); continue; }
+    if (!tags.building) continue;
     if (el.type === 'way' && el.geometry && el.geometry.length > 3) { const g = el.geometry.map(pt => latLonToGrid(pt.lat, pt.lon)); if (near(g[0], g[g.length - 1])) add(g, tags); }
     else if (el.type === 'relation' && el.members) { let parts = el.members.filter(m => m.type === 'way' && m.role !== 'inner' && m.geometry && m.geometry.length > 1).map(m => m.geometry.map(pt => latLonToGrid(pt.lat, pt.lon)));
       while (parts.length) { let ring = parts.shift(), grew = true; while (grew && !near(ring[0], ring[ring.length - 1])) { grew = false; for (let t = 0; t < parts.length; t++) { const pt = parts[t], e = ring[ring.length - 1]; if (near(e, pt[0])) { ring = ring.concat(pt.slice(1)); parts.splice(t, 1); grew = true; break; } if (near(e, pt[pt.length - 1])) { ring = ring.concat(pt.slice(0, -1).reverse()); parts.splice(t, 1); grew = true; break; } } } if (ring.length > 3 && near(ring[0], ring[ring.length - 1])) add(ring, tags); } } }
-  if (!blds.length) return; if (!S.coast) S.coast = { segs: [], seeds: [], lakes: [], blds: [] }; S.coast.blds = blds;
+  if (!blds.length && !roads.length) return; if (!S.coast) S.coast = { segs: [], seeds: [], lakes: [], blds: [], roads: [] }; S.coast.blds = blds; S.coast.roads = roads;
 }
 function segDist(px, py, sg) { const dx = sg[2] - sg[0], dy = sg[3] - sg[1], L2 = dx * dx + dy * dy || 1e-9, t = Math.max(0, Math.min(1, ((px - sg[0]) * dx + (py - sg[1]) * dy) / L2)); return Math.hypot(px - sg[0] - dx * t, py - sg[1] - dy * t); }
 function cleanWater(mask, level) {        // no mapped shoreline: drop islets and holes a few cells across, then one majority pass
@@ -2036,8 +2053,12 @@ function cleanWater(mask, level) {        // no mapped shoreline: drop islets an
   for (const { c, edge } of comps(1)) if (c.length < 12 && !edge) for (const n of c) mask[n] = 0;   // holes
   const copy = mask.slice(); for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) { let w = 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) w += copy[idx(i + di, j + dj)]; mask[idx(i, j)] = w >= 5 ? 1 : 0; }
 }
+function despike() {                      // a lone cell far below its neighbours is a data fault, not a hole
+  const c = base.slice(), nb = new Float32Array(8);
+  for (let j = 1; j < H - 1; j++) for (let i = 1; i < W - 1; i++) { let t = 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) if (di || dj) nb[t++] = c[idx(i + di, j + dj)]; const srt = Array.from(nb).sort((a, b) => a - b), med = (srt[3] + srt[4]) / 2, n = idx(i, j); if (c[n] < med - 60 || c[n] > med + 200) base[n] = med; }
+}
 function seaDetect() {                    // after a fetch: remember the raw ground, find the water, clip the sea floor
-  rawBase = base.slice(); waterDetect(); S.seaClip = S.hasWater; applySea();
+  despike(); rawBase = base.slice(); waterDetect(); S.seaClip = S.hasWater; applySea();
 }
 function applySea() {                     // base = raw, with the sea floor clipped to 0 when water is on; grading deltas ride along
   if (!rawBase) return; for (let n = 0; n < W * H; n++) { const nb = S.seaClip && rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
@@ -2064,6 +2085,7 @@ function drawWater(c, toXY, k, dense, alpha) {   // flat blue water with a shore
   c.save(); c.beginPath(); for (const l of loops) { const P = dense ? densify(l.map(q => [q[0], q[1], .5]), .3) : l; P.forEach((q, t) => { const p = toXY(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); }
   c.fillStyle = '#9dbad2'; c.globalAlpha = alpha; c.fill('evenodd'); c.globalAlpha = 1; c.strokeStyle = '#4f7391'; c.lineWidth = .9 * k; c.stroke(); c.restore();
 }
+document.getElementById('roadRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showRoads = b.dataset.road === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('bldRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showBld = b.dataset.bld === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('seaRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.seaClip = b.dataset.sea === '1'; applySea(); toast(S.seaClip ? 'water shown flat at its level' : 'raw ground, no water'); };
 bind('rise', v => fL(v, 1), v => { S.seaRise = v; if (rawBase) { waterDetect(); S.waterVer++; S.dirty = true; } });
@@ -2091,7 +2113,7 @@ async function fetchWorld(known, quiet) {
     S.world = { lat, lon, name, src, bathy }; try { await loadCoast(lat, lon); } catch (e) { S.coast = null; } try { await loadBuildings(lat, lon); } catch (e) {}
     resetGrading(); seaDetect(); if (typeof sheetInfo === 'function') setTimeout(sheetInfo, 0); const [lo, hi] = range(base);
     autoInterval();
-    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide · ${SRC_NOTE[S.world.src] || SRC_NOTE.tiles}${S.world.bathy ? ' · sea floor from noaa' : ''}${S.coast && S.coast.segs.length ? ' · shoreline from openstreetmap' : ''}${S.coast && S.coast.blds && S.coast.blds.length ? ' · ' + S.coast.blds.length + ' building footprints' : ''}. change site width to zoom; it refetches.`); toast('real terrain loaded');
+    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide · ${SRC_NOTE[S.world.src] || SRC_NOTE.tiles}${S.world.bathy ? ' · sea floor from noaa' : ''}${S.coast && S.coast.segs.length ? ' · shoreline from openstreetmap' : ''}${S.coast && S.coast.blds && S.coast.blds.length ? ' · ' + S.coast.blds.length + ' building footprints' : ''}${S.coast && S.coast.roads && S.coast.roads.length ? ' · ' + S.coast.roads.length + ' roads and paths' : ''}. change site width to zoom; it refetches.`); toast('real terrain loaded');
   } catch (e) {
     const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message));
     const msg = blocked ? 'network blocked on this page. open the live site: shopnerd.github.io/coyote-mountain/topo.html' : String(e.message || e);
@@ -2225,7 +2247,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [] } : null, showBld: S.showBld, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
@@ -2233,7 +2255,7 @@ function loadProject(pr, fromHome) {
   if (!pr || pr.app !== 'coyote-topo' || !pr.base) throw new Error('not a coyote topo file');
   const gw = pr.grid ? pr.grid[0] : 150; if (gw !== W) setGrid(gw / 150, true); if (pr.base.length !== W * H) throw new Error('not a coyote topo file');
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
-  rawBase = pr.world ? base.slice() : null; S.coast = pr.coast && (pr.coast.segs || pr.coast.blds) ? Object.assign({ segs: [], seeds: [], lakes: [], blds: [] }, pr.coast) : null; S.showBld = pr.showBld !== false; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
+  rawBase = pr.world ? base.slice() : null; S.coast = pr.coast && (pr.coast.segs || pr.coast.blds || pr.coast.roads) ? Object.assign({ segs: [], seeds: [], lakes: [], blds: [], roads: [] }, pr.coast) : null; S.showBld = pr.showBld !== false; S.showRoads = pr.showRoads !== false; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
   if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
   S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = '';
   S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
@@ -2245,7 +2267,7 @@ function loadProject(pr, fromHome) {
   document.querySelectorAll('#anaLayers button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); showSun(); document.getElementById('floodSec').style.display = S.an.flood ? '' : 'none';
   document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode)); document.querySelectorAll('#modelStyle button').forEach(b => b.classList.toggle('on', b.dataset.s === S.modelStyle));
   document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === S.aerial)); document.getElementById('aerialOp').style.display = S.aerial ? '' : 'none';
-  if (S.aerial) S.colorMode = 'aerial'; if (!S.aerial && S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
+  if (S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
   relabels.forEach(f => f()); worldStatus(''); if (typeof sheetInfo === 'function') setTimeout(sheetInfo, 0); S.terrainVer++; updateStats(); S.dirty = true;
 }
 function saveProject() { const pr = snapshotProject(), name = `coyote-topo-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 30)}.json`; dl(URL.createObjectURL(new Blob([JSON.stringify(pr)], { type: 'application/json' })), name); }
