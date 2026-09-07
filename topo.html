@@ -1054,7 +1054,7 @@ function plowField() {                    // furrow direction for every cell in 
 }
 function stepRain() {   // drops run on the ground, not the water surface
   const d = depressions(), dropVol = d.A * .025, pf = S.an.plow ? plowField() : null, chan = analyze().chan;
-  for (let q = 0; q < 5 && drops.length < 1400; q++) drops.push({ x: 1 + Math.random() * (W - 3), y: 1 + Math.random() * (H - 3), age: 0, trail: [] });
+  for (let q = 0; q < 5 && drops.length < 1400; q++) { let x = 0, y = 0, ok = false; for (let t = 0; t < 12 && !ok; t++) { x = 1 + Math.random() * (W - 3); y = 1 + Math.random() * (H - 3); ok = inTrim(x, y); } if (ok) drops.push({ x, y, age: 0, trail: [] }); }   // rain falls on the lot only when the model is trimmed
   const finish = dr => { rainStats.done++; };
   const absorb = (cp, dr, q) => { cp.vol = Math.min(cp.cap, cp.vol + dropVol); cp.level = poolLevel(cp, d.A); finish(dr); drops.splice(q, 1); }; const db = damBasinGet();
   for (let q = drops.length - 1; q >= 0; q--) { const dr = drops[q]; dr.age++; dr.trail.push([dr.x, dr.y]); if (dr.trail.length > 14) dr.trail.shift();
@@ -1072,7 +1072,7 @@ function stepRain() {   // drops run on the ground, not the water surface
     else { const i = Math.round(dr.x), j = Math.round(dr.y); let best = -1, bz = z[idx(i, j)] - 1e-4; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const v = z[idx(ii, jj)]; if (v < bz) { bz = v; best = idx(ii, jj); } }
       if (best < 0) { if (db && db.mask[n]) absorb(db, dr, q); else if (c >= 0) absorb(d.comps[c], dr, q); else { finish(dr); drops.splice(q, 1); } continue; } dr.x += (best % W - dr.x) * .25; dr.y += (((best / W) | 0) - dr.y) * .25; }
     dr.run = (dr.run || 0) + Math.hypot(dr.x - px0, dr.y - py0);
-    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 1800) { finish(dr); drops.splice(q, 1); continue; }
+    if (dr.x < 0 || dr.y < 0 || dr.x > W - 1 || dr.y > H - 1 || dr.age > 1800 || !inTrim(dr.x, dr.y)) { finish(dr); drops.splice(q, 1); continue; }
     if (db && db.mask[n] && !db.mask[idx(Math.round(dr.x), Math.round(dr.y))]) absorb(db, dr, q);   // tried to cross the dam wall: held behind it
   }
 }
@@ -1084,11 +1084,11 @@ function analysisFrame() {                // the analysis sheet rendered once, r
 }
 function drawRainOverlay(c, proj, w, h, inModel) {   // pools, dam pond and traces over an already-drawn picture
   const d = depressions(); c.fillStyle = WATER; c.globalAlpha = .55; let pooled = 0;
-  for (const cp of d.comps) { if (cp.vol <= 0) continue; pooled += cp.vol; fillPool(c, poolLoops(cp.cells, cp.level), proj, cp.level); }
+  for (const cp of d.comps) { if (cp.vol <= 0) continue; if (cp.cells.length && !inTrim(cp.cells[0] % W, (cp.cells[0] / W) | 0)) continue; pooled += cp.vol; fillPool(c, poolLoops(cp.cells, cp.level), proj, cp.level); }
   const db = damBasinGet(); if (db && db.vol > 0) { pooled += db.vol; fillPool(c, poolLoops(db.cells, db.level), proj, db.level); }
   c.strokeStyle = WATER; c.lineWidth = inModel ? .8 : .7; c.lineCap = 'round';
   for (let bucket = 0; bucket < 6; bucket++) { c.globalAlpha = .12 + .13 * bucket; c.beginPath();
-    for (const dr of drops) { const t = dr.trail, L = t.length; if (L < 2) continue; for (let q = 1; q < L; q++) { const age = L - 1 - q; if (Math.min(5, Math.floor(age / 2)) !== 5 - bucket) continue; const a = proj(t[q - 1][0], t[q - 1][1], sample(z, t[q - 1][0], t[q - 1][1]) + .05), b = proj(t[q][0], t[q][1], sample(z, t[q][0], t[q][1]) + .05); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); } }
+    for (const dr of drops) { const t = dr.trail, L = t.length; if (L < 2) continue; for (let q = 1; q < L; q++) { const age = L - 1 - q; if (Math.min(5, Math.floor(age / 2)) !== 5 - bucket) continue; if (!inTrim(t[q][0], t[q][1]) || !inTrim(t[q - 1][0], t[q - 1][1])) continue; const a = proj(t[q - 1][0], t[q - 1][1], sample(z, t[q - 1][0], t[q - 1][1]) + .05), b = proj(t[q][0], t[q][1], sample(z, t[q][0], t[q][1]) + .05); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); } }
     c.stroke(); }
   c.globalAlpha = 1; c.lineCap = 'butt'; return { pooled, db };
 }
