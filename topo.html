@@ -193,6 +193,7 @@ canvas.orbit{cursor:grab}
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="roadRow"><button data-road="1" class="on">roads</button><button data-road="0">no roads</button></div>
       <div class="seg" style="padding:0;margin-top:6px;display:none" id="bldRow"><button data-bld="1" class="on">buildings</button><button data-bld="0">no buildings</button></div>
       <div class="p" id="riseRow" style="display:none"><label>sea level rise<output id="o_rise">0 ft</output></label><input type="range" id="rise" min="0" max="10" step=".25" value="0"></div>
+      <div class="seg" style="padding:0;margin-top:6px;display:none" id="trimRow"><button data-trim="1">trim to lot</button><button data-trim="0" class="on">full site</button></div>
       <input type="file" id="kmlFile" accept=".kml,.geojson,.json,application/vnd.google-earth.kml+xml,application/geo+json" style="display:none">
       <div class="desc" id="worldStatus" style="padding:0">noise terrain. fetch pulls 30 m elevation data for an area as wide as the site width above.</div>
     </div>
@@ -361,7 +362,7 @@ let base = new Float32Array(W * H);     // existing grade, m
 let z = new Float32Array(W * H);        // proposed grade, m
 let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z;   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -449,7 +450,7 @@ function drawRoads(c, toXY, k, dense) {   // roads by class, paths dashed; throu
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round'; c.strokeStyle = INK2;
   for (let cls = 0; cls < 4; cls++) { const st = style[cls]; c.lineWidth = st[0] * k; c.globalAlpha = st[1]; c.setLineDash(st[2]); c.beginPath();
     for (const r of R) { if (r.c !== cls) continue; const P = dense ? densify(r.pts.map(q => [q[0], q[1], .5]), .3) : r.pts; let pen = false;
-      for (const q of P) { const inside = q[0] >= -1 && q[1] >= -1 && q[0] <= W && q[1] <= H; if (!inside) { pen = false; continue; } const p = toXY(q[0], q[1]); pen ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); pen = true; } }
+      for (const q of P) { const inside = q[0] >= -1 && q[1] >= -1 && q[0] <= W && q[1] <= H && (!dense || inTrim(q[0], q[1])); if (!inside) { pen = false; continue; } const p = toXY(q[0], q[1]); pen ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); pen = true; } }
     c.stroke(); }
   c.restore();
 }
@@ -577,17 +578,22 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   const fast = S.lowQ && !mini; if (fast) step = Math.max(step, 2);   // while the camera moves: every second cell, no labels; full quality on release
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const s = cs(), [lo, hi] = range(zv), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
+  const s = cs(), tm = trimMask(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
   const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
     return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
+  const tin = (i, j) => { if (!tm) return true; if (i < 0 || j < 0 || i > W - 2 || j > H - 2) return false; return !!tm.tiles[Math.min(H - 2, j + (step >> 1)) * (W - 1) + Math.min(W - 2, i + (step >> 1))]; };
   const items = [], iv = interval(), mode = S.aerial && S.colorMode !== 'sun' ? 'aerial' : S.colorMode;   // the photo wins whenever it is on, except under a sun study
   const lx = -.5, ly = -.4, lz = .77;  // light from upper left
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
+    if (tm && !tin(i, j)) continue;
     const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
     const za = zv[idx(i, j)], zb = zv[idx(i2, j)], zc = zv[idx(i2, j2)], zd = zv[idx(i, j2)];
     const P = [proj(i, j, za), proj(i2, j, zb), proj(i2, j2, zc), proj(i, j2, zd)];
+    if (tm) {   // a wall wherever the neighbour tile is outside the lot
+      const edge = (n1, n2) => { const q = [proj(n1[0], n1[1], zv[idx(n1[0], n1[1])]), proj(n2[0], n2[1], zv[idx(n2[0], n2[1])]), proj(n2[0], n2[1], baseZ), proj(n1[0], n1[1], baseZ)]; items.push({ d: (q[0][2] + q[1][2] + q[2][2] + q[3][2]) / 4, wall: q, lines: [] }); };
+      if (!tin(i - step, j)) edge([i, j], [i, j2]); if (!tin(i + step, j)) edge([i2, j2], [i2, j]); if (!tin(i, j - step)) edge([i2, j], [i, j]); if (!tin(i, j + step)) edge([i, j2], [i2, j2]); }
     const gc = grad(i + step / 2, j + step / 2), gx = gc[0], gy = gc[1], nx = -gx * S.ve, ny = -gy * S.ve; const nl = Math.hypot(nx, ny, 1);
     const light = (nx * lx + ny * ly + lz) / nl;
     let tone = surfaceColor(mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2), wpart = null, shore = null;
@@ -607,8 +613,8 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines, wpart, shore, tex: wet ? null : tex });
   }
   // base outline first, so the model covers it
-  c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
-  [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
+  if (!tm) { c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
+  [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke(); }
   // walls of the base slab: one polygon per side, drawn far to near before the surface
   const walls = [];
   const side = (nodes) => { const top = nodes.map(([i, j]) => proj(i, j, zv[idx(i, j)])), bot = nodes.map(([i, j]) => proj(i, j, baseZ));
@@ -618,12 +624,12 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   for (let j = 0; j < H; j += step) { west.push([0, Math.min(j, H - 1)]); east.push([W - 1, Math.min(j, H - 1)]); }
   if (north[north.length - 1][0] !== W - 1) { north.push([W - 1, 0]); south.push([W - 1, H - 1]); }
   if (west[west.length - 1][1] !== H - 1) { west.push([0, H - 1]); east.push([W - 1, H - 1]); }
-  side(north); side(south); side(west); side(east);
+  if (!tm) { side(north); side(south); side(west); side(east); }
   walls.sort((a, b) => a.d - b.d);
   c.lineJoin = 'round';
   for (const wl of walls) { c.fillStyle = TONES[3]; c.strokeStyle = INK2; c.lineWidth = .7; c.beginPath();
     wl.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
-  if (S.showBld && S.coast && S.coast.blds && S.coast.blds.length) for (const b of S.coast.blds) {   // blocks: flat roof at the highest ground under the footprint plus the height; walls down to the ground at each corner
+  if (S.showBld && S.coast && S.coast.blds && S.coast.blds.length) for (const b of S.coast.blds) { if (tm && !inTrim(b.pts.reduce((a, q) => a + q[0], 0) / b.pts.length, b.pts.reduce((a, q) => a + q[1], 0) / b.pts.length)) continue;   // blocks: flat roof at the highest ground under the footprint plus the height; walls down to the ground at each corner
     const g = b.pts.map(q => sample(zv, Math.max(0, Math.min(W - 1, q[0])), Math.max(0, Math.min(H - 1, q[1])))), top = Math.max(...g) + b.h;
     const R = b.pts.map(q => proj(q[0], q[1], top)), G = b.pts.map((q, t) => proj(q[0], q[1], g[t])); let d = -1e9; for (const p of G) d = Math.max(d, p[2]);
     items.push({ d: d + 1e-3, bld: { R, G }, lines: [] }); }
@@ -636,6 +642,7 @@ function drawModel(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     c.globalAlpha = 1; };
   let run = 0;
   for (const it of items) {
+    if (it.wall) { c.fillStyle = TONES[3]; c.strokeStyle = INK2; c.lineWidth = .7; c.lineJoin = 'round'; c.beginPath(); it.wall.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); continue; }
     if (it.bld) { const { R, G } = it.bld, n = R.length, walls = []; for (let t = 0; t < n; t++) { const t2 = (t + 1) % n; walls.push({ d: Math.max(G[t][2], G[t2][2]), q: [G[t], G[t2], R[t2], R[t]] }); } walls.sort((a, b2) => a.d - b2.d);
       c.lineJoin = 'round'; for (const w of walls) { c.fillStyle = '#b9b6ab'; c.strokeStyle = INK2; c.lineWidth = .5; c.beginPath(); w.q.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
       c.fillStyle = '#e2dfd5'; c.beginPath(); R.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = .8; c.stroke(); continue; }
@@ -701,11 +708,11 @@ function drawDam3D(c, proj) {             // the dam wall and the pond it holds,
 /* ---------- stepped model: the cardboard stack before you cut it ---------- */
 let stepCache = { key: '', layers: [] };
 function steppedLayers() {
-  const { lo, dz, n } = layerPlan(), key = [S.terrainVer, lo, dz, n].join('|');
+  const { lo, dz, n } = layerPlan(), F = trimField(), key = [S.terrainVer, lo, dz, n, S.trim, S.waterVer].join('|');
   if (stepCache.key === key) return stepCache.layers;
   const layers = [];
   for (let i = 0; i <= n; i++) {
-    const loops = layerLoops(lo + i * dz).map(l => { let A = 0; for (let q = 0; q < l.length; q++) { const a = l[q], b = l[(q + 1) % l.length]; A += a[0] * b[1] - b[0] * a[1]; } return A < 0 ? l.slice().reverse() : l; });
+    const loops = layerLoops(lo + i * dz, F).map(l => { let A = 0; for (let q = 0; q < l.length; q++) { const a = l[q], b = l[(q + 1) % l.length]; A += a[0] * b[1] - b[0] * a[1]; } return A < 0 ? l.slice().reverse() : l; });
     layers.push({ level: lo + i * dz, top: lo + (i + 1) * dz, loops });
   }
   stepCache = { key, layers }; return layers;
@@ -713,7 +720,7 @@ function steppedLayers() {
 function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const s = cs(), [lo, hi] = range(zv), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
+  const s = cs(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);
   const scale = zoom * Math.min(w, h) / (S.siteW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
   const proj = (i, j, zz) => { const X = (i - (W - 1) / 2) * s, Y = (j - (H - 1) / 2) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; return [ox + x1 * scale, oy + (y1 * cp - Z * sp) * scale, y1 * sp + Z * cp]; };
@@ -729,8 +736,8 @@ function drawStepped(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const qd of quads) { c.beginPath(); qd.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); } };
   c.lineJoin = 'round';
   c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
-  corners.forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
-  risers(corners, baseZ, lo, TONES[3]);
+  if (!trimMask()) { corners.forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke();
+  risers(corners, baseZ, lo, TONES[3]); }   // no rectangular slab when the model is trimmed to the lot
   for (const L of layers) {
     for (const loop of L.loops) risers(loop, L.level, L.top, TONES[2]);
     c.beginPath();
@@ -1400,7 +1407,7 @@ const TIPS = {
   's:hour': 'shade the ground for one month and hour, with cast shadows', 's:hours': 'colour the ground by hours of direct sun in a day', playDay: 'sweep the hour from dawn to dusk', playYear: 'sweep the months at this hour',
   'c:paper': 'plain paper tones', 'c:elevation': 'green low to ember high', 'c:slope': 'paper flat to ember steep', 'c:aspect': 'which way each slope faces', 'c:cutfill': 'where your grading sits above the existing ground (ember) or below it (grey); full tone at 2 m', 'c:sun': 'sun shading on the ground', 's:smooth': 'the ground as a continuous surface', 's:stepped': 'the ground as the cardboard stack you would cut',
   'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush',
-  kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'g:1': 'the standard 150 × 100 grid', 'g:2': 'a 300 × 200 grid: cells half the size, four times the work per redraw. terrain refetches at the finer grid', 'road:1': 'mapped roads and paths: heavier lines for main roads, dashed for footpaths and tracks, draped on the model', 'road:0': 'hide the roads', 'bld:1': 'mapped building footprints: hatched on the plan, blocks on the model at their mapped height (one storey where none is mapped)', 'bld:0': 'hide the buildings', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
+  kmlBtn: 'load a lot or property line from a kml or geojson file; it stays pinned to its real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'g:1': 'the standard 150 × 100 grid', 'g:2': 'a 300 × 200 grid: cells half the size, four times the work per redraw. terrain refetches at the finer grid', 'trim:1': 'cut the model, the stl and the laser layers to the loaded property line; the plan keeps its context', 'trim:0': 'the whole rectangular site', 'road:1': 'mapped roads and paths: heavier lines for main roads, dashed for footpaths and tracks, draped on the model', 'road:0': 'hide the roads', 'bld:1': 'mapped building footprints: hatched on the plan, blocks on the model at their mapped height (one storey where none is mapped)', 'bld:0': 'hide the buildings', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
   reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label',
   'p:month': 'month of the year for the sun study', 'p:hour': 'hour of the day for the sun study, solar time', 'p:rain': 'rain falling on the whole site in one storm, no soak-in', 'p:thr': 'how much upstream ground it takes to count as a stream', 'p:plow': 'distance between plow lines, measured on the ground', 'p:swale': 'vertical drop from one swale to the next', 'p:dam': 'wall height of the dam; the pond fills to its crest',
   'p:place': 'a place name, or lat, lng. then press fetch', 'p:siteW': 'how wide a piece of the world to fetch. wider means coarser ground; it refetches when this changes', 'p:rot': 'turn the fetched area so a long feature lies along the sheet', 'p:aop': 'how strongly the satellite photo shows through',
@@ -1411,7 +1418,7 @@ const TIPS = {
 };
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
-  else key = el.id && TIPS[el.id] ? el.id : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.road ? 'road:' + d.road : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
+  else key = el.id && TIPS[el.id] ? el.id : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.road ? 'road:' + d.road : d.trim ? 'trim:' + d.trim : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : null;
   const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.title || ''; }
 const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
 function showTip(el) { const t = tipFor(el); if (!t) return; showTipAt(t, el.getBoundingClientRect()); }
@@ -1668,18 +1675,19 @@ function toast(msg) { const t = document.getElementById('toast'); t.textContent 
 
 /* ---------- binary stl: surface + walls + bottom, in mm ---------- */
 function stl() { zdisp();
-  const k = S.mm / S.siteW, [lo] = range(zv), baseT = 3, s = cs() * k;
+  const k = S.mm / S.siteW, [lo] = rangeT(), baseT = 3, s = cs() * k;
   const X = i => i * s, Y = j => (H - 1 - j) * s, Z = n => (zv[n] - lo) * S.ve * k + baseT;
   const tris = [];
   const T = (a, b, c) => tris.push(a, b, c);
-  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) {
-    const a = [X(i), Y(j), Z(idx(i, j))], b = [X(i + 1), Y(j), Z(idx(i + 1, j))], c = [X(i + 1), Y(j + 1), Z(idx(i + 1, j + 1))], d = [X(i), Y(j + 1), Z(idx(i, j + 1))];
-    T(a, c, b); T(a, d, c);
-  }
+  const tm = trimMask(), tin = (i, j) => !tm || (i >= 0 && j >= 0 && i < W - 1 && j < H - 1 && !!tm.tiles[j * (W - 1) + i]);
   const wallQuad = (p, q) => { const p0 = [p[0], p[1], 0], q0 = [q[0], q[1], 0]; T(p, q, q0); T(p, q0, p0); };
-  for (let i = 0; i < W - 1; i++) { wallQuad([X(i + 1), Y(0), Z(idx(i + 1, 0))], [X(i), Y(0), Z(idx(i, 0))]); wallQuad([X(i), Y(H - 1), Z(idx(i, H - 1))], [X(i + 1), Y(H - 1), Z(idx(i + 1, H - 1))]); }
-  for (let j = 0; j < H - 1; j++) { wallQuad([X(0), Y(j), Z(idx(0, j))], [X(0), Y(j + 1), Z(idx(0, j + 1))]); wallQuad([X(W - 1), Y(j + 1), Z(idx(W - 1, j + 1))], [X(W - 1), Y(j), Z(idx(W - 1, j))]); }
-  T([0, Y(0), 0], [X(W - 1), Y(0), 0], [X(W - 1), Y(H - 1), 0]); T([0, Y(0), 0], [X(W - 1), Y(H - 1), 0], [0, Y(H - 1), 0]);
+  const N = (i, j) => [X(i), Y(j), Z(idx(i, j))];
+  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { if (!tin(i, j)) continue;
+    const a = N(i, j), b = N(i + 1, j), c = N(i + 1, j + 1), d = N(i, j + 1);
+    T(a, c, b); T(a, d, c);                                                         // top
+    const a0 = [a[0], a[1], 0], b0 = [b[0], b[1], 0], c0 = [c[0], c[1], 0], d0 = [d[0], d[1], 0]; T(a0, b0, c0); T(a0, c0, d0);   // base under the same tile
+    if (!tin(i, j - 1)) wallQuad(b, a); if (!tin(i, j + 1)) wallQuad(d, c); if (!tin(i - 1, j)) wallQuad(a, d); if (!tin(i + 1, j)) wallQuad(c, b);   // walls on every open edge
+  }
   const n = tris.length / 3, buf = new ArrayBuffer(84 + n * 50), dv = new DataView(buf); let o = 80; dv.setUint32(o, n, true); o += 4;
   for (let t = 0; t < tris.length; t += 3) {
     const [a, b, c] = [tris[t], tris[t + 1], tris[t + 2]];
@@ -1728,12 +1736,12 @@ function distIn(mask) {                   // chamfer distance (cells) from each 
     if (i < W - 1 && j < H - 1) d = Math.min(d, D[n + W + 1] + 1.414); if (i > 0 && j < H - 1) d = Math.min(d, D[n + W - 1] + 1.414); D[n] = d; }
   return D;
 }
-function insetLoops(level, ledgeCells) {   // loops of the region at/above level, shrunk inward by ledgeCells
-  const mask = new Uint8Array(W * H); for (let n = 0; n < W * H; n++) mask[n] = zv[n] >= level ? 1 : 0;
+function insetLoops(level, ledgeCells, F = zv) {   // loops of the region at/above level, shrunk inward by ledgeCells
+  const mask = new Uint8Array(W * H); for (let n = 0; n < W * H; n++) mask[n] = F[n] >= level ? 1 : 0;
   return layerLoops(ledgeCells, distIn(mask)).filter(l => l.length > 8);
 }
 function layerPlan() { zdisp();
-  const k = S.mm / S.siteW, [lo, hi] = range(zv), dz = S.thick / (k * S.ve), n = Math.floor((hi - lo) / dz + 1e-9);
+  const k = S.mm / S.siteW, [lo, hi] = rangeT(), dz = S.thick / (k * S.ve), n = Math.floor((hi - lo) / dz + 1e-9);
   return { k, lo, hi, dz, n, gu: cs() * k };
 }
 function footInfo() {                      // the printed object: width x depth x height at this scale
@@ -1747,16 +1755,16 @@ function layersInfo() {
   el.style.color = n + 1 > 80 ? 'var(--accent)' : '';
 }
 function laserSVG() { zdisp();
-  const { lo, dz, n, gu } = layerPlan(), [sw, sh] = S.sheet, margin = 10, gap = 6, ledgeC = S.ledge / gu, HAIR = '0.0254';
+  const F = trimField(), { lo, dz, n, gu } = layerPlan(), [sw, sh] = S.sheet, margin = 10, gap = 6, ledgeC = S.ledge / gu, HAIR = '0.0254';
   const modelW = (W - 1) * gu, modelH = (H - 1) * gu;
   if (modelW > sw - 2 * margin || modelH > sh - 2 * margin) { toast(`model ${modelW.toFixed(0)} × ${modelH.toFixed(0)} mm does not fit the sheet`); return null; }
   if (n + 1 > 200) { toast('over 200 layers. thicker material or a smaller model'); return null; }
   const layers = [];
   for (let i = 0; i <= n; i++) {
-    const level = lo + i * dz, loops = layerLoops(level); if (!loops.length) continue;
+    const level = lo + i * dz, loops = layerLoops(level, F); if (!loops.length) continue;
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     for (const l of loops) for (const [x, y] of l) { if (x < x0) x0 = x; if (y < y0) y0 = y; if (x > x1) x1 = x; if (y > y1) y1 = y; }
-    const mask = new Uint8Array(W * H); for (let q = 0; q < W * H; q++) mask[q] = zv[q] >= level ? 1 : 0;
+    const mask = new Uint8Array(W * H); for (let q = 0; q < W * H; q++) mask[q] = F[q] >= level ? 1 : 0;
     layers.push({ i, level, loops, holes: [], mask, bb: [x0 * gu, y0 * gu, x1 * gu, y1 * gu] });
   }
   const pickMax = D => { let best = -1, bd = 0; for (let c = 0; c < W * H; c++) if (D[c] > bd) { bd = D[c]; best = c; } return best >= 0 ? { i: best % W, j: (best / W) | 0, d: bd * gu } : null; };
@@ -1860,6 +1868,21 @@ function boundaryGrid() {                 // boundary in grid coords for the cur
   const polys = S.boundary.map(b => ({ closed: b.closed, pts: b.pts.map(q => latLonToGrid(q[0], q[1])) })); boundaryCache = { key, polys }; return polys;
 }
 function boundaryArea(b) { let a = 0; for (let q = 0; q < b.pts.length; q++) { const p = b.pts[q], n = b.pts[(q + 1) % b.pts.length]; a += p[0] * n[1] - n[0] * p[1]; } return Math.abs(a) / 2 * cs() * cs(); }
+let trimCache = { key: '' }, trimFieldCache = { key: '' };
+function trimMask() {                     // null when not trimming; else { tiles: (W-1)x(H-1) inside flags, nodes: WxH inside flags }
+  if (!S.trim || !S.boundary || !S.world) return null; const polys = boundaryGrid().filter(b => b.closed && b.pts.length > 2); if (!polys.length) return null;
+  const key = [boundaryCache.key, W, H].join('|'); if (trimCache.key === key) return trimCache;
+  const tiles = new Uint8Array((W - 1) * (H - 1)), nodes = new Uint8Array(W * H), inside = (x, y) => polys.some(b => inPoly(b.pts, x, y));
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) nodes[idx(i, j)] = inside(i, j) ? 1 : 0;
+  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) tiles[j * (W - 1) + i] = inside(i + .5, j + .5) ? 1 : 0;
+  trimCache = { key, tiles, nodes }; return trimCache;
+}
+function trimField() {                    // the display surface with every node outside the lot dropped far below any contour, so layer loops stop at the line
+  const tm = trimMask(); zdisp(); if (!tm) return zv; const key = zvKey + '|' + trimCache.key; if (trimFieldCache.key === key) return trimFieldCache.f;
+  const f = new Float32Array(W * H); for (let n = 0; n < W * H; n++) f[n] = tm.nodes[n] ? zv[n] : -1e9; trimFieldCache = { key, f }; return f;
+}
+function rangeT() { const tm = trimMask(); if (!tm) return range(zv); let lo = 1e9, hi = -1e9; for (let n = 0; n < W * H; n++) if (tm.nodes[n]) { if (zv[n] < lo) lo = zv[n]; if (zv[n] > hi) hi = zv[n]; } return lo > hi ? range(zv) : [lo, hi]; }
+const inTrim = (x, y) => { const tm = trimMask(); if (!tm) return true; const i = Math.max(0, Math.min(W - 2, Math.floor(x))), j = Math.max(0, Math.min(H - 2, Math.floor(y))); return !!tm.tiles[j * (W - 1) + i]; };
 function drawBoundary(c, toXY, k, dense) {
   const polys = boundaryGrid(); if (!polys.length) return; c.strokeStyle = INK; c.lineWidth = 2.1 * k; c.setLineDash([12 * k, 4 * k, 3 * k, 4 * k]); c.lineJoin = 'round';
   for (const b of polys) { const pts = b.closed ? b.pts.concat([b.pts[0]]) : b.pts, P = dense ? densify(pts.map(q => [q[0], q[1], .5]), .3) : pts; c.beginPath(); let pen = false;
@@ -1870,12 +1893,12 @@ function drawBoundary(c, toXY, k, dense) {
     const p = toXY(ci, cj); c.font = font(10.5, 600); c.textAlign = 'center'; c.textBaseline = 'middle'; haloText(c, 'lot · ' + fBig(boundaryArea(b)), p[0], p[1], INK); }
 }
 document.getElementById('kmlBtn').onclick = () => { if (!S.world) { toast('fetch real terrain first, then load the boundary'); return; } document.getElementById('kmlFile').click(); };
-document.getElementById('kmlFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { const b = parseBoundary(rd.result); if (!b.length) throw new Error('no coordinates found in that file'); S.boundary = b; boundaryCache.key = ''; S.strokeVer++; S.dirty = true; toast(`boundary loaded · ${b.length} line${b.length === 1 ? '' : 's'}`); } catch (err) { toast(String(err.message || err)); } }; rd.readAsText(f); e.target.value = ''; };
-document.getElementById('kmlClear').onclick = () => { S.boundary = null; boundaryCache.key = ''; S.strokeVer++; S.dirty = true; };
+document.getElementById('kmlFile').onchange = e => { const f = e.target.files[0]; if (!f) return; const rd = new FileReader(); rd.onload = () => { try { const b = parseBoundary(rd.result); if (!b.length) throw new Error('no coordinates found in that file'); S.boundary = b; boundaryCache.key = ''; S.strokeVer++; S.dirty = true; groundControls(); toast(`boundary loaded · ${b.length} line${b.length === 1 ? '' : 's'}`); } catch (err) { toast(String(err.message || err)); } }; rd.readAsText(f); e.target.value = ''; };
+document.getElementById('kmlClear').onclick = () => { S.boundary = null; boundaryCache.key = ''; S.trim = false; S.strokeVer++; S.terrainVer++; S.dirty = true; groundControls(); };
 
 /* ---------- world: real elevation for any place ---------- */
 function worldStatus(msg) { document.getElementById('worldStatus').textContent = msg; groundControls(); }
-function groundControls() { const real = !!S.world; document.getElementById('roadRow').style.display = S.coast && S.coast.roads && S.coast.roads.length ? '' : 'none'; document.querySelectorAll('#roadRow button').forEach(b => b.classList.toggle('on', (b.dataset.road === '1') === S.showRoads)); document.getElementById('bldRow').style.display = S.coast && S.coast.blds && S.coast.blds.length ? '' : 'none'; document.querySelectorAll('#bldRow button').forEach(b => b.classList.toggle('on', (b.dataset.bld === '1') === S.showBld)); document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
+function groundControls() { const real = !!S.world; { const has = !!(S.boundary && S.boundary.some(b => b.closed && b.pts.length > 2)); document.getElementById('trimRow').style.display = has ? '' : 'none'; if (!has) S.trim = false; document.querySelectorAll('#trimRow button').forEach(b => b.classList.toggle('on', (b.dataset.trim === '1') === S.trim)); } document.getElementById('roadRow').style.display = S.coast && S.coast.roads && S.coast.roads.length ? '' : 'none'; document.querySelectorAll('#roadRow button').forEach(b => b.classList.toggle('on', (b.dataset.road === '1') === S.showRoads)); document.getElementById('bldRow').style.display = S.coast && S.coast.blds && S.coast.blds.length ? '' : 'none'; document.querySelectorAll('#bldRow button').forEach(b => b.classList.toggle('on', (b.dataset.bld === '1') === S.showBld)); document.getElementById('seaRow').style.display = S.hasWater ? '' : 'none'; document.getElementById('riseRow').style.display = S.hasSea && S.seaClip ? '' : 'none'; document.querySelectorAll('#seaRow button').forEach(b => b.classList.toggle('on', (b.dataset.sea === '1') === S.seaClip)); document.getElementById('reliefRow').style.display = real ? 'none' : ''; document.getElementById('reseed').style.display = real ? 'none' : ''; }
 function nodeLatLon(i, j, lat, lon) { const sx = (i - (W - 1) / 2) * cs(), sy = ((H - 1) / 2 - j) * cs(), t = S.rot * D2R, dx = sx * Math.cos(t) + sy * Math.sin(t), dy = -sx * Math.sin(t) + sy * Math.cos(t); return [lat + dy / 111320, lon + dx / (111320 * Math.cos(lat * D2R))]; }
 function loadImage(url) { return new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => res(im); im.onerror = () => rej(new Error('tile blocked')); im.src = url; }); }
 const SRC_NOTE = { '3dep': 'USGS 3DEP elevation: lidar where it has been flown, 10 m elsewhere', tiles: 'elevation tiles: the best public source for this place, 30 m or finer', opentopo: 'opentopodata, about 30 m' };
@@ -2096,6 +2119,7 @@ function drawWater(c, toXY, k, dense, alpha) {   // flat blue water with a shore
   c.save(); c.beginPath(); for (const l of loops) { const P = dense ? densify(l.map(q => [q[0], q[1], .5]), .3) : l; P.forEach((q, t) => { const p = toXY(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); }
   c.fillStyle = '#9dbad2'; c.globalAlpha = alpha; c.fill('evenodd'); c.globalAlpha = 1; c.strokeStyle = '#4f7391'; c.lineWidth = .9 * k; c.stroke(); c.restore();
 }
+document.getElementById('trimRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.trim = b.dataset.trim === '1'; S.terrainVer++; S.dirty = true; groundControls(); updateStats(); toast(S.trim ? 'model trimmed to the lot' : 'full site'); };
 document.getElementById('roadRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showRoads = b.dataset.road === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('bldRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showBld = b.dataset.bld === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('seaRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.seaClip = b.dataset.sea === '1'; applySea(); toast(S.seaClip ? 'water shown flat at its level' : 'raw ground, no water'); };
@@ -2261,7 +2285,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'relief', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value };
 }
 function loadProject(pr, fromHome) {
@@ -2271,7 +2295,7 @@ function loadProject(pr, fromHome) {
   snapshot(); base.set(pr.base); z.set(pr.z && pr.z.length === W * H ? pr.z : pr.base);
   rawBase = pr.world ? base.slice() : null; S.coast = pr.coast && (pr.coast.segs || pr.coast.blds || pr.coast.roads) ? Object.assign({ segs: [], seeds: [], lakes: [], blds: [], roads: [] }, pr.coast) : null; S.showBld = pr.showBld !== false; S.showRoads = pr.showRoads !== false; S.seaRise = pr.sliders && pr.sliders.rise ? +pr.sliders.rise : 0; waterDetect(); S.seaClip = S.hasWater && pr.seaClip !== false; if (S.seaClip) for (let n = 0; n < W * H; n++) { const nb = rawBase[n] <= 0 ? 0 : rawBase[n]; z[n] += nb - base[n]; base[n] = nb; }
   if (pr.homeSaved && !fromHome) S.homeSaved = pr.homeSaved;
-  S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = '';
+  S.boundary = Array.isArray(pr.boundary) ? pr.boundary : null; boundaryCache.key = ''; S.trim = !!pr.trim;
   S.world = pr.world || null; S.sec = pr.sec || null; S.keyPt = pr.keyPt || null; S.keyAuto = !pr.keyPt; S.damPt = pr.damPt || null; setBrush(pr.brush && pr.brush !== 'section' ? pr.brush : 'pen'); S.sculpt = !!pr.sculpt; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', (x.dataset.k === 'sculpt') === S.sculpt)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.strokes = Array.isArray(pr.strokes) ? pr.strokes : []; S.strokeVer++; if (pr.an) Object.assign(S.an, pr.an); S.modelStyle = pr.modelStyle || 'smooth'; S.colorMode = pr.colorMode || 'paper'; S.sunMode = pr.sunMode || 'hour'; S.labels = pr.labels !== false; if (pr.cam) Object.assign(S.cam, pr.cam); if (pr.sheet) S.sheet = pr.sheet;
   if (pr.unit === 'm' || pr.unit === 'ft') { S.unit = pr.unit; document.getElementById('unit').value = pr.unit; }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
