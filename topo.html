@@ -3125,16 +3125,17 @@ function drawingSheet(painted) { zdisp();   // painted: { model, elev } images f
   const L = { x: inner.x, w: inner.w * .62 - gap / 2 }, R = { x: inner.x + inner.w * .62 + gap / 2, w: inner.w * .38 - gap / 2 };
   const half = (inner.h - gap) / 2, planBox = { x: L.x, y: inner.y, w: L.w, h: half }, anaBox = { x: L.x, y: inner.y + half + gap, w: L.w, h: half };
   const rh = (inner.h - 3 * gap), modelBox = { x: R.x, y: inner.y, w: R.w, h: rh * .32 }, secBox = { x: R.x, y: inner.y + rh * .32 + gap, w: R.w, h: rh * .21 }, elevBox = { x: R.x, y: inner.y + rh * .53 + 2 * gap, w: R.w, h: rh * .17 }, notesBox = { x: R.x, y: inner.y + rh * .70 + 3 * gap, w: R.w, h: rh * .30 };
-  const sc = pickScale(planBox.w, planBox.h - 60, dpi), k = sc.ppm * cs();
+  const swap = !!(painted && painted.model), pBox = swap ? modelBox : planBox, mBox = swap ? planBox : modelBox;   // painted: the painting takes the big box, the plan the small one
+  const sc = pickScale(anaBox.w, anaBox.h - 60, dpi), k = sc.ppm * cs(), scP = swap ? pickScale(pBox.w, pBox.h - 60, dpi) : sc, kP = scP.ppm * cs();
   const TRACE = '#f6f2e8';   // warm trace tone for the sheet
   const viewCanvas = (box, fn) => { const c = document.createElement('canvas'); c.width = Math.round(box.w * RES); c.height = Math.round(box.h * RES); const o = c.getContext('2d'); o.scale(RES, RES); o.fillStyle = TRACE; o.fillRect(0, 0, box.w, box.h); const fs0 = fontScale; fontScale = 1.3; fn(o, Math.round(box.w), Math.round(box.h)); fontScale = fs0; return c; };   // drawn in the box's own coordinates on a 1.5x canvas: layout as before, lines and type crisp
   const rp = (kk, w, h, fn) => renderPlanAt(kk * RES, Math.round(w * RES), Math.round(h * RES), fn, 1.35 * RES);   // a plan view at 1.5x with the type held at its size
   let rain = null;
   const out = document.createElement('canvas'); out.width = Math.round(PW * RES); out.height = Math.round(PH * RES); const o = out.getContext('2d'); o.scale(RES, RES); o.fillStyle = TRACE; o.fillRect(0, 0, PW, PH);
   const views = [
-    { box: planBox, title: 'PLAN · ' + sc.label, canvas: rp(k, planBox.w, planBox.h, () => { S.noFoot = true; drawPlanBase(); S.noFoot = false; }) },   // the title block carries what the screen footer says
+    { box: pBox, title: 'PLAN · ' + scP.label, canvas: rp(kP, pBox.w, pBox.h, () => { S.noFoot = true; drawPlanBase(); S.noFoot = false; }) },   // the title block carries what the screen footer says
     { box: anaBox, title: 'ANALYSIS · ' + sc.label + (S.rain ? ' · rain as it stands' : ''), canvas: rp(k, anaBox.w, anaBox.h, () => { drawAnalysis(); if (S.rain) drawRainOverlay(ctx, (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; }, S.w, S.h, false); ctx.fillStyle = TRACE; ctx.fillRect(0, sheet.y + sheet.h + 2, S.w, S.h); }) },
-    painted && painted.model ? { box: modelBox, title: 'MODEL · painted · ' + AI.style, canvas: viewCanvas(modelBox, (o2, w, h) => { const im = painted.model, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, kk = Math.max(w / iw, (h - 30) / ih), sw = w / kk, sh = (h - 30) / kk; o2.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h - 30); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) } :
+    painted && painted.model ? { box: mBox, title: 'MODEL · painted · ' + AI.style, canvas: viewCanvas(mBox, (o2, w, h) => { const im = painted.model, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, kk = Math.max(w / iw, (h - 30) / ih), sw = w / kk, sh = (h - 30) / kk; o2.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h - 30); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) } :
     { box: modelBox, title: 'MODEL · analysis layers' + (S.rain ? ' · rain' : ''), canvas: viewCanvas(modelBox, (o2, w, h) => { drawModel(o2, w, h, 1, false); if (S.rain) rain = drawRainOverlay(o2, camera(w, h).proj, w, h, true); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) },
     { box: secBox, title: 'SECTION ' + secLetters(S.secI).join('–') + ' · vertical ' + S.ve + '×', canvas: viewCanvas(secBox, (o2, w, h) => drawSection(o2, w, h, false, true)) },
     painted && painted.elev ? { box: elevBox, title: painted.elevTitle || 'ELEVATION · from the south · painted', canvas: viewCanvas(elevBox, (o2, w, h) => { const im = painted.elev, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, kk = Math.max(w / iw, (h - 30) / ih), sw = w / kk, sh = (h - 30) / kk; o2.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h - 30); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) } :
@@ -3152,19 +3153,19 @@ function drawingSheet(painted) { zdisp();   // painted: { model, elev } images f
     o.lineWidth = 1.4; o.beginPath(); o.moveTo(ux, uy); o.lineTo(ux + tw, uy - .6); o.stroke(); o.lineWidth = .9; o.beginPath(); o.moveTo(ux + 2, uy + 3); o.lineTo(ux + tw * .78, uy + 2.4); o.stroke(); o.lineWidth = 1.5; }
   o.letterSpacing = '0px';
   // dimension strings with slash ticks along the plan: the site width above, its depth down the left
-  { const sx = planBox.x + (planBox.w - k * (W - 1)) / 2, sy = planBox.y + (planBox.h - 22 - k * (H - 1)) / 2, sw = k * (W - 1), sh = k * (H - 1);
+  { const sx = pBox.x + (pBox.w - kP * (W - 1)) / 2, sy = pBox.y + (pBox.h - 22 - kP * (H - 1)) / 2, sw = kP * (W - 1), sh = kP * (H - 1);
     const ftIn = m => { if (!isFt()) return fL(m, 0); const f = m * FT; let ft = Math.floor(f), inch = Math.round((f - ft) * 12); if (inch === 12) { ft++; inch = 0; } return ft.toLocaleString() + "'-" + inch + '"'; };
     const dim = (x1, y1, x2, y2, txt, vertical) => { o.strokeStyle = INK; o.lineWidth = .8; o.beginPath(); o.moveTo(x1, y1); o.lineTo(x2, y2); o.stroke(); o.lineWidth = 1.1;
       for (const [x, y] of [[x1, y1], [x2, y2]]) { o.beginPath(); o.moveTo(x - 4, y + 4); o.lineTo(x + 4, y - 4); o.stroke(); }
       o.font = `600 11px ${fam}`; o.letterSpacing = '1px'; o.fillStyle = INK; o.textAlign = 'center'; o.textBaseline = 'bottom'; o.save(); o.translate((x1 + x2) / 2, (y1 + y2) / 2); if (vertical) o.rotate(-Math.PI / 2); o.fillText(txt, 0, -3); o.restore(); o.letterSpacing = '0px'; };
     o.lineWidth = .5; o.strokeStyle = INK2;
-    if (sy - planBox.y >= 24) { const y = sy - 12; o.beginPath(); o.moveTo(sx, sy - 3); o.lineTo(sx, y - 5); o.moveTo(sx + sw, sy - 3); o.lineTo(sx + sw, y - 5); o.stroke(); dim(sx, y, sx + sw, y, ftIn(S.siteW), false); }
-    if (sx - planBox.x >= 24) { const x = sx - 12; o.beginPath(); o.moveTo(sx - 3, sy); o.lineTo(x - 5, sy); o.moveTo(sx - 3, sy + sh); o.lineTo(x - 5, sy + sh); o.stroke(); dim(x, sy + sh, x, sy, ftIn(S.siteW * (H - 1) / (W - 1)), true); } }
+    if (sy - pBox.y >= 24) { const y = sy - 12; o.beginPath(); o.moveTo(sx, sy - 3); o.lineTo(sx, y - 5); o.moveTo(sx + sw, sy - 3); o.lineTo(sx + sw, y - 5); o.stroke(); dim(sx, y, sx + sw, y, ftIn(S.siteW), false); }
+    if (sx - pBox.x >= 24) { const x = sx - 12; o.beginPath(); o.moveTo(sx - 3, sy); o.lineTo(x - 5, sy); o.moveTo(sx - 3, sy + sh); o.lineTo(x - 5, sy + sh); o.stroke(); dim(x, sy + sh, x, sy, ftIn(S.siteW * (H - 1) / (W - 1)), true); } }
   // graphic scale bar in each topo: four one-inch (or 2 cm) segments
-  const seg = sc.unitM * sc.ppm; o.lineWidth = 1;
-  for (const box of [planBox, anaBox]) { const bx = box.x + box.w - 44 - 4 * seg, by = box.y + box.h - 32;
+  o.lineWidth = 1;
+  for (const [box, scb] of [[pBox, scP], [anaBox, sc]]) { const seg = scb.unitM * scb.ppm, bx = box.x + box.w - 44 - 4 * seg, by = box.y + box.h - 32;
     for (let q = 0; q < 4; q++) { o.fillStyle = q % 2 ? '#fff' : INK; o.fillRect(bx + q * seg, by, seg, 7); o.strokeStyle = INK; o.strokeRect(bx + q * seg + .5, by + .5, seg - 1, 6); }
-    o.fillStyle = INK; o.font = `11px ${fam}`; o.textBaseline = 'top'; o.textAlign = 'center'; for (let q = 0; q <= 4; q++) o.fillText(q ? sc.unitLabel(Math.round(q * sc.unitM * 1e4) / 1e4) : '0', bx + q * seg, by + 9); }
+    o.fillStyle = INK; o.font = `11px ${fam}`; o.textBaseline = 'top'; o.textAlign = 'center'; for (let q = 0; q <= 4; q++) o.fillText(q ? scb.unitLabel(Math.round(q * scb.unitM * 1e4) / 1e4) : '0', bx + q * seg, by + 9); }
   // border, title block
   o.strokeStyle = INK; o.lineWidth = 2; o.strokeRect(m - 8, m - 8, PW - 2 * m + 16, PH - 2 * m + 16); o.lineWidth = 1; o.strokeRect(m - 2, m - 2, PW - 2 * m + 4, PH - 2 * m + 4);
   const ty = PH - m - tb + gap; o.strokeRect(inner.x + .5, ty + .5, inner.w - 1, tb - gap - 1);
@@ -3174,7 +3175,7 @@ function drawingSheet(painted) { zdisp();   // painted: { model, elev } images f
   const cell = (q, lines) => { o.textAlign = 'left'; o.textBaseline = 'top'; let yy = ty + 10; const maxW = cols[q + 1] - cols[q] - 24 - (q === 3 ? 44 : 0); lines.forEach((ln, i) => { o.fillStyle = i ? INK : INK2; o.font = `${i ? 600 : 400} ${i ? 15 : 11}px ${fam}`; o.letterSpacing = i ? '0px' : '2px'; o.fillText(fitTxt(ln, maxW), cols[q] + 12, yy); yy += i ? 20 : 15; }); o.letterSpacing = '0px'; };
   const site = S.world ? S.world.name : 'sketch site', where = S.world ? `${S.world.lat.toFixed(5)}, ${S.world.lon.toFixed(5)}` : 'no real location';
   cell(0, ['PROJECT', site, where]);
-  cell(1, ['SCALE', sc.label + (isFt() ? ' · 1:' + sc.ratio.toLocaleString() : ''), `contour interval ${fL(interval(), 2)} · index every ${fL(interval() * 5, 2)}`]);
+  cell(1, ['SCALE', swap ? `plan ${scP.label} · analysis ${sc.label}` : sc.label + (isFt() ? ' · 1:' + sc.ratio.toLocaleString() : ''), `contour interval ${fL(interval(), 2)} · index every ${fL(interval() * 5, 2)}`]);
   cell(2, ['DATUM', `elevations in ${isFt() ? 'ft' : 'm'} above sea level`, S.world ? (S.world.survey ? 'drone survey ' + S.world.survey.name + ' over ' : '') + (S.world.src === '3dep' ? 'USGS 3DEP elevation' : 'elevation tiles ~30 m or finer') + (osmShown() ? ' · shoreline, buildings, roads © OpenStreetMap contributors' : '') : 'invented ground']);
   cell(3, ['SHEET', '1 of 1 · ' + new Date().toISOString().slice(0, 10), painted ? 'painted · ' + AI.style + ' · ' + AI.model : 'coyote mountain studio']);
   // compass in the title block, turned with the site
