@@ -360,8 +360,9 @@ const WTONE = light => rgb([176, 196, 212], .9 + .1 * light);
 let rend3D = null, litCache = { key: '' }, skyCache = { key: '' };
 function litCached(alt, az, hi) { const key = [S.terrainVer, S.month, S.hour, S.rot, S.siteW].join('|'); if (litCache.key !== key) litCache = { key, lit: litMask(alt, az, hi) }; return litCache.lit; }
 function rendTone(tone, light, lit, mode) {   // the ground in the render: warm earth in sun, cool in shade, cast shadows dropped a step; a photo keeps its own colour
-  if (mode === 'aerial' || (S.aiCtl && mode !== 'paper')) return tone; const m = tone.match(/\d+/g);   // the painter's control keeps a data map's own colours if (!m) return tone; let [r, g, b] = m.map(Number); const k = (.55 + .45 * Math.max(0, light)) * (.62 + .38 * lit);
-  r = r * k * 1.02; g = g * k * .98; b = b * k * .9 + 14 * (1 - lit); return `rgb(${r | 0},${g | 0},${b | 0})`;
+  if (mode === 'aerial' || (S.aiCtl && mode !== 'paper')) return tone;
+  const m = tone.match(/\d+/g); if (!m) return tone; let [r, g, b] = m.map(Number); const k = (.55 + .45 * Math.max(0, light)) * (.62 + .38 * lit);
+  r = r * k * 1.02; g = g * k * .98; b = b * k * .9 + (S.aiCtl ? 0 : 14 * (1 - lit)); return `rgb(${r | 0},${g | 0},${b | 0})`;   // no blue in the shadows of the painter's control: the painter reads blue as water
 }
 function skyNoise(x, y, sd) { const xi = Math.floor(x), yi = Math.floor(y), u = x - xi, v = y - yi, uu = u * u * (3 - 2 * u), vv = v * v * (3 - 2 * v); const a = hash(xi, yi, sd), b = hash(xi + 1, yi, sd), c = hash(xi, yi + 1, sd), d = hash(xi + 1, yi + 1, sd); return a + (b - a) * uu + (c - a) * vv + (a - b - c + d) * uu * vv; }
 function skyFbm(x, y, sd, oct = 4) { let v = 0, a = .5, f = 1; for (let k = 0; k < oct; k++) { v += a * skyNoise(x * f, y * f, sd + k); a *= .5; f *= 2.1; } return v; }
