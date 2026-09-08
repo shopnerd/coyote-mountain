@@ -883,24 +883,42 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     if (tm) {   // a wall wherever the neighbour tile is outside the lot
       const edge = (n1, n2) => { const q = [proj(n1[0], n1[1], zv[idx(n1[0], n1[1])]), proj(n2[0], n2[1], zv[idx(n2[0], n2[1])]), proj(n2[0], n2[1], baseZ), proj(n1[0], n1[1], baseZ)]; items.push({ d: (q[0][2] + q[1][2] + q[2][2] + q[3][2]) / 4, wall: q, lines: [] }); };
       if (!tin(i - step, j)) edge([i, j], [i, j2]); if (!tin(i + step, j)) edge([i2, j2], [i2, j]); if (!tin(i, j - step)) edge([i2, j], [i, j]); if (!tin(i, j + step)) edge([i, j2], [i2, j2]); }
-    const gc = grad(i + step / 2, j + step / 2), gx = gc[0], gy = gc[1], nx = -gx * S.ve, ny = -gy * S.ve; const nl = Math.hypot(nx, ny, 1);
-    const light = (nx * lx + ny * ly + lz) / nl;
-    let tone = surfaceColor(cfR ? 'paper' : mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, i + step / 2, j + step / 2), wpart = null, shore = null;
-    if (R) tone = rendTone(tone, light, lit ? (lit[idx(i, j)] + lit[idx(i2, j)] + lit[idx(i2, j2)] + lit[idx(i, j2)]) / 4 : 1, mode);
-    let wet = false, tex = null;
-    if ((mode === 'aerial' && !fast && ((S.aerialM && aerialCache.canvas) || ovR)) || cfR) tex = [i * AER, j * AER, step * AER, step * AER, light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
-    if (S.seaClip && wF) { const f = [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]], nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
-      if (nw === 4) { tone = WTONE(light); wet = true; }
-      else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
-        for (let k = 0; k < 4; k++) { const k2 = (k + 1) % 4; if (f[k] >= 0) poly.push([cn[k][0], cn[k][1], zs[k]]); if ((f[k] >= 0) !== (f[k2] >= 0)) { const t = f[k] / (f[k] - f[k2]), q = [cn[k][0] + (cn[k2][0] - cn[k][0]) * t, cn[k][1] + (cn[k2][1] - cn[k][1]) * t, zs[k] + (zs[k2] - zs[k]) * t]; poly.push(q); cross.push(q); } }
-        wpart = poly.map(q => proj(i + q[0] * step, j + q[1] * step, q[2])); if (cross.length >= 2) shore = cross.map(q => proj(i + q[0] * step, j + q[1] * step, q[2] + .02)); } }
-    const lines = [];
-    const mn = Math.min(za, zb, zc, zd), mx = Math.max(za, zb, zc, zd);
-    for (let lv = Math.ceil(mn / iv) * iv; lv <= mx; lv += iv) {
-      const tmp = []; isoSegs(za, zb, zc, zd, lv, tmp);
-      if (!R || S.aiCtl) for (let q = 0; q < tmp.length; q += 4) lines.push([proj(i + tmp[q] * step, j + tmp[q + 1] * step, lv), proj(i + tmp[q + 2] * step, j + tmp[q + 3] * step, lv), isIndex(lv), lv]);
+    // one tile, or a tile split into sub-tiles when it is large on screen: heights, slopes and light interpolated between the corner nodes, so deep zoom shades smoothly
+    const emit = (ii, jj, st, za, zb, zc, zd, P, gx, gy, litv, texRect, f) => {
+      const nx = -gx * S.ve, ny = -gy * S.ve, nl = Math.hypot(nx, ny, 1), light = (nx * lx + ny * ly + lz) / nl;
+      let tone = surfaceColor(cfR ? 'paper' : mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, ii + st / 2, jj + st / 2), wpart = null, shore = null;
+      if (R) tone = rendTone(tone, light, litv, mode);
+      let wet = false, tex = null;
+      if ((mode === 'aerial' && !fast && ((S.aerialM && aerialCache.canvas) || ovR)) || cfR) tex = [texRect[0], texRect[1], texRect[2], texRect[3], light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
+      if (f) { const nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
+        if (nw === 4) { tone = WTONE(light); wet = true; }
+        else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
+          for (let k = 0; k < 4; k++) { const k2 = (k + 1) % 4; if (f[k] >= 0) poly.push([cn[k][0], cn[k][1], zs[k]]); if ((f[k] >= 0) !== (f[k2] >= 0)) { const t = f[k] / (f[k] - f[k2]), q = [cn[k][0] + (cn[k2][0] - cn[k][0]) * t, cn[k][1] + (cn[k2][1] - cn[k][1]) * t, zs[k] + (zs[k2] - zs[k]) * t]; poly.push(q); cross.push(q); } }
+          wpart = poly.map(q => proj(ii + q[0] * st, jj + q[1] * st, q[2])); if (cross.length >= 2) shore = cross.map(q => proj(ii + q[0] * st, jj + q[1] * st, q[2] + .02)); } }
+      const lines = [];
+      const mn = Math.min(za, zb, zc, zd), mx = Math.max(za, zb, zc, zd);
+      for (let lv = Math.ceil(mn / iv) * iv; lv <= mx; lv += iv) {
+        const tmp = []; isoSegs(za, zb, zc, zd, lv, tmp);
+        if (!R || S.aiCtl) for (let q = 0; q < tmp.length; q += 4) lines.push([proj(ii + tmp[q] * st, jj + tmp[q + 1] * st, lv), proj(ii + tmp[q + 2] * st, jj + tmp[q + 3] * st, lv), isIndex(lv), lv]);
+      }
+      items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines, wpart, shore, tex: wet ? null : tex });
+    };
+    const fW = S.seaClip && wF ? [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]] : null, litC = lit ? [lit[idx(i, j)], lit[idx(i2, j)], lit[idx(i2, j2)], lit[idx(i, j2)]] : null;
+    const px = Math.max(Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]), Math.hypot(P[3][0] - P[0][0], P[3][1] - P[0][1]), Math.hypot(P[2][0] - P[1][0], P[2][1] - P[1][1]));
+    const sub = !fast && !mini && px > 30 ? Math.min(6, Math.ceil(px / 15)) : 1;
+    if (sub === 1) { const gc = grad(i + step / 2, j + step / 2); emit(i, j, step, za, zb, zc, zd, P, gc[0], gc[1], litC ? (litC[0] + litC[1] + litC[2] + litC[3]) / 4 : 1, [i * AER, j * AER, step * AER, step * AER], fW); }
+    else {
+      const g4 = [grad(i, j), grad(i2, j), grad(i2, j2), grad(i, j2)], bil = (a, b, cc, d, u, v) => a * (1 - u) * (1 - v) + b * u * (1 - v) + cc * u * v + d * (1 - u) * v;
+      const zAt = (u, v) => bil(za, zb, zc, zd, u, v), fAt = fW ? (u, v) => bil(fW[0], fW[1], fW[2], fW[3], u, v) : null;
+      for (let b2 = 0; b2 < sub; b2++) for (let a2 = 0; a2 < sub; a2++) {
+        const u0 = a2 / sub, u1 = (a2 + 1) / sub, v0 = b2 / sub, v1 = (b2 + 1) / sub, uc = (u0 + u1) / 2, vc = (v0 + v1) / 2, st = step / sub, ii = i + u0 * step, jj = j + v0 * step;
+        const sa = zAt(u0, v0), sb = zAt(u1, v0), sc = zAt(u1, v1), sd = zAt(u0, v1);
+        const Ps = [proj(ii, jj, sa), proj(ii + st, jj, sb), proj(ii + st, jj + st, sc), proj(ii, jj + st, sd)];
+        const gx = bil(g4[0][0], g4[1][0], g4[2][0], g4[3][0], uc, vc), gy = bil(g4[0][1], g4[1][1], g4[2][1], g4[3][1], uc, vc), litv = litC ? bil(litC[0], litC[1], litC[2], litC[3], uc, vc) : 1;
+        const fs = fAt ? [fAt(u0, v0), fAt(u1, v0), fAt(u1, v1), fAt(u0, v1)] : null;
+        emit(ii, jj, st, sa, sb, sc, sd, Ps, gx, gy, litv, [(i + u0 * step) * AER, (j + v0 * step) * AER, st * AER, st * AER], fs);
+      }
     }
-    items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, lines, wpart, shore, tex: wet ? null : tex });
   }
   // base outline first, so the model covers it
   const slab = !tm && (!R || !cutSide);   // the base slab shows in the model, and in the render whenever there is no cut: a model on a table
