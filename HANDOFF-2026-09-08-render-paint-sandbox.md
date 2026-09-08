@@ -30,6 +30,8 @@ If you are reading this with no other context: everything you need is here. The 
 ## 7. State at the end of the night (9/8)
 
 Live and verified: grading tools, render mode with the held cut, paint it with five styles, structured control, reference photo, studio backdrops, painted sheet (painting big, plan small, true painted section), drawing sheet at 150 dpi, imported CAD objects, several sections with geology, simple/deep, the 27/17-stop tour, smooth deep zoom, the consolidated render rail. Removed: the render set. Pending: the sandbox with the Femto Bolt at USC; a depth-conditioned painter if Gemini's edits ever get loose again; deeper geology sources.
+23. **Section camera reads like the drawing.** `secYaw()` now picks the yaw where A and B share a depth *and A projects left of B*, so the 3D jump and the painted section read the same way as the drawn profile whichever way the line was dragged (Will saw one mirrored). `window.__dbg(fn)` exposes `{ S, camera, secYaw }` for tests only.
+24. **Style row always with render.** The five styles show whenever render is on (the painted sheet uses the chosen style without the paint switch); the paint switch reveals the reference photo, the words and paint it / key.
 13. **See this section in 3d** (section page). Searches the camera yaw where A and B sit at the same depth with the site behind the plane, sets low aerial, perspective, black cut if none, and jumps to the render. The 3D section is the render itself; paint it from there.
 
 ## 2. How the paint pipeline works (so you can change it safely)
