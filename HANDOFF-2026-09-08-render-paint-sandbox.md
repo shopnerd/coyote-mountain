@@ -25,6 +25,11 @@ If you are reading this with no other context: everything you need is here. The 
 19. **The cut is held after painting.** `aiControl()` also returns a `mask` canvas with just the cut face and the paper (drawn by `drawCutFace` from the same geometry); `holdCut(img, mask)` lays it back over the painter's picture, so the poché and the paper are always ours and the painter only ever touches the ground and sky. Used by paint it and by both pictures of the painted sheet. The painted section box crops around the cut line (`elevFocus`), more ground above than paper below.
 20. **Render set removed** (Will, 9/8): the plain four-times-of-day sheet, its button, `renderSet()` and `composeSet()` are gone; the drawing sheet and the painted sheet are the two outputs.
 21. **Two painter tics to keep** (Will's call): buildings occasionally hanging over the model's edge, and clouds drifting out past the model onto the backdrop. Both make the picture read as a real model on a table under a real sky. Do not add prompt wording or masks that suppress them.
+22. **Aerial switch in the model menu.** The `#aerialRow` element travels with the mode in `setMode`: under smooth / stepped in the model view (padding 0 12px), back among the sheet switches after `#annoRow` in plan. Its state is still per view (`aeKey()`: `aerial` in plan, `aerialM` in the model).
+
+## 7. State at the end of the night (9/8)
+
+Live and verified: grading tools, render mode with the held cut, paint it with five styles, structured control, reference photo, studio backdrops, painted sheet (painting big, plan small, true painted section), drawing sheet at 150 dpi, imported CAD objects, several sections with geology, simple/deep, the 27/17-stop tour, smooth deep zoom, the consolidated render rail. Removed: the render set. Pending: the sandbox with the Femto Bolt at USC; a depth-conditioned painter if Gemini's edits ever get loose again; deeper geology sources.
 13. **See this section in 3d** (section page). Searches the camera yaw where A and B sit at the same depth with the site behind the plane, sets low aerial, perspective, black cut if none, and jumps to the render. The 3D section is the render itself; paint it from there.
 
 ## 2. How the paint pipeline works (so you can change it safely)
