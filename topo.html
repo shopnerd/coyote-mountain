@@ -1514,19 +1514,19 @@ function sectionProfile(n, sec = S.sec) {
   for (let q = 0; q <= n; q++) { const t = q / n, gx = a[0] + (b[0] - a[0]) * t, gy = a[1] + (b[1] - a[1]) * t; prop.push(sample(zv, gx, gy)); gnd.push(sample(z, gx, gy)); ex.push(sample(base, gx, gy)); }
   return { L, prop, ex, gnd };
 }
-function drawSection(c = ctx, w = S.w, h = S.h, mini = false) {   // every section stacked down the page, the active one first-class; the pip and the sheet show the active one alone
+function drawSection(c = ctx, w = S.w, h = S.h, mini = false, activeOnly = false) {   // every section stacked down the page, the active one first-class; the pip and the sheet show the active one alone
   c.clearRect(0, 0, w, h);
   if (!S.sec) { c.fillStyle = INK2; c.font = font(11); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('no section yet. in plan, pick "section line" and drag across the sheet.', w / 2, h / 2); return; }
-  const list = mini || S.noFoot ? [S.secI] : S.secs.map((_, i) => i), nb = list.length, bh = h / nb;
+  const list = mini || S.noFoot || activeOnly ? [S.secI] : S.secs.map((_, i) => i), nb = list.length, bh = h / nb;
   list.forEach((i, k) => { const [la, lb] = secLetters(i); c.save(); c.translate(0, k * bh); c.beginPath(); c.rect(0, 0, w, bh); c.clip(); drawSectionOne(c, w, bh, mini, S.secs[i], la, lb, i === S.secI); if (k) { c.strokeStyle = 'rgba(40,40,36,.18)'; c.lineWidth = 1; c.setLineDash([2, 4]); c.beginPath(); c.moveTo(0, .5); c.lineTo(w, .5); c.stroke(); c.setLineDash([]); } c.restore(); });
 }
 function drawSectionOne(c, w, h, mini, sec, la, lb, active) {
   const n = 240, { L, prop, ex, gnd } = sectionProfile(n, sec), iv = interval();
   const lo = Math.min(...gnd, ...ex), hi = Math.max(...gnd, ...ex, ...prop);
-  const mL = mini ? 40 : 64, mR = mini ? 16 : 30, mB = mini ? 34 : 60, pw = w - mL - mR;
+  const mL = mini ? 40 : 64, mR = mini ? 16 : 30, mB = mini ? 34 : Math.min(60, Math.round(h * .22)), topR = mini ? 30 : Math.min(50, Math.round(h * .18)), pw = w - mL - mR;   // margins shrink with a short band, so the profile never inverts
   let pxm = pw / L, ph = (hi - lo) * pxm * S.ve, vs = S.ve;
-  if (ph > h - 50 - mB) { vs = (h - 50 - mB) / ((hi - lo) * pxm); ph = h - 50 - mB; }
-  const mT = Math.max(50, (h - ph - mB) / 2);
+  { const avail = Math.max(24, h - topR - mB); if (ph > avail) { vs = avail / ((hi - lo) * pxm); ph = avail; } }
+  const mT = Math.max(topR, (h - ph - mB) / 2);
   const ground = mT + ph + 6, X = q => mL + q / n * pw, Y = v => ground - (v - lo) * pxm * vs;
   // earth below proposed: hatch
   c.save(); c.beginPath(); c.moveTo(X(0), ground + 30); gnd.forEach((v, q) => c.lineTo(X(q), Y(v))); c.lineTo(X(n), ground + 30); c.closePath(); c.clip();
@@ -2265,10 +2265,10 @@ function aiControl() {                    // the structured control for the view
   AI.ctl = { pools, map: S.aerialM ? 'aerial' : S.colorMode, slab: !(S.rendCut !== 'none' && S.sec) }; S.colorMode = wasCol.c; S.aerialM = wasCol.a; S.aiCtl = false; S.rendOn = was.on; S.mode = was.mode; skyCache.key = ''; S.dirty = true;
   return { png: cv2.toDataURL('image/png').split(',')[1], prompt: aiPrompt(), ref: [AI.style === 'white' ? null : aerialJpeg(), AI.photo ? AI.photo.data : null].filter(Boolean) };
 }
-async function aiCall(key, png, prompt, ref) {   // one painted picture back from the image model, as a data url; ref: extra jpeg references in order
+async function aiCall(key, png, prompt, ref, size = '1K') {   // one painted picture back from the image model, as a data url; ref: extra jpeg references in order
   const hdr = { 'Content-Type': 'application/json', 'x-goog-api-key': key }, findImg = o => { if (!o || typeof o !== 'object') return null; if (typeof o.data === 'string' && o.data.length > 500 && /^image\//.test(o.mime_type || o.mimeType || 'image/png')) return o; for (const k in o) { const v = findImg(o[k]); if (v) return v; } return null; };
   // the current interactions endpoint first; the older generateContent shape as the fallback, so both generations of the image models answer
-  let r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', headers: hdr, body: JSON.stringify({ model: AI.model, input: [{ type: 'text', text: prompt }, { type: 'image', mime_type: 'image/png', data: png }].concat((ref || []).map(d => ({ type: 'image', mime_type: 'image/jpeg', data: d }))), response_format: { type: 'image', mime_type: 'image/png', aspect_ratio: '16:9', image_size: '1K' } }) });
+  let r = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', headers: hdr, body: JSON.stringify({ model: AI.model, input: [{ type: 'text', text: prompt }, { type: 'image', mime_type: 'image/png', data: png }].concat((ref || []).map(d => ({ type: 'image', mime_type: 'image/jpeg', data: d }))), response_format: { type: 'image', mime_type: 'image/png', aspect_ratio: '16:9', image_size: size } }) });
   let j = await r.json().catch(() => null), img = findImg(j);
   if (!img) { r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${AI.model}:generateContent`, { method: 'POST', headers: hdr, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: 'image/png', data: png } }].concat((ref || []).map(d => ({ inlineData: { mimeType: 'image/jpeg', data: d } }))) }], generationConfig: { responseModalities: ['IMAGE'] } }) }); j = await r.json().catch(() => null); img = findImg(j); }
   if (!img) { const msg = (j && j.error && j.error.message) || (j && JSON.stringify(j).match(/"text":"([^"]{0,200})/) || [])[1] || ('request failed ' + r.status); throw new Error(msg); }
@@ -2286,12 +2286,12 @@ const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.on
 async function paintSheet() {             // the drawing sheet, with the model view and the south elevation painted: two calls, the rest drawn
   if (AI.busy) return; const key = aiKey(); if (!key) return; AI.busy = true; document.getElementById('aiBtn').disabled = true;
   try {
-    busy('painting 1 of 2 · the model'); const c1 = aiControl(); const model = await loadImg(await aiCall(key, c1.png, c1.prompt, c1.ref));
-    const secPersp = !!S.sec; busy(secPersp ? `painting 2 of 2 · section ${secLetters(S.secI).join('–')} in perspective` : 'painting 2 of 2 · the elevation'); const keep = { cam: S.cam, cut: S.rendCut };
-    if (secPersp) { S.cam = { yaw: secYaw(), pitch: 1.25, zoom: 1, pan: { x: 0, y: 0 }, persp: true }; if (S.rendCut === 'none') S.rendCut = 'black'; }   // the same cut the section above it shows, seen in perspective
+    busy('painting 1 of 2 · the model'); const c1 = aiControl(); const model = await loadImg(await aiCall(key, c1.png, c1.prompt, c1.ref, '2K'));
+    const secPersp = !!S.sec; busy(secPersp ? `painting 2 of 2 · section ${secLetters(S.secI).join('–')}` : 'painting 2 of 2 · the elevation'); const keep = { cam: S.cam, cut: S.rendCut };
+    if (secPersp) { const [A, B] = S.sec, L = Math.hypot(B[0] - A[0], B[1] - A[1]) * cs(), fit = viewFrame().fitW * 1.25, zoom = Math.max(.4, Math.min(24, .92 * 1536 * fit / (L * 864))); S.cam = { yaw: secYaw(), pitch: 1.55, zoom, pan: { x: 0, y: 0 }, persp: false }; { const mi = (A[0] + B[0]) / 2, mj = (A[1] + B[1]) / 2, m = camera(1536, 864).proj(mi, mj, sample(zv, mi, mj)); S.cam.pan = { x: 768 - m[0], y: 442 - m[1] }; } if (S.rendCut === 'none') S.rendCut = 'black'; }   // the line's midpoint at the centre of the frame   // the same cut the section above it shows: eye level, square to the line, no perspective, the line filling the frame
     else { S.cam = { yaw: 0, pitch: 1.55, zoom: 1512 * 1.25 / 864, pan: { x: 0, y: 0 }, persp: false }; S.rendCut = 'none'; }   // no line: the south elevation, the drawing sheet's own camera
-    let elev; try { const c2 = aiControl(); elev = await loadImg(await aiCall(key, c2.png, c2.prompt, c2.ref)); } finally { S.cam = keep.cam; S.rendCut = keep.cut; skyCache.key = ''; }
-    busy('drawing the sheet'); await new Promise(r => setTimeout(r, 30)); const sh = drawingSheet({ model, elev, elevTitle: secPersp ? 'SECTION ' + secLetters(S.secI).join('–') + ' · painted perspective' : 'ELEVATION · from the south · painted' }), name = `coyote-topo-painted-sheet-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}`;
+    let elev; try { const c2 = aiControl(); if (window.__ctl) window.__ctl(c2.png); elev = await loadImg(await aiCall(key, c2.png, c2.prompt, c2.ref, '2K')); } finally { S.cam = keep.cam; S.rendCut = keep.cut; skyCache.key = ''; }
+    busy('drawing the sheet'); await new Promise(r => setTimeout(r, 30)); const sh = drawingSheet({ model, elev, elevTitle: secPersp ? 'SECTION ' + secLetters(S.secI).join('–') + ' · painted' : 'ELEVATION · from the south · painted' }), name = `coyote-topo-painted-sheet-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}`;
     dl(URL.createObjectURL(pdfFromCanvas(sh.pages, sh.wIn, sh.hIn)), name + '.pdf'); setTimeout(() => dl(sh.pages[0].toDataURL('image/png'), name + '.png'), 700); toast(`painted sheet at ${sh.scale.label}`);
   } catch (e) { toast(String(e.message || e)); } finally { AI.busy = false; unbusy(); document.getElementById('aiBtn').disabled = false; S.dirty = true; }
 }
@@ -3120,28 +3120,29 @@ function analysisNotes(rain) {             // what the analysis sheet shows, in 
 }
 function drawingSheet(painted) { zdisp();   // painted: { model, elev } images from the painter, cover-cropped into the two picture boxes         // one sheet: plan over analysis at the same scale on the left; model, section and notes down the right
   const [pw_, ph_] = document.getElementById('paper').value.split('x').map(Number), dpi = 100, PW = Math.round(pw_ * dpi), PH = Math.round(ph_ * dpi), fam = getComputedStyle(document.body).fontFamily;
-  const m = .5 * dpi, tb = 1.3 * dpi, gap = .25 * dpi;                                  // margins, title block, gutter
+  const m = .5 * dpi, tb = 1.3 * dpi, gap = .25 * dpi, RES = 1.5;                       // margins, title block, gutter; RES: the page is rendered at 150 dpi for the plotter
   const inner = { x: m, y: m, w: PW - 2 * m, h: PH - 2 * m - tb };
   const L = { x: inner.x, w: inner.w * .62 - gap / 2 }, R = { x: inner.x + inner.w * .62 + gap / 2, w: inner.w * .38 - gap / 2 };
   const half = (inner.h - gap) / 2, planBox = { x: L.x, y: inner.y, w: L.w, h: half }, anaBox = { x: L.x, y: inner.y + half + gap, w: L.w, h: half };
   const rh = (inner.h - 3 * gap), modelBox = { x: R.x, y: inner.y, w: R.w, h: rh * .32 }, secBox = { x: R.x, y: inner.y + rh * .32 + gap, w: R.w, h: rh * .21 }, elevBox = { x: R.x, y: inner.y + rh * .53 + 2 * gap, w: R.w, h: rh * .17 }, notesBox = { x: R.x, y: inner.y + rh * .70 + 3 * gap, w: R.w, h: rh * .30 };
   const sc = pickScale(planBox.w, planBox.h - 60, dpi), k = sc.ppm * cs();
   const TRACE = '#f6f2e8';   // warm trace tone for the sheet
-  const viewCanvas = (box, fn) => { const c = document.createElement('canvas'); c.width = Math.round(box.w); c.height = Math.round(box.h); const o = c.getContext('2d'); o.fillStyle = TRACE; o.fillRect(0, 0, c.width, c.height); const fs0 = fontScale; fontScale = 1.3; fn(o, c.width, c.height); fontScale = fs0; return c; };
+  const viewCanvas = (box, fn) => { const c = document.createElement('canvas'); c.width = Math.round(box.w * RES); c.height = Math.round(box.h * RES); const o = c.getContext('2d'); o.scale(RES, RES); o.fillStyle = TRACE; o.fillRect(0, 0, box.w, box.h); const fs0 = fontScale; fontScale = 1.3; fn(o, Math.round(box.w), Math.round(box.h)); fontScale = fs0; return c; };   // drawn in the box's own coordinates on a 1.5x canvas: layout as before, lines and type crisp
+  const rp = (kk, w, h, fn) => renderPlanAt(kk * RES, Math.round(w * RES), Math.round(h * RES), fn, 1.35 * RES);   // a plan view at 1.5x with the type held at its size
   let rain = null;
-  const out = document.createElement('canvas'); out.width = PW; out.height = PH; const o = out.getContext('2d'); o.fillStyle = TRACE; o.fillRect(0, 0, PW, PH);
+  const out = document.createElement('canvas'); out.width = Math.round(PW * RES); out.height = Math.round(PH * RES); const o = out.getContext('2d'); o.scale(RES, RES); o.fillStyle = TRACE; o.fillRect(0, 0, PW, PH);
   const views = [
-    { box: planBox, title: 'PLAN · ' + sc.label, canvas: renderPlanAt(k, Math.round(planBox.w), Math.round(planBox.h), () => { S.noFoot = true; drawPlanBase(); S.noFoot = false; }) },   // the title block carries what the screen footer says
-    { box: anaBox, title: 'ANALYSIS · ' + sc.label + (S.rain ? ' · rain as it stands' : ''), canvas: renderPlanAt(k, Math.round(anaBox.w), Math.round(anaBox.h), () => { drawAnalysis(); if (S.rain) drawRainOverlay(ctx, (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; }, S.w, S.h, false); ctx.fillStyle = TRACE; ctx.fillRect(0, sheet.y + sheet.h + 2, S.w, S.h); }) },
+    { box: planBox, title: 'PLAN · ' + sc.label, canvas: rp(k, planBox.w, planBox.h, () => { S.noFoot = true; drawPlanBase(); S.noFoot = false; }) },   // the title block carries what the screen footer says
+    { box: anaBox, title: 'ANALYSIS · ' + sc.label + (S.rain ? ' · rain as it stands' : ''), canvas: rp(k, anaBox.w, anaBox.h, () => { drawAnalysis(); if (S.rain) drawRainOverlay(ctx, (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; }, S.w, S.h, false); ctx.fillStyle = TRACE; ctx.fillRect(0, sheet.y + sheet.h + 2, S.w, S.h); }) },
     painted && painted.model ? { box: modelBox, title: 'MODEL · painted · ' + AI.style, canvas: viewCanvas(modelBox, (o2, w, h) => { const im = painted.model, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, kk = Math.max(w / iw, (h - 30) / ih), sw = w / kk, sh = (h - 30) / kk; o2.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h - 30); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) } :
     { box: modelBox, title: 'MODEL · analysis layers' + (S.rain ? ' · rain' : ''), canvas: viewCanvas(modelBox, (o2, w, h) => { drawModel(o2, w, h, 1, false); if (S.rain) rain = drawRainOverlay(o2, camera(w, h).proj, w, h, true); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) },
-    { box: secBox, title: 'SECTION ' + secLetters(S.secI).join('–') + ' · vertical ' + S.ve + '×', canvas: viewCanvas(secBox, (o2, w, h) => drawSection(o2, w, h, false)) },
+    { box: secBox, title: 'SECTION ' + secLetters(S.secI).join('–') + ' · vertical ' + S.ve + '×', canvas: viewCanvas(secBox, (o2, w, h) => drawSection(o2, w, h, false, true)) },
     painted && painted.elev ? { box: elevBox, title: painted.elevTitle || 'ELEVATION · from the south · painted', canvas: viewCanvas(elevBox, (o2, w, h) => { const im = painted.elev, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, kk = Math.max(w / iw, (h - 30) / ih), sw = w / kk, sh = (h - 30) / kk; o2.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h - 30); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) } :
     { box: elevBox, title: 'ELEVATION · from the south · vertical ' + S.ve + '×', canvas: viewCanvas(elevBox, (o2, w, h) => {   // the model seen from the south at eye level, fitted to the box: ground profile, water, roads and buildings
       const keep = { cam: S.cam, labels: S.labels, lowQ: S.lowQ }; S.cam = { yaw: 0, pitch: 1.55, zoom: (w - 24) * 1.25 / Math.min(w, h), pan: { x: 0, y: 0 } }; S.labels = false; S.lowQ = false;
       try { drawModel(o2, w, h, 1, false); } finally { S.cam = keep.cam; S.labels = keep.labels; S.lowQ = keep.lowQ; } o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) },
     { box: notesBox, title: 'NOTES', canvas: null }];
-  for (const v of views) if (v.canvas) o.drawImage(v.canvas, v.box.x, v.box.y);
+  for (const v of views) if (v.canvas) o.drawImage(v.canvas, v.box.x, v.box.y, v.box.w, v.box.h);
   // notes
   { const nb = notesBox; o.textAlign = 'left'; o.textBaseline = 'top'; let yy = nb.y + 12; const maxW = nb.w - 28;
     for (const [head, body] of analysisNotes(rain)) { if (yy > nb.y + nb.h - 46) break; o.fillStyle = INK2; o.font = `600 9.5px ${fam}`; o.fillText(head, nb.x + 14, yy); yy += 12; o.fillStyle = INK; o.font = `11px ${fam}`; for (const ln of wrapText(o, body, maxW)) { if (yy > nb.y + nb.h - 46) break; o.fillText(ln, nb.x + 14, yy); yy += 13.5; } yy += 5; } }
