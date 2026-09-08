@@ -395,11 +395,14 @@ function drawCutFace(c, proj, cs0, lo, hi) {  // the earth cut open along A–B:
   const A2 = [A[0] + dx * t0, A[1] + dy * t0], B = [A[0] + dx * t1, A[1] + dy * t1];
   for (let k = 0; k <= n; k++) { const t = k / n, x = A2[0] + (B[0] - A2[0]) * t, y = A2[1] + (B[1] - A2[1]) * t, xi = Math.max(0, Math.min(W - 1, x)), yi = Math.max(0, Math.min(H - 1, y)), g = sample(z, xi, yi), nn = idx(Math.round(xi), Math.round(yi)); top.push(proj(x, y, g)); bot.push(proj(x, y, zb));
     const wl = isWater(nn) && waterLevel ? waterLevel[nn] : null; water.push(wl !== null && wl > g + .02 ? [proj(x, y, wl), proj(x, y, g)] : null); }
+  { const L = Math.hypot(B[0] - A2[0], B[1] - A2[1]) || 1, ux = (B[0] - A2[0]) / L, uy = (B[1] - A2[1]) / L, far = 6 * (W + H), g0 = sample(z, Math.max(0, Math.min(W - 1, A2[0])), Math.max(0, Math.min(H - 1, A2[1]))), g1 = sample(z, Math.max(0, Math.min(W - 1, B[0])), Math.max(0, Math.min(H - 1, B[1])));
+    top.unshift(proj(A2[0] - ux * far, A2[1] - uy * far, g0)); bot.unshift(proj(A2[0] - ux * far, A2[1] - uy * far, zb)); water.unshift(null); top.push(proj(B[0] + ux * far, B[1] + uy * far, g1)); bot.push(proj(B[0] + ux * far, B[1] + uy * far, zb)); water.push(null); }   // past the site the face carries on flat at the edge height, edge to edge of the frame
+  const m = top.length - 1;
   c.save(); const ww = c.canvas.width / (c.getTransform ? c.getTransform().a || 1 : 1);   // below the base plane the sheet is blank paper, edge to edge
-  { const big = 4 * (ww + hh), ext = (a, b) => { const d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1; return [a[0] + (a[0] - b[0]) / d * big, a[1] + (a[1] - b[1]) / d * big]; }, e0 = ext(bot[0], bot[1]), e1 = ext(bot[n], bot[n - 1]);   // the band's underside continued past both ends in its own direction, then everything under it
+  { const big = 4 * (ww + hh), ext = (a, b) => { const d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1; return [a[0] + (a[0] - b[0]) / d * big, a[1] + (a[1] - b[1]) / d * big]; }, e0 = ext(bot[0], bot[1]), e1 = ext(bot[m], bot[m - 1]);   // the band's underside continued past both ends in its own direction, then everything under it
     c.fillStyle = '#f4f3ee'; c.beginPath(); c.moveTo(e0[0], e0[1]); bot.forEach(p => c.lineTo(p[0], p[1])); c.lineTo(e1[0], e1[1]); c.lineTo(e1[0], e1[1] + big); c.lineTo(e0[0], e0[1] + big); c.closePath(); c.fill(); }
-  c.fillStyle = S.rendCut === 'white' ? '#f4f3ee' : '#15140f'; c.strokeStyle = S.rendCut === 'white' ? INK : '#15140f'; c.lineWidth = 1; c.lineJoin = 'round'; c.beginPath(); top.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); for (let k = n; k >= 0; k--) c.lineTo(bot[k][0], bot[k][1]); c.closePath(); c.fill(); c.stroke();
-  c.fillStyle = WATER; c.globalAlpha = .9; let run = null; for (let k = 0; k <= n + 1; k++) { const wv = k <= n ? water[k] : null; if (wv) { if (!run) run = []; run.push(wv); } else if (run) { if (run.length > 1) { c.beginPath(); run.forEach((r, i) => i ? c.lineTo(r[0][0], r[0][1]) : c.moveTo(r[0][0], r[0][1])); for (let i = run.length - 1; i >= 0; i--) c.lineTo(run[i][1][0], run[i][1][1]); c.closePath(); c.fill(); } run = null; } }
+  c.fillStyle = S.rendCut === 'white' ? '#f4f3ee' : '#15140f'; c.strokeStyle = S.rendCut === 'white' ? INK : '#15140f'; c.lineWidth = 1; c.lineJoin = 'round'; c.beginPath(); top.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); for (let k = m; k >= 0; k--) c.lineTo(bot[k][0], bot[k][1]); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = WATER; c.globalAlpha = .9; let run = null; for (let k = 0; k <= m + 1; k++) { const wv = k <= m ? water[k] : null; if (wv) { if (!run) run = []; run.push(wv); } else if (run) { if (run.length > 1) { c.beginPath(); run.forEach((r, i) => i ? c.lineTo(r[0][0], r[0][1]) : c.moveTo(r[0][0], r[0][1])); for (let i = run.length - 1; i >= 0; i--) c.lineTo(run[i][1][0], run[i][1][1]); c.closePath(); c.fill(); } run = null; } }
   c.restore();
 }
 function drawTreeStanding(c, st, toXY) {  // a tree in the render: a silhouette standing on the ground, canopy the size you drew it
@@ -980,6 +983,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     contourLabels(c, groups, 200, true); spotLabels(c, (i, j, zz) => proj(i, j, zz));
   }
   rend3D = null; rendCutSide = cutSide;
+  if (S.aiCtl) return;   // the painter's control carries no captions, credits or legends
   if (R && !S.aiCtl) { c.fillStyle = 'rgba(240,240,236,.75)'; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom'; const hh = Math.floor(S.hour), hm = S.hour % 1 ? ':30' : ':00'; c.fillText(`render · ${MONTHS[S.month - 1]} · ${(hh % 12 || 12) + hm + (hh < 12 ? ' am' : ' pm')} · ${S.rendSky} sky${cutSide ? ' · cut along A–B' : ''}`, 14, h - 10); return; }
   if (!mini && mode !== 'paper' && mode !== 'aerial' && mode !== 'sun') drawLegend(c, w, h, mode, lo, hi);
   if (!mini && mode === 'sun') { c.fillStyle = INK2; c.font = font(10.5); c.textAlign = 'right'; c.textBaseline = 'bottom'; c.fillText(sunCache.note || '', w - 14, h - 10); }
