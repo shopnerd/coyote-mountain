@@ -346,8 +346,8 @@ html[data-depth="simple"] #png{grid-column:1/-1}
       <button class="btn" id="png">save png</button>
       <button class="btn deep" id="stl">export stl</button>
       <div class="deep" style="display:flex;gap:6px"><button class="btn" id="laser" style="flex:1">export laser</button><button class="btn" id="laserDxf" title="the same cut file as DXF, for laser software that prefers it">dxf</button></div>
-      <button class="btn wide deep" id="rendAiBtn" title="the drawing sheet with the model view and the south elevation painted: plan, analysis, section, notes and the title block drawn, two pictures from the painter">painted sheet · pdf + png</button>
       <button class="btn wide deep" id="cncDxf" title="a dxf at the model's scale, in inches or millimetres to match the units setting: site edge, contours, building footprints, path edges, lot line, on their own layers. for engraving on the cnc, or any cad">cnc lines · dxf</button>
+      <button class="btn wide deep" id="rendAiBtn" title="the drawing sheet with the model view and the south elevation painted: plan, analysis, section, notes and the title block drawn, two pictures from the painter">painted sheet · pdf + png</button>
       <button class="btn primary wide" id="sheetBtn">drawing sheet · pdf + png</button>
     </div>
   </aside>
@@ -3106,7 +3106,15 @@ function drawingSheet(painted) { zdisp();   // painted: { model, elev } images f
   const half = (inner.h - gap) / 2, planBox = { x: L.x, y: inner.y, w: L.w, h: half }, anaBox = { x: L.x, y: inner.y + half + gap, w: L.w, h: half };
   const rh = (inner.h - 3 * gap), modelBox = { x: R.x, y: inner.y, w: R.w, h: rh * .32 }, secBox = { x: R.x, y: inner.y + rh * .32 + gap, w: R.w, h: rh * .21 }, elevBox = { x: R.x, y: inner.y + rh * .53 + 2 * gap, w: R.w, h: rh * .17 }, notesBox = { x: R.x, y: inner.y + rh * .70 + 3 * gap, w: R.w, h: rh * .30 };
   const swap = !!(painted && painted.model), pBox = swap ? modelBox : planBox, mBox = swap ? planBox : modelBox;   // painted: the painting takes the big box, the plan the small one
-  const sc = pickScale(anaBox.w, anaBox.h - 60, dpi), k = sc.ppm * cs(), scP = swap ? pickScale(pBox.w, pBox.h - 60, dpi) : sc, kP = scP.ppm * cs();
+  if (swap) {   // the painted sheet: the split between the painting and the analysis is chosen so the two topos print as large as the paper allows, the right column stacking to the same heights so every edge lines up across the gutter
+    let best = null;
+    for (const f of [.5, .53, .56, .6, .64]) { const heroH = Math.round((inner.h - gap) * f), anaH = inner.h - gap - heroH, secH = Math.max(240, Math.round(heroH * .28)), planH = heroH - gap - secH; if (planH < 200 || anaH < 200) continue;
+      const a = pickScale(anaBox.w, anaH - 60, dpi), pl = pickScale(R.w, planH - 60, dpi), score = a.ratio + pl.ratio;   // smaller ratios are larger drawings
+      if (!best || score < best.score || (score === best.score && planH > best.planH)) best = { score, heroH, anaH, secH, planH }; }
+    const { heroH, anaH, secH, planH } = best, notesH = Math.max(220, Math.min(300, anaH - gap - 240)), elevH = anaH - gap - notesH;   // the notes take what their few lines need; the painted section gets the rest
+    planBox.h = heroH; anaBox.y = inner.y + heroH + gap; anaBox.h = anaH;
+    modelBox.h = planH; secBox.y = inner.y + planH + gap; secBox.h = secH; elevBox.y = anaBox.y; elevBox.h = elevH; notesBox.y = elevBox.y + elevH + gap; notesBox.h = notesH; }
+  const sc = pickScale(anaBox.w, anaBox.h - 60, dpi), k = sc.ppm * cs(), scP = swap ? pickScale(pBox.w, pBox.h - 60, dpi) : sc, kP = scP.ppm * cs(); S.lastSheet = { plan: scP.label, ana: sc.label, hero: planBox.h, plan_h: pBox.h, notes: notesBox.h };
   const TRACE = '#f6f2e8';   // warm trace tone for the sheet
   const viewCanvas = (box, fn) => { const c = document.createElement('canvas'); c.width = Math.round(box.w * RES); c.height = Math.round(box.h * RES); const o = c.getContext('2d'); o.scale(RES, RES); o.fillStyle = TRACE; o.fillRect(0, 0, box.w, box.h); const fs0 = fontScale; fontScale = 1.3; fn(o, Math.round(box.w), Math.round(box.h)); fontScale = fs0; return c; };   // drawn in the box's own coordinates on a 1.5x canvas: layout as before, lines and type crisp
   const rp = (kk, w, h, fn) => renderPlanAt(kk * RES, Math.round(w * RES), Math.round(h * RES), fn, 1.35 * RES);   // a plan view at 1.5x with the type held at its size
