@@ -19,6 +19,8 @@ body{background:var(--page);color:var(--ink);font:13px/1.5 var(--font);overflow:
 header{grid-column:1/-1;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 12px}
 header .logo{font-weight:600;font-size:15px;letter-spacing:.02em}
 header .logo b{color:var(--accent);font-weight:600}
+#modes .k{font-style:normal;color:var(--ink3);font-weight:400;margin-right:6px}
+#modes button.on .k{color:var(--accent)}
 header a{color:var(--ink3);text-decoration:none;font-size:10px}
 header a:hover{color:var(--ink)}
 header .read{margin-left:auto;color:var(--ink2);font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
@@ -159,8 +161,8 @@ html[data-depth="simple"] #png{grid-column:1/-1}
   <aside>
     <div class="sec">view</div>
     <div id="modes">
-      <div class="seg"><button data-m="plan" class="on">plan</button><button data-m="model">model</button><button data-m="section">section</button></div>
-      <div class="seg" style="margin-top:4px"><button data-m="analysis" style="border-radius:3px">analyze</button></div>
+      <div class="seg"><button data-m="plan" class="on"><i class="k">1</i>plan</button><button data-m="model"><i class="k">2</i>model</button><button data-m="section"><i class="k">3</i>section</button></div>
+      <div class="seg" style="margin-top:4px"><button data-m="analysis" style="border-radius:3px"><i class="k">4</i>analyze</button></div>
     </div>
     <div class="desc" id="desc"></div>
     <div class="seg deep" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped</button></div>
