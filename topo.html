@@ -150,7 +150,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
   <header>
     <a class="logo" href="index.html" style="text-decoration:none;color:inherit">coyote_mountain<b>_topo</b></a>
     <a href="flight.html">flight</a>
-    <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis · 0 refits · wheel zooms · middle drag pans · ctrl+z undo</span>
+    <span class="read" id="read">keys · 1 plan · 2 model · 3 section · 4 analysis · 0 refits · wheel zooms · middle drag pans · ctrl+z undo</span>
     <button class="theme" id="depthBtn" title="simple shows the tools you see on the sheet at once; deep shows everything: tuning, calibration, fabrication and the other exports">deep</button>
     <button class="theme" id="tourBtn" title="a five-minute guided tour of every tool on a sample site; your own work comes back after">tour</button>
     <button class="theme" id="themeBtn" title="dark or light around the drawing; the paper stays paper">dark</button>
@@ -1886,7 +1886,7 @@ function busy(msg, frames) {              // pulse the prompt and say what is ru
   busyMsg = msg; busyFrames = frames || 0; document.querySelector('.cmd .prompt').classList.add('busy'); const h = document.getElementById('hint'); h.classList.add('busy'); h.textContent = msg + ' …'; lastHint = ''; }
 function unbusy() { busyMsg = ''; busyFrames = 0; document.querySelector('.cmd .prompt').classList.remove('busy'); document.getElementById('hint').classList.remove('busy'); lastHint = ''; updateHint(); }
 function runBusy(msg, fn) { busy(msg); return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => { try { res(fn()); } catch (e) { toast(String(e.message || e)); } finally { unbusy(); } }))); }
-const KEYS_LINE = 'keys 1 plan · 2 model · 3 section · 4 analysis · 0 refits · wheel zooms · middle drag pans · ctrl+z undo';
+const KEYS_LINE = 'keys · 1 plan · 2 model · 3 section · 4 analysis · 0 refits · wheel zooms · middle drag pans · ctrl+z undo';
 function hintText() {
   let h = '';
   if (S.mode === 'plan') {
