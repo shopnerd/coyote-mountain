@@ -150,7 +150,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
   <header>
     <a class="logo" href="index.html" style="text-decoration:none;color:inherit">coyote_mountain<b>_topo</b></a>
     <a href="flight.html">flight</a>
-    <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis · 0 reset zoom · wheel zooms, middle-drag pans</span>
+    <span class="read" id="read">keys 1 plan · 2 model · 3 section · 4 analysis · 0 refits · wheel zooms · middle drag pans · ctrl+z undo</span>
     <button class="theme" id="depthBtn" title="simple shows the tools you see on the sheet at once; deep shows everything: tuning, calibration, fabrication and the other exports">deep</button>
     <button class="theme" id="tourBtn" title="a five-minute guided tour of every tool on a sample site; your own work comes back after">tour</button>
     <button class="theme" id="themeBtn" title="dark or light around the drawing; the paper stays paper">dark</button>
@@ -1887,24 +1887,23 @@ function busy(msg, frames) {              // pulse the prompt and say what is ru
 function unbusy() { busyMsg = ''; busyFrames = 0; document.querySelector('.cmd .prompt').classList.remove('busy'); document.getElementById('hint').classList.remove('busy'); lastHint = ''; updateHint(); }
 function runBusy(msg, fn) { busy(msg); return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => { try { res(fn()); } catch (e) { toast(String(e.message || e)); } finally { unbusy(); } }))); }
 function hintText() {
-  const nav = 'wheel zooms · middle or shift drag pans · 0 refits';
   let h = '';
   if (S.mode === 'plan') {
-    if (S.brush === 'pen') { const m = S.penMode; h = m === 'smart' ? 'pen · draw freehand; on lift a wobbly line straightens, a loop becomes a circle or box, corners become a clean polyline' : m === 'free' ? 'pen · draw freehand, kept as drawn' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : 'circle · drag from the centre outward'; if (S.plant) h = S.plant === 'tree' ? PLANT_HINT.tree : PLANT_HINT[S.plant] + ' · ' + (m === 'smart' ? 'smart tidies the outline' : m === 'free' ? 'traced as drawn' : m + ' gives it a clean shape') + ' · click the plant again for plain ink'; h += ' · width, opacity, dashed in the rail · strokes drape onto the model'; }
+    if (S.brush === 'pen') { const m = S.penMode; h = m === 'smart' ? 'pen · freehand; on lift, wobbly lines straighten, loops close, corners snap' : m === 'free' ? 'pen · freehand, kept as drawn' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : 'circle · drag from the centre outward'; if (S.plant) h = S.plant === 'tree' ? PLANT_HINT.tree : PLANT_HINT[S.plant] + (m === 'smart' ? ' · smart tidies the outline' : m === 'free' ? ' · traced as drawn' : ' · ' + m + ' gives it a clean shape'); }
     else if (S.brush === 'erase') h = 'eraser · drag across pen strokes to remove them';
     else if (S.brush === 'section') h = 'section · drag from A to B; the section view opens when you let go';
-    else if (S.brush === 'path') h = `path · draw the centreline; a ${fL(S.pathW, 1)} wide corridor ${S.pathH === 0 ? 'flush with' : S.pathH > 0 ? 'raised ' + fL(S.pathH, 2) + ' above' : 'sunk ' + fL(-S.pathH, 2) + ' into'} the ground follows it, smoothed along its length · undo ctrl+z`;
-    else if (S.brush === 'pad') h = `pad · drag a ${S.padShape === 'draw' ? 'shape freehand' : S.padShape === 'oval' ? 'box for the oval' : 'rectangle'}; the ground inside becomes a flat pad, ${S.padLevel === 'balance' ? 'cut balancing fill' : 'at the ground where you start'}, side slopes daylighting · undo ctrl+z`;
-    else if (S.brush === 'spot') h = 'spot · tap the sheet to place a spot elevation; it reads the ground live · eraser removes it';
-    else if (S.brush === 'obj') h = 'object · tap an object to select it and drag to move it · tap empty ground to move the selected one there · rotation, scale and lift in the rail';
-    else if (S.brush === 'grade') h = 'grade · drag from A to B; the strip between is set to the rail grade from the ground at A, flat across the half width, side slopes daylighting into the ground · undo ctrl+z';
-    else h = `${S.brush} · drag on the sheet to ${S.brush} the ground · radius and strength in the rail · undo ctrl+z`;
-  } else if (S.mode === 'model') h = S.sculpt ? `sculpt · left drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' ? 'raises' : S.brush + 's'} the ground under the cursor · right drag orbits · m stepped · surface colour in the rail` : 'model · left or right drag orbits · ctrl+right drag zooms · double-click refits · m stepped · sculpt switch in the rail';
-  else if (S.mode === 'section') h = 'section · drag a new A–B line in plan view · vertical exaggeration in the rail';
-  else h = S.tapMode === 'dam' ? 'analysis · tap the sheet to place the dam; tap a keypoint to put it there · dam height in the rail' : 'analysis · tap a keypoint or any spot to set the keyline · "tap: dam" places the dam · layers in the rail · r rain';
-  if (S.rain) h += S.rainPaused ? ' · rain paused, p resumes' : ' · rain running, p pauses, r stops';
-  if (S.sunPlay) h += ' · sun playing, drag the slider to take over';
-  return h + ' · ' + nav;
+    else if (S.brush === 'path') h = `path · draw the centreline; a ${fL(S.pathW, 1)} corridor, ${S.pathH === 0 ? 'flush' : S.pathH > 0 ? 'raised ' + fL(S.pathH, 2) : 'sunk ' + fL(-S.pathH, 2)}, follows it`;
+    else if (S.brush === 'pad') h = `pad · drag a ${S.padShape === 'draw' ? 'shape' : S.padShape === 'oval' ? 'box for the oval' : 'rectangle'}; a flat pad inside, ${S.padLevel === 'balance' ? 'cut balancing fill' : 'at the level where you start'}, sides daylighting`;
+    else if (S.brush === 'spot') h = 'spot · tap to place a spot elevation; the eraser removes it';
+    else if (S.brush === 'obj') h = 'object · tap to select, drag to move; tap empty ground to move it there';
+    else if (S.brush === 'grade') h = 'grade · drag A to B; the strip takes the rail grade from the ground at A, sides daylighting';
+    else h = `${S.brush} · drag to ${S.brush} the ground · radius and strength in the rail`;
+  } else if (S.mode === 'model') h = S.sculpt ? `sculpt · drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj' ? 'raises' : S.brush + 's'} the ground · right drag orbits` : 'model · right drag orbits · wheel zooms · double-click refits · m stepped';
+  else if (S.mode === 'section') h = 'section · drag a new A–B line in plan · vertical exaggeration in the rail';
+  else h = S.tapMode === 'dam' ? 'analysis · tap the sheet or a keypoint to place the dam' : 'analysis · tap a keypoint or a spot for the keyline' + (S.rain ? '' : ' · r rain');
+  if (S.rain) h += S.rainPaused ? ' · rain paused: p resumes' : ' · rain: p pause, r stop';
+  if (S.sunPlay) h += ' · sun playing; drag the slider to stop';
+  return h;
 }
 function updateHint() { if (busyMsg) return; const h = hintText(); if (h !== lastHint) { lastHint = h; document.getElementById('hint').textContent = h; } }
 const VIEWS = { top: [0, 0, 'top · straight down, north up'], front: [0, 1.55, 'front · from the south'], back: [Math.PI, 1.55, 'back · from the north'], left: [-Math.PI / 2, 1.55, 'left · from the west'], right: [Math.PI / 2, 1.55, 'right · from the east'], axon: [Math.PI / 4, .6155, 'axonometric · 45° corner, isometric tilt'] };
@@ -1947,7 +1946,7 @@ function densify(pts, maxStep) {           // add points so no gap is longer tha
   return out;
 }
 const PLANT_KINDS = ['tree', 'shrub', 'hedge', 'gravel', 'paving'];
-const PLANT_HINT = { tree: 'tree · tap to plant one with a 20 ft canopy, or drag from the trunk to size it', shrub: 'shrub mass · draw around the bed; it closes into a scalloped cloud when you lift', hedge: 'hedge · draw the line of the row', gravel: 'gravel · draw around the area; it fills with stipple', paving: 'paving · draw around the area; it fills with flagstones' };
+const PLANT_HINT = { tree: 'tree · tap to plant one, or drag from the trunk to size the canopy', shrub: 'shrub · draw around the bed; it closes into a mass', hedge: 'hedge · draw the line of the row', gravel: 'gravel · draw around the area', paving: 'paving · draw around the area' };
 function inPoly(pts, x, y) { let inside = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const yi = pts[i][1], yj = pts[j][1]; if ((yi > y) !== (yj > y) && x < (pts[j][0] - pts[i][0]) * (y - yi) / (yj - yi) + pts[i][0]) inside = !inside; } return inside; }
 function polyArea(pts) { let a = 0; for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; } return Math.abs(a) / 2; }
 function resample(pts, step, closed) {     // evenly spaced points along a polyline, grid units
@@ -3291,7 +3290,7 @@ const TOUR_RESTORE = saved => { setRain(false); S.gline = null; S.aerial = false
 const TOUR = [
   // the top row
   { el: 'header', text: 'the top row. coyote_mountain_topo is this tool, flight is its sister for planning a drone survey. the keys line is the cheat sheet: 1 to 4 pick a view, 0 refits it, the wheel zooms and a middle drag pans. simple shows the essentials and deep every tool; tour restarts this walk; dark and light swap the chrome, the paper stays paper.', do: async () => setMode('plan') },
-  { el: '.cmd', text: 'the command row. the left side reads out what the tool under the cursor does. the view buttons set the model camera: top, front, back, left, right, axon, or persp for perspective, and zoom extents refits whatever is on screen.' },
+  { el: '.cmd', text: 'the status line. it spells out what the tool under the cursor does. the view buttons set the camera: top, front, back, left, right, axon, or perspective, and zoom extents refits whatever is on screen.' },
   // the rail, top to bottom, in plan
   { el: '#modes', text: 'the rail starts with the four views. plan is the drawing sheet: contours every 10 ft, a heavier index line every 50, short downhill strokes are hachures. model is the 3d ground, section a cut through it, analysis where the water goes.', do: async () => setMode('plan') },
   { el: '#brushes', text: 'the brush row. raise, lower, smooth and flatten shape the ground with the radius and strength sliders below; the cut and fill numbers in the grading block update as you drag. here is one stroke.', do: async () => { setMode('plan'); setBrush('raise'); const r = document.getElementById('radius'); r.value = 30; r.oninput({ target: r }); snapshot(); strokeLine([W * .35, H * .55], [W * .5, H * .5], 'raise', 0); updateStats(); S.dirty = true; } },
@@ -3304,8 +3303,8 @@ const TOUR = [
   { el: 'button[data-b="section"]', text: 'section line: drag from a to b on the sheet and the section view cuts the ground there. drag again elsewhere for c to d, up to four lines; tap one to make it the active one. we come back to it after the model.', do: async () => { setMode('plan'); setBrush('section'); } },
   { el: '#aerialRow', text: 'the sheet switches. hachures density, labels on or off, the cut·fill wash or a plain sheet, contours labelled to read uphill or existing ground dashed, and the aerial photo with its opacity. photo on.', do: async () => { setMode('plan'); setBrush('pen'); S.aerial = true; aerialUI(); S.dirty = true; } },
   // the model
-  { el: '#modes button[data-m="model"]', text: 'press 2 for the model. right drag orbits, the wheel zooms in close enough to read a single contour, and the view buttons in the command row give the standard views; this is axon. in deep, smooth or stepped picks a draped ground or the cardboard-stack look of the laser cut.', do: async () => { S.aerial = false; aerialUI(); setMode('model'); document.querySelector('#views button[data-v="axon"]').click(); } },
-  { el: '#rendRow', text: 'the render block. render turns the model into a perspective with a real sun: the section cut menu (none, black or white face along the active line), the background menu (four skies or a studio backdrop), the paint switch, and the month and hour. the camera heights, eye, low and high, sit with the view buttons in the command row.', do: async () => { setMode('model'); S.rendOn = true; S.cam.persp = true; rendUI(); document.querySelector('#views button[data-eye="1.25"]').click(); S.dirty = true; } },
+  { el: '#modes button[data-m="model"]', text: 'press 2 for the model. right drag orbits, the wheel zooms in close enough to read a single contour, and the view buttons on the status line give the standard views; this is axon. in deep, smooth or stepped picks a draped ground or the cardboard-stack look of the laser cut.', do: async () => { S.aerial = false; aerialUI(); setMode('model'); document.querySelector('#views button[data-v="axon"]').click(); } },
+  { el: '#rendRow', text: 'the render block. render turns the model into a perspective with a real sun: the section cut menu (none, black or white face along the active line), the background menu (four skies or a studio backdrop), the paint switch, and the month and hour. the camera heights, eye, low and high, sit with the view buttons on the status line.', do: async () => { setMode('model'); S.rendOn = true; S.cam.persp = true; rendUI(); document.querySelector('#views button[data-eye="1.25"]').click(); S.dirty = true; } },
   { el: '#aiRow', text: 'paint it sends the render to an image model that paints real ground, plants and light over it: as a photograph, a watercolour, an ink wash, a map mash-up that keeps the map colours and contour lines and paints life on top, or a white card model with only the planting and water painted in. what it sends carries the contour lines, the standing rain and the surface colour you chose, so the painter holds the real ground. the words box tells it what it cannot see, and a reference photo of the place or of the look you want goes along too. it needs your own google ai key, kept in this browser only.', do: async () => { setMode('model'); S.rendOn = true; S.paintOn = true; rendUI(); S.dirty = true; } },
   { el: '#colorRow', deep: true, text: 'surface color. paper, elevation bands, slope, aspect, the cut·fill wash, or sun: the shadows at one hour, or hours of sun over a day, with play day and play year to watch them move.', do: async () => { setMode('model'); S.rendOn = false; rendUI(); document.querySelector('#colorRow button[data-c="slope"]').click(); } },
   { el: '#sculptRow', deep: true, text: 'orbit or sculpt: in sculpt the brush row above works on the 3d ground under your finger, and rain runs on the model while you shape it. rain is on now.', do: async () => { setMode('model'); document.querySelector('#colorRow button[data-c="paper"]').click(); setRain(true); } },
