@@ -3343,6 +3343,7 @@ tourEls.card.querySelector('.next').onclick = () => tourIntro ? tourStart() : to
 addEventListener('resize', () => tourPlace()); document.querySelector('aside').addEventListener('scroll', () => tourPlace());
 addEventListener('keydown', e => { if (!tour) return; if (e.key === 'Escape') tourEnd(false); else if (e.key === 'ArrowRight') tourGo(tour.i + 1); else if (e.key === 'ArrowLeft') tourGo(tour.i - 1); else return; e.preventDefault(); e.stopPropagation(); }, true);
 document.getElementById('tourBtn').onclick = tourStart;
+if (location.hash === '#tour') setTimeout(tourStart, 3500);   // teachers.html links straight into the tour
 setTimeout(() => { let seen = null; try { seen = localStorage.getItem(TOUR_KEY); } catch (_) {} if (seen || tour) return; tourIntro = true; const c = tourEls.card;   // first visit: offer, never force
   c.querySelector('.t').textContent = 'new here? a short tour walks the tools on a sample site, then hands your own work back.'; c.querySelector('.n').textContent = ''; c.querySelector('.back').style.display = 'none'; c.querySelector('.next').textContent = 'start the tour'; c.querySelector('.skip').textContent = 'no thanks'; tourEls.spot.style.display = 'none'; c.classList.add('show');
   c.style.left = ((innerWidth - c.offsetWidth) / 2) + 'px'; c.style.top = (innerHeight - c.offsetHeight - 24) + 'px'; }, 2500);

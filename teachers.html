@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>coyote mountain · for teachers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="A landscape grading tool for studios: real terrain, cut and fill, sections, water, a painted drawing sheet. Free for teaching, runs in the browser, nothing to install.">
+<style>
+:root{
+  --page:#d0d0cc; --panel:#e8e8e4; --paper:#f0f0ec; --hover:#e2e2dc;
+  --ink:#1a1a18; --ink2:#454440; --ink3:#6e6d68; --line:#c8c8c2;
+  --accent:#C96B3A; --accent2:#a85830; --wash:#f3e4d8;
+  --font:'SF Mono','Cascadia Mono',Consolas,'Liberation Mono',Menlo,monospace;
+}
+:root[data-theme=dark]{--page:#161615;--panel:#1f1f1e;--paper:#262624;--hover:#2d2d2b;--ink:#e6e5df;--ink2:#b8b7b0;--ink3:#8b8a84;--line:#3b3b38;--wash:#3a2a20}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--page);color:var(--ink);font:13px/1.6 var(--font);-webkit-font-smoothing:antialiased;min-height:100%}
+header{height:38px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 12px;position:sticky;top:0;z-index:5}
+header .logo{font-weight:600;color:inherit;text-decoration:none}
+header .logo b{color:var(--accent);font-weight:600}
+header a.nav{color:var(--ink3);text-decoration:none;font-size:12px}
+header a.nav:hover{color:var(--accent)}
+header .theme{margin-left:auto;border:1px solid var(--line);background:transparent;color:var(--ink3);font:inherit;font-size:10px;padding:2px 8px;border-radius:3px;cursor:pointer}
+header .theme:hover{color:var(--accent);border-color:var(--accent)}
+main{max-width:1080px;margin:0 auto;padding:36px 20px 72px}
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:3px;padding:32px 36px;margin-bottom:16px}
+.eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+h1{font-size:24px;font-weight:600;letter-spacing:.02em;margin:4px 0 6px;text-wrap:balance}
+h1 b{color:var(--accent);font-weight:600}
+h2{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;margin:0 0 12px;color:var(--ink)}
+p{color:var(--ink2);max-width:72ch;margin:0 0 12px}
+p.lead{color:var(--ink);font-size:14.5px;max-width:70ch}
+a{color:var(--accent)}
+ul,ol{margin:0 0 12px 18px;color:var(--ink2);max-width:72ch}
+li{margin:0 0 6px}
+strong{color:var(--ink);font-weight:600}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.two{grid-template-columns:1fr}.sheet{padding:22px 18px}}
+.go{display:inline-block;border:1px solid var(--accent);color:var(--accent);text-decoration:none;padding:8px 14px;border-radius:3px;font-weight:600;margin:6px 10px 6px 0}
+.go:hover{background:var(--wash)}
+.go.q{border-color:var(--line);color:var(--ink2);font-weight:400}
+video{width:100%;display:block;background:#000;border:1px solid var(--line);border-radius:3px}
+.frames{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 18px;margin-top:4px}
+@media (max-width:760px){.frames{grid-template-columns:1fr}}
+.frame img{width:100%;display:block;border:1px solid var(--line);border-radius:2px;background:var(--panel)}
+.frame .n{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:8px 0 2px}
+.frame p{font-size:12px;margin:0}
+table{border-collapse:collapse;width:100%;margin:4px 0 12px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--ink2)}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+td:first-child{color:var(--ink);width:44%}
+.tbl{overflow-x:auto}
+.foot{color:var(--ink3);font-size:11px;text-align:center;margin-top:20px}
+.foot a{color:var(--ink3)}
+</style>
+</head>
+<body>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('coyote-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(_){}</script>
+<header>
+  <a class="logo" href="index.html">coyote_mountain<b>_farm</b></a>
+  <a class="nav" href="topo.html">topo</a>
+  <a class="nav" href="flight.html">flight</a>
+  <button class="theme" id="themeBtn">dark</button>
+</header>
+<main>
+  <div class="sheet">
+    <span class="eyebrow">for teachers · landscape studios</span>
+    <h1>A site, graded, cut, watered and drawn, <b>in one session</b></h1>
+    <p class="lead">coyote_mountain_topo is a landscape grading tool that runs in the browser. It fetches real terrain for any place on earth, lets students grade it with the cut and fill counted, cut sections through it, watch where rain goes, and hand in a drawing sheet with a painted model on it. Nothing to install, nothing to license, free for teaching.</p>
+    <a class="go" href="topo.html">open the tool</a>
+    <a class="go q" href="topo.html#tour">open and press tour</a>
+    <p style="margin-top:10px;font-size:12px">Deep zoom, geology under the section, CAD objects, the laser stack and the mill files are behind the <strong>deep</strong> switch in the top right. A first visit opens in <strong>simple</strong>, which is the right place to start a class.</p>
+  </div>
+
+  <div class="two">
+    <div class="sheet">
+      <h2>what a studio does with it</h2>
+      <ol>
+        <li><strong>Fetch the site.</strong> Type a place or a lat, lng, set how wide, press fetch. Contours, hachures and the aerial photo arrive.</li>
+        <li><strong>Read it.</strong> Press 4 for analysis: flow lines, catchments, keypoints, the keyline, where a pond would sit. Press r and it rains.</li>
+        <li><strong>Grade it.</strong> Brushes for the ground, a pad tool that balances cut and fill, a path tool that follows the ground, grade a to b at an exact fall. The volumes update as you go.</li>
+        <li><strong>Cut sections.</strong> Drag a line across the sheet. Up to four. Existing ground dashed, proposed solid, cut grey, fill ember.</li>
+        <li><strong>See it.</strong> Press 2 for the model, orbit it, then render: a real sun for the date and hour, a section-perspective with the cut face as poché.</li>
+        <li><strong>Hand it in.</strong> One drawing sheet: the model and the section painted by an image model, the plan and the analysis at true scale, notes and a title block, sized for the plotter.</li>
+      </ol>
+      <p>Then, if the studio makes things: an STL for the printer, a laser file for the cardboard stack, DXF lines for the mill, all from the same ground.</p>
+    </div>
+    <div class="sheet">
+      <h2>beside grasshopper, not against it</h2>
+      <p>The tool is the fast first pass. Grasshopper is where the parametric work follows. They pass files both ways.</p>
+      <div class="tbl"><table>
+        <tr><th>in the tool</th><th>then in grasshopper</th></tr>
+        <tr><td>real terrain in a minute</td><td>the same ground as a mesh: export STL, or the drone survey as GeoTIFF</td></tr>
+        <tr><td>grading tried by hand, volumes counted</td><td>the design rationalised, panelised, scripted</td></tr>
+        <tr><td>sections, water, sun</td><td>the analysis you script yourself, against a ground you already understand</td></tr>
+        <tr><td>a sheet on the wall by the end of the session</td><td>the drawing set that takes the term</td></tr>
+        <tr><td>an STL or OBJ from Rhino placed on the ground</td><td>the building, the wall, the bridge you modelled there</td></tr>
+      </table></div>
+      <p>What comes out: STL, DXF, PNG, PDF, a share link that carries the whole project. What goes in: KML or GeoJSON boundaries, GeoTIFF elevation from a drone survey, STL or OBJ objects, any photo as a reference for the painter.</p>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <h2>the walkthrough · 2 min 44 s</h2>
+    <p>Every stop of the tour inside the tool, in order, on a sample site. The same tour runs live for every student the first time they open it, and hands their own work back at the end.</p>
+    <video controls preload="metadata" poster="walk/walk-01.jpg" src="walk/walkthrough.mp4"></video>
+    <div class="frames" style="margin-top:18px">
+      <div class="frame"><img src="walk/walk-01.jpg" alt="tour stop 1" loading="lazy" width="1200" height="675"><div class="n">1 of 17</div><p>the top row. coyote_mountain_topo is this tool, flight is its sister for planning a drone survey. the keys line is the cheat sheet: 1 to 4 pick a view, 0 refits it, the wheel zooms and a middle drag pans. simple shows the essentials and deep every tool; tour restarts this walk; dark and light swap the chrome, the paper stays paper.</p></div>
+      <div class="frame"><img src="walk/walk-02.jpg" alt="tour stop 2" loading="lazy" width="1200" height="675"><div class="n">2 of 17</div><p>the command row. the left side reads out what the tool under the cursor does. the view buttons set the model camera: top, front, back, left, right, axon, or persp for perspective, and zoom extents refits whatever is on screen.</p></div>
+      <div class="frame"><img src="walk/walk-03.jpg" alt="tour stop 3" loading="lazy" width="1200" height="675"><div class="n">3 of 17</div><p>the rail starts with the four views. plan is the drawing sheet: contours every 10 ft, a heavier index line every 50, short downhill strokes are hachures. model is the 3d ground, section a cut through it, analysis where the water goes.</p></div>
+      <div class="frame"><img src="walk/walk-04.jpg" alt="tour stop 4" loading="lazy" width="1200" height="675"><div class="n">4 of 17</div><p>the brush row. raise, lower, smooth and flatten shape the ground with the radius and strength sliders below; the cut and fill numbers in the grading block update as you drag. here is one stroke.</p></div>
+      <div class="frame"><img src="walk/walk-05.jpg" alt="tour stop 5" loading="lazy" width="1200" height="675"><div class="n">5 of 17</div><p>the planting row. tree, shrub, hedge, gravel or paving turn pen strokes into planting and surfaces that carry through to the model and the exports. one tree, planted for you.</p></div>
+      <div class="frame"><img src="walk/walk-06.jpg" alt="tour stop 6" loading="lazy" width="1200" height="675"><div class="n">6 of 17</div><p>pad flattens a rectangle, oval or drawn shape. balance cut and fill finds the level that moves the least earth, or hold the level of the first corner. the edges slope down, or become retaining walls where a slope would not fit. here is a pad.</p></div>
+      <div class="frame"><img src="walk/walk-07.jpg" alt="tour stop 7" loading="lazy" width="1200" height="675"><div class="n">7 of 17</div><p>path draws a road or trail that follows the ground: width, a bare, gravel or paved surface, and raised or sunk by the slider so it shows in a 3d print. here is a gravel track. the ember and grey wash on the sheet is fill and cut.</p></div>
+      <div class="frame"><img src="walk/walk-08.jpg" alt="tour stop 8" loading="lazy" width="1200" height="675"><div class="n">8 of 17</div><p>section line: drag from a to b on the sheet and the section view cuts the ground there. drag again elsewhere for c to d, up to four lines; tap one to make it the active one. we come back to it after the model.</p></div>
+      <div class="frame"><img src="walk/walk-09.jpg" alt="tour stop 9" loading="lazy" width="1200" height="675"><div class="n">9 of 17</div><p>the sheet switches. hachures density, labels on or off, the cut·fill wash or a plain sheet, contours labelled to read uphill or existing ground dashed, and the aerial photo with its opacity. photo on.</p></div>
+      <div class="frame"><img src="walk/walk-10.jpg" alt="tour stop 10" loading="lazy" width="1200" height="675"><div class="n">10 of 17</div><p>press 2 for the model. right drag orbits, the wheel zooms in close enough to read a single contour, and the view buttons in the command row give the standard views; this is axon. in deep, smooth or stepped picks a draped ground or the cardboard-stack look of the laser cut.</p></div>
+      <div class="frame"><img src="walk/walk-11.jpg" alt="tour stop 11" loading="lazy" width="1200" height="675"><div class="n">11 of 17</div><p>the render block. render turns the model into a perspective with a real sun: the section cut menu (none, black or white face along the active line), the background menu (four skies or a studio backdrop), the paint switch, and the month and hour. the camera heights, eye, low and high, sit with the view buttons in the command row.</p></div>
+      <div class="frame"><img src="walk/walk-12.jpg" alt="tour stop 12" loading="lazy" width="1200" height="675"><div class="n">12 of 17</div><p>paint it sends the render to an image model that paints real ground, plants and light over it: as a photograph, a watercolour, an ink wash, a map mash-up that keeps the map colours and contour lines and paints life on top, or a white card model with only the planting and water painted in. what it sends carries the contour lines, the standing rain and the surface colour you chose, so the painter holds the real ground. the words box tells it what it cannot see, and a reference photo of the place or of the look you want goes along too. it needs your own google ai key, kept in this browser only.</p></div>
+      <div class="frame"><img src="walk/walk-13.jpg" alt="tour stop 13" loading="lazy" width="1200" height="675"><div class="n">13 of 17</div><p>the section, press 3. proposed ground is solid, existing dashed, cut grey, fill ember, water blue, and the vertical exaggeration slider in the site block stretches it. with several lines drawn the sections stack down the page; tap one, or its tab, to make it the active one that the render cut and the geology follow. in deep, the geology switch draws the mapped bedrock under the ground from the finest published map of the place.</p></div>
+      <div class="frame"><img src="walk/walk-14.jpg" alt="tour stop 14" loading="lazy" width="1200" height="675"><div class="n">14 of 17</div><p>analysis, press 4. flow lines, catchments, ridges, keypoints, a keyline, swales, a dam and its pond, flood, sun and plow lines, each a switch. tap picks where the keyline or the dam goes. rain is running; the sliders below set the storm, the flow threshold, runoff, plow and swale spacing and the dam height. for exploring a site, not engineering.</p></div>
+      <div class="frame"><img src="walk/walk-15.jpg" alt="tour stop 15" loading="lazy" width="1200" height="675"><div class="n">15 of 17</div><p>the world block. type a place or lat, lng and press fetch terrain; home brings back encino solo. site width sets how much of the world to grab, halve and double jump it, and rotation turns the sheet.</p></div>
+      <div class="frame"><img src="walk/walk-16.jpg" alt="tour stop 16" loading="lazy" width="1200" height="675"><div class="n">16 of 17</div><p>the grading block: cut and fill volumes for the whole design, with topsoil strip depth and the swell of loosened earth folded in. this is the number to watch while grading.</p></div>
+      <div class="frame"><img src="walk/walk-17.jpg" alt="tour stop 17" loading="lazy" width="1200" height="675"><div class="n">17 of 17</div><p>the exports. undo, wipe and save; new, open and copy link for this exact place; a png of the sheet, an stl to print, a laser file for the stack or the same as a dxf, cnc lines for the mill, and the drawing sheet: the model and the section painted, plan, analysis and notes drawn, on one page. that is the tour; your own project comes back now.</p></div>
+    </div>
+  </div>
+
+  <div class="two">
+    <div class="sheet">
+      <h2>the sandbox</h2>
+      <p>A depth camera over a box of sand, a projector above it, and this tool on the machine between them. Shape the sand and the contours, water and rain follow your hands. Load a grading design and the box shows where sand must come off and go on until the students have built it.</p>
+      <p>It runs on an Orbbec Femto Bolt or any camera that speaks the Azure Kinect API, through a small Python bridge. Setup is a page: <a href="sandbox/README.md">sandbox/README.md</a>.</p>
+    </div>
+    <div class="sheet">
+      <h2>what students need</h2>
+      <ul>
+        <li>A laptop with Chrome, Edge or Safari. It runs on a phone too, in a pinch.</li>
+        <li>Internet for the terrain and the aerial photo. After that the project lives in the browser and in a file they save.</li>
+        <li>For painting: a Google AI Studio key of their own, pasted once with the key button. It stays in their browser and never leaves it. Everything else works without one.</li>
+        <li>Feet or metres, their choice; the sheet follows.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <h2>free for teaching · source available</h2>
+    <p>The tool is one file of plain JavaScript, published under the <a href="LICENSE.md">PolyForm Noncommercial License 1.0.0</a>. Teaching, study, research and personal use are free, including copying it onto a school machine, reading how it works and changing it for a class. Use in commercial work, or offering it as a service, needs a separate licence. The source is at <a href="https://github.com/shopnerd/coyote-mountain">github.com/shopnerd/coyote-mountain</a>.</p>
+    <p>Built by Will Rollins at Coyote Mountain, Encino Solo, Baja California, and tested on it.</p>
+  </div>
+  <div class="foot"><a href="index.html">coyote_mountain_farm</a> · <a href="topo.html">topo</a> · <a href="flight.html">flight</a> · <a href="LICENSE.md">licence</a></div>
+</main>
+<script>
+{ const tb = document.getElementById('themeBtn'), lab = () => { tb.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; lab();
+  tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
+</script>
+</body>
+</html>
