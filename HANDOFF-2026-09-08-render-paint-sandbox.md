@@ -74,3 +74,6 @@ Live and verified (updated after item 27): grading tools, render mode with the h
 - Geology: deeper sources (SGM Mexico 1:50,000 sheets, well logs, SoilGrids for soils) if real depths are wanted.
 - Depth-conditioned painting (section 3) if Gemini's edits stay too free.
 - The sketch studio at `sketch.html` needs work before it is linked again.
+
+30. **World block in plan view only** (late 9/8). `setMode` hides `#worldLbl` + `#worldSec` unless the mode is plan. Tour stops for the world block already set plan mode, so nothing else moved.
+31. **Tilt-shift test** run live through the words box (photograph style) rather than code: result convincing (sharp band, blur top and bottom, richer colour). Not in `aiPrompt()` yet; add as a switch or style only if Will says yes.
