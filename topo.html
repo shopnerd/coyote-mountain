@@ -1820,7 +1820,7 @@ function endPointer(e) {
   drag = null; S.dirty = true;
 }
 cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
-cv.addEventListener('pointerleave', () => { S.ptr = null; S.dirty = true; document.getElementById('read').textContent = 'keys 1 plan · 2 model · 3 section'; });
+cv.addEventListener('pointerleave', () => { S.ptr = null; S.dirty = true; document.getElementById('read').textContent = KEYS_LINE; });
 let lowQT = null;
 cv.addEventListener('wheel', e => { const q = pt(e); if (S.mode === 'model') { e.preventDefault(); S.lowQ = true; clearTimeout(lowQT); lowQT = setTimeout(() => { S.lowQ = false; S.dirty = true; }, 160); zoomAt(S.cam.pan, q[0], q[1], e.deltaY < 0 ? 1.1 : .9, S.w, S.h); } else if (S.mode === 'plan' || S.mode === 'analysis') { e.preventDefault(); planZoomAt(q[0], q[1], e.deltaY < 0 ? 1.15 : 1 / 1.15); } }, { passive: false });
 cv.addEventListener('contextmenu', e => e.preventDefault()); pip.addEventListener('contextmenu', e => e.preventDefault());
@@ -1886,6 +1886,7 @@ function busy(msg, frames) {              // pulse the prompt and say what is ru
   busyMsg = msg; busyFrames = frames || 0; document.querySelector('.cmd .prompt').classList.add('busy'); const h = document.getElementById('hint'); h.classList.add('busy'); h.textContent = msg + ' …'; lastHint = ''; }
 function unbusy() { busyMsg = ''; busyFrames = 0; document.querySelector('.cmd .prompt').classList.remove('busy'); document.getElementById('hint').classList.remove('busy'); lastHint = ''; updateHint(); }
 function runBusy(msg, fn) { busy(msg); return new Promise(res => requestAnimationFrame(() => requestAnimationFrame(() => { try { res(fn()); } catch (e) { toast(String(e.message || e)); } finally { unbusy(); } }))); }
+const KEYS_LINE = 'keys 1 plan · 2 model · 3 section · 4 analysis · 0 refits · wheel zooms · middle drag pans · ctrl+z undo';
 function hintText() {
   let h = '';
   if (S.mode === 'plan') {
@@ -1893,14 +1894,14 @@ function hintText() {
     else if (S.brush === 'erase') h = 'eraser · drag across pen strokes to remove them';
     else if (S.brush === 'section') h = 'section · drag from A to B; the section view opens when you let go';
     else if (S.brush === 'path') h = `path · draw the centreline; a ${fL(S.pathW, 1)} corridor, ${S.pathH === 0 ? 'flush' : S.pathH > 0 ? 'raised ' + fL(S.pathH, 2) : 'sunk ' + fL(-S.pathH, 2)}, follows it`;
-    else if (S.brush === 'pad') h = `pad · drag a ${S.padShape === 'draw' ? 'shape' : S.padShape === 'oval' ? 'box for the oval' : 'rectangle'}; a flat pad inside, ${S.padLevel === 'balance' ? 'cut balancing fill' : 'at the level where you start'}, sides daylighting`;
+    else if (S.brush === 'pad') h = `pad · drag a ${S.padShape === 'draw' ? 'shape' : S.padShape === 'oval' ? 'box for the oval' : 'rectangle'}; a flat pad, ${S.padLevel === 'balance' ? 'cut balancing fill' : 'at the start level'}, sides daylighting`;
     else if (S.brush === 'spot') h = 'spot · tap to place a spot elevation; the eraser removes it';
     else if (S.brush === 'obj') h = 'object · tap to select, drag to move; tap empty ground to move it there';
-    else if (S.brush === 'grade') h = 'grade · drag A to B; the strip takes the rail grade from the ground at A, sides daylighting';
+    else if (S.brush === 'grade') h = 'grade · drag A to B; the strip takes the rail grade from A, sides daylighting';
     else h = `${S.brush} · drag to ${S.brush} the ground · radius and strength in the rail`;
   } else if (S.mode === 'model') h = S.sculpt ? `sculpt · drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj' ? 'raises' : S.brush + 's'} the ground · right drag orbits` : 'model · right drag orbits · wheel zooms · double-click refits · m stepped';
   else if (S.mode === 'section') h = 'section · drag a new A–B line in plan · vertical exaggeration in the rail';
-  else h = S.tapMode === 'dam' ? 'analysis · tap the sheet or a keypoint to place the dam' : 'analysis · tap a keypoint or a spot for the keyline' + (S.rain ? '' : ' · r rain');
+  else h = S.tapMode === 'dam' ? 'analysis · tap the sheet or a keypoint for the dam' : 'analysis · tap a keypoint or a spot for the keyline' + (S.rain ? '' : ' · r rain');
   if (S.rain) h += S.rainPaused ? ' · rain paused: p resumes' : ' · rain: p pause, r stop';
   if (S.sunPlay) h += ' · sun playing; drag the slider to stop';
   return h;
