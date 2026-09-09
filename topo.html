@@ -76,7 +76,7 @@ input[type=text]::placeholder{color:var(--ink3)}
 .stat span{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink2)}
 .stat b{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
 .stat.cut b{color:var(--accent)}
-.actions{margin-top:auto;padding:10px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-top:1px solid var(--line)}
+#projLbl{margin-top:auto}.actions{padding:6px 12px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-top:1px solid var(--line)}
 .btn{min-height:38px;padding:6px 8px;border:1px solid #9a9992;background:transparent;color:var(--ink);border-radius:3px;font:inherit;font-size:12px;cursor:pointer;line-height:1}
 .btn:hover{background:var(--paper);color:var(--ink)}
 .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -165,21 +165,17 @@ html[data-depth="simple"] #png{grid-column:1/-1}
       <div class="seg" style="margin-top:4px"><button data-m="analysis" style="border-radius:3px"><i class="k">4</i>analyze</button></div>
     </div>
     <div class="desc" id="desc"></div>
+    <div class="sec" id="modelLbl" style="display:none">model</div>
     <div class="seg deep" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped</button></div>
+    <div class="desc deep" id="sculptLbl" style="display:none;padding-bottom:2px">left drag or one finger</div>
+    <div class="seg deep" id="sculptRow" style="display:none;margin-bottom:6px"><button data-k="orbit" class="on">orbit</button><button data-k="sculpt">sculpt</button></div>
+    <div class="seg" id="rainRowM" style="display:none;margin-bottom:6px"><button id="rainBtnM">rain (r)</button></div>
     <div class="sec" id="rendLbl" style="display:none;padding-top:4px">render</div>
     <div class="seg" id="rendRow" style="display:none;margin-bottom:6px"><button data-rd="0" class="on">model</button><button data-rd="1">render</button></div>
     <div class="params deep" id="rendSel" style="display:none;padding-top:0;padding-bottom:2px">
     <div class="p" id="cutRow"><label>section cut</label><select id="cutSel"><option value="none">no cut</option><option value="black" selected>black cut</option><option value="white">white cut</option></select></div>
     <div class="p" id="skyRow"><label>background</label><select id="skySel"><option value="clear">clear sky</option><option value="cumulus" selected>cumulus sky</option><option value="marine">marine layer</option><option value="overcast">overcast sky</option><option value="seamless">seamless</option><option value="white">white</option><option value="dark">charcoal</option></select></div>
     </div>
-    <div class="seg" id="paintRow" style="display:none;margin-bottom:6px"><button data-pt="0" class="on">plain</button><button data-pt="1">paint</button></div>
-    <div class="seg wrap" id="aiStyleRow" style="display:none;margin-bottom:6px"><button data-ai="photo" class="on">photograph</button><button data-ai="watercolour">watercolour</button><button data-ai="ink">ink wash</button><button data-ai="mashup">map mash-up</button><button data-ai="white">white model</button></div>
-    <div class="seg deep" id="aiRefRow" style="display:none;margin-bottom:6px"><button id="aiRefBtn" style="flex:2">reference photo</button><button id="aiRefClear" style="display:none">clear</button></div>
-    <div class="seg deep" id="aiRefModeRow" style="display:none;margin-bottom:6px"><button data-rm="place" class="on">the place</button><button data-rm="look">the look</button></div>
-    <div class="desc deep" id="aiRefInfo" style="display:none;padding-bottom:4px"></div>
-    <input type="file" id="aiRefFile" accept="image/*" style="display:none">
-    <div class="p deep" id="aiWordsRow" style="display:none"><label>in the picture</label><input type="text" id="aiWords" placeholder="oaks, dry grass, late summer…"></div>
-    <div class="seg" id="aiRow" style="display:none;margin-bottom:6px"><button id="aiBtn" style="flex:2">paint it</button><button id="aiKey">key</button></div>
     <div class="desc deep" id="colorLbl" style="display:none;padding-bottom:2px">surface color</div>
     <div class="seg wrap deep" id="colorRow" style="display:none;margin-bottom:6px"><button data-c="paper" class="on">paper</button><button data-c="elevation">elevation</button><button data-c="slope">slope</button><button data-c="aspect">aspect</button></div>
     <div class="deep" id="sunSec" style="display:none">
@@ -190,13 +186,21 @@ html[data-depth="simple"] #png{grid-column:1/-1}
           <div class="seg" style="padding:0"><button id="playDay" title="sweep the hour from dawn to dusk">play day</button><button id="playYear" title="sweep the months at this hour">play year</button></div>
         </div>
       </div>
-    <div class="desc deep" id="sculptLbl" style="display:none;padding-bottom:2px">left drag or one finger</div>
-    <div class="seg deep" id="sculptRow" style="display:none;margin-bottom:6px"><button data-k="orbit" class="on">orbit</button><button data-k="sculpt">sculpt</button></div>
+    <div class="sec" id="paintLbl" style="display:none">paint</div>
+    <div class="seg" id="paintRow" style="display:none;margin-bottom:6px"><button data-pt="0" class="on">plain</button><button data-pt="1">paint</button></div>
+    <div class="seg wrap" id="aiStyleRow" style="display:none;margin-bottom:6px"><button data-ai="photo" class="on">photograph</button><button data-ai="watercolour">watercolour</button><button data-ai="ink">ink wash</button><button data-ai="mashup">map mash-up</button><button data-ai="white">white model</button></div>
+    <div class="seg deep" id="aiRefRow" style="display:none;margin-bottom:6px"><button id="aiRefBtn" style="flex:2">reference photo</button><button id="aiRefClear" style="display:none">clear</button></div>
+    <div class="seg deep" id="aiRefModeRow" style="display:none;margin-bottom:6px"><button data-rm="place" class="on">the place</button><button data-rm="look">the look</button></div>
+    <div class="desc deep" id="aiRefInfo" style="display:none;padding-bottom:4px"></div>
+    <input type="file" id="aiRefFile" accept="image/*" style="display:none">
+    <div class="p deep" id="aiWordsRow" style="display:none"><label>in the picture</label><input type="text" id="aiWords" placeholder="oaks, dry grass, late summer…"></div>
+    <div class="seg" id="aiRow" style="display:none;margin-bottom:6px"><button id="aiBtn" style="flex:2">paint it</button><button id="aiKey">key</button></div>
+    <div class="sec" id="secLbl" style="display:none">sections</div>
     <div class="seg wrap" id="secTabs" style="display:none;margin-bottom:6px"></div>
     <div class="seg" id="secRow" style="display:none;margin-bottom:6px"><button id="sec3d">paint this section</button></div>
+    <div class="sec" id="geoLbl" style="display:none">geology</div>
     <div class="seg deep" id="geoRow" style="display:none;margin-bottom:6px"><button data-geo="1">geology</button><button data-geo="0" class="on">no geology</button></div>
     <div class="desc deep" id="geoInfo" style="display:none;padding-bottom:4px"></div>
-    <div class="seg" id="rainRowM" style="display:none;margin-bottom:6px"><button id="rainBtnM">rain (r)</button></div>
 
     <div class="sec" id="worldLbl">world</div>
     <div class="params" id="worldSec">
@@ -223,7 +227,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     </div>
 
     <div id="brushSec">
-      <div class="sec">brush</div>
+      <div class="sec">draw</div>
       <div class="seg wrap" id="brushes">
         <button data-b="raise" class="on">raise</button><button data-b="lower">lower</button>
         <button data-b="smooth">smooth</button><button data-b="flatten">flatten</button>
@@ -256,6 +260,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div id="sheetSec">
       <div class="sec">sheet</div>
       <div class="params">
+      <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="6" step="1" value="2"></div>
         <div class="p deep"><label>hachures<output id="o_hach">15</output></label><input type="range" id="hach" min="0" max="100" step="5" value="15"></div>
         <div class="seg" id="labelRow" style="padding:0;margin-top:6px"><button data-l="1" class="on">labels</button><button data-l="0">no labels</button></div>
         <div class="seg deep" id="cfRow" style="padding:0;margin-top:6px"><button data-cf="1" class="on" title="the ember and grey wash shows fill and cut on the sheet">cut · fill wash</button><button data-cf="0">plain sheet</button></div>
@@ -266,13 +271,12 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     </div>
 
     <div id="anaSec" style="display:none">
-      <div class="sec">analysis layers</div>
+      <div class="sec">water</div>
       <div class="seg wrap" id="anaLayers">
         <button data-a="flow" class="on">flow</button><button data-a="catch" class="on">catchments</button>
         <button data-a="ridge" class="on">ridges</button><button data-a="keys" class="on">keypoints</button>
         <button data-a="keyline" class="on" style="flex:2">keyline</button><button data-a="plow" id="plowBtn" title="rain follows the plow furrows: water drifts from the valley toward the ridges">plowing effect</button>
         <button data-a="swales">swales</button><button data-a="dam" class="on">dam site</button>
-        <button data-a="sun">sun study</button>
       </div>
       <div class="seg deep" id="tapRow" style="margin-top:6px"><button data-t="key" class="on">tap: keyline</button><button data-t="dam">tap: dam</button></div>
       <div class="seg" style="margin-top:6px"><button id="rainBtn" title="animated raindrops running downhill and pooling, here and on the model (r)" style="flex:2">rain (r)</button><button id="rainPause" title="freeze the drops and pools (p)">pause</button></div>
@@ -286,6 +290,9 @@ html[data-depth="simple"] #png{grid-column:1/-1}
         <div class="p" title="wall height of a dam at the keypoint"><label>dam height<output id="o_dam">2 m</output></label><input type="range" id="dam" min="0.5" max="12" step=".5" value="2"></div>
       </div>
       <div class="desc" id="anaDesc">tap a keypoint or any spot to set the keyline. switch to "tap places dam" to put the dam anywhere.</div>
+      <div class="sec">sun</div>
+      <div class="seg" id="sunRow" style="margin-top:6px"><button data-a="sun">sun study</button></div>
+      <div id="sunSlot"></div>
     </div>
 
     <div class="sec deep">site</div>
@@ -302,7 +309,6 @@ html[data-depth="simple"] #png{grid-column:1/-1}
         </div>
         <div class="desc" id="sandInfo" style="padding:0"></div>
       </div>
-      <div class="p"><label>contour interval<output id="o_interval">0.5 m</output></label><input type="range" id="interval" min="0" max="6" step="1" value="2"></div>
       <div class="p"><label>vertical exaggeration<output id="o_ve">1.5 x</output></label><input type="range" id="ve" min="1" max="5" step=".25" value="1.5"></div>
     </div>
 
@@ -337,13 +343,17 @@ html[data-depth="simple"] #png{grid-column:1/-1}
       <div class="desc" id="sheetInfo" style="padding:0"></div>
     </div>
 
-    <div class="actions">
+    <div class="sec" id="projLbl">project</div>
+    <div class="actions" id="project">
       <button class="btn" id="undo">undo</button>
       <button class="btn" id="wipe">delete all</button>
       <button class="btn" id="saveProj">save</button>
       <div style="display:flex;gap:6px"><button class="btn" id="newProj" style="flex:1">new</button><button class="btn" id="openProj" style="flex:1">open</button></div>
       <button class="btn" id="shareBtn">copy link</button>
       <input type="file" id="openFile" accept=".json,application/json" style="display:none">
+    </div>
+    <div class="sec">exports</div>
+    <div class="actions" id="exports">
       <button class="btn" id="png">save png</button>
       <button class="btn deep" id="stl">export stl</button>
       <div class="deep" style="display:flex;gap:6px"><button class="btn" id="laser" style="flex:1">export laser</button><button class="btn" id="laserDxf" title="the same cut file as DXF, for laser software that prefers it">dxf</button></div>
@@ -1922,8 +1932,9 @@ function setMode(m) {
   document.querySelectorAll('#brushes .planOnly').forEach(b => b.style.display = m === 'model' ? 'none' : '');
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   rendUI(m);
+  { const su = document.getElementById('sunSec'); if (m === 'analysis') document.getElementById('sunSlot').appendChild(su); else document.getElementById('colorRow').insertAdjacentElement('afterend', su); }   // the one sun clock: in the sun block in analysis, under the render in the model
   { const ae = document.getElementById('aerialRow'); if (m === 'model') { document.getElementById('modelStyle').insertAdjacentElement('afterend', ae); ae.style.padding = '0 12px'; ae.style.marginTop = '0'; ae.style.marginBottom = '6px'; } else { document.getElementById('annoRow').insertAdjacentElement('afterend', ae); ae.style.padding = '0'; ae.style.marginTop = '6px'; ae.style.marginBottom = '0'; } }   // the photo switch travels: under smooth / stepped in the model, with the sheet switches in plan
-  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('sheetSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('geoRow').style.display = m === 'section' ? '' : 'none'; document.getElementById('secRow').style.display = m === 'section' ? '' : 'none'; secTabs(); for (const id of ['worldLbl', 'worldSec']) document.getElementById(id).style.display = m === 'plan' ? '' : 'none'; document.getElementById('geoInfo').style.display = m === 'section' && S.geo ? '' : 'none'; document.getElementById('rainRowM').style.display = m === 'model' ? '' : 'none'; document.getElementById('sculptLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null; aerialUI();
+  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('sheetSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('geoRow').style.display = m === 'section' ? '' : 'none'; document.getElementById('secRow').style.display = m === 'section' ? '' : 'none'; secTabs(); for (const id of ['worldLbl', 'worldSec']) document.getElementById(id).style.display = m === 'plan' ? '' : 'none'; document.getElementById('geoInfo').style.display = m === 'section' && S.geo ? '' : 'none'; document.getElementById('rainRowM').style.display = m === 'model' ? '' : 'none'; for (const id of ['sculptLbl', 'modelLbl']) document.getElementById(id).style.display = m === 'model' ? '' : 'none'; for (const id of ['secLbl', 'geoLbl']) document.getElementById(id).style.display = m === 'section' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null; aerialUI();
   cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
@@ -2158,10 +2169,11 @@ document.getElementById('rainPause').onclick = () => setRainPause(!S.rainPaused)
 function setRain(on) { S.rain = on; setRainPause(false); for (const id of ['rainBtn', 'rainBtnM']) { const b = document.getElementById(id); b.classList.toggle('on', on); b.textContent = on ? 'stop rain (r)' : 'rain (r)'; } if (on) { drops.length = 0; dep.key = ''; damBasin.key = ''; rainStats = { done: 0, creek: 0, run: 0 }; } S.dirty = true; }
 document.getElementById('rainBtn').onclick = document.getElementById('rainBtnM').onclick = () => setRain(!S.rain);
 document.getElementById('tapRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.tapMode = b.dataset.t; document.querySelectorAll('#tapRow button').forEach(x => x.classList.toggle('on', x === b)); };
-document.getElementById('anaLayers').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]);
+const anaClick = e => { const b = e.target.closest('button'); if (!b) return; S.an[b.dataset.a] = !S.an[b.dataset.a]; b.classList.toggle('on', S.an[b.dataset.a]);
   document.getElementById('plowBtn').style.display = S.an.keyline ? '' : 'none'; if (b.dataset.a === 'plow') { rainStats = { done: 0, creek: 0, run: 0 }; for (const dr of drops) { dr.creek = false; dr.run = 0; } }
   if (b.dataset.a === 'sun') { S.colorMode = S.an.sun ? 'sun' : 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === S.colorMode)); }
   showSun(); S.dirty = true; };
+document.getElementById('anaLayers').onclick = document.getElementById('sunRow').onclick = anaClick;
 function showSun() { const study = (S.mode === 'analysis' && S.an.sun) || (S.mode === 'model' && S.colorMode === 'sun'), rend = S.mode === 'model' && S.rendOn; document.getElementById('sunSec').style.display = study || rend ? '' : 'none'; document.getElementById('sunSec').querySelector('.seg').style.display = study ? '' : 'none'; }   // one clock: the sun study and the render share it; the shadows / sun hours choice only matters to the study
 document.getElementById('sunSec').querySelector('.seg').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sunMode = b.dataset.s; if (S.sunMode === 'hours') busy('counting sun hours', 2); b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -3038,7 +3050,7 @@ document.getElementById('ovRow').onclick = e => { const b = e.target.closest('bu
 document.getElementById('trimRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.trim = b.dataset.trim === '1'; S.terrainVer++; S.dirty = true; groundControls(); updateStats(); toast(S.trim ? 'model trimmed to the lot' : 'full site'); };
 document.getElementById('roadRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showRoads = b.dataset.road === '1'; S.strokeVer++; S.dirty = true; groundControls(); };
 document.getElementById('bldRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.showBld = b.dataset.bld === '1'; S.strokeVer++; S.dirty = true; zvKey = ''; S.terrainVer++; groundControls(); };
-function rendUI(m = S.mode) { const on = m === 'model'; if (typeof showSun === 'function') showSun(); document.getElementById('rendLbl').style.display = document.getElementById('rendRow').style.display = on ? '' : 'none'; for (const id of ['rendSel', 'paintRow']) document.getElementById(id).style.display = on && S.rendOn ? '' : 'none'; document.getElementById('aiStyleRow').style.display = on && S.rendOn ? '' : 'none'; for (const id of ['aiRefRow', 'aiWordsRow', 'aiRow']) document.getElementById(id).style.display = on && S.rendOn && S.paintOn ? '' : 'none'; for (const id of ['aiRefModeRow', 'aiRefInfo']) document.getElementById(id).style.display = on && S.rendOn && S.paintOn && AI.photo ? '' : 'none';
+function rendUI(m = S.mode) { const on = m === 'model'; if (typeof showSun === 'function') showSun(); document.getElementById('rendLbl').style.display = document.getElementById('rendRow').style.display = on ? '' : 'none'; for (const id of ['rendSel', 'paintLbl', 'paintRow']) document.getElementById(id).style.display = on && S.rendOn ? '' : 'none'; document.getElementById('aiStyleRow').style.display = on && S.rendOn ? '' : 'none'; for (const id of ['aiRefRow', 'aiWordsRow', 'aiRow']) document.getElementById(id).style.display = on && S.rendOn && S.paintOn ? '' : 'none'; for (const id of ['aiRefModeRow', 'aiRefInfo']) document.getElementById(id).style.display = on && S.rendOn && S.paintOn && AI.photo ? '' : 'none';
   document.querySelectorAll('#rendRow button').forEach(b => b.classList.toggle('on', (b.dataset.rd === '1') === S.rendOn)); document.getElementById('cutSel').value = S.rendCut; document.getElementById('skySel').value = S.rendSky; document.querySelectorAll('#paintRow button').forEach(b => b.classList.toggle('on', (b.dataset.pt === '1') === S.paintOn)); }
 document.getElementById('rendRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.rendOn = b.dataset.rd === '1'; if (S.rendOn && !S.cam.persp) { S.cam.persp = true; document.getElementById('perspBtn') && document.getElementById('perspBtn').classList.add('on'); } rendUI(); S.dirty = true; if (S.rendOn && !S.sec) toast('render on · draw a section line in plan to get the cut'); };
 document.getElementById('cutSel').onchange = e => { S.rendCut = e.target.value; rendUI(); S.dirty = true; };
@@ -3234,7 +3246,7 @@ function loadProject(pr, fromHome) {
   for (const id of SLIDERS) { const el = document.getElementById(id); if (pr.sliders && pr.sliders[id] !== undefined) { el.value = pr.sliders[id]; } }
   for (const id of SLIDERS) { const el = document.getElementById(id); if (el.oninput) el.oninput({ target: el }); }
   document.getElementById('place').value = pr.place || ''; document.getElementById('sheet').value = (S.sheet || [300, 450]).join('x');
-  document.querySelectorAll('#anaLayers button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); document.getElementById('plowBtn').style.display = S.an.keyline ? '' : 'none'; showSun();
+  document.querySelectorAll('#anaLayers button, #sunRow button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); document.getElementById('plowBtn').style.display = S.an.keyline ? '' : 'none'; showSun();
   document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode)); document.querySelectorAll('#modelStyle button').forEach(b => b.classList.toggle('on', b.dataset.s === S.modelStyle));
   document.querySelectorAll('#labelRow button').forEach(b => b.classList.toggle('on', (b.dataset.l === '1') === S.labels)); aerialUI();
   if (S.colorMode === 'aerial') S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(b => b.classList.toggle('on', b.dataset.c === S.colorMode));
@@ -3257,7 +3269,7 @@ async function openFromLink() {           // ?lat=&lon=&w=&rot=&iv=&u=&an=&name=
   const lat = +q.get('lat'), lon = +q.get('lon'); if (!isFinite(lat) || !isFinite(lon)) return false;
   if (q.get('u') === 'm' || q.get('u') === 'ft') { S.unit = q.get('u'); document.getElementById('unit').value = S.unit; relabels.forEach(f => f()); }
   setSiteW(+q.get('w') || 1000, true); const rot = +q.get('rot') || 0; document.getElementById('rot').value = rot; document.getElementById('rot').dispatchEvent(new Event('input'));
-  if (q.get('an') !== null) { for (const k of Object.keys(S.an)) S.an[k] = false; q.get('an').split(',').forEach(k => { if (k in S.an) S.an[k] = true; }); document.querySelectorAll('#anaLayers button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); }
+  if (q.get('an') !== null) { for (const k of Object.keys(S.an)) S.an[k] = false; q.get('an').split(',').forEach(k => { if (k in S.an) S.an[k] = true; }); document.querySelectorAll('#anaLayers button, #sunRow button').forEach(b => b.classList.toggle('on', !!S.an[b.dataset.a])); }
   document.getElementById('place').value = lat + ', ' + lon; setBrush('pen');
   await fetchWorld({ lat, lon, name: q.get('name') || `${lat.toFixed(4)}, ${lon.toFixed(4)}` }, true);
   if (q.has('iv')) { const el = document.getElementById('interval'); el.value = +q.get('iv'); el.dispatchEvent(new Event('input')); }
@@ -3308,7 +3320,7 @@ const TOUR = [
   { el: '#fetch', text: 'the world block. type a place or lat, lng and press fetch terrain; home brings back encino solo. site width sets how much of the world to grab and rotation turns the sheet. everything drawn stays pinned to the ground when either changes.', do: async () => setMode('plan') },
   { el: '#kmlBtn', deep: true, text: 'a lot boundary from google earth or a gis file loads here, and trim to lot cuts the whole model to it in every view and export. your own drone survey replaces the public ground where it has coverage; plan a flight hands this place to the flight planner.' },
   { el: '#flightBtn', deep: true, text: 'below plan a flight, rows appear when the map has something to show: water, roads and buildings, each a switch; buildings as plain blocks, or for the mill a pedestal, a recess or an outline of a few millimetres; rise lifts the ground above the sea; overlay shows a georeferenced drawing on the sheet.' },
-  { el: '#brushes', text: 'the brush row. raise, lower, smooth and flatten shape the ground with the radius and strength sliders below; the cut and fill numbers in the grading block update as you drag. here is one stroke.', do: async () => { setMode('plan'); setBrush('raise'); const r = document.getElementById('radius'); r.value = 30; r.oninput({ target: r }); snapshot(); strokeLine([W * .35, H * .55], [W * .5, H * .5], 'raise', 0); updateStats(); S.dirty = true; } },
+  { el: '#brushes', text: 'the draw block. raise, lower, smooth and flatten shape the ground with the radius and strength sliders below; the cut and fill numbers in the grading block update as you drag. here is one stroke.', do: async () => { setMode('plan'); setBrush('raise'); const r = document.getElementById('radius'); r.value = 30; r.oninput({ target: r }); snapshot(); strokeLine([W * .35, H * .55], [W * .5, H * .5], 'raise', 0); updateStats(); S.dirty = true; } },
   { el: '#penRow', deep: true, text: 'the pen draws on the sheet and drapes over the 3d ground: ink, red or blue, dashed or solid, and clear wipes the drawing. below it the pen modes: smart snaps to a line, circle or rectangle from a rough gesture, the others force a shape. erase rubs strokes out.', do: async () => { setMode('plan'); setBrush('pen'); } },
   { el: '#plantRow', text: 'the planting row. tree, shrub, hedge, gravel or paving turn pen strokes into planting and surfaces that carry through to the model and the exports. one tree, planted for you.', do: async () => { setBrush('pen'); const p = toSheet(W * .62, H * .35); S.strokes.push(shapeFromDrag('tree', p, null)); S.strokeVer++; S.dirty = true; } },
   { el: 'button[data-b="grade"]', deep: true, text: 'grade a→b sets an exact fall between two points, with the slope slider below; the earth is cut and filled, never pushed. spot drops an elevation label wherever you click.', do: async () => { setMode('plan'); setBrush('grade'); } },
@@ -3316,24 +3328,24 @@ const TOUR = [
   { el: 'button[data-b="path"]', text: 'path draws a road or trail that follows the ground: width, a bare, gravel or paved surface, and raised or sunk by the slider so it shows in a 3d print. here is a gravel track. the ember and grey wash on the sheet is fill and cut.', do: async () => { setMode('plan'); setBrush('path'); const pts = pathClean([[W * .2, H * .8], [W * .3, H * .74], [W * .42, H * .7], [W * .53, H * .62]]); applyPath(pts); S.strokes.push({ kind: 'path', color: 'ink', w: 1, a: 1, c: pts[0].slice(), pts: pts.map(q => [q[0], q[1], .5]), pw: 4, ph: -.15, sf: 'gravel' }); S.strokeVer++; updateStats(); S.dirty = true; } },
   { el: '#objRow', deep: true, text: 'object: import an stl or obj from any cad program, say what its units are, and it lands at the centre of the sheet. drag it into place, turn, scale and lift it. it stands in the model and the render, goes to the painter as a designed structure, and prints with the stl.', do: async () => { setMode('plan'); setBrush('obj'); } },
   { el: 'button[data-b="section"]', text: 'section line: drag from a to b on the sheet and the section view cuts the ground there. drag again elsewhere for c to d, up to four lines; tap one to make it the active one. we come back to it after the model.', do: async () => { setMode('plan'); setBrush('section'); } },
-  { el: '#aerialRow', text: 'the sheet block. hachures density, labels on or off, the cut·fill wash or a plain sheet, contours labelled to read uphill or existing ground dashed, and the aerial photo with its opacity. photo on.', do: async () => { setMode('plan'); setBrush('pen'); S.aerial = true; aerialUI(); S.dirty = true; } },
+  { el: '#aerialRow', text: 'the sheet block. the contour interval, hachures density, labels on or off, the cut·fill wash or a plain sheet, contours labelled to read uphill or existing ground dashed, and the aerial photo with its opacity. photo on.', do: async () => { setMode('plan'); setBrush('pen'); S.aerial = true; aerialUI(); S.dirty = true; } },
   // 2 model
-  { el: '#modes button[data-m="model"]', text: 'press 2 for the model. right drag orbits, the wheel zooms in close enough to read a single contour, and the view buttons on the status line give the standard views; this is axon. in deep, smooth or stepped picks a draped ground or the cardboard-stack look of the laser cut.', do: async () => { S.aerial = false; aerialUI(); setMode('model'); document.querySelector('#views button[data-v="axon"]').click(); } },
-  { el: '#rendRow', text: 'the render block. render turns the model into a perspective with a real sun: the section cut menu (none, black or white face along the active line), the background menu (four skies or a studio backdrop), the paint switch, and the sun clock below with month, hour, play day and play year. the eye height button sits with the view buttons on the status line.', do: async () => { setMode('model'); S.rendOn = true; S.cam.persp = true; rendUI(); document.querySelector('#views button[data-eye="1.25"]').click(); S.dirty = true; } },
-  { el: '#aiRow', text: 'paint it sends the render to an image model that paints real ground, plants and light over it: as a photograph, a watercolour, an ink wash, a map mash-up that keeps the map colours and contour lines and paints life on top, or a white card model with only the planting and water painted in. what it sends carries the contour lines, the standing rain and the surface colour you chose, so the painter holds the real ground. the words box tells it what it cannot see, and a reference photo of the place or of the look you want goes along too. it needs your own google ai key, kept in this browser only.', do: async () => { setMode('model'); S.rendOn = true; S.paintOn = true; rendUI(); S.dirty = true; } },
+  { el: '#modes button[data-m="model"]', text: 'press 2 for the model. right drag orbits, the wheel zooms in close enough to read a single contour, and the view buttons on the status line give the standard views; this is axon. in deep, the model block holds smooth or stepped, a draped ground or the cardboard-stack look of the laser cut, and the photo, orbit or sculpt and rain switches.', do: async () => { S.aerial = false; aerialUI(); setMode('model'); document.querySelector('#views button[data-v="axon"]').click(); } },
+  { el: '#sculptRow', deep: true, text: 'orbit or sculpt: in sculpt the draw block below works on the 3d ground under your finger, and rain runs on the model while you shape it. rain is on now.', do: async () => { setMode('model'); document.querySelector('#colorRow button[data-c="paper"]').click(); setRain(true); } },
+  { el: '#rendRow', text: 'the render block. render turns the model into a perspective with a real sun: the section cut menu (none, black or white face along the active line), the background menu (four skies or a studio backdrop), the surface colour, and the sun clock with month, hour, play day and play year. the eye height button sits with the view buttons on the status line.', do: async () => { setMode('model'); S.rendOn = true; S.cam.persp = true; rendUI(); document.querySelector('#views button[data-eye="1.47"]').click(); S.dirty = true; } },
   { el: '#colorRow', deep: true, text: 'surface color. paper, elevation bands, slope or aspect on the model; the map mash-up paints from whichever is showing.', do: async () => { setMode('model'); S.rendOn = false; rendUI(); document.querySelector('#colorRow button[data-c="slope"]').click(); } },
-  { el: '#sculptRow', deep: true, text: 'orbit or sculpt: in sculpt the brush row above works on the 3d ground under your finger, and rain runs on the model while you shape it. rain is on now.', do: async () => { setMode('model'); document.querySelector('#colorRow button[data-c="paper"]').click(); setRain(true); } },
+  { el: '#aiRow', text: 'the paint block. plain or paint, then paint it sends the render to an image model that paints real ground, plants and light over it: as a photograph, a watercolour, an ink wash, a map mash-up that keeps the map colours and contour lines and paints life on top, or a white card model with only the planting and water painted in. what it sends carries the contour lines, the standing rain and the surface colour you chose, so the painter holds the real ground. the words box tells it what it cannot see, and a reference photo of the place or of the look you want goes along too. it needs your own google ai key, kept in this browser only.', do: async () => { setMode('model'); S.rendOn = true; S.paintOn = true; rendUI(); S.dirty = true; } },
   // 3 section
   { el: '#modes button[data-m="section"]', text: 'the section, press 3. paint this section sends the active cut to the painter square-on, exactly as the drawing sheet paints it, and without a key it is drawn instead. proposed ground is solid, existing dashed, cut grey, fill ember, water blue, and the vertical exaggeration slider in the site block stretches it. with several lines drawn the sections stack down the page; tap one, or its tab, to make it the active one that the render cut and the geology follow. in deep, the geology switch draws the mapped bedrock under the ground from the finest published map of the place.', do: async () => { setRain(false); secSet([[[W * .2, H * .35], [W * .8, H * .65]]]); setMode('section'); } },
   { el: '#geoRow', deep: true, text: 'geology: the mapped bedrock along a to b from the finest published geologic map of the place, drawn as bands under the ground with the rock, its name and its age. the map says what the rock is, not how deep it goes, so the band is nominal and the sheet says so.', do: async () => { setMode('section'); S.geo = true; document.querySelectorAll('#geoRow button').forEach(x => x.classList.toggle('on', x.dataset.geo === '1')); document.getElementById('geoInfo').style.display = ''; GEO.key = ''; geoRefresh(); geoInfo(); S.dirty = true; } },
   // 4 analysis
-  { el: '#anaLayers', text: 'analysis, press 4. flow lines, catchments, ridges, keypoints, a keyline with its plow lines, swales, a dam and its pond, and sun, each a switch; plowing effect appears beside keyline and bends the rain along the furrows. tap picks where the keyline or the dam goes. rain is running; the sliders below set the storm, the flow threshold, runoff, plow and swale spacing and the dam height. for exploring a site, not engineering.', do: async () => { setMode('analysis'); setRain(true); } },
+  { el: '#anaLayers', text: 'analysis, press 4. the water block: flow lines, catchments, ridges, keypoints, a keyline with its plow lines, swales and a dam with its pond, each a switch; plowing effect appears beside keyline and bends the rain along the furrows. tap picks where the keyline or the dam goes. rain is running; the sliders below set the storm, the flow threshold, runoff, plow and swale spacing and the dam height. the sun block below holds the sun study and its clock. for exploring a site, not engineering.', do: async () => { setMode('analysis'); setRain(true); } },
   // the shared blocks below every view
-  { el: '#gridRow', deep: true, text: 'the site block. detail 1× or 2× is the grid resolution, units flip everything between feet and metres. sandbox · live drives the tool from a depth camera over real sand, and projector opens the window for the projector above it.', do: async () => setRain(false) },
-  { el: '#interval', deep: true, text: 'contour interval and vertical exaggeration set the drawing.' },
+  { el: '#gridRow', deep: true, text: 'the site block. detail 1× or 2× is the grid resolution, units flip everything between feet and metres, vertical exaggeration stretches the model and the section. sandbox · live drives the tool from a depth camera over real sand, and projector opens the window for the projector above it.', do: async () => setRain(false) },
   { el: '.stats', text: 'the grading block: cut and fill volumes for the whole design, with topsoil strip depth and the swell of loosened earth folded in. this is the number to watch while grading.' },
   { el: '#mm', deep: true, text: 'the fabricate block: the printed model width, wall thickness, the laser sheet size and its ledge for the cardboard stack, and the paper size of the drawing sheet.' },
-  { el: '.actions', text: 'the exports. undo, wipe and save; new, open and copy link for this exact place; a png of the sheet, an stl to print, a laser file for the stack or the same as a dxf, cnc lines for the mill, and the drawing sheet: the model and the section painted, plan, analysis and notes drawn, on one page. that is the tour; your own project comes back now.', do: async () => setMode('plan') },
+  { el: '#project', text: 'the project block. undo, delete all and save; new, open and copy link for this exact place.', do: async () => setMode('plan') },
+  { el: '#exports', text: 'the exports. a png of the sheet, an stl to print, a laser file for the stack or the same as a dxf, cnc lines for the mill, and the drawing sheet: the model and the section painted, plan, analysis and notes drawn, on one page. that is the tour; your own project comes back now.', do: async () => setMode('plan') },
 ];
 
 /* ---------- guided tour: a spotlight and a card that walk through the tool on a sample site, then hand the project back ---------- */
