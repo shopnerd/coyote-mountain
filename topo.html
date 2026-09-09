@@ -1918,7 +1918,7 @@ document.getElementById('views').onclick = e => { const b = e.target.closest('bu
 document.getElementById('extents').onclick = () => { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } toast('view refitted'); };
 
 /* ---------- rail ---------- */
-const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints, keyline, rain and sun. the model view shows whatever is running here.', plan: 'sketch grade with the brush. contours and hachures redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
+const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints, keyline, rain and sun. the model view shows whatever is running here.', plan: 'sketch grade with the brush. contours redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
 function setMode(m) {
   if (m === 'model' && S.mode !== 'model' && (S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj')) { S.planBrush = S.brush; setBrush('raise'); }   // the model sculpts; pen tools wait for the plan
   else if (m !== 'model' && S.mode === 'model' && S.planBrush) { setBrush(S.planBrush); S.planBrush = null; }
