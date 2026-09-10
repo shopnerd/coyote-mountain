@@ -3264,7 +3264,7 @@ function shareLink() {
   const u = new URL(location.href); u.search = ''; u.hash = ''; const q = u.searchParams;
   q.set('lat', S.world.lat.toFixed(6)); q.set('lon', S.world.lon.toFixed(6)); q.set('w', S.siteW); if (S.rot) q.set('rot', S.rot); q.set('iv', S.ivl); q.set('u', S.unit); q.set('an', Object.keys(S.an).filter(k => S.an[k]).join(',')); if (S.world.name) q.set('name', S.world.name.slice(0, 60));
   if (S.boundary) { const lot = S.boundary.filter(b => b.closed).map(b => b.pts.map(p => p[0].toFixed(5) + ',' + p[1].toFixed(5)).join(';')).join('|'); if (lot && lot.length < 6000) { q.set('lot', lot); if (S.trim) q.set('trim', '1'); } }
-  const link = u.toString(); const ok = () => toast('link copied · it opens this place with these settings');
+  const link = u.toString(); const ok = () => toast(S.strokes.length || S.earth && S.earth.dist > 0 ? 'link copied · it opens this place with these settings; the drawing and grading travel as a saved file, not in the link' : 'link copied · it opens this place with these settings');
   if (navigator.clipboard) navigator.clipboard.writeText(link).then(ok, () => prompt('copy this link', link)); else prompt('copy this link', link);
 }
 document.getElementById('shareBtn').onclick = shareLink;
@@ -3305,6 +3305,7 @@ addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if 
 updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 setBrush('pen');
 (async () => {   // a shared link wins; else a newer home file beats a stale session; otherwise the session wins
+  { const q = new URLSearchParams(location.search), src = q.get('proj'); if (src && /^[\w./-]+\.json$/i.test(src)) { try { const r = await fetch(src, { cache: 'no-store' }); if (!r.ok) throw new Error('no project at ' + src); loadProject(await r.json()); toast('project opened from the link'); return; } catch (err) { toast(String(err.message || err)); } } }   // ?proj=projects/name.json opens a saved project kept beside the page
   if (await openFromLink()) return;
   let homeSaved = null; try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) homeSaved = ((await r.json()).saved) || ''; } catch (_) {}
   let sessionHome = null; try { const raw = localStorage.getItem('topo-session'); if (raw) sessionHome = JSON.parse(raw).homeSaved || ''; } catch (_) {}
