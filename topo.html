@@ -168,7 +168,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="sec" id="modelLbl" style="display:none">model</div>
     <div class="seg deep" id="modelStyle" style="display:none;margin-bottom:6px"><button data-s="smooth" class="on">smooth</button><button data-s="stepped">stepped</button></div>
     <div class="desc deep" id="sculptLbl" style="display:none;padding-bottom:2px">left drag or one finger</div>
-    <div class="seg deep" id="sculptRow" style="display:none;margin-bottom:6px"><button data-k="orbit" class="on">orbit</button><button data-k="sculpt">sculpt</button></div>
+    <div class="seg deep" id="sculptRow" style="display:none;margin-bottom:6px"><button data-k="orbit" class="on">orbit</button><button data-k="sculpt">sculpt</button><button data-k="walk">walk</button></div>
     <div class="seg" id="rainRowM" style="display:none;margin-bottom:6px"><button id="rainBtnM">rain (r)</button></div>
     <div class="sec" id="rendLbl" style="display:none;padding-top:4px">render</div>
     <div class="seg" id="rendRow" style="display:none;margin-bottom:6px"><button data-rd="0" class="on">model</button><button data-rd="1">render</button></div>
@@ -264,7 +264,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
         <div class="seg" id="labelRow" style="padding:0;margin-top:6px"><button data-l="1" class="on">labels</button><button data-l="0">no labels</button></div>
         <div class="seg deep" id="cfRow" style="padding:0;margin-top:6px"><button data-cf="1" class="on" title="the ember and grey wash shows fill and cut on the sheet">cut · fill wash</button><button data-cf="0">plain sheet</button></div>
         <div class="seg deep" id="annoRow" style="padding:0;margin-top:6px"><button data-x="up" title="contour numbers face uphill, the drafting convention">read uphill</button><button data-x="base" class="on" title="existing contours dashed wherever the ground has been graded">existing dashed</button></div>
-        <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="1">aerial photo</button><button data-ae="0" class="on">no photo</button></div>
+        <div class="seg" style="padding:0;margin-top:6px" id="aerialRow"><button data-ae="1">aerial photo</button><button data-ae="2" id="paintedBtn" style="display:none">painted</button><button data-ae="0" class="on">no photo</button></div>
         <div class="p deep" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
       </div>
     </div>
@@ -395,9 +395,9 @@ const STUDIO = { seamless: ['#d3d0c6', '#e6e4dc'], white: ['#f6f5f1', '#f6f5f1']
 const skyWord = () => ({ clear: 'clear sky', cumulus: 'cumulus sky', marine: 'marine layer', overcast: 'overcast sky', seamless: 'seamless backdrop', white: 'white backdrop', dark: 'charcoal backdrop' })[S.rendSky] || S.rendSky;
 function drawSky(c, w, h, proj, alt, az, s, zmid, scale, ox, oy, sy, cy) {   // sky and clouds behind the ground, computed at quarter size and stretched; the horizon comes from the camera itself
   if (STUDIO[S.rendSky]) { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, STUDIO[S.rendSky][0]); g.addColorStop(1, STUDIO[S.rendSky][1]); c.fillStyle = g; c.fillRect(0, 0, w, h); return; }   // a studio backdrop: no horizon, no sky, the model on a sweep
-  const far = 40 * S.siteW, MF = viewFrame(), hp = proj(MF.ci - far * sy / s, MF.cj - far * cy / s, zmid), yH = hp[1], focal = scale * PD;   // far is the negative view direction in this projection
+  const far = 40 * S.siteW, MF = viewFrame(), hp = proj(MF.ci - far * sy / s, MF.cj - far * cy / s, zmid), yH = S.walk ? walkHorizonY(w, h) : hp[1], focal = scale * PD;   // far is the negative view direction in this projection
   const b = az - S.rot * D2R, sx = Math.sin(b) * Math.cos(alt), syy = -Math.cos(b) * Math.cos(alt), sz = Math.sin(alt), D = 20 * S.siteW, sp = proj(MF.ci + D * sx / s, MF.cj + D * syy / s, zmid + D * sz / S.ve), sunOn = sp[2] < 0 && sz > -.05;   // the sun is on screen only when its far point lies ahead of the eye
-  const key = [w, h, yH.toFixed(1), S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, alt.toFixed(3), az.toFixed(3), S.rendSky, S.month, S.siteW].join('|');
+  const key = [w, h, yH.toFixed(1), S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, walkKey(), alt.toFixed(3), az.toFixed(3), S.rendSky, S.month, S.siteW].join('|');
   if (skyCache.key !== key) {
     const Q = 3, cw = Math.ceil(w / Q), ch = Math.ceil(h / Q), off = document.createElement('canvas'); off.width = cw; off.height = ch; const o = off.getContext('2d'), img = o.createImageData(cw, ch), d = img.data;
     const a = Math.max(-.2, Math.min(1, alt / .35)), day = Math.max(0, a), low = Math.max(0, 1 - Math.abs(alt) / .26);   // day strength, and how low the sun is
@@ -892,16 +892,17 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const R = S.rendOn && !mini && !S.noFoot, s = cs(), tm = R ? null : trimMask(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);   // the render shows the whole fetched world, lot or no lot
-  const scale = zoom * Math.min(w, h) / (viewFrame().fitW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
-  const MF = viewFrame(); const proj = (i, j, zz) => { const X = (i - MF.ci) * s, Y = (j - MF.cj) * s, Z = (zz - zmid) * S.ve;
+  let scale = zoom * Math.min(w, h) / (viewFrame().fitW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
+  const MF = viewFrame(); let proj = (i, j, zz) => { const X = (i - MF.ci) * s, Y = (j - MF.cj) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
     const dv = y1 * sp + Z * cp, f = S.cam.persp ? PD / Math.max(PD * .15, PD - dv) : 1; return [ox + x1 * scale * f, oy + (y1 * cp - Z * sp) * scale * f, dv]; };
+  if (S.walk && !mini) { const wp = walkProj(w, h); proj = wp.proj; scale = wp.scale; ox = wp.ox; oy = wp.oy; }   // on foot: the eye on the ground, the little preview keeps the orbit view
   const tin = (i, j) => { if (!tm) return true; if (i < 0 || j < 0 || i > W - 2 || j > H - 2) return false; return !!tm.tiles[Math.min(H - 2, j + (step >> 1)) * (W - 1) + Math.min(W - 2, i + (step >> 1))]; };
-  const ovR = overlayRaster(), items = [], iv = interval(), mode = (S.aerialM || ovR) && S.colorMode !== 'sun' ? 'aerial' : S.colorMode, cfR = mode === 'cutfill' && !fast ? cutfillImage() : null;   // the model photo wins whenever it is on, except under a sun study
+  const ovR = overlayRaster(), items = [], iv = interval(), mode = (S.aerialM || groundPainted() || ovR) && S.colorMode !== 'sun' ? 'aerial' : S.colorMode, cfR = mode === 'cutfill' && !fast ? cutfillImage() : null;   // the model photo wins whenever it is on, except under a sun study
   let lx = -.5, ly = -.4, lz = .77, lit = null, cutSide = null;  // light from upper left; in the render, from the sun
   if (R) { const lat = S.world ? S.world.lat : 34.1, { alt, az } = sunPos(S.month, S.hour, lat), b = az - S.rot * D2R, ca = Math.cos(Math.max(alt, .06)); lx = Math.sin(b) * ca; ly = -Math.cos(b) * ca; lz = Math.max(.12, Math.sin(alt)); lit = litCached(alt, az, hi);
     drawSky(c, w, h, proj, alt, az, s, zmid, scale, ox, oy, sy, cy);
-    if (S.rendCut !== 'none' && S.sec) { const A = S.sec[0], B = S.sec[1], dx = B[0] - A[0], dy = B[1] - A[1], m = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], nrm = [-dy, dx], L = Math.hypot(dx, dy) || 1; const p1 = [m[0] + nrm[0] / L * 3, m[1] + nrm[1] / L * 3], p2 = [m[0] - nrm[0] / L * 3, m[1] - nrm[1] / L * 3];
+    if (S.rendCut !== 'none' && S.sec && !S.walk) { const A = S.sec[0], B = S.sec[1], dx = B[0] - A[0], dy = B[1] - A[1], m = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], nrm = [-dy, dx], L = Math.hypot(dx, dy) || 1; const p1 = [m[0] + nrm[0] / L * 3, m[1] + nrm[1] / L * 3], p2 = [m[0] - nrm[0] / L * 3, m[1] - nrm[1] / L * 3];
       const d1 = proj(p1[0], p1[1], zmid)[2], d2 = proj(p2[0], p2[1], zmid)[2]; cutSide = { A, dx, dy, sign: Math.sign(d1 > d2 ? dx * (p1[1] - A[1]) - dy * (p1[0] - A[0]) : dx * (p2[1] - A[1]) - dy * (p2[0] - A[0])) }; } }   // the camera stands on the side with the larger depth value
   const onCamSide = (x, y) => cutSide && Math.sign(cutSide.dx * (y - cutSide.A[1]) - cutSide.dy * (x - cutSide.A[0])) === cutSide.sign;
   rend3D = R ? { proj, s } : null;
@@ -920,7 +921,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
       let tone = surfaceColor(cfR ? 'paper' : mode, (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, ii + st / 2, jj + st / 2), wpart = null, shore = null;
       if (R) tone = rendTone(tone, light, litv, mode);
       let wet = false, tex = null;
-      if ((mode === 'aerial' && !fast && ((S.aerialM && aerialCache.canvas) || ovR)) || cfR) tex = [texRect[0], texRect[1], texRect[2], texRect[3], light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
+      if ((mode === 'aerial' && (!fast || S.walk) && ((S.aerialM && aerialCache.canvas) || groundPainted() || ovR)) || cfR) tex = [texRect[0], texRect[1], texRect[2], texRect[3], light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
       if (f) { const nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
         if (nw === 4) { tone = WTONE(light); wet = true; }
         else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
@@ -998,7 +999,14 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const P = it.P, cx = (P[0][0] + P[1][0] + P[2][0] + P[3][0]) * .25, cyy = (P[0][1] + P[1][1] + P[2][1] + P[3][1]) * .25;
     if (it.tex) {   // the photo patch mapped onto the tile: unit square -> the tile's projected corners (affine on three corners); the tile is first filled with its average colour so the fourth corner's miss never shows white
       c.fillStyle = it.tone; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1; if (k) c.lineTo(p[0] + dx / d * OUT, p[1] + dy / d * OUT); else c.moveTo(p[0] + dx / d * OUT, p[1] + dy / d * OUT); } c.closePath(); c.fill();
-      const t = it.tex; c.save(); c.transform(P[1][0] - P[0][0], P[1][1] - P[0][1], P[3][0] - P[0][0], P[3][1] - P[0][1], P[0][0], P[0][1]); if (cfR) c.drawImage(cfR.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); else if (S.aerialM && aerialCache.canvas) c.drawImage(aerialCache.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); if (ovR) { c.globalAlpha = .85; c.drawImage(ovR.canvas, t[0], t[1], t[2], t[3], -.05, -.05, 1.1, 1.1); c.globalAlpha = 1; } c.restore();
+      const t = it.tex, ov = .05, ow = 1 + 2 * ov;
+      if (S.walk && !cfR) {   // on foot the perspective is strong: the tile as two triangles, each an exact affine map of its half of the patch, clipped to itself
+        const src = groundPainted() ? paintedCache.canvas : (S.aerialM && aerialCache.canvas) ? aerialCache.canvas : null;
+        if (src) { const tri = (A, B, C2, ua, va, ub, vb, uc, vc) => { const du1 = ub - ua, dv1 = vb - va, du2 = uc - ua, dv2 = vc - va, det = du1 * dv2 - du2 * dv1; if (Math.abs(det) < 1e-9) return;
+            const ax = B[0] - A[0], ay = B[1] - A[1], bx = C2[0] - A[0], by = C2[1] - A[1], m11 = (ax * dv2 - bx * dv1) / det, m12 = (bx * du1 - ax * du2) / det, m21 = (ay * dv2 - by * dv1) / det, m22 = (by * du1 - ay * du2) / det;
+            c.save(); c.beginPath(); c.moveTo(A[0], A[1]); c.lineTo(B[0], B[1]); c.lineTo(C2[0], C2[1]); c.closePath(); c.clip(); c.transform(m11, m21, m12, m22, A[0] - m11 * ua - m12 * va, A[1] - m21 * ua - m22 * va); c.drawImage(src, t[0], t[1], t[2], t[3], -.01, -.01, 1.02, 1.02); c.restore(); };
+          tri(P[0], P[1], P[2], 0, 0, 1, 0, 1, 1); tri(P[0], P[2], P[3], 0, 0, 1, 1, 0, 1); } }
+      else { c.save(); c.transform(P[1][0] - P[0][0], P[1][1] - P[0][1], P[3][0] - P[0][0], P[3][1] - P[0][1], P[0][0], P[0][1]); if (cfR) c.drawImage(cfR.canvas, t[0], t[1], t[2], t[3], -ov, -ov, ow, ow); else if (groundPainted()) c.drawImage(paintedCache.canvas, t[0], t[1], t[2], t[3], -ov, -ov, ow, ow); else if (S.aerialM && aerialCache.canvas) c.drawImage(aerialCache.canvas, t[0], t[1], t[2], t[3], -ov, -ov, ow, ow); if (ovR) { c.globalAlpha = .85; c.drawImage(ovR.canvas, t[0], t[1], t[2], t[3], -ov, -ov, ow, ow); c.globalAlpha = 1; } c.restore(); }
       const sh = cfR ? 0 : Math.max(0, Math.min(.5, (1 - t[4]) * .45)); if (sh > .02) { c.fillStyle = `rgba(20,24,20,${sh.toFixed(3)})`; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k]; if (k) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); } c.closePath(); c.fill(); } }
     else { c.fillStyle = it.tone; c.beginPath();
       for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1, x = p[0] + dx / d * OUT, y = p[1] + dy / d * OUT; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
@@ -1033,7 +1041,21 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
 }
 
 /* ---------- camera + picking (screen point -> grid node on the surface) ---------- */
+const WALK_FOV = 70 * D2R;
+function walkProj(w, h) {                 // first person: the eye on the ground at S.walk, at eye height, looking along the same yaw and pitch the orbit camera uses (pitch pi/2 is level)
+  const { yaw, pitch } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch), s = cs(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, MF = viewFrame(), wk = S.walk;
+  const F = h / (2 * Math.tan(WALK_FOV / 2)), ox = w / 2, oy = h / 2, near = .3;
+  const Ex = (wk.i - MF.ci) * s, Ey = (wk.j - MF.cj) * s, Ez = (sample(zv, wk.i, wk.j) - zmid) * S.ve + wk.h * S.ve;
+  const fx = sy * sp, fy = cy * sp, fz = cp, rx = cy, ry = -sy, ux = -sy * cp, uy = -cy * cp, uz = sp;   // forward, right and up, the same axes as the orbit camera
+  const proj = (i, j, zz) => { const dx = (i - MF.ci) * s - Ex, dy = (j - MF.cj) * s - Ey, dz = (zz - zmid) * S.ve - Ez, dep = dx * fx + dy * fy + dz * fz;
+    if (dep < near) return [NaN, NaN, -dep];   // behind the eye or at its feet: not drawn (a path with NaN in it draws nothing)
+    const k = F / dep; return [ox + (dx * rx + dy * ry) * k, oy - (dx * ux + dy * uy + dz * uz) * k, -dep]; };   // depth grows negative with distance, as the orbit camera's does
+  return { proj, scale: F / PD, s, ox, oy };
+}
+function walkHorizonY(w, h) { const F = h / (2 * Math.tan(WALK_FOV / 2)); return h / 2 + F * Math.cos(S.cam.pitch) / Math.max(.05, Math.sin(S.cam.pitch)); }   // where level ground at infinity crosses the screen
+const walkKey = () => (S.walk ? 'w' + S.walk.i.toFixed(2) + ',' + S.walk.j.toFixed(2) + ',' + S.walk.h : '') + (S.groundPaint ? 'P' : '');
 function camera(w = S.w, h = S.h) {
+  if (S.walk) { const wp = walkProj(w, h); return { proj: wp.proj, scale: wp.scale, s: wp.s }; }
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const s = cs(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, scale = zoom * Math.min(w, h) / (viewFrame().fitW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;   // same frame as the drawing, so picks land where the ground is drawn
   const MF = viewFrame(); const proj = (i, j, zz) => { const X = (i - MF.ci) * s, Y = (j - MF.cj) * s, Z = (zz - zmid) * S.ve;
@@ -1405,7 +1427,7 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.bldMode, S.bldMM, S.rendOn, S.rendCut, S.rendSky, JSON.stringify(S.sec), S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.bldMode, S.bldMM, S.rendOn, S.rendCut, S.rendSky, JSON.stringify(S.sec), S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, walkKey(), S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
@@ -1505,7 +1527,7 @@ function secYaw() {                      // the camera yaw where a and b sit at 
   const [A, B] = S.sec, yaw0 = S.cam.yaw; let best = null;
   for (let k = 0; k < 360; k++) { S.cam.yaw = k * D2R; const { proj } = camera(S.w, S.h), pA = proj(A[0], A[1], 0), pB = proj(B[0], B[1], 0); const score = Math.abs(pA[2] - pB[2]) + (pA[0] < pB[0] ? 0 : 1e6); if (!best || score < best.score) best = { yaw: S.cam.yaw, score }; }
   S.cam.yaw = yaw0; return best ? best.yaw : yaw0; }
-window.__dbg = fn => fn({ S, camera, secYaw, nodeLatLon, setSiteW, aiPrompt, snapshotProject, cs, applyPad, objFromMesh, updateStats, W, H });   // a hook for the end-to-end tests
+window.__dbg = fn => fn({ S, AI, camera, secYaw, nodeLatLon, setSiteW, aiPrompt, snapshotProject, cs, applyPad, objFromMesh, updateStats, W, H, renderPicture, bakePainted, aerialUI, paintedCache: () => paintedCache });   // a hook for the end-to-end tests
 document.getElementById('sec3d').onclick = () => paintSection();
 document.getElementById('geoRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.geo = b.dataset.geo === '1'; document.querySelectorAll('#geoRow button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('geoInfo').style.display = S.geo ? '' : 'none'; GEO.key = ''; geoRefresh(); geoInfo(); S.dirty = true; };
 /* ---------- several sections: a list of a–b lines, one active; S.sec always mirrors the active one ---------- */
@@ -1604,12 +1626,12 @@ function zoomAt(pan, mx, my, f, w, h, mul) {   // keep the point under (mx,my) f
   const z0 = S.cam.zoom, z1 = Math.max(.4, Math.min(24, z0 * f)), fr = z1 / z0;
   const ox = w / 2 + pan.x, oy = h / 2 + 10 + pan.y; pan.x += (mx - ox) * (1 - fr); pan.y += (my - oy) * (1 - fr); S.cam.zoom = z1; S.dirty = true;
 }
-function orbit(dx, dy) { S.cam.yaw -= dx * .008; S.cam.pitch = Math.max(.08, Math.min(1.5, S.cam.pitch - dy * .006)); S.dirty = true; }
+function orbit(dx, dy) { S.cam.yaw -= dx * (S.walk ? .004 : .008); S.cam.pitch = Math.max(S.walk ? .7 : .08, Math.min(S.walk ? 1.95 : 1.5, S.cam.pitch - dy * (S.walk ? .004 : .006))); S.dirty = true; }   // on foot a drag is a look, gentler, and it may look up
 const pip = document.getElementById('pip'), pctx = pip.getContext('2d'); let pw = 0, ph = 0, pdrag = null;
 function sizePip() { const r = pip.getBoundingClientRect(); pw = r.width; ph = r.height; pip.width = pw * dpr; pip.height = ph * dpr; pctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 let pipShot = { key: '', canvas: null };
 function pipFrame() {                     // the 3d preview drawn once (camera already swapped in by drawPip), reused while the rain moves
-  const key = [S.terrainVer, S.bldMode, S.bldMM, S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
+  const key = [S.terrainVer, S.bldMode, S.bldMM, S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, walkKey(), S.modelStyle, S.colorMode, S.aerialM, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.siteW, S.unit, pw, ph, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.strokeVer].join('|');
   if (pipShot.key !== key) { const now = performance.now(); if (drag && (drag.kind === 'brush' || drag.kind === 'sculpt') && pipShot.canvas) return pipShot.canvas;
     const off = document.createElement('canvas'); off.width = Math.max(1, Math.round(pw * dpr)); off.height = Math.max(1, Math.round(ph * dpr)); const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0); o.fillStyle = PAPER; o.fillRect(0, 0, pw, ph);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, pw, ph, 3, true); pipShot = { key, canvas: off, t: now }; }
@@ -1833,7 +1855,7 @@ let lowQT = null;
 cv.addEventListener('wheel', e => { const q = pt(e); if (S.mode === 'model') { e.preventDefault(); S.lowQ = true; clearTimeout(lowQT); lowQT = setTimeout(() => { S.lowQ = false; S.dirty = true; }, 160); zoomAt(S.cam.pan, q[0], q[1], e.deltaY < 0 ? 1.1 : .9, S.w, S.h); } else if (S.mode === 'plan' || S.mode === 'analysis') { e.preventDefault(); planZoomAt(q[0], q[1], e.deltaY < 0 ? 1.15 : 1 / 1.15); } }, { passive: false });
 cv.addEventListener('contextmenu', e => e.preventDefault()); pip.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); }); pip.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
-cv.addEventListener('dblclick', () => { if (S.mode !== 'model') return; S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; toast('view reset'); });
+cv.addEventListener('dblclick', () => { if (S.mode !== 'model' || S.walk) return; S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; toast('view reset'); });
 function readout(g) {
   const el = document.getElementById('read');
   if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) { el.textContent = 'outside the site'; return; }
@@ -1852,7 +1874,7 @@ const TIPS = {
   't:key': 'a tap on the sheet sets the keyline point', 't:dam': 'a tap on the sheet places the dam', rainBtn: 'animated raindrops running downhill and pooling, here and on the model (r)', rainPause: 'freeze the drops and pools (p)', rainBtnM: 'rain on the model while you sculpt: drops follow the new ground and pools stay where they were (r)', rainPauseM: 'freeze the drops and pools (p)',
   's:hour': 'shade the ground for one month and hour, with cast shadows', 's:hours': 'colour the ground by hours of direct sun in a day', playDay: 'sweep the hour from dawn to dusk', playYear: 'sweep the months at this hour',
   'c:paper': 'plain paper tones', 'c:elevation': 'green low to ember high', 'c:slope': 'paper flat to ember steep', 'c:aspect': 'which way each slope faces', 'c:cutfill': 'where your grading sits above the existing ground (ember) or below it (grey); full tone at 2 m', 'c:sun': 'sun shading on the ground', 's:smooth': 'the ground as a continuous surface', 's:stepped': 'the ground as the cardboard stack you would cut',
-  'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush',
+  'k:orbit': 'one finger or left drag turns the model', 'k:sculpt': 'one finger or left drag pushes the ground with the current brush', 'k:walk': 'stand on the ground at eye height and walk it: w a s d or the arrows move, shift runs, a drag looks around', 'ae:2': 'the last painting laid back onto the ground it was painted from; walk into it. hidden ground keeps the photo or the paper',
   kmlBtn: 'load a lot or property line from a kml, kmz or geojson file, and any image overlay a kmz carries; both stay pinned to their real coordinates', kmlClear: 'remove the boundary', halfW: 'zoom in: fetch half the width around the same point', dblW: 'zoom out: fetch double the width', fetch: 'pull real elevation for the place or lat, lng above', home: 'back to the default project', 'g:1': 'the standard 150 × 100 grid', 'g:2': 'a 300 × 200 grid: cells half the size, four times the work per redraw. terrain refetches at the finer grid', 'ov:1': 'the image overlay from the kmz, pinned and rotated to its box: under the plan and on the model', 'ov:0': 'hide the overlay', 'trim:1': 'cut the model, the stl and the laser layers to the loaded property line; the plan keeps its context', 'trim:0': 'the whole rectangular site', 'road:1': 'mapped roads and paths: heavier lines for main roads, dashed for footpaths and tracks, draped on the model', 'road:0': 'hide the roads', 'bld:1': 'mapped building footprints: hatched on the plan, blocks on the model at their mapped height (one storey where none is mapped)', 'bld:0': 'hide the buildings', 'sea:1': 'sea and lakes found in the elevation data are shown flat and blue in every view; the sea floor is clipped to sea level', 'sea:0': 'show the raw fetched ground with no water (for places genuinely below sea level)', 'p:rise': 'raise the sea: land below this height that connects to the sea goes under water, in every view and export', 'ae:0': 'no satellite photo', 'ae:1': 'satellite photo under the plan and on the model',
   reseed: 'invent fresh rolling hills (only without real terrain)', reset: 'drop your grading; the ground returns to as found', 'l:1': 'show elevation numbers and labels', 'l:0': 'hide every label', 'x:up': 'contour numbers face uphill, the old drafting convention; off, they simply never read upside down', 'x:base': 'existing contours dashed wherever the ground has been graded, so proposed reads against existing',
   'p:month': 'month of the year for the sun study', 'p:hour': 'hour of the day for the sun study, solar time', 'p:rain': 'rain falling on the whole site in one storm; the runoff share says how much of it runs rather than soaks in', 'p:thr': 'how much upstream ground it takes to count as a stream', 'p:plow': 'distance between plow lines, measured on the ground', 'p:swale': 'vertical drop from one swale to the next', 'p:dam': 'wall height of the dam; the pond fills to its crest',
@@ -1907,7 +1929,7 @@ function hintText() {
     else if (S.brush === 'obj') h = 'object · tap to select, drag to move; tap empty ground to move it there';
     else if (S.brush === 'grade') h = 'grade · drag A to B; the strip takes the rail grade from A, sides daylighting';
     else h = `${S.brush} · drag to ${S.brush} the ground · radius and strength in the rail`;
-  } else if (S.mode === 'model') h = S.sculpt ? `sculpt · drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj' ? 'raises' : S.brush + 's'} the ground · right drag orbits` : 'model · right drag orbits · wheel zooms · double-click refits · m stepped';
+  } else if (S.mode === 'model') h = S.walk ? 'walk · w a s d or the arrows move · q e turn · shift runs · drag to look · orbit or sculpt leaves the ground' : S.sculpt ? `sculpt · drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj' ? 'raises' : S.brush + 's'} the ground · right drag orbits` : 'model · right drag orbits · wheel zooms · double-click refits · m stepped';
   else if (S.mode === 'section') h = 'section · drag a new A–B line in plan · vertical exaggeration in the rail';
   else h = S.tapMode === 'dam' ? 'analysis · tap the sheet or a keypoint for the dam' : 'analysis · tap a keypoint or a spot for the keyline' + (S.rain ? '' : ' · r rain');
   if (S.rain) h += S.rainPaused ? ' · rain paused: p resumes' : ' · rain: p pause, r stop';
@@ -1934,7 +1956,7 @@ function setMode(m) {
   { const su = document.getElementById('sunSec'); if (m === 'analysis') document.getElementById('sunSlot').appendChild(su); else document.getElementById('colorRow').insertAdjacentElement('afterend', su); }   // the one sun clock: in the sun block in analysis, under the render in the model
   { const ae = document.getElementById('aerialRow'); if (m === 'model') { document.getElementById('modelStyle').insertAdjacentElement('afterend', ae); ae.style.padding = '0 12px'; ae.style.marginTop = '0'; ae.style.marginBottom = '6px'; } else { document.getElementById('annoRow').insertAdjacentElement('afterend', ae); ae.style.padding = '0'; ae.style.marginTop = '6px'; ae.style.marginBottom = '0'; } }   // the photo switch travels: under smooth / stepped in the model, with the sheet switches in plan
   document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('sheetSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('geoRow').style.display = m === 'section' ? '' : 'none'; document.getElementById('secRow').style.display = m === 'section' ? '' : 'none'; secTabs(); for (const id of ['worldLbl', 'worldSec']) document.getElementById(id).style.display = m === 'plan' ? '' : 'none'; document.getElementById('geoInfo').style.display = m === 'section' && S.geo ? '' : 'none'; document.getElementById('rainRowM').style.display = m === 'model' ? '' : 'none'; for (const id of ['sculptLbl', 'modelLbl']) document.getElementById(id).style.display = m === 'model' ? '' : 'none'; for (const id of ['secLbl', 'geoLbl']) document.getElementById(id).style.display = m === 'section' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null; aerialUI();
-  cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
+  if (m !== 'model') walkStop(); cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
 document.getElementById('brushes').onclick = e => { const b = e.target.closest('button'); if (!b) return; setBrush(b.dataset.b); S.dirty = true; };
@@ -2072,9 +2094,11 @@ const setSiteW = (v, silent) => { const el = document.getElementById('siteW'); e
 bind('rot', v => v + '°', v => S.rot = v);
 bind('aop', v => v + '%', v => S.aop = v / 100);
 const aeKey = () => S.mode === 'model' ? 'aerialM' : 'aerial';   // the plan and the model each keep their own photo switch
-function aerialUI() { const on = !!S[aeKey()]; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', (b.dataset.ae === '1') === on)); document.getElementById('aerialOp').style.display = on && S.mode !== 'model' ? '' : 'none'; }
+function aerialUI() { const on = !!S[aeKey()], pt = S.mode === 'model' && !!S.groundPaint; document.getElementById('paintedBtn').style.display = S.mode === 'model' && AI.lastImg ? '' : 'none'; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '2' ? pt : !pt && (b.dataset.ae === '1') === on)); document.getElementById('aerialOp').style.display = on && S.mode !== 'model' ? '' : 'none'; }
 function aerialOff() { S.aerial = S.aerialM = false; aerialUI(); }
-document.getElementById('aerialRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; const on = b.dataset.ae === '1'; S[aeKey()] = on; aerialUI();
+document.getElementById('aerialRow').onclick = async e => { const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.ae === '2') { if (!AI.lastImg) { toast('paint the model first'); return; } if (paintedCache.key !== (AI.last || '').slice(-40) + '|' + S.terrainVer) { busy('laying the painting on the ground'); await new Promise(r => setTimeout(r, 30)); const ok = bakePainted(); unbusy(); if (!ok) { toast('the painting does not reach the ground from here'); return; } } S.groundPaint = true; S.aerialM = false; aerialUI(); toast(`painted ground · ${paintedCache.hit ? Math.round(paintedCache.hit / ((W - 1) * AER * (H - 1) * AER) * 100) : 0}% of the ground was in the picture · walk to look around`); return; }
+  S.groundPaint = false; const on = b.dataset.ae === '1'; S[aeKey()] = on; aerialUI();
   if (on && S.overlay && S.overlayOn) { S.overlayOn = false; groundControls(); toast('photo on · the overlay is hidden; the two would cover each other'); }
   else if (S.world) toast((on ? 'photo on' : 'photo off') + (S.mode === 'model' ? ' · model view' : ' · plan view'));
   if (on && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
@@ -2210,7 +2234,20 @@ document.getElementById('cfRow').onclick = e => { const b = e.target.closest('bu
 document.getElementById('annoRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.x === 'up') S.labelUp = !S.labelUp; else S.showBase = !S.showBase; annoUI(); S.dirty = true; };
 function annoUI() { document.querySelectorAll('#annoRow button').forEach(b => b.classList.toggle('on', b.dataset.x === 'up' ? S.labelUp : S.showBase)); }
 document.getElementById('labelRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.labels = b.dataset.l === '1'; document.querySelectorAll('#labelRow button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
-document.getElementById('sculptRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.sculpt = b.dataset.k === 'sculpt'; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.pick = null; S.dirty = true; toast(S.sculpt ? 'left drag sculpts · right drag orbits · middle drag pans' : 'left drag orbits'); };
+function walkStart() {                  // stand at the centre of the model, at eye height, level, in the render
+  const MF = viewFrame(); S.walk = { i: MF.ci, j: MF.cj, h: 1.7 }; S.sculpt = false; S.cam.persp = true; S.cam.pitch = Math.max(1.5, Math.min(1.6, S.cam.pitch)); S.cam.zoom = 1; S.cam.pan = { x: 0, y: 0 }; if (!S.rendOn) { S.rendOn = true; rendUI(); } skyCache.key = ''; S.pick = null; S.dirty = true; }
+function walkStop() { if (!S.walk) return; S.walk = null; walkKeys.clear(); S.cam.pitch = Math.min(1.5, S.cam.pitch); skyCache.key = ''; S.dirty = true; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x.dataset.k === (S.sculpt ? 'sculpt' : 'orbit'))); }
+const walkKeys = new Set(); let walkT = 0, walkRAF = 0;
+function walkTick(t) {                    // w a s d or the arrows move, q e or the side arrows turn, shift runs; the ground carries the eye
+  if (!S.walk || S.mode !== 'model') { walkRAF = 0; walkT = 0; return; } const dt = walkT ? Math.min(.1, (t - walkT) / 1000) : 0; walkT = t; const k = walkKeys; let f = 0, r = 0, turn = 0;
+  if (k.has('w') || k.has('arrowup')) f += 1; if (k.has('s') || k.has('arrowdown')) f -= 1; if (k.has('d')) r += 1; if (k.has('a')) r -= 1; if (k.has('arrowright') || k.has('e')) turn -= 1; if (k.has('arrowleft') || k.has('q')) turn += 1;
+  if (f || r || turn) { const v = (k.has('shift') ? 12 : 4) * dt, s = cs(); S.cam.yaw += turn * 1.4 * dt; const sy = Math.sin(S.cam.yaw), cy = Math.cos(S.cam.yaw), wk = S.walk;
+    wk.i = Math.max(0, Math.min(W - 1, wk.i + (sy * f + cy * r) * v / s)); wk.j = Math.max(0, Math.min(H - 1, wk.j + (cy * f - sy * r) * v / s)); S.lowQ = true; S.dirty = true; walkRAF = requestAnimationFrame(walkTick); }
+  else { walkRAF = 0; walkT = 0; if (S.lowQ) { S.lowQ = false; S.dirty = true; } }
+}
+addEventListener('keydown', e => { if (!S.walk || S.mode !== 'model' || e.target.tagName === 'INPUT') return; const k = e.key.toLowerCase(); if (!['w', 'a', 's', 'd', 'q', 'e', 'shift', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) return; walkKeys.add(k); e.preventDefault(); e.stopPropagation(); if (!walkRAF) walkRAF = requestAnimationFrame(walkTick); }, true);
+addEventListener('keyup', e => { walkKeys.delete(e.key.toLowerCase()); });
+document.getElementById('sculptRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.k === 'walk') { walkStart(); document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', true); toast('on foot · w a s d move, shift runs · drag to look · orbit or sculpt leaves the ground'); S.dirty = true; return; } walkStop(); S.sculpt = b.dataset.k === 'sculpt'; document.querySelectorAll('#sculptRow button').forEach(x => x.classList.toggle('on', x === b)); cv.classList.toggle('orbit', S.mode === 'model' && !S.sculpt); S.pick = null; S.dirty = true; toast(S.sculpt ? 'left drag sculpts · right drag orbits · middle drag pans' : 'left drag orbits'); };
 
 document.getElementById('place').onkeydown = e => { if (e.key === 'Enter') fetchWorld(); };
 document.getElementById('laser').onclick = () => runBusy('cutting the layers', () => { const out = laserSVG(); if (!out) return; dl(URL.createObjectURL(new Blob([out.svg], { type: 'image/svg+xml' })), `coyote-topo-laser-${S.thick}mm-${out.layers}layers.svg`); });
@@ -2290,6 +2327,7 @@ async function aiCall(key, png, prompt, ref, size = '1K') {   // one painted pic
 }
 async function aiPaint() {
   if (AI.busy) return; const key = aiKey(); if (!key) return;
+  AI.lastCam = { cam: JSON.parse(JSON.stringify(S.cam)), walk: S.walk ? { ...S.walk } : null, W2: 1536, H2: 864 };   // the camera the painting was made from, for laying it back on the ground
   const { png, prompt, ref, mask } = aiControl(); AI.busy = true; busy('painting'); document.getElementById('aiBtn').disabled = true;
   try {
     const url = await aiCall(key, png, prompt, ref); showPainted(mask ? holdCut(await loadImg(url), mask).toDataURL('image/png') : url, `painted · ${AI.style} · ${AI.model}`, prompt, `coyote-topo-painted-${AI.style}.png`, aiPaint);
@@ -2312,12 +2350,13 @@ function renderPicture() {                // the view as the renderer draws it, 
 const sheetPictures = (model, elev, painted) => ({ model, elev, painted, secPersp: !!S.sec, elevFocus: S.sec ? 442 / 864 : .5 });
 function showPainted(src, title, note, name, again) {   // the painted panel: picture, title, the prompt as the note, and what again and save png do
   const panel = document.getElementById('aiPanel'); let im = document.getElementById('aiImg'); if (!im) { im = document.createElement('img'); im.id = 'aiImg'; im.alt = 'the painted view'; document.getElementById('aiImgWrap').appendChild(im); }
-  AI.last = src; AI.lastName = name; AI.again = again; im.src = src; document.getElementById('aiTitle').textContent = title; document.getElementById('aiNote').textContent = note; panel.hidden = false;
+  AI.last = src; AI.lastName = name; AI.again = again; im.src = src; { const li = new Image(); li.onload = () => { AI.lastImg = li; aerialUI(); }; li.src = src; } document.getElementById('aiTitle').textContent = title; document.getElementById('aiNote').textContent = note; panel.hidden = false;
 }
 async function paintSection() {           // the active section as the drawing sheet paints it: square to the line at eye level, no perspective, the cut face held; without a key the renderer's own picture
   if (!S.sec) { toast('draw a section line in plan first'); return; } if (AI.busy) return; const key = aiKey(); const ab = secLetters(S.secI).join('–'); AI.busy = true; busy(key ? `painting section ${ab}` : `drawing section ${ab}`);
   const restore = sectionCamera();
   try {
+    AI.lastCam = { cam: JSON.parse(JSON.stringify(S.cam)), walk: null, W2: 1536, H2: 864 };
     if (key) { const c = aiControl(); const im = holdCut(await loadImg(await aiCall(key, c.png, c.prompt, c.ref, '2K')), c.mask); showPainted(im.toDataURL('image/png'), `section ${ab} · painted · ${AI.style} · ${AI.model}`, c.prompt, `coyote-topo-section-${ab}-${AI.style}.png`, paintSection); }
     else { toast('no google ai key · the section is drawn, not painted'); showPainted(renderPicture().toDataURL('image/png'), `section ${ab} · drawn`, 'the section as the renderer draws it, square to the line, no perspective. add a google ai key to paint it.', `coyote-topo-section-${ab}.png`, paintSection); }
   } catch (e) { toast(String(e.message || e)); } finally { restore(); AI.busy = false; unbusy(); S.dirty = true; }
@@ -2575,6 +2614,27 @@ function dxfFrom(ents, totalH, totalW = S.sheet[0], inch = false) {   // a plain
 
 /* ---------- aerial photo, resampled into the (possibly rotated) site frame ---------- */
 let aerialCache = { key: '', status: '' };   // (rebuilt by setGrid)
+let paintedCache = { key: '', canvas: null };   // the last painting laid on the ground, at the photo raster's resolution
+const groundPainted = () => !!(S.groundPaint && paintedCache.canvas);
+function bakePainted() {                  // each ground pixel looks up its place in the painting through the camera it was painted from; ground the painter could not see keeps the photo or the paper
+  const pc = AI.lastCam, im = AI.lastImg; if (!AI.last || !pc || !im) { toast('paint the model first'); return false; }
+  const keep = { cam: S.cam, walk: S.walk }; S.cam = JSON.parse(JSON.stringify(pc.cam)); S.walk = pc.walk ? { ...pc.walk } : null;
+  try {
+    const W2 = pc.W2, H2 = pc.H2, { proj } = camera(W2, H2);
+    const pic = document.createElement('canvas'); pic.width = W2; pic.height = H2; const pctx2 = pic.getContext('2d'); pctx2.drawImage(im, 0, 0, W2, H2); const pd = pctx2.getImageData(0, 0, W2, H2).data;
+    const dc = document.createElement('canvas'); dc.width = W2; dc.height = H2; const d2 = dc.getContext('2d'); d2.fillStyle = '#000'; d2.fillRect(0, 0, W2, H2); const tiles = [];   // a depth map from the same camera, quarter metres in red and green
+    for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { const P = [proj(i, j, zv[idx(i, j)]), proj(i + 1, j, zv[idx(i + 1, j)]), proj(i + 1, j + 1, zv[idx(i + 1, j + 1)]), proj(i, j + 1, zv[idx(i, j + 1)])]; if (P.some(q => isNaN(q[0]))) continue; const d = -(P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4; if (!(d > 0)) continue; tiles.push({ d, P }); }
+    tiles.sort((a, b) => b.d - a.d); for (const t of tiles) { const v = Math.max(1, Math.min(65535, Math.round(t.d * 4))); d2.fillStyle = `rgb(${v >> 8},${v & 255},0)`; d2.beginPath(); t.P.forEach((q, k) => k ? d2.lineTo(q[0], q[1]) : d2.moveTo(q[0], q[1])); d2.closePath(); d2.fill(); }
+    const dd = d2.getImageData(0, 0, W2, H2).data;
+    const GW = (W - 1) * AER, GH = (H - 1) * AER, out = document.createElement('canvas'); out.width = GW; out.height = GH; const o = out.getContext('2d');
+    if (aerialCache.canvas) o.drawImage(aerialCache.canvas, 0, 0, GW, GH); else { o.fillStyle = PAPER; o.fillRect(0, 0, GW, GH); }
+    const img = o.getImageData(0, 0, GW, GH), g = img.data; let hit = 0;
+    for (let py = 0; py < GH; py++) for (let px = 0; px < GW; px++) { const gi = (px + .5) / AER, gj = (py + .5) / AER, q = proj(gi, gj, sample(zv, gi, gj)); if (isNaN(q[0])) continue; const x = Math.round(q[0]), y = Math.round(q[1]); if (x < 0 || y < 0 || x >= W2 || y >= H2) continue;
+      const dep = -q[2], di = (y * W2 + x) * 4, bd = (dd[di] * 256 + dd[di + 1]) / 4; if (!bd || dep > bd + 1.5 + dep * .03) continue;   // hidden behind nearer ground: keep the photo
+      const k = (py * GW + px) * 4; g[k] = pd[di]; g[k + 1] = pd[di + 1]; g[k + 2] = pd[di + 2]; hit++; }
+    o.putImageData(img, 0, 0); paintedCache = { key: AI.last.slice(-40) + '|' + S.terrainVer, canvas: out, hit }; return hit > 0;
+  } finally { S.cam = keep.cam; S.walk = keep.walk; skyCache.key = ''; S.dirty = true; }
+}
 function aerialImage() {
   if (!S.world) return null; const key = [S.world.lat, S.world.lon, S.siteW, S.rot, W].join('|');
   if (aerialCache.key === key) return aerialCache;
@@ -3336,7 +3396,7 @@ const TOUR = [
   { el: '#aerialRow', text: 'the sheet block. the contour interval, hachures density, labels on or off, the cut·fill wash or a plain sheet, contours labelled to read uphill or existing ground dashed, and the aerial photo with its opacity. photo on.', do: async () => { setMode('plan'); setBrush('pen'); S.aerial = true; aerialUI(); S.dirty = true; } },
   // 2 model
   { el: '#modes button[data-m="model"]', text: 'press 2 for the model. right drag orbits, the wheel zooms in close enough to read a single contour, and the view buttons on the status line give the standard views; this is axon. in deep, the model block holds smooth or stepped, a draped ground or the cardboard-stack look of the laser cut, and the photo, orbit or sculpt and rain switches.', do: async () => { S.aerial = false; aerialUI(); setMode('model'); document.querySelector('#views button[data-v="axon"]').click(); } },
-  { el: '#sculptRow', deep: true, text: 'orbit or sculpt: in sculpt the draw block below works on the 3d ground under your finger, and rain runs on the model while you shape it. rain is on now.', do: async () => { setMode('model'); document.querySelector('#colorRow button[data-c="paper"]').click(); setRain(true); } },
+  { el: '#sculptRow', deep: true, text: 'orbit, sculpt or walk. in sculpt the draw block below works on the 3d ground under your finger, and rain runs on the model while you shape it. walk stands you on the ground at eye height: w a s d or the arrows move, shift runs, a drag looks around; after a painting, the painted switch beside the photo lays the picture back on the ground so you can walk inside it. rain is on now.', do: async () => { setMode('model'); document.querySelector('#colorRow button[data-c="paper"]').click(); setRain(true); } },
   { el: '#rendRow', text: 'the render block. render turns the model into a perspective with a real sun: the section cut menu (none, black or white face along the active line), the background menu (four skies or a studio backdrop), the surface colour, and the sun clock with month, hour, play day and play year. the eye height button sits with the view buttons on the status line.', do: async () => { setMode('model'); S.rendOn = true; S.cam.persp = true; rendUI(); document.querySelector('#views button[data-eye="1.47"]').click(); S.dirty = true; } },
   { el: '#colorRow', deep: true, text: 'surface color. paper, elevation bands, slope or aspect on the model; the map mash-up paints from whichever is showing.', do: async () => { setMode('model'); S.rendOn = false; rendUI(); document.querySelector('#colorRow button[data-c="slope"]').click(); } },
   { el: '#aiRow', text: 'the paint block. plain or paint, then paint it sends the render to an image model that paints real ground, plants and light over it: as a photograph, a watercolour, an ink wash, a map mash-up that keeps the map colours and contour lines and paints life on top, or a white card model with only the planting and water painted in. what it sends carries the contour lines, the standing rain and the surface colour you chose, so the painter holds the real ground. the words box tells it what it cannot see, and up to three reference photos go along too: the place, the look you want, or the building to be built, so a placed object is painted as that building. it needs your own google ai key, kept in this browser only.', do: async () => { setMode('model'); S.rendOn = true; S.paintOn = true; rendUI(); S.dirty = true; } },
