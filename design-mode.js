@@ -52,8 +52,9 @@
 
   const el = id => { const d = document.createElement('div'); d.id = id; d.className = 'dm'; ROOT.appendChild(d); return d; };
   const bar = el('dmBar'), box = el('dmBox'), hov = el('dmHover'), knobs = el('dmKnobs'), list = el('dmList'), hint = el('dmHint');
-  bar.innerHTML = '<b>design mode</b><span class="n" id="dmN">no changes</span><button id="dmUndo">undo</button><button id="dmCopy">copy</button><button id="dmSave">save</button><button id="dmClear">clear</button><button id="dmDone">done</button>';
-  hint.textContent = 'click to select · drag to move · double-click to edit the words · scrub the numbers · delete hides · p for the parent · esc';
+  bar.innerHTML = '<b>design mode</b><span class="n" id="dmN">no changes</span><button id="dmPause">pause</button><button id="dmUndo">undo</button><button id="dmCopy">copy</button><button id="dmSave">save</button><button id="dmClear">clear</button><button id="dmDone">done</button>';
+  const HINT = 'click to select · drag to move · double-click to edit the words · scrub the numbers · delete hides · p for the parent · ctrl-click uses the page · esc';
+  hint.textContent = HINT;
 
   /* ---------- naming things for humans and for the patch ---------- */
   const textNode = (e, make) => {
@@ -127,7 +128,7 @@
   ops.forEach(o => { try { apply(o); } catch (_) {} });
 
   /* ---------- selection ---------- */
-  let sel = null, editing = null;
+  let sel = null, editing = null, paused = false;
   const rect = (d, e, pad) => { const r = e.getBoundingClientRect(); d.style.left = (r.left - pad) + 'px'; d.style.top = (r.top - pad) + 'px'; d.style.width = (r.width + pad * 2) + 'px'; d.style.height = (r.height + pad * 2) + 'px'; };
   const select = e => {
     sel = e; if (!e) { box.style.display = 'none'; knobs.style.display = 'none'; return; }
@@ -222,10 +223,10 @@
 
   /* ---------- pointer: select, drag to move ---------- */
   let drag = null;
-  const inPage = t => t instanceof Element && ROOT.contains(t) && !t.closest('.dm');
+  const inPage = t => !paused && t instanceof Element && ROOT.contains(t) && !t.closest('.dm');
   window.addEventListener('pointerdown', ev => {
     if (editing) { if (!editing.contains(ev.target)) endEdit(true); else return; }
-    if (!inPage(ev.target)) return;
+    if (!inPage(ev.target) || ev.ctrlKey) return;
     ev.preventDefault(); ev.stopImmediatePropagation();
     const u = unitOf(ev.target); if (!u) return;
     select(u); if (u === ROOT) return;
@@ -263,12 +264,12 @@
     }
     drag = null;
   }, true);
-  window.addEventListener('click', ev => { if (inPage(ev.target) && !editing) { ev.preventDefault(); ev.stopImmediatePropagation(); } }, true);
+  window.addEventListener('click', ev => { if (inPage(ev.target) && !editing && !ev.ctrlKey) { ev.preventDefault(); ev.stopImmediatePropagation(); } }, true);
   window.addEventListener('scroll', () => { hov.style.display = 'none'; }, true);
 
   /* ---------- double-click: edit the words ---------- */
   window.addEventListener('dblclick', ev => {
-    if (!inPage(ev.target) || editing) return; ev.preventDefault(); ev.stopImmediatePropagation();
+    if (!inPage(ev.target) || editing || ev.ctrlKey) return; ev.preventDefault(); ev.stopImmediatePropagation();
     const u = unitOf(ev.target); if (!u || u === ROOT || u.matches('select,input,textarea,img,svg,canvas,video')) return;
     let t = ev.target.closest(TEXTY); while (t && t !== u && !textNode(t) && u.contains(t)) t = t.parentElement.closest(TEXTY);
     if (!t || !u.contains(t)) t = u; const node = textNode(t, true);
@@ -284,7 +285,7 @@
 
   /* ---------- keys ---------- */
   window.addEventListener('keydown', ev => {
-    if (knobs.contains(ev.target)) return;
+    if (knobs.contains(ev.target) || paused) return;
     if (editing) { if (ev.key === 'Enter') { ev.preventDefault(); endEdit(true); } else if (ev.key === 'Escape') { ev.preventDefault(); endEdit(false); } ev.stopImmediatePropagation(); return; }
     if ((ev.ctrlKey || ev.metaKey) && ev.key === 'z') { ev.preventDefault(); ev.stopImmediatePropagation(); undo(); return; }
     if (!sel) return; ev.stopImmediatePropagation();
@@ -303,6 +304,12 @@
   /* ---------- the bar ---------- */
   const undo = () => { const o = ops.pop(); if (!o) return; try { revert(o); } catch (_) {} show(); if (sel) buildKnobs(sel); };
   document.getElementById('dmUndo').onclick = undo;
+  const pauseBtn = document.getElementById('dmPause');
+  pauseBtn.onclick = () => {
+    paused = !paused; if (editing) endEdit(true); drag = null; select(null); hov.style.display = 'none';
+    pauseBtn.textContent = paused ? 'resume' : 'pause'; bar.style.borderStyle = paused ? 'dashed' : 'solid';
+    hint.textContent = paused ? 'paused · the page works as usual · resume to keep designing' : HINT;
+  };
   const brief = () => {
     const page = location.pathname.replace(/^\//, '') || 'index.html', when = new Date().toLocaleString('en-US', { hour12: false });
     return 'design mode · ' + location.host + '/' + page + ' · ' + when + '\n\n' + ops.map((o, i) => (i + 1) + '. ' + plain(english(o)) + '\n   ' + JSON.stringify(o)).join('\n') + '\n';
