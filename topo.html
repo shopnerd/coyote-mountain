@@ -379,6 +379,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="sec">exports</div>
     <div class="actions" id="exports">
       <button class="btn" id="png">save png</button>
+      <button class="btn" id="recView">record video</button>
       <div class="p deep" style="grid-column:1/-1;margin-top:2px"><label>3d model</label><select id="meshFmt"><option value="stl">stl · solid to print, no texture</option><option value="obj">obj + mtl + png · textured, three files zipped</option><option value="glb">glb · textured, one file</option><option value="wrl">wrl · vrml, textured, for colour printing</option></select></div>
       <button class="btn deep" id="stl">export stl</button>
       <div class="deep" style="display:flex;gap:6px"><button class="btn" id="laser" style="flex:1">export laser</button><button class="btn" id="laserDxf" title="the same cut file as DXF, for laser software that prefers it">dxf</button></div>
@@ -2934,6 +2935,21 @@ function glbOut(m, png, name) {            // gltf binary: one node, the ground 
   const b0 = 20 + jl; dv.setUint32(b0, off, true); dv.setUint32(b0 + 4, 0x004e4942, true); let p = b0 + 8; for (const ch of chunks) { u8.set(new Uint8Array(ch.buffer, ch.byteOffset, ch.byteLength), p); p += pad4(ch.byteLength); }
   return new Blob([buf], { type: 'model/gltf-binary' });
 }
+const REC = { rec: null, rc: null, t0: 0, raf: 0, last: -1 };
+function recUI() { const b = document.getElementById('recView'); if (!REC.rec) { b.textContent = 'record video'; b.classList.remove('on'); return; } const t = Math.floor((performance.now() - REC.t0) / 1000); if (t !== REC.last) { REC.last = t; b.textContent = `stop · ${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`; } b.classList.add('on'); }
+function recStart() {   // the view as it is on screen, every frame, until stop: rain, the sun playing, an orbit, the history
+  if (!window.MediaRecorder) { toast('this browser cannot record video'); return; }
+  const k = Math.min(1, 1920 / cv.width), rc = document.createElement('canvas'); rc.width = Math.round(cv.width * k / 2) * 2; rc.height = Math.round(cv.height * k / 2) * 2;   // at most 1920 wide, even sides
+  const o = rc.getContext('2d'), ground = getComputedStyle(document.body).backgroundColor || '#f0f0ec';
+  const copy = () => { if (!REC.rec) return; o.fillStyle = ground; o.fillRect(0, 0, rc.width, rc.height); o.imageSmoothingEnabled = true; o.imageSmoothingQuality = 'high'; o.drawImage(cv, 0, 0, rc.width, rc.height); recUI(); if (performance.now() - REC.t0 > 600e3) { recStop(); return; } REC.raf = requestAnimationFrame(copy); };   // drawn every frame even when nothing moves, so a still stretch stays a steady picture; ten minutes at most
+  const stream = rc.captureStream(30), mime = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '', ext = /mp4/.test(mime) ? 'mp4' : 'webm', chunks = [];
+  const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : undefined);
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => { cancelAnimationFrame(REC.raf); REC.rec = null; REC.rc = null; recUI(); if (!chunks.length) return; const url = URL.createObjectURL(new Blob(chunks, { type: mime || 'video/webm' })); const where = S.world && S.world.name ? S.world.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24) : 'site'; dl(url, `coyote-topo-${S.mode}-${where}.${ext}`); setTimeout(() => URL.revokeObjectURL(url), 5000); };
+  REC.rec = rec; REC.rc = rc; REC.t0 = performance.now(); REC.last = -1; rec.start(500); copy();
+}
+function recStop() { if (REC.rec && REC.rec.state !== 'inactive') REC.rec.stop(); }
+document.getElementById('recView').onclick = () => { if (REC.rec) recStop(); else recStart(); };
 function dl(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; a.click(); toast('saved ' + name); }
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1600); }
 
