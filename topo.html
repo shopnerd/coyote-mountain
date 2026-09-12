@@ -180,7 +180,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="desc deep" id="sculptLbl" style="display:none;padding-bottom:2px">left drag or one finger</div>
     <div class="seg deep" id="sculptRow" style="display:none;margin-bottom:6px"><button data-k="orbit" class="on">orbit</button><button data-k="sculpt">sculpt</button><button data-k="walk" style="display:none">walk</button></div>
     <div class="seg" id="rainRowM" style="display:none;margin-bottom:6px"><button id="rainBtnM">rain (r)</button></div>
-    <div class="seg deep" id="cloudRow" style="display:none;margin-bottom:6px"><button data-cl="1">points</button><button data-cl="0" class="on">no points</button><button id="cloudLoad">load</button></div>
+    <div class="seg deep" id="cloudRow" style="display:none;margin-bottom:6px"><button data-cl="1">points</button><button data-cl="0" class="on">no points</button><button id="cloudNight">night</button><button id="cloudLoad">load</button></div>
     <div class="desc deep" id="cloudInfo" style="display:none;padding-bottom:4px"></div>
     <input type="file" id="cloudFile" accept=".bin" style="display:none">
     <div class="sec" id="rendLbl" style="display:none;padding-top:4px">render</div>
@@ -575,7 +575,7 @@ let base = new Float32Array(W * H);     // existing grade, m
 let z = new Float32Array(W * H);        // proposed grade, m
 let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z, modelSurf = false, rendCutSide = null;   // modelSurf: true while the model, the print or the cuts are being made, so footprints carry their pedestal or recess   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, secs: [], secI: 0, geo: false, paintOn: false, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, gradeV: 2, sideV: 3, gline: null, padShape: 'rect', padLevel: 'balance', padEdge: 'slopes', padGradeV: 0, showCF: true, pathW: 1.5, pathH: -.15, pathSurf: 'none', rendOn: false, rendCut: 'black', rendSky: 'cumulus', bldMode: 'mapped', bldMM: 3, labelUp: false, showBase: true, strip: 0, swell: .2, runoff: .7, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false, wet: false, land: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null };
+  seed: 7, sec: null, secs: [], secI: 0, geo: false, paintOn: false, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, gradeV: 2, sideV: 3, gline: null, padShape: 'rect', padLevel: 'balance', padEdge: 'slopes', padGradeV: 0, showCF: true, pathW: 1.5, pathH: -.15, pathSurf: 'none', rendOn: false, rendCut: 'black', rendSky: 'cumulus', bldMode: 'mapped', bldMM: 3, labelUp: false, showBase: true, strip: 0, swell: .2, runoff: .7, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false, wet: false, land: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null, cloudNight: false };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -761,10 +761,11 @@ let fontScale = 1;
 function font(px, weight) { return `${weight || 400} ${px * fontScale}px ${getComputedStyle(document.body).fontFamily}`; }
 
 /* ---------- plan ---------- */
+let nightInk = null;   // the roads' colour on the night ground
 function drawRoads(c, toXY, k, dense) {   // roads by class, paths dashed; through any projection
   const R = S.showRoads && S.coast && S.coast.roads; if (!R || !R.length) return;
   const style = [[2.2, .95, []], [1.6, .9, []], [1.0, .85, []], [.7, .8, [4 * k, 3 * k]]];
-  c.save(); c.lineJoin = 'round'; c.lineCap = 'round'; c.strokeStyle = INK2;
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'round'; c.strokeStyle = nightInk || INK2;
   for (let cls = 0; cls < 4; cls++) { const st = style[cls]; c.lineWidth = st[0] * k; c.globalAlpha = st[1]; c.setLineDash(st[2]); c.beginPath();
     for (const r of R) { if (r.c !== cls) continue; const P = dense ? densify(r.pts.map(q => [q[0], q[1], .5]), .3) : r.pts; let pen = false;
       for (const q of P) { const inside = q[0] >= -1 && q[1] >= -1 && q[0] <= W && q[1] <= H && (!dense || inTrim(q[0], q[1])); if (!inside) { pen = false; continue; } const p = toXY(q[0], q[1]); pen ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); pen = true; } }
@@ -919,7 +920,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   const fast = S.lowQ && !mini; if (fast) step = Math.max(step, 2);   // while the camera moves: every second cell, no labels; full quality on release
   c.clearRect(0, 0, w, h);
   const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
-  const R = S.rendOn && !mini && !S.noFoot, s = cs(), tm = R ? null : trimMask(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);   // the render shows the whole fetched world, lot or no lot
+  const R = S.rendOn && !mini && !S.noFoot, night = !!(S.cloud && S.cloudNight && CLOUD.buf && !mini && !R), s = cs(), tm = R ? null : trimMask(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, baseZ = lo - Math.max(1, (hi - lo) * .25);   // the render shows the whole fetched world, lot or no lot
   let scale = zoom * Math.min(w, h) / (viewFrame().fitW * 1.25), ox = w / 2 + S.cam.pan.x, oy = h / 2 + 10 + S.cam.pan.y;
   const MF = viewFrame(); let proj = (i, j, zz) => { const X = (i - MF.ci) * s, Y = (j - MF.cj) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy;
@@ -933,9 +934,9 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     if (S.rendCut !== 'none' && S.sec && !S.walk) { const A = S.sec[0], B = S.sec[1], dx = B[0] - A[0], dy = B[1] - A[1], m = [(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], nrm = [-dy, dx], L = Math.hypot(dx, dy) || 1; const p1 = [m[0] + nrm[0] / L * 3, m[1] + nrm[1] / L * 3], p2 = [m[0] - nrm[0] / L * 3, m[1] - nrm[1] / L * 3];
       const d1 = proj(p1[0], p1[1], zmid)[2], d2 = proj(p2[0], p2[1], zmid)[2]; cutSide = { A, dx, dy, sign: Math.sign(d1 > d2 ? dx * (p1[1] - A[1]) - dy * (p1[0] - A[0]) : dx * (p2[1] - A[1]) - dy * (p2[0] - A[0])) }; } }   // the camera stands on the side with the larger depth value
   const onCamSide = (x, y) => cutSide && Math.sign(cutSide.dx * (y - cutSide.A[1]) - cutSide.dy * (x - cutSide.A[0])) === cutSide.sign;
-  rend3D = R ? { proj, s } : null;
+  rend3D = R ? { proj, s } : null; if (night) drawNightSky(c, w, h);
   const eG = Math.max(1, Math.round(W / 150)), gradM = eG === 1 ? grad : (fx, fy) => [(sample(z, fx + eG, fy) - sample(z, fx - eG, fy)) / (2 * eG * s), (sample(z, fx, fy + eG) - sample(z, fx, fy - eG)) / (2 * eG * s)];   // at detail 2x the slope for shading spans the height data's own pixel, or its steps show as stripes
-  const texSrc = groundPainted() ? paintedCache.canvas : (S.aerialM && aerialCache.canvas) ? aerialCache.canvas : null, baked = mode === 'aerial' && texSrc && !cfR && !ovR && !R ? shadeTex(texSrc, lx, ly, lz) : null; const bakedPat = baked ? c.createPattern(baked, 'no-repeat') : null;
+  const texSrc = groundPainted() ? paintedCache.canvas : (S.aerialM && aerialCache.canvas) ? aerialCache.canvas : null, baked = mode === 'aerial' && texSrc && !cfR && !ovR && !R && !night ? shadeTex(texSrc, lx, ly, lz) : null; const bakedPat = baked ? c.createPattern(baked, 'no-repeat') : null;
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
     if (tm && !tin(i, j)) continue;
     const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
@@ -964,6 +965,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
         const tmp = []; isoSegs(za, zb, zc, zd, lv, tmp);
         if (!R || S.aiCtl) for (let q = 0; q < tmp.length; q += 4) lines.push([proj(ii + tmp[q] * st, jj + tmp[q + 1] * st, lv), proj(ii + tmp[q + 2] * st, jj + tmp[q + 3] * st, lv), isIndex(lv), lv]);
       }
+      if (night) { const v = 7 + 20 * Math.max(0, light); tone = wet ? `rgb(${v * .5 | 0},${v * .9 | 0},${v * 1.8 | 0})` : `rgb(${v * .85 | 0},${v * .95 | 0},${v * 1.2 | 0})`; tex = null; pt = null; wpart = null; shore = null; }   // night: the ground a dark body, lit only enough to read its form
       items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, pt, lines, wpart, shore, tex: wet ? null : tex });
     };
     const fW = S.seaClip && wF ? [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]] : null, litC = lit ? [lit[idx(i, j)], lit[idx(i2, j)], lit[idx(i2, j2)], lit[idx(i, j2)]] : null;
@@ -985,7 +987,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   }
   // base outline first, so the model covers it
   const slab = !tm && (!R || !cutSide);   // the base slab shows in the model, and in the render whenever there is no cut: a model on a table
-  if (slab) { c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath();
+  if (slab) { c.strokeStyle = night ? 'rgba(63,224,207,.3)' : INK2; c.lineWidth = 1; c.beginPath();
   [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const p = proj(i, j, baseZ); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke(); }
   // walls of the base slab: one polygon per side, drawn far to near before the surface
   const walls = [];
@@ -999,7 +1001,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   if (slab) { side(north); side(south); side(west); side(east); }
   walls.sort((a, b) => a.d - b.d);
   c.lineJoin = 'round';
-  for (const wl of walls) { c.fillStyle = TONES[3]; c.strokeStyle = INK2; c.lineWidth = .7; c.beginPath();
+  for (const wl of walls) { c.fillStyle = night ? '#090c12' : TONES[3]; c.strokeStyle = night ? 'rgba(63,224,207,.3)' : INK2; c.lineWidth = .7; c.beginPath();
     wl.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
   if (S.showBld && S.coast && S.coast.blds && S.coast.blds.length) for (const b of S.coast.blds) { if (cutSide && onCamSide(b.pts.reduce((a, q) => a + q[0], 0) / b.pts.length, b.pts.reduce((a, q) => a + q[1], 0) / b.pts.length)) continue; if (tm && !inTrim(b.pts.reduce((a, q) => a + q[0], 0) / b.pts.length, b.pts.reduce((a, q) => a + q[1], 0) / b.pts.length)) continue;   // blocks: flat roof at the highest ground under the footprint plus the height; walls down to the ground at each corner
     const g = b.pts.map(q => sample(zv, Math.max(0, Math.min(W - 1, q[0])), Math.max(0, Math.min(H - 1, q[1])))), top = S.bldMode === 'mapped' ? Math.max(...g) + b.h : Math.max(...g) + .001;   // pedestal and recess are already in the ground; outline mode draws a flat footprint on it
@@ -1017,17 +1019,17 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   items.sort((a, b) => a.d - b.d);
   // tiles are filled with a hair of outset instead of being stroked (half the canvas calls); contour lines are batched in runs of near-equal depth
   const OUT = .4, ln = [], li = [], ls = [];
-  const flushLines = () => { if (ls.length) { c.strokeStyle = '#4f7391'; c.lineWidth = 1; c.globalAlpha = .9; c.beginPath(); for (let q = 0; q < ls.length; q++) { const l = ls[q]; c.moveTo(l[0][0], l[0][1]); for (let t = 1; t < l.length; t++) c.lineTo(l[t][0], l[t][1]); } c.stroke(); ls.length = 0; } c.strokeStyle = INK;
-    if (ln.length) { c.lineWidth = .6; c.globalAlpha = .7; c.beginPath(); for (let q = 0; q < ln.length; q++) { const l = ln[q]; c.moveTo(l[0][0], l[0][1]); c.lineTo(l[1][0], l[1][1]); } c.stroke(); ln.length = 0; }
-    if (li.length) { c.lineWidth = 1.2; c.globalAlpha = .9; c.beginPath(); for (let q = 0; q < li.length; q++) { const l = li[q]; c.moveTo(l[0][0], l[0][1]); c.lineTo(l[1][0], l[1][1]); } c.stroke(); li.length = 0; }
-    c.globalAlpha = 1; };
+  const flushLines = () => { if (ls.length) { c.strokeStyle = '#4f7391'; c.lineWidth = 1; c.globalAlpha = .9; c.beginPath(); for (let q = 0; q < ls.length; q++) { const l = ls[q]; c.moveTo(l[0][0], l[0][1]); for (let t = 1; t < l.length; t++) c.lineTo(l[t][0], l[t][1]); } c.stroke(); ls.length = 0; } c.strokeStyle = night ? '#3fe0cf' : INK; if (night) c.globalCompositeOperation = 'lighter';
+    if (ln.length) { c.lineWidth = .6; c.globalAlpha = night ? .3 : .7; c.beginPath(); for (let q = 0; q < ln.length; q++) { const l = ln[q]; c.moveTo(l[0][0], l[0][1]); c.lineTo(l[1][0], l[1][1]); } c.stroke(); ln.length = 0; }
+    if (li.length) { c.lineWidth = 1.2; c.globalAlpha = night ? .8 : .9; c.beginPath(); for (let q = 0; q < li.length; q++) { const l = li[q]; c.moveTo(l[0][0], l[0][1]); c.lineTo(l[1][0], l[1][1]); } c.stroke(); li.length = 0; }
+    c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; };
   let run = 0;
   for (const it of items) {
-    if (it.wall) { c.fillStyle = TONES[3]; c.strokeStyle = INK2; c.lineWidth = .7; c.lineJoin = 'round'; c.beginPath(); it.wall.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); continue; }
+    if (it.wall) { c.fillStyle = night ? '#090c12' : TONES[3]; c.strokeStyle = night ? 'rgba(63,224,207,.3)' : INK2; c.lineWidth = .7; c.lineJoin = 'round'; c.beginPath(); it.wall.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); continue; }
     if (it.tri) { const P = it.tri, cxt = (P[0][0] + P[1][0] + P[2][0]) / 3, cyt = (P[0][1] + P[1][1] + P[2][1]) / 3; c.fillStyle = it.tone; c.beginPath(); for (let k = 0; k < 3; k++) { const p = P[k], dx = p[0] - cxt, dy = p[1] - cyt, d = Math.hypot(dx, dy) || 1; const x = p[0] + dx / d * .35, y = p[1] + dy / d * .35; k ? c.lineTo(x, y) : c.moveTo(x, y); } c.closePath(); c.fill(); continue; }
     if (it.bld) { const { R, G } = it.bld, n = R.length, walls = []; for (let t = 0; t < n; t++) { const t2 = (t + 1) % n; walls.push({ d: Math.max(G[t][2], G[t2][2]), q: [G[t], G[t2], R[t2], R[t]] }); } walls.sort((a, b2) => a.d - b2.d);
-      c.lineJoin = 'round'; for (const w of walls) { c.fillStyle = '#b9b6ab'; c.strokeStyle = INK2; c.lineWidth = .5; c.beginPath(); w.q.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
-      c.fillStyle = '#e2dfd5'; c.beginPath(); R.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = .8; c.stroke(); continue; }
+      c.lineJoin = 'round'; for (const w of walls) { c.fillStyle = night ? '#10141c' : '#b9b6ab'; c.strokeStyle = night ? 'rgba(63,224,207,.35)' : INK2; c.lineWidth = .5; c.beginPath(); w.q.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
+      c.fillStyle = night ? '#171c26' : '#e2dfd5'; c.beginPath(); R.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = .8; c.stroke(); continue; }
     const P = it.P, cx = (P[0][0] + P[1][0] + P[2][0] + P[3][0]) * .25, cyy = (P[0][1] + P[1][1] + P[2][1] + P[3][1]) * .25;
     if (it.tex) {   // the photo patch mapped onto the tile: unit square -> the tile's projected corners (affine on three corners); the tile is first filled with its average colour so the fourth corner's miss never shows white
       const big = Math.max(Math.abs(P[2][0] - P[0][0]), Math.abs(P[2][1] - P[0][1]), Math.abs(P[3][0] - P[1][0]), Math.abs(P[3][1] - P[1][1])) > 40;
@@ -1060,11 +1062,11 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   }
   flushLines();
   if (cutSide) drawCutFace(c, proj, cutSide, lo, hi);
-  drawRoads(c, (i, j) => proj(i, j, sample(zv, i, j) + .03), mini ? .7 : 1, true);
+  nightInk = night ? 'rgba(214,226,238,.5)' : null; drawRoads(c, (i, j) => proj(i, j, sample(zv, i, j) + .03), mini ? .7 : 1, true); nightInk = null;
   drawStrokes(c, (i, j) => proj(i, j, sample(zv, i, j) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
-  if (S.cloud && CLOUD.n && !mini) drawCloud(c, proj, w, h, fast, cutSide ? onCamSide : null);
-  if (S.labels && !mini && !fast && !R) {
+  if (S.cloud && CLOUD.buf && !mini) drawCloud(c, proj, w, h, fast, cutSide ? onCamSide : null, night);
+  if (S.labels && !mini && !fast && !R && !night) {
     const groups = new Map(), dmed = items.length ? items[Math.floor(items.length * .45)].d : 0;
     for (const it of items) if (it.d >= dmed) for (const [a, b, ix, lv] of it.lines) if (ix) { if (!groups.has(lv)) groups.set(lv, []); groups.get(lv).push([a[0], a[1], b[0], b[1]]); }
     contourLabels(c, groups, 200, true); spotLabels(c, (i, j, zz) => proj(i, j, zz));
@@ -1505,7 +1507,7 @@ function poolLevel(cp, A) {
   return (lo + hi) / 2;
 }
 function modelFrame() {                   // the model rendered once, reused while the rain moves
-  const key = [S.terrainVer, S.bldMode, S.bldMM, S.rendOn, S.rendCut, S.rendSky, JSON.stringify(S.sec), S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, walkKey(), S.modelStyle, S.colorMode, S.aerialM, S.aop, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer, S.cloud, CLOUD.n].join('|');
+  const key = [S.terrainVer, S.bldMode, S.bldMM, S.rendOn, S.rendCut, S.rendSky, JSON.stringify(S.sec), S.lowQ, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, walkKey(), S.modelStyle, S.colorMode, S.aerialM, S.aop, S.cam.persp, S.overlayOn && !!S.overlay, S.ve, S.labels, S.siteW, S.unit, S.w, S.h, aerialCache.status, S.month, S.hour, S.sunMode, S.an.dam, S.damH, JSON.stringify(S.keyPt), JSON.stringify(S.damPt), S.rain, S.an.plow, S.strokeVer, S.cloud, S.cloudNight, CLOUD.n].join('|');
   if (modelShot.key !== key) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
     (S.modelStyle === 'stepped' ? drawStepped : drawModel)(o, S.w, S.h, 1, false); modelShot = { key, canvas: off }; }
   return modelShot.canvas;
@@ -2753,24 +2755,40 @@ function placeCloud() {                    // the points into grid coordinates f
   const c = CLOUD; if (!c.buf || !S.world) { c.n = 0; return; } const key = [S.world.lat, S.world.lon, S.siteW, S.rot, W].join('|'); if (c.key === key && c.n) return;
   const p = c.parsed || (c.parsed = parseCloud(c.buf)), kx = 111320 * Math.cos(p.lat * D2R), ky = 111320, gi = new Float32Array(p.n), gj = new Float32Array(p.n); let inside = 0;
   for (let k = 0; k < p.n; k++) { const g = latLonToGrid(p.lat + p.y[k] / ky, p.lon + p.x[k] / kx); gi[k] = g[0]; gj[k] = g[1]; if (g[0] >= 0 && g[1] >= 0 && g[0] <= W - 1 && g[1] <= H - 1) inside++; }
-  c.n = p.n; c.gi = gi; c.gj = gj; c.z = p.z; c.rgb = p.rgb; c.name = p.name; c.lat = p.lat; c.lon = p.lon; c.key = key; c.inside = inside;
+  c.n = p.n; c.gi = gi; c.gj = gj; c.z = p.z; c.rgb = p.rgb; c.name = p.name; c.lat = p.lat; c.lon = p.lon; c.key = key; c.inside = inside; { const zs = []; for (let k = 0; k < p.n; k += Math.max(1, p.n >> 12)) zs.push(p.z[k]); zs.sort((a, b) => a - b); c.zlo = zs[Math.floor(zs.length * .02)]; c.zhi = zs[Math.floor(zs.length * .98)]; }   // the height range for the night colours, the outliers left out
   document.getElementById('cloudInfo').textContent = `${p.name} · ${p.n.toLocaleString()} points · ${Math.round(inside / p.n * 100)}% inside this site`; document.getElementById('cloudInfo').style.display = S.mode === 'model' ? '' : 'none';
 }
 async function loadCloud(buf, quiet) { CLOUD.buf = buf; CLOUD.parsed = null; CLOUD.key = ''; placeCloud(); if (!CLOUD.n) { if (!quiet) toast('fetch the real terrain around the survey first, then load the points'); return; } S.cloud = true; cloudUI(); S.dirty = true; if (!quiet) toast(`${CLOUD.name} · ${CLOUD.n.toLocaleString()} points · ${Math.round(CLOUD.inside / CLOUD.n * 100)}% inside this site`); }
-function cloudUI() { document.querySelectorAll('#cloudRow button[data-cl]').forEach(b => b.classList.toggle('on', (b.dataset.cl === '1') === !!S.cloud)); }
+function cloudUI() { document.querySelectorAll('#cloudRow button[data-cl]').forEach(b => b.classList.toggle('on', (b.dataset.cl === '1') === !!S.cloud)); document.getElementById('cloudNight').classList.toggle('on', !!(S.cloud && S.cloudNight)); }
 let cloudCv = null;
-function drawCloud(c, proj, w, h, fast, hidden) {   // every point a speck through the model's own camera, written straight into pixels: near ones full, far ones fainter; every fourth point while the camera moves
+const NIGHT_RAMP = [[46, 26, 110], [47, 95, 190], [34, 178, 170], [140, 214, 90], [246, 186, 72]];   // low to high: violet, blue, teal, green, amber
+let nightStars = null, cloudBloom = null, nightAcc = null;
+function drawNightSky(c, w, h) {           // the night ground under the points: a deep gradient and a fixed field of stars
+  const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#04050a'); g.addColorStop(.6, '#080b14'); g.addColorStop(1, '#0c111b'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+  if (!nightStars) { let r = 91; const rnd = () => (r = (r * 16807) % 2147483647) / 2147483647; nightStars = Array.from({ length: 240 }, () => [rnd(), rnd() * rnd(), .4 + rnd() * 1.1, .25 + rnd() * .65]); }
+  for (const [x, y, sz, a] of nightStars) { c.globalAlpha = a; c.fillStyle = '#dfe8ff'; c.fillRect(x * w, y * h * .8, sz, sz); } c.globalAlpha = 1;
+}
+function drawCloud(c, proj, w, h, fast, hidden, night) {   // every point a speck through the model's own camera, written straight into pixels: near ones full, far ones fainter; every fourth point while the camera moves
   if (CLOUD.key !== [S.world && S.world.lat, S.world && S.world.lon, S.siteW, S.rot, W].join('|')) placeCloud(); if (!CLOUD.n) return;
   const sc = Math.min(2, dpr), ww = Math.round(w * sc), hh = Math.round(h * sc); if (!cloudCv || cloudCv.width !== ww || cloudCv.height !== hh) { cloudCv = document.createElement('canvas'); cloudCv.width = ww; cloudCv.height = hh; }
   const o = cloudCv.getContext('2d'), img = o.createImageData(ww, hh), d = img.data, step = fast ? 4 : 1, gi = CLOUD.gi, gj = CLOUD.gj, z = CLOUD.z, rgb = CLOUD.rgb; let dmin = Infinity, dmax = -Infinity;
-  const pts = new Float32Array(Math.ceil(CLOUD.n / step) * 3); let m = 0;
+  const pts = new Float32Array(Math.ceil(CLOUD.n / step) * 3); let m = 0; const acc = night ? (nightAcc && nightAcc.length === ww * hh * 4 ? (nightAcc.fill(0), nightAcc) : (nightAcc = new Float32Array(ww * hh * 4))) : null;
   for (let k = 0; k < CLOUD.n; k += step) { if (gi[k] < 0 || gj[k] < 0 || gi[k] > W - 1 || gj[k] > H - 1) continue; if (hidden && hidden(gi[k], gj[k])) continue; const p = proj(gi[k], gj[k], z[k]); if (isNaN(p[0])) continue; const x = p[0] * sc, y = p[1] * sc; if (x < 0 || y < 0 || x >= ww || y >= hh) continue; pts[m++] = x; pts[m++] = y; pts[m++] = p[2]; if (p[2] < dmin) dmin = p[2]; if (p[2] > dmax) dmax = p[2]; }
   const dr = Math.max(1e-6, dmax - dmin);
   for (let q = 0, k = 0; q < m; q += 3, k += step) { let kk = k; while (kk < CLOUD.n && (gi[kk] < 0 || gj[kk] < 0 || gi[kk] > W - 1 || gj[kk] > H - 1)) kk += step; const x = pts[q] | 0, y = pts[q + 1] | 0, t = (pts[q + 2] - dmin) / dr, i = (y * ww + x) * 4, col = rgb[Math.min(CLOUD.n - 1, kk)], r = (col >> 11) << 3, g = ((col >> 5) & 63) << 2, b = (col & 31) << 3, a = 90 + 165 * t;
+    if (night) { const u = Math.max(0, Math.min(.9999, (z[Math.min(CLOUD.n - 1, kk)] - CLOUD.zlo) / Math.max(1e-6, CLOUD.zhi - CLOUD.zlo))) * (NIGHT_RAMP.length - 1), u0 = Math.floor(u), f = u - u0, A = NIGHT_RAMP[u0], B = NIGHT_RAMP[u0 + 1], e = (.35 + .65 * t) * (fast ? 4 : 1);   // colour by height, nearer weighs more; the colour is averaged per pixel and the crowd sets the glow
+      acc[i] += (A[0] + (B[0] - A[0]) * f) * e; acc[i + 1] += (A[1] + (B[1] - A[1]) * f) * e; acc[i + 2] += (A[2] + (B[2] - A[2]) * f) * e; acc[i + 3] += e; k = kk; continue; }
     if (a > d[i + 3]) { d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = a; } k = kk; }
-  o.putImageData(img, 0, 0); c.save(); c.imageSmoothingEnabled = false; c.drawImage(cloudCv, 0, 0, w, h); c.restore();
+  if (night) { let sum = 0, cnt = 0; for (let q = 3; q < acc.length; q += 4) if (acc[q] > 0) { sum += acc[q]; cnt++; } const gain = cnt ? 1.1 / (sum / cnt) : 1;   // tone map: the average crowd lands mid-glow, the densest ground near full
+    for (let q = 0; q < acc.length; q += 4) { const wq = acc[q + 3]; if (!wq) continue; const I = .2 + .95 * (1 - Math.exp(-wq * gain)); d[q] = Math.min(255, acc[q] / wq * I * 1.15); d[q + 1] = Math.min(255, acc[q + 1] / wq * I * 1.15); d[q + 2] = Math.min(255, acc[q + 2] / wq * I * 1.15); d[q + 3] = 255; } }
+  o.putImageData(img, 0, 0); c.save(); c.imageSmoothingEnabled = false;
+  if (night) { c.globalCompositeOperation = 'lighter'; c.drawImage(cloudCv, 0, 0, w, h);   // the bloom: the specks shrunk and blown back up soft, added over themselves
+    const bw = Math.max(8, ww >> 3), bh = Math.max(8, hh >> 3); if (!cloudBloom || cloudBloom.width !== bw || cloudBloom.height !== bh) { cloudBloom = document.createElement('canvas'); cloudBloom.width = bw; cloudBloom.height = bh; }
+    const bo = cloudBloom.getContext('2d'); bo.clearRect(0, 0, bw, bh); bo.imageSmoothingEnabled = true; bo.imageSmoothingQuality = 'high'; bo.drawImage(cloudCv, 0, 0, bw, bh); c.imageSmoothingEnabled = true; c.globalAlpha = .55; c.drawImage(cloudBloom, 0, 0, w, h); c.globalAlpha = 1; }
+  else c.drawImage(cloudCv, 0, 0, w, h);
+  c.restore();
 }
-document.getElementById('cloudRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'cloudLoad') { document.getElementById('cloudFile').click(); return; } if (!b.dataset.cl) return; if (b.dataset.cl === '1' && !CLOUD.buf) { toast('load a points file first (tools/cloud2bin.py makes one from a drone mesh or a lidar file)'); return; } S.cloud = b.dataset.cl === '1'; cloudUI(); S.dirty = true; };
+document.getElementById('cloudRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'cloudLoad') { document.getElementById('cloudFile').click(); return; } if (b.id === 'cloudNight') { if (!CLOUD.buf) { toast('load a points file first, then the night view shows it as light'); return; } S.cloudNight = !(S.cloud && S.cloudNight); if (S.cloudNight) S.cloud = true; cloudUI(); S.dirty = true; return; } if (!b.dataset.cl) return; if (b.dataset.cl === '1' && !CLOUD.buf) { toast('load a points file first (tools/cloud2bin.py makes one from a drone mesh or a lidar file)'); return; } S.cloud = b.dataset.cl === '1'; cloudUI(); S.dirty = true; };
 document.getElementById('cloudFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; busy('reading the points'); try { const buf = await f.arrayBuffer(); await loadCloud(buf, false); if (CLOUD.n) cloudStore.put(buf); } catch (err) { toast(String(err.message || err)); } finally { unbusy(); } };
 setTimeout(() => cloudStore.get().then(rec => { if (!rec || !rec.buf) return; CLOUD.buf = rec.buf; const tryPlace = () => { if (S.world) { loadCloud(rec.buf, true); if (CLOUD.n) toast('points on: ' + CLOUD.name); } else setTimeout(tryPlace, 2000); }; setTimeout(tryPlace, 3000); }).catch(() => {}), 0);   // a cloud loaded before follows you back, once the terrain is in (deferred: the store is declared further down)
 document.getElementById('aiBtn').onclick = aiPaint; document.getElementById('aiAgain').onclick = () => (AI.again || aiPaint)(); document.getElementById('aiClose').onclick = () => { document.getElementById('aiPanel').hidden = true; };
