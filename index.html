@@ -49,5 +49,6 @@ a.card:hover{border-color:var(--accent);background:var(--hover)}
 { const tb = document.getElementById('themeBtn'), lab = () => { tb.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; lab();
   tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
 </script>
+<script>if (/[?&]design(=|&|$)/.test(location.search)) { const s = document.createElement('script'); s.src = location.protocol === 'file:' ? 'design-mode.js' : '/design-mode.js'; document.body.appendChild(s); }</script>
 </body>
 </html>

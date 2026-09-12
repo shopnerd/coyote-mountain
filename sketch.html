@@ -369,5 +369,6 @@ renderSwatches(); selectTool(tools[0]); resize(); raf = requestAnimationFrame(lo
 { const tb = document.getElementById('themeBtn'), lab = () => { tb.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; lab();   // dark or light chrome, remembered across the studio's pages; the drawing itself stays paper
   tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
 </script>
+<script>if (/[?&]design(=|&|$)/.test(location.search)) { const s = document.createElement('script'); s.src = location.protocol === 'file:' ? 'design-mode.js' : '/design-mode.js'; document.body.appendChild(s); }</script>
 </body>
 </html>
