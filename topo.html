@@ -2763,7 +2763,7 @@ function placeCloud() {                    // the points into grid coordinates f
   c.n = p.n; c.gi = gi; c.gj = gj; c.z = p.z; c.rgb = p.rgb; c.name = p.name; c.lat = p.lat; c.lon = p.lon; c.key = key; c.inside = inside; { const zs = []; for (let k = 0; k < p.n; k += Math.max(1, p.n >> 12)) zs.push(p.z[k]); zs.sort((a, b) => a - b); c.zlo = zs[Math.floor(zs.length * .02)]; c.zhi = zs[Math.floor(zs.length * .98)]; }   // the height range for the night colours, the outliers left out
   document.getElementById('cloudInfo').textContent = `${p.name} · ${p.n.toLocaleString()} points · ${Math.round(inside / p.n * 100)}% inside this site`; document.getElementById('cloudInfo').style.display = S.mode === 'model' ? '' : 'none';
 }
-async function loadCloud(buf, quiet) { CLOUD.buf = buf; CLOUD.parsed = null; CLOUD.key = ''; placeCloud(); if (!CLOUD.n) { if (!quiet) toast('fetch the real terrain around the survey first, then load the points'); return; } S.cloud = true; cloudUI(); S.dirty = true; if (!quiet) toast(`${CLOUD.name} · ${CLOUD.n.toLocaleString()} points · ${Math.round(CLOUD.inside / CLOUD.n * 100)}% inside this site`); }
+async function loadCloud(buf, quiet) { CLOUD.buf = buf; CLOUD.parsed = null; CLOUD.key = ''; placeCloud(); if (!CLOUD.n) { if (!quiet) toast('fetch the real terrain around the survey first, then load the points'); return; } if (quiet && CLOUD.inside / CLOUD.n < .05) return; S.cloud = true; cloudUI(); S.dirty = true; if (!quiet) toast(`${CLOUD.name} · ${CLOUD.n.toLocaleString()} points · ${Math.round(CLOUD.inside / CLOUD.n * 100)}% inside this site`); }
 function cloudUI() { document.querySelectorAll('#cloudRow button[data-cl]').forEach(b => b.classList.toggle('on', (b.dataset.cl === '1') === !!S.cloud)); document.getElementById('cloudNight').classList.toggle('on', !!(S.cloud && S.cloudNight)); }
 let cloudCv = null;
 const NIGHT_RAMP = [[46, 26, 110], [47, 95, 190], [34, 178, 170], [140, 214, 90], [246, 186, 72]];   // low to high: violet, blue, teal, green, amber
@@ -2795,7 +2795,7 @@ function drawCloud(c, proj, w, h, fast, hidden, night) {   // every point a spec
 }
 document.getElementById('cloudRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'cloudLoad') { document.getElementById('cloudFile').click(); return; } if (b.id === 'cloudNight') { if (!CLOUD.buf) { toast('load a points file first, then the night view shows it as light'); return; } S.cloudNight = !(S.cloud && S.cloudNight); if (S.cloudNight) S.cloud = true; cloudUI(); S.dirty = true; return; } if (!b.dataset.cl) return; if (b.dataset.cl === '1' && !CLOUD.buf) { toast('load a points file first (tools/cloud2bin.py makes one from a drone mesh or a lidar file)'); return; } S.cloud = b.dataset.cl === '1'; cloudUI(); S.dirty = true; };
 document.getElementById('cloudFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; busy('reading the points'); try { const buf = await f.arrayBuffer(); await loadCloud(buf, false); if (CLOUD.n) cloudStore.put(buf); } catch (err) { toast(String(err.message || err)); } finally { unbusy(); } };
-setTimeout(() => cloudStore.get().then(rec => { if (!rec || !rec.buf) return; CLOUD.buf = rec.buf; const tryPlace = () => { if (S.world) { loadCloud(rec.buf, true); if (CLOUD.n) toast('points on: ' + CLOUD.name); } else setTimeout(tryPlace, 2000); }; setTimeout(tryPlace, 3000); }).catch(() => {}), 0);   // a cloud loaded before follows you back, once the terrain is in (deferred: the store is declared further down)
+setTimeout(() => cloudStore.get().then(rec => { if (!rec || !rec.buf) return; CLOUD.buf = rec.buf; const tryPlace = () => { if (S.world) { loadCloud(rec.buf, true); if (S.cloud) toast('points on: ' + CLOUD.name); } else setTimeout(tryPlace, 2000); }; setTimeout(tryPlace, 3000); }).catch(() => {}), 0);   // a cloud loaded before follows you back, once the terrain is in (deferred: the store is declared further down)
 document.getElementById('aiBtn').onclick = aiPaint; document.getElementById('aiAgain').onclick = () => (AI.again || aiPaint)(); document.getElementById('aiClose').onclick = () => { document.getElementById('aiPanel').hidden = true; };
 document.getElementById('aiSave').onclick = () => { if (AI.last) dl(AI.last, AI.lastName || `coyote-topo-painted-${AI.style}.png`); };
 document.getElementById('kmlOut').onclick = () => runBusy('placing every line on the earth', () => { const out = kmlOut(); if (!out) return; dl(URL.createObjectURL(new Blob([out.kml], { type: 'application/vnd.google-earth.kml+xml' })), `coyote-topo-${(S.world.name || 'site').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}.kml`); toast(`kml · ${out.n} folders · heights in metres · opens in google earth`); });
@@ -3570,7 +3570,7 @@ const surveyStore = (() => {           // the loaded survey lives in the browser
 function applySurvey(quiet) {             // the survey's heights replace the public ground where it has coverage, feathered over six cells at its edge; a local-datum survey is lifted to the public datum
   const sv = S.survey; if (!sv || !S.world) return; const N = W * H, val = new Float32Array(N), cov = new Uint8Array(N); let covered = 0, sumD = 0;
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j), [la, lo] = nodeLatLon(i, j, S.world.lat, S.world.lon), v = sv.sample(la, lo); if (Number.isNaN(v)) continue; val[n] = v; cov[n] = 1; covered++; sumD += (rawBase ? rawBase[n] : base[n]) - v; }
-  if (!covered) { if (!quiet) toast('the survey does not overlap this site'); return; }
+  if (!covered) { if (S.world) S.world.survey = null; document.getElementById('surveyInfo').textContent = `${sv.name} · stored, not over this site`; if (!quiet) toast('the survey does not overlap this site'); return; }
   const shift = sumD / covered, lift = Math.abs(shift) > 15 ? shift : 0;   // heights far from the public ground mean a local datum (mesh exports); nudge it onto the public one
   const dist = new Float32Array(N).fill(1e9), q = []; for (let n = 0; n < N; n++) if (!cov[n]) { dist[n] = 0; q.push(n); }   // distance to the nearest uncovered cell
   for (let t = 0; t < q.length; t++) { const n = q[t], i = n % W, j = (n / W) | 0; for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = idx(ii, jj); if (dist[m] > dist[n] + 1) { dist[m] = dist[n] + 1; q.push(m); } } }
@@ -3646,6 +3646,21 @@ document.getElementById('bldModeRow').onclick = e => { const b = e.target.closes
 document.getElementById('seaRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.seaClip = b.dataset.sea === '1'; applySea(); toast(S.seaClip ? 'water shown flat at its level' : 'raw ground, no water'); };
 bind('rise', v => fL(v, 1), v => { S.seaRise = v; if (rawBase) { waterDetect(); S.waterVer++; S.dirty = true; } });
 let fetching = false;
+function leavePlace() {                   // a fetch far from the current site: the drawings, sections, marks, lot file, painted ground and history belonged to the old place. undo brings the drawings, sections and old ground back; the drone survey and points stay stored and only show where they cover
+  const had = [];
+  if (S.strokes.length) had.push('drawings');
+  if (S.secs.length) had.push('sections');
+  if (S.boundary || S.overlay) had.push('the lot file');
+  if (HIST.frames) had.push('the history');
+  if (S.groundPaint) had.push('the painted ground');
+  S.strokes = []; S.strokeVer++; secSet([]); S.keyPt = null; S.keyAuto = true; S.damPt = null;
+  S.boundary = null; boundaryCache.key = ''; S.trim = false; setOverlay(null);
+  S.groundPaint = false;
+  if (ANIM.on) animStop();
+  histStop(); HIST.frames = null; HIST.key = ''; HIST.green = HIST.masks = HIST.diffs = HIST.tmp = null; histUI();
+  if (S.cloud) { S.cloud = false; S.cloudNight = false; S.cloudAway = true; cloudUI(); document.getElementById('cloudInfo').style.display = 'none'; }
+  return had;
+}
 async function fetchWorld(known, quiet) { S.frameW = S.siteW; S.frameRot = S.rot;
   if (fetching) return; const btn = document.getElementById('fetch');
   let lat, lon, name;
@@ -3663,13 +3678,14 @@ async function fetchWorld(known, quiet) { S.frameW = S.siteW; S.frameRot = S.rot
       const j = await r.json(); if (!j.length) throw new Error('no place found. try "lat, lng"');
       lat = +j[0].lat; lon = +j[0].lon; name = j[0].display_name.split(',').slice(0, 2).join(',');
     }
+    let left = null; if (S.world) { const dy = (lat - S.world.lat) * 111320, dx = (lon - S.world.lon) * 111320 * Math.cos(lat * D2R); if (Math.hypot(dx, dy) > Math.max(100, S.siteW / 2)) left = leavePlace(); }   // site width, rotation and detail refetch the same place and keep everything
     let src = null; if (IN_US(lat, lon)) { try { await load3DEP(lat, lon); src = '3dep'; } catch (e) { src = null; } }
     if (!src) { try { await loadTerrarium(lat, lon); src = 'tiles'; } catch (e) { worldStatus('tiles unavailable, trying opentopodata…'); await loadOpenTopo(lat, lon); src = 'opentopo'; } }
     let bathy = false; try { bathy = await loadBathy(lat, lon); } catch (e) { bathy = false; }
     S.world = { lat, lon, name, src, bathy }; try { await loadCoast(lat, lon); } catch (e) { S.coast = null; } try { await loadBuildings(lat, lon); } catch (e) {}
-    resetGrading(); seaDetect(); if (S.survey) applySurvey(true); if (typeof sheetInfo === 'function') setTimeout(sheetInfo, 0); const [lo, hi] = range(base);
+    resetGrading(); seaDetect(); if (S.survey) applySurvey(true); if (S.cloudAway && CLOUD.buf) { CLOUD.key = ''; placeCloud(); if (CLOUD.n && CLOUD.inside / CLOUD.n > .05) { S.cloud = true; S.cloudAway = false; cloudUI(); } } /* points switched off by leaving come back on when a fetch lands where they were surveyed */ if (typeof sheetInfo === 'function') setTimeout(sheetInfo, 0); const [lo, hi] = range(base);
     autoInterval();
-    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide · ${SRC_NOTE[S.world.src] || SRC_NOTE.tiles}${S.world.bathy ? ' · sea floor from noaa' : ''}${S.coast && S.coast.segs.length ? ' · shoreline from openstreetmap' : ''}${S.coast && S.coast.blds && S.coast.blds.length ? ' · ' + S.coast.blds.length + ' building footprints' : ''}${S.coast && S.coast.roads && S.coast.roads.length ? ' · ' + S.coast.roads.length + ' roads and paths' : ''}${S.world.survey ? ' · drone survey ground over the public data' : ''}${cs() > 20 ? ' · COARSE: each cell is ' + fL(cs(), 0) + ' across, so small features will not show; halve the width or use detail 2×' : ''}. change site width to zoom; it refetches.`); toast('real terrain loaded');
+    worldStatus(`${name} · ${fL(lo, 0)} to ${fL(hi, 0)} above sea level · site ${fL(S.siteW, 0)} wide · ${SRC_NOTE[S.world.src] || SRC_NOTE.tiles}${S.world.bathy ? ' · sea floor from noaa' : ''}${S.coast && S.coast.segs.length ? ' · shoreline from openstreetmap' : ''}${S.coast && S.coast.blds && S.coast.blds.length ? ' · ' + S.coast.blds.length + ' building footprints' : ''}${S.coast && S.coast.roads && S.coast.roads.length ? ' · ' + S.coast.roads.length + ' roads and paths' : ''}${S.world.survey ? ' · drone survey ground over the public data' : ''}${cs() > 20 ? ' · COARSE: each cell is ' + fL(cs(), 0) + ' across, so small features will not show; halve the width or use detail 2×' : ''}. change site width to zoom; it refetches.`); toast(left && left.length ? `new place · cleared ${left.join(', ').replace(/, ([^,]*)$/, ' and $1')} · undo brings the drawings back` : 'real terrain loaded');
   } catch (e) {
     const blocked = e instanceof TypeError || /blocked|fetch/i.test(String(e.message));
     const msg = blocked ? 'network blocked on this page. open the live site: shopnerd.github.io/coyote-mountain/topo.html' : String(e.message || e);
