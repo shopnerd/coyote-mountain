@@ -55,13 +55,14 @@ Written at Will's stopping point, 12 September. **Read this first**, then `HANDO
     - the Hooke Park Wood Chip Barn interior as a LiDAR cloud, coloured blue→green→red over a white wireframe;
     - a black-and-white forest scan: trunks and crowns as white dots, mesh-wire ground, mountains dissolving into dust.
 
-    **What they share:** dark ground, the data as light, colour ramps by height or deviation, and wire or contour ground under the dots. That differs from the "dots on paper" rule drawn from the Hooke Park brief. Ask Will whether the points view gets a night mode or replaces the paper look.
+    **What they share:** dark ground, the data as light, colour ramps by height or deviation, and wire or contour ground under the dots. That differs from the "dots on paper" rule drawn from the Hooke Park brief. Will's answer: **a dark night mode** (built, item 16).
+16. **Points night view.** Model block, deep: `points · no points · night · load`. `S.cloudNight` (in the modelFrame key). Everything is in `drawModel0` behind `night` (points on, a cloud loaded, not the mini view, not the render): `drawNightSky()` (gradient + 240 seeded stars), dark tile tones from the light, cyan contours with `lighter` compositing, dark slab walls with cyan edges, dark buildings, pale roads (`nightInk`), no labels, no photo. `drawCloud(…, night)` colours by height through `NIGHT_RAMP` (CLOUD.zlo/zhi = 2nd/98th percentile, set in placeCloud), accumulates colour and weight per pixel in `nightAcc` (Float32), then tone-maps (mean crowd → mid glow) and adds a bloom (1/8-size copy blown back up at .55, `lighter`). The first cut summed the specks and blew out to white. Frame ~316 ms with 1.02 M points (was 285 in paper). Test e2e187.
 
 ## Open, waiting on Will
 
 - **Tour copy.** He is still moving things around. The Drive docx (`INBOX (1)\coyote-tour-stops.docx`, 9 Sept 10:20) is **stale**: walk and the sculpt/draw split both changed cards. When he says he is done, rebuild it from the live TOUR with `scratchpad/tour-doc.py` (previous session's scratchpad), then his edits → respell → record.
 - **The digital voice-over.** Pipeline proven, nothing recorded. Four test lines from the twin voice sit in the previous session's scratchpad awaiting his verdict. Record with `WebDev/twin` F5-TTS **in float32** (`vo-batch32.py`; fp16 is silent on the GTX 1660 Ti) → `vo-assemble.py` → `vo_check.py`. Narrated cut goes live only after he hears it; the silent cut is live now.
-- **Points step two direction:** his references are in (item 15). One question for him: a dark night mode for the points view, or keep the paper look?
+- **Points night view** (item 16): his reaction, then the next looks: section slicing the cloud, dust dissolving, rising contour light.
 - **References for the animation** before anything else happens to it.
 - Six example picks for the teachers page gallery; the OpenAI key pasted once in his browser; the Google Earth Pro installers downloaded.
 - Walker's iPad report.
