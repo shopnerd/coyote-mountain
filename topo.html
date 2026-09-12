@@ -137,11 +137,13 @@ body.projector #app{grid-template-columns:1fr;grid-template-rows:1fr}
 body.projector main{background:#000;transform-origin:0 0}
 body.projector main::before{display:none}
 .kst{position:fixed;z-index:70;width:22px;height:22px;margin:-11px 0 0 -11px;border:2px solid var(--accent);border-radius:50%;background:rgba(240,240,236,.85);cursor:move;display:none;touch-action:none}
-#aiPanel{position:absolute;z-index:40;right:14px;top:14px;width:min(52vw,760px);background:var(--paper);border:1px solid var(--accent);border-radius:3px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:8px}
-#aiPanel .aiTop{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;color:var(--ink2)}
-#aiPanel .b{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:11px;padding:3px 9px;border-radius:3px;cursor:pointer}
+#aiPanel,#animPanel{position:absolute;z-index:40;right:14px;top:14px;width:min(52vw,760px);background:var(--paper);border:1px solid var(--accent);border-radius:3px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:8px}
+#aiPanel .aiTop,#animPanel .aiTop{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;color:var(--ink2)}
+#aiPanel .b,#animPanel .b{border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-size:11px;padding:3px 9px;border-radius:3px;cursor:pointer}
 #aiPanel img{display:block;width:100%;height:auto;border-radius:2px;background:#ddd}
-#aiPanel .aiNote{font-size:10.5px;color:var(--ink3);margin-top:6px;line-height:1.45}
+#animPanel canvas{position:static;display:block;width:100%;height:auto;border-radius:2px;background:var(--paper);cursor:default}
+#animPanel .b.on{border-color:var(--accent);color:var(--accent)}
+#aiPanel .aiNote,#animPanel .aiNote{font-size:10.5px;color:var(--ink3);margin-top:6px;line-height:1.45}
 html[data-depth="simple"] .deep{display:none!important}
 html[data-depth="simple"] #png{grid-column:1/-1}
 </style>
@@ -198,7 +200,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="seg" id="aiRow" style="display:none;margin-bottom:6px"><button id="aiBtn" style="flex:2">paint it</button><button id="aiKey">key</button></div>
     <div class="sec" id="secLbl" style="display:none">sections</div>
     <div class="seg wrap" id="secTabs" style="display:none;margin-bottom:6px"></div>
-    <div class="seg" id="secRow" style="display:none;margin-bottom:6px"><button id="sec3d">paint this section</button></div>
+    <div class="seg" id="secRow" style="display:none;margin-bottom:6px"><button id="sec3d">paint this section</button><button id="secAnim">animate</button></div>
     <div class="sec" id="geoLbl" style="display:none">geology</div>
     <div class="seg deep" id="geoRow" style="display:none;margin-bottom:6px"><button data-geo="1">geology</button><button data-geo="0" class="on">no geology</button></div>
     <div class="desc deep" id="geoInfo" style="display:none;padding-bottom:4px"></div>
@@ -367,6 +369,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
   <div id="railGrip"></div>
   <div id="tip"></div>
   <div id="aiPanel" hidden><div class="aiTop"><span id="aiTitle">painted</span><span style="flex:1"></span><button class="b" id="aiSave">save png</button><button class="b" id="aiAgain">again</button><button class="b" id="aiClose">close</button></div><div id="aiImgWrap"></div><div class="aiNote" id="aiNote"></div></div>
+  <div id="animPanel" hidden><div class="aiTop"><span id="animTitle">animated</span><span style="flex:1"></span><button class="b" id="animSound">sound</button><button class="b" id="animSave">save video</button><button class="b" id="animClose">close</button></div><canvas id="animCv" width="960" height="540"></canvas><div class="aiNote" id="animNote"></div></div>
   <main>
     <canvas id="c"></canvas>
     <canvas id="pip"></canvas>
@@ -1567,8 +1570,12 @@ function secYaw() {                      // the camera yaw where a and b sit at 
   const [A, B] = S.sec, yaw0 = S.cam.yaw; let best = null;
   for (let k = 0; k < 360; k++) { S.cam.yaw = k * D2R; const { proj } = camera(S.w, S.h), pA = proj(A[0], A[1], 0), pB = proj(B[0], B[1], 0); const score = Math.abs(pA[2] - pB[2]) + (pA[0] < pB[0] ? 0 : 1e6); if (!best || score < best.score) best = { yaw: S.cam.yaw, score }; }
   S.cam.yaw = yaw0; return best ? best.yaw : yaw0; }
-window.__dbg = fn => fn({ S, AI, camera, secYaw, nodeLatLon, setSiteW, aiPrompt, snapshotProject, cs, applyPad, objFromMesh, updateStats, W, H, renderPicture, bakePainted, aerialUI, paintedCache: () => paintedCache, aiControl, aiCall, kmlOut, geoTiff });   // a hook for the end-to-end tests
+window.__dbg = fn => fn({ S, AI, camera, secYaw, nodeLatLon, setSiteW, aiPrompt, snapshotProject, cs, applyPad, objFromMesh, updateStats, W, H, renderPicture, bakePainted, aerialUI, paintedCache: () => paintedCache, aiControl, aiCall, kmlOut, geoTiff, animStart, animDraw, ANIM });   // a hook for the end-to-end tests
 document.getElementById('sec3d').onclick = () => paintSection();
+document.getElementById('secAnim').onclick = () => animStart();
+document.getElementById('animClose').onclick = () => animStop();
+document.getElementById('animSave').onclick = () => animSave();
+document.getElementById('animSound').onclick = e => { ANIM.sound = !ANIM.sound; animAudio(ANIM.sound); e.currentTarget.classList.toggle('on', ANIM.sound); };
 document.getElementById('geoRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.geo = b.dataset.geo === '1'; document.querySelectorAll('#geoRow button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('geoInfo').style.display = S.geo ? '' : 'none'; GEO.key = ''; geoRefresh(); geoInfo(); S.dirty = true; };
 /* ---------- several sections: a list of a–b lines, one active; S.sec always mirrors the active one ---------- */
 const SEC_LETTERS = 'ABCDEFGH', SEC_MAX = 4;
@@ -1651,6 +1658,7 @@ function drawSectionOne(c, w, h, mini, sec, la, lb, active) {
   c.fillStyle = 'rgba(201,107,58,.28)'; c.fillRect(mL + 196, ly - 5, 22, 10); c.fillStyle = INK2; c.fillText(`fill ${fA(fillA)}`, mL + 224, ly);
   c.fillStyle = 'rgba(42,42,40,.16)'; c.fillRect(mL + 330, ly - 5, 22, 10); c.fillStyle = INK2; c.fillText(`cut ${fA(cutA)}`, mL + 358, ly);
   }
+  return { X, Y, n, gnd, ex, prop, L, lo, hi, mL, mR, mT, ground, pxm, vs, cutA, fillA };
 }
 
 /* ---------- loop ---------- */
@@ -2469,6 +2477,93 @@ async function paintSection() {           // the active section as the drawing s
     if (key) { const c = aiControl(); const im = holdCut(await loadImg(await aiCall(key, c.png, c.prompt, c.ref, '2K')), c.mask); showPainted(im.toDataURL('image/png'), `section ${ab} · painted · ${AI.style} · ${aiModelName()}`, c.prompt, `coyote-topo-section-${ab}-${AI.style}.png`, paintSection); }
     else { toast('no google ai key · the section is drawn, not painted'); showPainted(renderPicture().toDataURL('image/png'), `section ${ab} · drawn`, 'the section as the renderer draws it, square to the line, no perspective. add a google ai key to paint it.', `coyote-topo-section-${ab}.png`, paintSection); }
   } catch (e) { toast(String(e.message || e)); } finally { restore(); AI.busy = false; unbusy(); S.dirty = true; }
+}
+/* ---------- the animated section: the drawing wipes in, the sun crosses one day and its shadows sweep the ground, one person walks the line, birds pass, the numbers draw themselves as pies ---------- */
+const ANIM = { on: false, t0: 0, raf: 0, sound: false, audio: null, rec: null, frame: null, img: null, W: 960, H: 540, SW: 670, LOOP: 24, birds: [], pies: [], bearing: 0, ab: '' };
+function animData() {                     // the pies: earth moved along this line, the landforms of the whole site, what is planted
+  const pies = [], f = ANIM.frame;
+  if (f.cutA > 0 || f.fillA > 0) pies.push({ title: 'earth along the line', parts: [['cut', f.cutA, 'rgba(42,42,40,.45)'], ['fill', f.fillA, ACC]], fmt: fA });
+  { const li = landformImage(), parts = LANDFORMS.map((l, q) => [l[0], li.count[q], l[1]]).filter(p => p[1] > 0).sort((a, b) => b[1] - a[1]); if (parts.length > 1) pies.push({ title: 'landforms of the site', parts: parts.slice(0, 6), fmt: null }); }
+  { const A = cs() * cs(); let canopy = 0, bed = 0, hedge = 0, gravel = 0, paving = 0;
+    for (const st of S.strokes) { if (!st.kind) continue; if (st.kind === 'tree') canopy += Math.PI * st.r * st.r * A; else if (st.kind === 'shrub') bed += polyArea(st.pts) * A; else if (st.kind === 'hedge') { let L = 0; for (let i = 1; i < st.pts.length; i++) L += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); hedge += L * 1.2; } else if (st.kind === 'gravel') gravel += polyArea(st.pts) * A; else if (st.kind === 'paving') paving += polyArea(st.pts) * A; }
+    const parts = [['tree canopy', canopy, '#4f7a3a'], ['shrub beds', bed, '#8fae5a'], ['hedges', hedge, '#2f5d2a'], ['gravel', gravel, '#c9b99a'], ['paving', paving, '#9a9590']].filter(p => p[1] > 0); if (parts.length) pies.push({ title: 'planting and ground', parts, fmt: fBig }); }
+  return pies;
+}
+function animShade(f, alt, along) {        // which stretches of the ground the sun cannot reach: a ray cast along the profile with the sun's lean along the line
+  const n = f.n, sh = new Uint8Array(n + 1); if (alt <= 0) { sh.fill(1); return sh; }
+  const c = Math.abs(along); if (c < .05) return sh; const rise = f.L / n * Math.tan(alt) / c, dir = along > 0 ? 1 : -1;
+  for (let q = 0; q <= n; q++) { const z0 = f.gnd[q]; for (let k = 1; ; k++) { const p = q + dir * k; if (p < 0 || p > n) break; if (f.gnd[p] > z0 + k * rise + .02) { sh[q] = 1; break; } } }
+  return sh;
+}
+function animWalker(c, f, u, t) {         // one person, 1.7 m at the drawing's own scale, walking the proposed ground; u = 0..1 along the line
+  const q = u * f.n, qi = Math.min(f.n - 1, Math.floor(q)), fr = q - qi, gz = f.gnd[qi] * (1 - fr) + f.gnd[qi + 1] * fr, x = f.X(q), y = f.Y(gz);
+  const s = Math.max(12, 1.7 * f.pxm * f.vs) / 1.7, ph = t * 6.5, sw = Math.sin(ph), sw2 = -sw, hip = -.85 * s, sh = -1.45 * s;
+  c.save(); c.translate(x, y); c.strokeStyle = INK; c.fillStyle = INK; c.lineWidth = Math.max(1, s * .12); c.lineCap = 'round'; c.lineJoin = 'round';
+  c.beginPath(); c.moveTo(0, hip); c.lineTo(.22 * s * sw, hip * .5); c.lineTo(.3 * s * sw, 0); c.moveTo(0, hip); c.lineTo(.22 * s * sw2, hip * .5); c.lineTo(.3 * s * sw2, 0); c.stroke();
+  c.beginPath(); c.moveTo(0, hip); c.lineTo(0, sh); c.moveTo(0, sh); c.lineTo(.25 * s * sw2, -1.05 * s); c.moveTo(0, sh); c.lineTo(.25 * s * sw, -1.05 * s); c.stroke();
+  c.beginPath(); c.arc(0, -1.62 * s, .13 * s, 0, TAU); c.fill(); c.restore();
+}
+function animBirds(c, t, sw) {             // a few birds crossing the sky, each on its own line and beat
+  c.save(); c.strokeStyle = INK2; c.lineWidth = 1.2; c.lineCap = 'round';
+  for (const b of ANIM.birds) { const x = ((b.x0 + b.v * t) % (sw + 60)) - 30, y = b.y + 5 * Math.sin(t * .7 + b.ph), a = Math.sin(t * 9 + b.ph) * .55 * b.s;
+    c.beginPath(); c.moveTo(x - b.s, y - a); c.quadraticCurveTo(x - b.s / 2, y + a * .4, x, y); c.quadraticCurveTo(x + b.s / 2, y + a * .4, x + b.s, y - a); c.stroke(); }
+  c.restore();
+}
+function animPies(c, x0, y0, t) {          // the pies draw themselves one wedge after another, in colour, with their labels
+  const r = 40; let y = y0; c.save();
+  ANIM.pies.forEach((p, k) => { const start = 3 + k * 2.4, u = Math.max(0, Math.min(1, (t - start) / 1.8)), tot = p.parts.reduce((s, q) => s + q[1], 0); if (u <= 0 || !tot) return;
+    c.fillStyle = INK2; c.font = font(10.5, 600); c.textAlign = 'left'; c.textBaseline = 'top'; c.fillText(p.title, x0, y); const cx = x0 + r, cy = y + 22 + r, end = -Math.PI / 2 + u * TAU; let a0 = -Math.PI / 2;
+    p.parts.forEach(([name, v, col], i) => { const a = v / tot * TAU, a1 = Math.min(a0 + a, end); if (a1 > a0) { c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, r, a0, a1); c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = PAPER; c.lineWidth = 1.5; c.stroke(); }
+      const lu = Math.max(0, Math.min(1, (t - start - .2 - i * .28) / .4)); if (lu > 0) { const ly = cy - r + 5 + i * 15; c.globalAlpha = lu; c.fillStyle = col; c.fillRect(cx + r + 14, ly - 4, 9, 9); c.fillStyle = INK; c.font = font(10.5); c.textBaseline = 'middle'; c.fillText(`${name} ${Math.round(v / tot * 100)}%${p.fmt && p.parts.length <= 3 ? ' · ' + p.fmt(v) : ''}`, cx + r + 28, ly); c.globalAlpha = 1; }
+      a0 += a; });
+    y += 22 + 2 * r + 26; });
+  c.restore();
+}
+function animDraw(c, t) {                  // one frame at t seconds into the loop
+  const w = ANIM.W, h = ANIM.H, sw = ANIM.SW, f = ANIM.frame, lat = S.world ? S.world.lat : 34.1, hour = 5.5 + 14 * t / ANIM.LOOP, { alt, az } = sunPos(S.month, hour, lat), along = Math.cos(az - S.rot * D2R - ANIM.bearing), fs0 = fontScale; fontScale = 1.2;
+  c.fillStyle = PAPER; c.fillRect(0, 0, w, h);
+  const hz = f.ground, sky = Math.max(60, f.mT - 44), sx = f.X(f.n / 2) + along * (f.X(f.n) - f.X(0)) / 2, sy = sky - Math.sin(alt) * (sky - 34);   // sky wash to the datum; the sun arcs above the labels, behind the drawing
+  c.fillStyle = `rgba(150,185,220,${(.06 + .16 * Math.max(0, Math.sin(alt))).toFixed(3)})`; c.fillRect(0, 0, sw, hz);
+  if (alt > 0) { c.fillStyle = 'rgba(232,150,60,.85)'; c.beginPath(); c.arc(sx, sy, 9, 0, TAU); c.fill(); }
+  const wipe = Math.min(1, t / 2.5), wx = Math.max(1, Math.round(sw * wipe)); c.drawImage(ANIM.img, 0, 0, wx, h, 0, 0, wx, h);
+  if (wipe >= 1) {
+    const sh = animShade(f, alt, along); c.fillStyle = 'rgba(40,40,70,.2)'; let q = 0;
+    while (q <= f.n) { if (!sh[q]) { q++; continue; } let e = q; while (e < f.n && sh[e + 1]) e++; c.beginPath(); for (let p = q; p <= e; p++) c.lineTo(f.X(p), f.Y(f.gnd[p])); for (let p = e; p >= q; p--) c.lineTo(f.X(p), f.Y(f.gnd[p]) + 7); c.closePath(); c.fill(); q = e + 1; }
+    if (alt > 0) { const hh = Math.floor(hour), hm = hour % 1 >= .5 ? ':30' : ':00'; c.fillStyle = INK2; c.font = font(10.5); c.textAlign = 'center'; c.textBaseline = 'bottom'; c.fillText(`${MONTHS[S.month - 1]} · ${(hh % 12 || 12) + hm + (hh < 12 ? ' am' : ' pm')}`, Math.max(70, Math.min(sw - 70, sx)), sy - 14); }
+    const u = (t - 2.5) / (ANIM.LOOP - 3.5); if (u >= 0 && u <= 1) animWalker(c, f, u, t);
+  }
+  animBirds(c, t, sw); animPies(c, sw + 24, 36, t); fontScale = fs0;
+}
+function animStart() {
+  if (!S.sec) { toast('draw a section line in plan first'); return; }
+  const h = ANIM.H, sw = ANIM.SW, off = document.createElement('canvas'); off.width = sw; off.height = h; const o = off.getContext('2d'), fs0 = fontScale; fontScale = 1.2;
+  const [la, lb] = secLetters(S.secI), f = drawSectionOne(o, sw, h, false, S.secs[S.secI], la, lb, true); fontScale = fs0;
+  ANIM.frame = f; ANIM.img = off; ANIM.ab = `${la}–${lb}`; { const [A, B] = S.secs[S.secI]; ANIM.bearing = Math.atan2(B[0] - A[0], -(B[1] - A[1])); }
+  ANIM.pies = animData(); ANIM.birds = Array.from({ length: 5 }, () => ({ x0: Math.random() * sw, y: 24 + Math.random() * Math.max(30, f.mT - 30), v: 38 + Math.random() * 50, ph: Math.random() * TAU, s: 5 + Math.random() * 5 }));
+  document.getElementById('animTitle').textContent = `section ${ANIM.ab} · animated`;
+  document.getElementById('animNote').textContent = `one day in ${MONTHS[S.month - 1]} along the line: the sun crosses and its shadows sweep the ground, one person walks from ${la} to ${lb}, the numbers draw themselves. shadows are cast along the line only; hedges count 1.2 m wide. sound is wind and birds made here, nothing recorded. save video keeps one loop of ${ANIM.LOOP} s as webm.`;
+  document.getElementById('animPanel').hidden = false; ANIM.on = true; ANIM.t0 = performance.now(); cancelAnimationFrame(ANIM.raf); ANIM.raf = requestAnimationFrame(animTick);
+}
+function animStop() { ANIM.on = false; cancelAnimationFrame(ANIM.raf); document.getElementById('animPanel').hidden = true; if (ANIM.rec) { try { ANIM.rec.stop(); } catch (_) {} } animAudio(false); ANIM.sound = false; document.getElementById('animSound').classList.remove('on'); }
+function animTick(now) { if (!ANIM.on) return; animDraw(document.getElementById('animCv').getContext('2d'), ((now - ANIM.t0) / 1000) % ANIM.LOOP); if (ANIM.sound) animChirp(); ANIM.raf = requestAnimationFrame(animTick); }
+function animAudio(on) {                   // wind: brown noise through a low filter, breathing slowly; birds come from animChirp
+  if (!on) { if (ANIM.audio) { ANIM.audio.ctx.close(); ANIM.audio = null; } return; } if (ANIM.audio) return;
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) { toast('no sound in this browser'); return; } const ctx = new AC(), N = ctx.sampleRate * 4, buf = ctx.createBuffer(1, N, ctx.sampleRate), d = buf.getChannelData(0); let last = 0; for (let i = 0; i < N; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.5; }
+  const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true; const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 420; const g = ctx.createGain(); g.gain.value = .22; const lfo = ctx.createOscillator(); lfo.frequency.value = .09; const lg = ctx.createGain(); lg.gain.value = .12; lfo.connect(lg); lg.connect(g.gain);
+  const out = ctx.createGain(); out.gain.value = 1; src.connect(lp); lp.connect(g); g.connect(out); out.connect(ctx.destination); const dest = ctx.createMediaStreamDestination(); out.connect(dest); src.start(); lfo.start();
+  ANIM.audio = { ctx, out, dest, next: ctx.currentTime + .8 };
+}
+function animChirp() {                     // a small bird now and then: two to four short rising notes
+  const a = ANIM.audio; if (!a || a.ctx.currentTime < a.next) return; a.next = a.ctx.currentTime + 1.2 + Math.random() * 3.5; const c = a.ctx, n = 2 + Math.floor(Math.random() * 3), f0 = 2600 + Math.random() * 900;
+  for (let k = 0; k < n; k++) { const t0 = c.currentTime + k * .13, o = c.createOscillator(), g = c.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f0 * 1.5, t0 + .05); o.frequency.exponentialRampToValueAtTime(f0 * .9, t0 + .1); g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.05, t0 + .015); g.gain.exponentialRampToValueAtTime(.0005, t0 + .11); o.connect(g); g.connect(a.out); o.start(t0); o.stop(t0 + .12); }
+}
+function animSave() {                      // one loop of the animation as a webm, with the sound if it is on
+  if (ANIM.rec || !ANIM.on) return; if (!window.MediaRecorder) { toast('this browser cannot record video'); return; }
+  const stream = document.getElementById('animCv').captureStream(30); if (ANIM.audio) ANIM.audio.dest.stream.getAudioTracks().forEach(tr => stream.addTrack(tr));
+  const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp9', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '', chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 6e6 } : undefined);
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => { ANIM.rec = null; unbusy(); if (!chunks.length) return; const url = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })); dl(url, `coyote-topo-section-${ANIM.ab.replace('–', '-')}-animated.webm`); setTimeout(() => URL.revokeObjectURL(url), 5000); };
+  ANIM.rec = rec; ANIM.t0 = performance.now(); rec.start(250); busy(`recording one loop · ${ANIM.LOOP} s`); setTimeout(() => { if (ANIM.rec === rec && rec.state !== 'inactive') rec.stop(); }, ANIM.LOOP * 1000 + 120);
 }
 async function paintSheet() {             // the drawing sheet: the model as it stands and the section, both painted (two calls), the rest drawn; without a key the two pictures come from the renderer instead
   if (AI.busy) return; const key = aiKey(); AI.busy = true; document.getElementById('aiBtn').disabled = true;
