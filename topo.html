@@ -1699,10 +1699,12 @@ function drawSectionOne(c, w, h, mini, sec, la, lb, active) {
 }
 
 /* ---------- loop ---------- */
+let booting = true;   // nothing is drawn until the start decides what to open, so the sample sheet never flashes before a saved project
 function frame(now) {
+  if (booting) { requestAnimationFrame(frame); return; }
   tickSun(now || performance.now()); updateHint(); zdisp();
   if ((S.mode === 'model' || S.mode === 'analysis') && S.rain) { if (!S.rainPaused) stepRain(); drawRain(); S.dirty = false; drawPip(); }
-  else if (S.mode === 'plan' && HIST.on && HIST.frames) { if (S.dirty || !planShot.canvas) { S.dirty = false; drawPlan(); } try { drawHistory(); } catch (e) { HIST.on = false; histUI(); toast('the history stopped: ' + (e.message || e)); } drawPip(); }   // a bad frame must never take the page's draw loop with it
+  else if (S.mode === 'plan' && HIST.on && HIST.frames) { if (S.dirty || !planShot.canvas) { S.dirty = false; drawPlan(); } try { drawHistory(); if (HIST.rec && HIST.rc) { const o = HIST.rc.getContext('2d'); o.imageSmoothingEnabled = true; o.imageSmoothingQuality = 'high'; o.drawImage(cv, sheet.x * dpr, sheet.y * dpr, sheet.w * dpr, sheet.h * dpr, 0, 0, HIST.rc.width, HIST.rc.height); } } catch (e) { HIST.on = false; histUI(); toast('the history stopped: ' + (e.message || e)); } drawPip(); }   // a bad frame must never take the page's draw loop with it
   else if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel(ctx, S.w, S.h, 1)); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); if (busyFrames > 0 && --busyFrames === 0) unbusy(); }
   requestAnimationFrame(frame);
 }
@@ -2737,8 +2739,10 @@ document.getElementById('histBtn').onclick = () => { if (HIST.on) histStop(); el
 document.getElementById('histPlay').onclick = () => { HIST.paused = !HIST.paused; if (!HIST.paused) HIST.t0 = performance.now() - HIST.u * HIST.per * 1000; histUI(); };   // play carries on from wherever the slider left it
 document.getElementById('histPos').oninput = e => { if (!HIST.frames) return; const n = HIST.frames.length; HIST.paused = true; HIST.u = Math.min(n - .001, +e.target.value / 1000 * n); document.getElementById('o_histPos').textContent = HIST.frames[Math.floor(HIST.u)].date.slice(0, 7); histUI(); };
 document.getElementById('histSave').onclick = () => { if (HIST.rec || !HIST.on || !HIST.frames) return; if (!window.MediaRecorder) { toast('this browser cannot record video'); return; }
-  const stream = cv.captureStream(30), mime = ['video/webm;codecs=vp9', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '', ext = /mp4/.test(mime) ? 'mp4' : 'webm', chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : undefined), secs = HIST.frames.length * HIST.per;
-  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); }; rec.onstop = () => { HIST.rec = null; unbusy(); if (!chunks.length) return; const url = URL.createObjectURL(new Blob(chunks, { type: mime || 'video/webm' })); dl(url, `coyote-topo-history-${(S.world.name || 'site').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}.${ext}`); setTimeout(() => URL.revokeObjectURL(url), 5000); };
+  const k = Math.min(1, 1920 / (sheet.w * dpr)), rc = document.createElement('canvas'); rc.width = Math.round(sheet.w * dpr * k / 2) * 2; rc.height = Math.round(sheet.h * dpr * k / 2) * 2; HIST.rc = rc;   // the video is the sheet alone, at most 1920 wide, even sides (odd ones break players)
+  HIST.paused = false; histUI();   // a saved video always plays the whole history; a paused one recorded a still, and a still stream decodes as grey blocks
+  const stream = rc.captureStream(30), mime = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '', ext = /mp4/.test(mime) ? 'mp4' : 'webm', chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : undefined), secs = HIST.frames.length * HIST.per;
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); }; rec.onstop = () => { HIST.rec = null; HIST.rc = null; unbusy(); if (!chunks.length) return; const url = URL.createObjectURL(new Blob(chunks, { type: mime || 'video/webm' })); dl(url, `coyote-topo-history-${(S.world.name || 'site').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}.${ext}`); setTimeout(() => URL.revokeObjectURL(url), 5000); };
   HIST.rec = rec; HIST.t0 = performance.now(); rec.start(250); busy(`recording the history · ${Math.round(secs)} s`); setTimeout(() => { if (HIST.rec === rec && rec.state !== 'inactive') rec.stop(); }, secs * 1000 + 150); };
 /* ---------- points: a cloud from a drone survey or a lidar file, as dust over the model ---------- */
 const CLOUD = { n: 0, gi: null, gj: null, z: null, rgb: null, name: '', lat: 0, lon: 0, buf: null, key: '' };
@@ -3867,14 +3871,15 @@ addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if 
   if (e.key === 'p') { if (S.rain) setRainPause(!S.rainPaused); if (S.sunPlay) { S.sunHeld = S.sunPlay; setSunPlay(S.sunPlay); } else if (S.sunHeld) { const k = S.sunHeld; S.sunHeld = null; setSunPlay(k); } } });
 updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 setBrush('pen');
-(async () => {   // a shared link wins; else a newer home file beats a stale session; otherwise the session wins
+setTimeout(() => { if (booting) { booting = false; S.dirty = true; } }, 8000);   // a slow start still shows something
+(async () => { try {   // a shared link wins; else a newer home file beats a stale session; otherwise the session wins
   { const q = new URLSearchParams(location.search), src = q.get('proj'); if (src && /^[\w./-]+\.json$/i.test(src)) { try { const r = await fetch(src, { cache: 'no-store' }); if (!r.ok) throw new Error('no project at ' + src); loadProject(await r.json()); toast('project opened from the link'); return; } catch (err) { toast(String(err.message || err)); } } }   // ?proj=projects/name.json opens a saved project kept beside the page
   if (await openFromLink()) return;
   let homeSaved = null; try { const r = await fetch('home.json', { cache: 'no-store' }); if (r.ok) homeSaved = ((await r.json()).saved) || ''; } catch (_) {}
   let sessionHome = null; try { const raw = localStorage.getItem('topo-session'); if (raw) sessionHome = JSON.parse(raw).homeSaved || ''; } catch (_) {}
   if (homeSaved !== null && sessionHome !== null && sessionHome !== homeSaved) { await goHome(true); toast('home project updated'); return; }
-  if (!restoreSession()) goHome(true);
-})();
+  if (!restoreSession()) await goHome(true);
+} finally { booting = false; S.dirty = true; } })();
 
 const TOUR_KEY = 'coyote-tour-topo';
 const TOUR_SETUP = async () => { setRain(false); setMode('plan'); await goHome(true); };
