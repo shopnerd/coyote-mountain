@@ -1659,7 +1659,7 @@ function drawSectionOne(c, w, h, mini, sec, la, lb, active) {
   c.fillStyle = 'rgba(201,107,58,.28)'; c.fillRect(mL + 196, ly - 5, 22, 10); c.fillStyle = INK2; c.fillText(`fill ${fA(fillA)}`, mL + 224, ly);
   c.fillStyle = 'rgba(42,42,40,.16)'; c.fillRect(mL + 330, ly - 5, 22, 10); c.fillStyle = INK2; c.fillText(`cut ${fA(cutA)}`, mL + 358, ly);
   }
-  return { X, Y, n, gnd, ex, prop, L, lo, hi, mL, mR, mT, ground, pxm, vs, cutA, fillA };
+  return { X, Y, n, gnd, ex, prop, L, lo, hi, mL, mR, mT, pw, ground, pxm, vs, cutA, fillA };
 }
 
 /* ---------- loop ---------- */
@@ -2146,8 +2146,8 @@ const aeKey = () => S.mode === 'model' ? 'aerialM' : 'aerial';   // the plan and
 function aerialUI() { const on = !!S[aeKey()], pt = S.mode === 'model' && !!S.groundPaint; document.getElementById('paintedBtn').style.display = S.mode === 'model' && AI.lastImg ? '' : 'none'; document.querySelectorAll('#aerialRow button').forEach(b => b.classList.toggle('on', b.dataset.ae === '2' ? pt : !pt && (b.dataset.ae === '1') === on)); document.getElementById('aerialOp').style.display = on && S.mode !== 'model' ? '' : 'none'; }
 function aerialOff() { S.aerial = S.aerialM = false; aerialUI(); }
 document.getElementById('aerialRow').onclick = async e => { const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.ae === '2') { if (!AI.lastImg) { toast('paint the model first'); return; } if (paintedCache.key !== (AI.last || '').slice(-40) + '|' + S.terrainVer) { busy('laying the painting on the ground'); await new Promise(r => setTimeout(r, 30)); const ok = bakePainted(); unbusy(); if (!ok) { toast('the painting does not reach the ground from here'); return; } } S.groundPaint = true; S.aerialM = false; aerialUI(); toast(`painted ground · ${paintedCache.hit ? Math.round(paintedCache.hit / ((W - 1) * AER * (H - 1) * AER) * 100) : 0}% of the ground was in the picture · orbit to look around`); return; }
-  S.groundPaint = false; const on = b.dataset.ae === '1'; S[aeKey()] = on; aerialUI();
+  if (b.dataset.ae === '2') { if (!AI.lastImg) { toast('paint the model first'); return; } if (paintedCache.key !== (AI.last || '').slice(-40) + '|' + S.terrainVer) { busy('laying the painting on the ground'); await new Promise(r => setTimeout(r, 30)); const ok = bakePainted(); unbusy(); if (!ok) { toast('the painting does not reach the ground from here'); return; } } S.groundPaint = true; S.aerialM = false; if (S.colorMode !== 'paper' && S.colorMode !== 'sun') { S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'paper')); } aerialUI(); toast(`painted ground · ${paintedCache.hit ? Math.round(paintedCache.hit / ((W - 1) * AER * (H - 1) * AER) * 100) : 0}% of the ground was in the picture · orbit to look around`); return; }
+  S.groundPaint = false; const on = b.dataset.ae === '1'; S[aeKey()] = on; aerialUI(); if (on && S.mode === 'model' && S.colorMode !== 'paper' && S.colorMode !== 'sun') { S.colorMode = 'paper'; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x.dataset.c === 'paper')); }   // the photo wins over a surface colour, so the rail says so
   if (on && S.overlay && S.overlayOn) { S.overlayOn = false; groundControls(); toast('photo on · the overlay is hidden; the two would cover each other'); }
   else if (S.world) toast((on ? 'photo on' : 'photo off') + (S.mode === 'model' ? ' · model view' : ' · plan view'));
   if (on && !S.world) toast('fetch real terrain first, then the photo can load'); S.dirty = true; };
@@ -2273,6 +2273,7 @@ bind('dam', v => fL(v, 1), v => S.damH = v);
 const rainMM = v => 2 + 198 * (v / 100) ** 2;
 bind('rain', v => isFt() ? tz((rainMM(v) / 25.4).toFixed(2)) + ' in' : Math.round(rainMM(v)) + ' mm', v => S.rainV = v);
 document.getElementById('colorRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.colorMode = b.dataset.c; document.querySelectorAll('#colorRow button').forEach(x => x.classList.toggle('on', x === b)); showSun();
+  if (S.mode === 'model' && S.colorMode !== 'paper' && (S.aerialM || S.groundPaint)) { S.aerialM = false; S.groundPaint = false; aerialUI(); toast(`${S.colorMode} colour · the photo is off; pick aerial photo to bring it back`); }   // a colour and the photo cannot both show: the one you just picked wins
   S.dirty = true; };
 document.getElementById('pathSurfRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.pathSurf = b.dataset.sf; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
 document.getElementById('padRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.padShape = b.dataset.ps; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
@@ -2480,69 +2481,86 @@ async function paintSection() {           // the active section as the drawing s
   } catch (e) { toast(String(e.message || e)); } finally { restore(); AI.busy = false; unbusy(); S.dirty = true; }
 }
 /* ---------- the animated section: the drawing wipes in, the sun crosses one day and its shadows sweep the ground, one person walks the line, birds pass, the numbers draw themselves as pies ---------- */
-const ANIM = { on: false, t0: 0, raf: 0, sound: false, audio: null, rec: null, frame: null, img: null, W: 960, H: 540, SW: 670, LOOP: 24, birds: [], pies: [], bearing: 0, ab: '' };
-function animData() {                     // the pies: earth moved along this line, the landforms of the whole site, what is planted
-  const pies = [], f = ANIM.frame;
-  if (f.cutA > 0 || f.fillA > 0) pies.push({ title: 'earth along the line', parts: [['cut', f.cutA, 'rgba(42,42,40,.45)'], ['fill', f.fillA, ACC]], fmt: fA });
-  { const li = landformImage(), parts = LANDFORMS.map((l, q) => [l[0], li.count[q], l[1]]).filter(p => p[1] > 0).sort((a, b) => b[1] - a[1]); if (parts.length > 1) pies.push({ title: 'landforms of the site', parts: parts.slice(0, 6), fmt: null }); }
-  { const A = cs() * cs(); let canopy = 0, bed = 0, hedge = 0, gravel = 0, paving = 0;
-    for (const st of S.strokes) { if (!st.kind) continue; if (st.kind === 'tree') canopy += Math.PI * st.r * st.r * A; else if (st.kind === 'shrub') bed += polyArea(st.pts) * A; else if (st.kind === 'hedge') { let L = 0; for (let i = 1; i < st.pts.length; i++) L += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); hedge += L * 1.2; } else if (st.kind === 'gravel') gravel += polyArea(st.pts) * A; else if (st.kind === 'paving') paving += polyArea(st.pts) * A; }
-    const parts = [['tree canopy', canopy, '#4f7a3a'], ['shrub beds', bed, '#8fae5a'], ['hedges', hedge, '#2f5d2a'], ['gravel', gravel, '#c9b99a'], ['paving', paving, '#9a9590']].filter(p => p[1] > 0); if (parts.length) pies.push({ title: 'planting and ground', parts, fmt: fBig }); }
-  return pies;
-}
+const ANIM = { on: false, t0: 0, raf: 0, sound: false, audio: null, rec: null, frame: null, W: 960, H: 540, SEC: 290, LOOP: 24, birds: [], bearing: 0, ab: '', plates: null, shadeFrac: null, birdTicks: [], grain: null, EMB: '#e0552b', BLU: '#2f5fa8' };
+const animSun = t => { const hour = 5.5 + 14 * t / ANIM.LOOP, lat = S.world ? S.world.lat : 34.1, { alt, az } = sunPos(S.month, hour, lat); return { hour, alt, az, along: Math.cos(az - S.rot * D2R - ANIM.bearing), up: Math.max(0, Math.sin(alt)) }; };
+const animClock = h => { const hh = Math.floor(h), m = h % 1 >= .5 ? ':30' : ':00'; return (hh % 12 || 12) + m + (hh < 12 ? ' am' : ' pm'); };
 function animShade(f, alt, along) {        // which stretches of the ground the sun cannot reach: a ray cast along the profile with the sun's lean along the line
   const n = f.n, sh = new Uint8Array(n + 1); if (alt <= 0) { sh.fill(1); return sh; }
   const c = Math.abs(along); if (c < .05) return sh; const rise = f.L / n * Math.tan(alt) / c, dir = along > 0 ? 1 : -1;
   for (let q = 0; q <= n; q++) { const z0 = f.gnd[q]; for (let k = 1; ; k++) { const p = q + dir * k; if (p < 0 || p > n) break; if (f.gnd[p] > z0 + k * rise + .02) { sh[q] = 1; break; } } }
   return sh;
 }
-function animWalker(c, f, u, t) {         // one person, 1.7 m at the drawing's own scale, walking the proposed ground; u = 0..1 along the line
-  const q = u * f.n, qi = Math.min(f.n - 1, Math.floor(q)), fr = q - qi, gz = f.gnd[qi] * (1 - fr) + f.gnd[qi + 1] * fr, x = f.X(q), y = f.Y(gz);
-  const s = Math.max(12, 1.7 * f.pxm * f.vs) / 1.7, ph = t * 6.5, sw = Math.sin(ph), sw2 = -sw, hip = -.85 * s, sh = -1.45 * s;
-  c.save(); c.translate(x, y); c.strokeStyle = INK; c.fillStyle = INK; c.lineWidth = Math.max(1, s * .12); c.lineCap = 'round'; c.lineJoin = 'round';
-  c.beginPath(); c.moveTo(0, hip); c.lineTo(.22 * s * sw, hip * .5); c.lineTo(.3 * s * sw, 0); c.moveTo(0, hip); c.lineTo(.22 * s * sw2, hip * .5); c.lineTo(.3 * s * sw2, 0); c.stroke();
-  c.beginPath(); c.moveTo(0, hip); c.lineTo(0, sh); c.moveTo(0, sh); c.lineTo(.25 * s * sw2, -1.05 * s); c.moveTo(0, sh); c.lineTo(.25 * s * sw, -1.05 * s); c.stroke();
-  c.beginPath(); c.arc(0, -1.62 * s, .13 * s, 0, TAU); c.fill(); c.restore();
+function animFigure(c, x, y, s, ph, col, lw) {   // one person s px tall, feet at (x, y), mid-stride at phase ph
+  const sw = Math.sin(ph), hip = -.5 * s, sh = -.85 * s; c.save(); c.translate(x, y); c.strokeStyle = col; c.fillStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.lineJoin = 'round';
+  c.beginPath(); c.moveTo(0, hip); c.lineTo(.13 * s * sw, hip * .5); c.lineTo(.18 * s * sw, 0); c.moveTo(0, hip); c.lineTo(-.13 * s * sw, hip * .5); c.lineTo(-.18 * s * sw, 0); c.stroke();
+  c.beginPath(); c.moveTo(0, hip); c.lineTo(0, sh); c.moveTo(0, sh); c.lineTo(-.15 * s * sw, -.62 * s); c.moveTo(0, sh); c.lineTo(.15 * s * sw, -.62 * s); c.stroke();
+  c.beginPath(); c.arc(0, -.94 * s, .075 * s, 0, TAU); c.fill(); c.restore();
 }
-function animBirds(c, t, sw) {             // a few birds crossing the sky, each on its own line and beat
-  c.save(); c.strokeStyle = INK2; c.lineWidth = 1.2; c.lineCap = 'round';
-  for (const b of ANIM.birds) { const x = ((b.x0 + b.v * t) % (sw + 60)) - 30, y = b.y + 5 * Math.sin(t * .7 + b.ph), a = Math.sin(t * 9 + b.ph) * .55 * b.s;
-    c.beginPath(); c.moveTo(x - b.s, y - a); c.quadraticCurveTo(x - b.s / 2, y + a * .4, x, y); c.quadraticCurveTo(x + b.s / 2, y + a * .4, x + b.s, y - a); c.stroke(); }
-  c.restore();
+function animBirds(c, t, w, col, lw) { c.save(); c.strokeStyle = col; c.lineWidth = lw; c.lineCap = 'round'; for (const b of ANIM.birds) { const x = ((b.x0 + b.v * t) % (w + 60)) - 30, y = b.y + 5 * Math.sin(t * .7 + b.ph), a = Math.sin(t * 9 + b.ph) * .55 * b.s; c.beginPath(); c.moveTo(x - b.s, y - a); c.quadraticCurveTo(x - b.s / 2, y + a * .4, x, y); c.quadraticCurveTo(x + b.s / 2, y + a * .4, x + b.s, y - a); c.stroke(); } c.restore(); }
+const animDot = (o, x, y, r) => { o.moveTo(x + r, y); o.arc(x, y, r, 0, TAU); };
+function animGrain(c, w, h, alpha) { if (!ANIM.grain) { const g = document.createElement('canvas'); g.width = g.height = 160; const x = g.getContext('2d'), im = x.createImageData(160, 160); for (let q = 0; q < im.data.length; q += 4) { const v = Math.random(); im.data[q] = im.data[q + 1] = im.data[q + 2] = v < .5 ? 40 : 255; im.data[q + 3] = v < .5 ? v * 30 : (v - .5) * 24; } x.putImageData(im, 0, 0); ANIM.grain = g; } c.save(); c.globalAlpha = alpha; c.fillStyle = c.createPattern(ANIM.grain, 'repeat'); c.fillRect(0, 0, w, h); c.restore(); }
+function animProfile(o, f, close) { o.beginPath(); for (let q = 0; q <= f.n; q++) q ? o.lineTo(f.X(q), f.Y(f.gnd[q])) : o.moveTo(f.X(q), f.Y(f.gnd[q])); if (close) { o.lineTo(f.X(f.n), f.ground + close); o.lineTo(f.X(0), f.ground + close); o.closePath(); } }
+function animScore() {                     // where the score sits under the section: the time axis, the rows and their heights
+  const f = ANIM.frame, x0 = f.mL, w = f.pw, y0 = ANIM.SEC + 24, rows = [['sun', 12], ['shade', 8], ['walk', 12], ['ground', 12], ['birds', 6]], unit = (ANIM.H - y0 - 24) / rows.reduce((a, r) => a + r[1], 0); let y = y0; const R = {};
+  for (const [name, wgt] of rows) { R[name] = { y, h: wgt * unit }; y += wgt * unit; } return { x0, w, y0, y1: y, R, tx: t => x0 + t / ANIM.LOOP * w };
 }
-function animPies(c, x0, y0, t) {          // the pies draw themselves one wedge after another, in colour, with their labels
-  const r = 40; let y = y0; c.save();
-  ANIM.pies.forEach((p, k) => { const start = 3 + k * 2.4, u = Math.max(0, Math.min(1, (t - start) / 1.8)), tot = p.parts.reduce((s, q) => s + q[1], 0); if (u <= 0 || !tot) return;
-    c.fillStyle = INK2; c.font = font(10.5, 600); c.textAlign = 'left'; c.textBaseline = 'top'; c.fillText(p.title, x0, y); const cx = x0 + r, cy = y + 22 + r, end = -Math.PI / 2 + u * TAU; let a0 = -Math.PI / 2;
-    p.parts.forEach(([name, v, col], i) => { const a = v / tot * TAU, a1 = Math.min(a0 + a, end); if (a1 > a0) { c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, r, a0, a1); c.closePath(); c.fillStyle = col; c.fill(); c.strokeStyle = PAPER; c.lineWidth = 1.5; c.stroke(); }
-      const lu = Math.max(0, Math.min(1, (t - start - .2 - i * .28) / .4)); if (lu > 0) { const ly = cy - r + 5 + i * 15; c.globalAlpha = lu; c.fillStyle = col; c.fillRect(cx + r + 14, ly - 4, 9, 9); c.fillStyle = INK; c.font = font(10.5); c.textBaseline = 'middle'; c.fillText(`${name} ${Math.round(v / tot * 100)}%${p.fmt && p.parts.length <= 3 ? ' · ' + p.fmt(v) : ''}`, cx + r + 28, ly); c.globalAlpha = 1; }
-      a0 += a; });
-    y += 22 + 2 * r + 26; });
-  c.restore();
+function animStatic() {                    // the still parts of both plates, drawn once per opening: the section in blue halftone, the letters and the fill in ember, the score's faint future
+  const w = ANIM.W, h = ANIM.H, f = ANIM.frame, n = f.n, mk = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }, a = mk(), b = mk(), A = a.getContext('2d'), B = b.getContext('2d'), sc = animScore(), EMB = ANIM.EMB, BLU = ANIM.BLU;
+  // ember: the letters, a light dot sky, the fill between existing and proposed as hatching, the whole day's sun as a faint area
+  A.fillStyle = EMB; A.font = font(13, 600); A.textAlign = 'center'; A.textBaseline = 'top'; A.fillText(ANIM.ab[0], f.X(0), f.mT - 34); A.fillText(ANIM.ab[ANIM.ab.length - 1], f.X(n), f.mT - 34);
+  A.beginPath(); for (let y = 8; y < f.mT - 40; y += 6) for (let x = f.mL + ((y / 6) | 0) % 2 * 3; x < f.mL + f.pw; x += 6) animDot(A, x, y, .25 + .6 * (1 - y / f.mT)); A.fill();
+  const graded = f.ex.some((v, q) => Math.abs(v - f.gnd[q]) > .01);
+  if (graded) { A.save(); A.beginPath(); for (let q = 0; q <= n; q++) q ? A.lineTo(f.X(q), f.Y(f.gnd[q])) : A.moveTo(f.X(q), f.Y(f.gnd[q])); for (let q = n; q >= 0; q--) A.lineTo(f.X(q), f.Y(Math.min(f.gnd[q], f.ex[q]))); A.closePath(); A.clip(); A.strokeStyle = EMB; A.lineWidth = 1.2; A.beginPath(); for (let x = f.mL - 300; x < w; x += 6) { A.moveTo(x, f.mT - 20); A.lineTo(x + 300, f.ground + 60); } A.stroke(); A.restore(); }   // fill: ember hatching where the proposed ground stands above the existing
+  { const r = sc.R.sun; A.beginPath(); A.moveTo(sc.x0, r.y + r.h); for (let k = 0; k <= 140; k++) { const s2 = animSun(k / 140 * ANIM.LOOP); A.lineTo(sc.tx(k / 140 * ANIM.LOOP), r.y + r.h - s2.up * r.h * .95); } A.lineTo(sc.x0 + sc.w, r.y + r.h); A.closePath(); A.fillStyle = EMB; A.globalAlpha = .18; A.fill(); A.globalAlpha = 1; }
+  // blue: the earth as a halftone fading with depth, the proposed line, the existing line dashed, the cut as a denser dot field, the score's frame
+  B.fillStyle = BLU; B.save(); animProfile(B, f, 34); B.clip(); B.beginPath(); for (let y = f.mT; y < f.ground + 34; y += 5) for (let x = f.mL + ((y / 5) | 0) % 2 * 2.5; x < f.mL + f.pw; x += 5) { const d = (y - f.mT) / (f.ground + 34 - f.mT); animDot(B, x, y, 1.6 - 1.15 * d); } B.fill(); B.restore();
+  if (graded) { B.save(); B.beginPath(); for (let q = 0; q <= n; q++) q ? B.lineTo(f.X(q), f.Y(f.ex[q])) : B.moveTo(f.X(q), f.Y(f.ex[q])); for (let q = n; q >= 0; q--) B.lineTo(f.X(q), f.Y(Math.min(f.gnd[q], f.ex[q]))); B.closePath(); B.clip(); B.beginPath(); for (let y = f.mT; y < f.ground + 34; y += 3) for (let x = f.mL + ((y / 3) | 0) % 2 * 1.5; x < f.mL + f.pw; x += 3) animDot(B, x, y, 1); B.fill(); B.restore();   // cut: the earth taken away, dense dots
+    B.strokeStyle = BLU; B.lineWidth = 1; B.setLineDash([5, 4]); B.beginPath(); for (let q = 0; q <= n; q++) q ? B.lineTo(f.X(q), f.Y(f.ex[q])) : B.moveTo(f.X(q), f.Y(f.ex[q])); B.stroke(); B.setLineDash([]); }
+  B.strokeStyle = BLU; B.lineWidth = 2; B.lineJoin = 'round'; animProfile(B, f); B.stroke();
+  B.fillStyle = BLU; B.font = font(10); B.textAlign = 'left'; B.textBaseline = 'top'; B.fillText(`section ${ANIM.ab} · one day in ${MONTHS[S.month - 1]} · length ${fL(f.L, 0)} · vertical ${f.vs.toFixed(1)}x`, f.mL, f.ground + 42);
+  B.strokeStyle = BLU; B.lineWidth = .6; B.globalAlpha = .45; B.beginPath(); for (let k = 0; k <= 14; k += 2) { const x = sc.x0 + k / 14 * sc.w; B.moveTo(x, sc.y0 - 6); B.lineTo(x, sc.y1); } B.moveTo(sc.x0, sc.y1); B.lineTo(sc.x0 + sc.w, sc.y1); B.stroke(); B.globalAlpha = 1;
+  B.font = font(8.5); B.textAlign = 'center'; B.textBaseline = 'top'; for (let k = 0; k <= 14; k += 2) B.fillText(animClock(5.5 + k), sc.x0 + k / 14 * sc.w, sc.y1 + 5);
+  B.textAlign = 'right'; B.textBaseline = 'middle'; for (const name in sc.R) B.fillText(name, sc.x0 - 8, sc.R[name].y + sc.R[name].h / 2);
+  { const r = sc.R.shade; for (let k = 0; k < 140; k++) { B.globalAlpha = .06 + .22 * ANIM.shadeFrac[k]; B.fillRect(sc.tx(k / 140 * ANIM.LOOP), r.y + 2, sc.w / 140 + .5, r.h - 4); } B.globalAlpha = 1; }   // the future, faint
+  { const r = sc.R.walk; B.globalAlpha = .25; B.lineWidth = 1; B.beginPath(); B.moveTo(sc.tx(2), r.y + r.h - 2); B.lineTo(sc.tx(ANIM.LOOP - 2), r.y + 2); B.stroke(); B.globalAlpha = 1; B.font = font(7.5); B.textAlign = 'left'; B.fillText(ANIM.ab[0].toLowerCase(), sc.x0 + 3, r.y + r.h - 5); B.fillText(ANIM.ab[ANIM.ab.length - 1].toLowerCase(), sc.x0 + 3, r.y + 5); }
+  { const r = sc.R.ground; B.globalAlpha = .25; B.beginPath(); for (let k = 0; k <= 140; k++) { const u = Math.max(0, Math.min(1, (k / 140 * ANIM.LOOP - 2) / (ANIM.LOOP - 4))), z = f.gnd[Math.round(u * n)]; B.lineTo(sc.tx(k / 140 * ANIM.LOOP), r.y + r.h - 2 - (z - f.lo) / Math.max(1e-6, f.hi - f.lo) * (r.h - 4)); } B.stroke(); B.globalAlpha = 1; }
+  { const r = sc.R.birds; B.globalAlpha = .25; B.lineWidth = 1; B.beginPath(); for (const tc of ANIM.birdTicks) { B.moveTo(sc.tx(tc), r.y + 2); B.lineTo(sc.tx(tc), r.y + r.h - 2); } B.stroke(); B.globalAlpha = 1; }
+  ANIM.plates = { a, b, da: mk(), db: mk() };
 }
-function animDraw(c, t) {                  // one frame at t seconds into the loop
-  const w = ANIM.W, h = ANIM.H, sw = ANIM.SW, f = ANIM.frame, lat = S.world ? S.world.lat : 34.1, hour = 5.5 + 14 * t / ANIM.LOOP, { alt, az } = sunPos(S.month, hour, lat), along = Math.cos(az - S.rot * D2R - ANIM.bearing), fs0 = fontScale; fontScale = 1.2;
-  c.fillStyle = PAPER; c.fillRect(0, 0, w, h);
-  const hz = f.ground, sky = Math.max(60, f.mT - 44), sx = f.X(f.n / 2) + along * (f.X(f.n) - f.X(0)) / 2, sy = sky - Math.sin(alt) * (sky - 34);   // sky wash to the datum; the sun arcs above the labels, behind the drawing
-  c.fillStyle = `rgba(150,185,220,${(.06 + .16 * Math.max(0, Math.sin(alt))).toFixed(3)})`; c.fillRect(0, 0, sw, hz);
-  if (alt > 0) { c.fillStyle = 'rgba(232,150,60,.85)'; c.beginPath(); c.arc(sx, sy, 9, 0, TAU); c.fill(); }
-  const wipe = Math.min(1, t / 2.5), wx = Math.max(1, Math.round(sw * wipe)); c.drawImage(ANIM.img, 0, 0, wx, h, 0, 0, wx, h);
-  if (wipe >= 1) {
-    const sh = animShade(f, alt, along); c.fillStyle = 'rgba(40,40,70,.2)'; let q = 0;
-    while (q <= f.n) { if (!sh[q]) { q++; continue; } let e = q; while (e < f.n && sh[e + 1]) e++; c.beginPath(); for (let p = q; p <= e; p++) c.lineTo(f.X(p), f.Y(f.gnd[p])); for (let p = e; p >= q; p--) c.lineTo(f.X(p), f.Y(f.gnd[p]) + 7); c.closePath(); c.fill(); q = e + 1; }
-    if (alt > 0) { const hh = Math.floor(hour), hm = hour % 1 >= .5 ? ':30' : ':00'; c.fillStyle = INK2; c.font = font(10.5); c.textAlign = 'center'; c.textBaseline = 'bottom'; c.fillText(`${MONTHS[S.month - 1]} · ${(hh % 12 || 12) + hm + (hh < 12 ? ' am' : ' pm')}`, Math.max(70, Math.min(sw - 70, sx)), sy - 14); }
-    const u = (t - 2.5) / (ANIM.LOOP - 3.5); if (u >= 0 && u <= 1) animWalker(c, f, u, t);
-  }
-  animBirds(c, t, sw); animPies(c, sw + 24, 36, t); fontScale = fs0;
+function animDraw(c, t) {                  // one frame at t seconds into the loop: the still plates, then the day's moving parts, printed in two inks a hair out of register
+  const w = ANIM.W, h = ANIM.H, f = ANIM.frame, n = f.n, s = animSun(t), sh = animShade(f, s.alt, s.along), sc = animScore(), pl = ANIM.plates, fs0 = fontScale, EMB = ANIM.EMB, BLU = ANIM.BLU; fontScale = 1.2;
+  const A = pl.da.getContext('2d'), B = pl.db.getContext('2d'); A.clearRect(0, 0, w, h); B.clearRect(0, 0, w, h);
+  const sky = Math.max(60, f.mT - 44), sx = f.X(n / 2) + s.along * (f.X(n) - f.X(0)) / 2, sy = sky - Math.sin(Math.max(0, s.alt)) * (sky - 34), px = sc.tx(t);
+  if (s.alt > 0) { A.fillStyle = EMB; A.beginPath(); A.arc(sx, sy, 11, 0, TAU); A.fill(); }
+  // the shade on the ground as an ember halftone, sixteen pixels deep under the profile
+  A.save(); A.beginPath(); let q = 0; while (q <= n) { if (!sh[q]) { q++; continue; } let e = q; while (e < n && sh[e + 1]) e++; for (let p = q; p <= e; p++) p === q ? A.moveTo(f.X(p), f.Y(f.gnd[p])) : A.lineTo(f.X(p), f.Y(f.gnd[p])); A.lineTo(f.X(e), f.Y(f.gnd[e]) + 14); A.lineTo(f.X(q), f.Y(f.gnd[q]) + 14); A.closePath(); q = e + 1; } A.clip();
+  A.fillStyle = EMB; A.beginPath(); for (let y = f.mT; y < f.ground + 20; y += 4) for (let x = f.mL + ((y / 4) | 0) % 2 * 2; x < f.mL + f.pw; x += 4) animDot(A, x, y, 1.5); A.fill(); A.restore();
+  // the score's past, in full ink, up to the playhead
+  { const r = sc.R.sun; A.save(); A.beginPath(); A.moveTo(sc.x0, r.y + r.h); for (let k = 0; k <= 140; k++) { const s2 = animSun(k / 140 * ANIM.LOOP); A.lineTo(sc.tx(k / 140 * ANIM.LOOP), r.y + r.h - s2.up * r.h * .95); } A.lineTo(sc.x0 + sc.w, r.y + r.h); A.closePath(); A.clip(); A.fillStyle = EMB; A.globalAlpha = .6; A.fillRect(sc.x0, r.y, px - sc.x0, r.h); A.restore(); }
+  A.strokeStyle = EMB; A.lineWidth = 1.4; A.beginPath(); A.moveTo(px, sc.y0 - 8); A.lineTo(px, sc.y1); A.stroke(); A.fillStyle = EMB; A.font = font(9, 600); A.textAlign = 'center'; A.textBaseline = 'bottom'; A.fillText(animClock(s.hour), Math.max(sc.x0 + 30, Math.min(sc.x0 + sc.w - 30, px)), sc.y0 - 10);
+  const u = Math.max(0, Math.min(1, (t - 2) / (ANIM.LOOP - 4))), wq = u * n, wi = Math.min(n - 1, Math.floor(wq)), wf = wq - wi, wz = f.gnd[wi] * (1 - wf) + f.gnd[wi + 1] * wf;
+  animFigure(B, f.X(wq), f.Y(wz), Math.max(24, 1.7 * f.pxm * f.vs), t * 6.5, BLU, 1.6); animBirds(B, t, w, BLU, 1.4);
+  B.fillStyle = BLU; B.strokeStyle = BLU;
+  { const r = sc.R.shade; for (let k = 0; k < 140 && k / 140 * ANIM.LOOP <= t; k++) { B.globalAlpha = .15 + .6 * ANIM.shadeFrac[k]; B.fillRect(sc.tx(k / 140 * ANIM.LOOP), r.y + 2, sc.w / 140 + .5, r.h - 4); } B.globalAlpha = 1; }
+  { const r = sc.R.walk, x1 = sc.tx(2) + (sc.tx(ANIM.LOOP - 2) - sc.tx(2)) * u, y1 = r.y + r.h - 2 - (r.h - 4) * u; if (t > 2) { B.lineWidth = 1.4; B.beginPath(); B.moveTo(sc.tx(2), r.y + r.h - 2); B.lineTo(x1, y1); B.stroke(); } A.fillStyle = EMB; A.beginPath(); A.arc(x1, y1, 3, 0, TAU); A.fill(); }
+  { const r = sc.R.ground; B.lineWidth = 1.4; B.beginPath(); for (let k = 0; k <= 140 && k / 140 * ANIM.LOOP <= t; k++) { const u2 = Math.max(0, Math.min(1, (k / 140 * ANIM.LOOP - 2) / (ANIM.LOOP - 4))), z = f.gnd[Math.round(u2 * n)]; B.lineTo(sc.tx(k / 140 * ANIM.LOOP), r.y + r.h - 2 - (z - f.lo) / Math.max(1e-6, f.hi - f.lo) * (r.h - 4)); } B.stroke(); }
+  { const r = sc.R.birds; B.lineWidth = 1.2; B.beginPath(); for (const tc of ANIM.birdTicks) { if (tc > t) continue; B.moveTo(sc.tx(tc), r.y + 2); B.lineTo(sc.tx(tc), r.y + r.h - 2); } B.stroke(); }
+  // print: paper, grain, then the two inks multiplied, drifting a hair out of register
+  c.fillStyle = '#f2ede1'; c.fillRect(0, 0, w, h); animGrain(c, w, h, .35);
+  const mis = 1.3, ax = Math.sin(t * .6) * mis, ay = Math.cos(t * .4) * mis, bx = -Math.sin(t * .5) * mis, by = Math.sin(t * .35) * mis;
+  c.save(); c.globalCompositeOperation = 'multiply'; c.globalAlpha = .9; c.drawImage(pl.a, ax, ay); c.drawImage(pl.da, ax, ay); c.drawImage(pl.b, bx, by); c.drawImage(pl.db, bx, by); c.restore(); fontScale = fs0;
 }
 function animStart() {
   if (!S.sec) { toast('draw a section line in plan first'); return; }
-  const h = ANIM.H, sw = ANIM.SW, off = document.createElement('canvas'); off.width = sw; off.height = h; const o = off.getContext('2d'), fs0 = fontScale; fontScale = 1.2;
-  const [la, lb] = secLetters(S.secI), f = drawSectionOne(o, sw, h, false, S.secs[S.secI], la, lb, true); fontScale = fs0;
-  ANIM.frame = f; ANIM.img = off; ANIM.ab = `${la}–${lb}`; { const [A, B] = S.secs[S.secI]; ANIM.bearing = Math.atan2(B[0] - A[0], -(B[1] - A[1])); }
-  ANIM.pies = animData(); ANIM.birds = Array.from({ length: 5 }, () => ({ x0: Math.random() * sw, y: 24 + Math.random() * Math.max(30, f.mT - 30), v: 38 + Math.random() * 50, ph: Math.random() * TAU, s: 5 + Math.random() * 5 }));
-  document.getElementById('animTitle').textContent = `section ${ANIM.ab} · animated`;
-  document.getElementById('animNote').textContent = `one day in ${MONTHS[S.month - 1]} along the line: the sun crosses and its shadows sweep the ground, one person walks from ${la} to ${lb}, the numbers draw themselves. shadows are cast along the line only; hedges count 1.2 m wide. sound is wind and birds made here, nothing recorded. save video keeps one loop of ${ANIM.LOOP} s as webm.`;
+  const w = ANIM.W, off = document.createElement('canvas'); off.width = w; off.height = ANIM.SEC; const o = off.getContext('2d'), fs0 = fontScale; fontScale = 1.2;
+  const [la, lb] = secLetters(S.secI), f = drawSectionOne(o, w, ANIM.SEC, false, S.secs[S.secI], la, lb, true); fontScale = fs0;   // drawn only for its frame: where the profile sits, and the ground along it
+  ANIM.frame = f; ANIM.ab = `${la}–${lb}`; { const [A, B] = S.secs[S.secI]; ANIM.bearing = Math.atan2(B[0] - A[0], -(B[1] - A[1])); }
+  ANIM.birds = Array.from({ length: 5 }, () => ({ x0: Math.random() * w, y: 24 + Math.random() * Math.max(30, f.mT - 60), v: 38 + Math.random() * 50, ph: Math.random() * TAU, s: 6 + Math.random() * 5 }));
+  ANIM.shadeFrac = Array.from({ length: 140 }, (_, k) => { const s2 = animSun(k / 140 * ANIM.LOOP), sh = animShade(f, s2.alt, s2.along); let cnt = 0; for (let q = 0; q <= f.n; q++) cnt += sh[q]; return cnt / (f.n + 1); });
+  ANIM.birdTicks = []; for (const b of ANIM.birds) for (let k = 0; k < 12; k++) { const tc = (((w / 2 + 30 - b.x0) % (w + 60) + (w + 60)) % (w + 60) + k * (w + 60)) / b.v; if (tc <= ANIM.LOOP) ANIM.birdTicks.push(tc); }
+  fontScale = 1.2; animStatic(); fontScale = fs0;
+  document.getElementById('animTitle').textContent = `section ${ANIM.ab} · animated · two inks`;
+  document.getElementById('animNote').textContent = `one day in ${MONTHS[S.month - 1]} along the line, as a score: the section above, the day below with a playhead. sun height, ground in shade, the walk from ${la} to ${lb}, the ground under foot, the birds. shadows are cast along the line only. printed in two inks a hair out of register. sound is wind and birds made here, nothing recorded. save video keeps one loop of ${ANIM.LOOP} s as webm.`;
   document.getElementById('animPanel').hidden = false; ANIM.on = true; ANIM.t0 = performance.now(); cancelAnimationFrame(ANIM.raf); ANIM.raf = requestAnimationFrame(animTick);
 }
 function animStop() { ANIM.on = false; cancelAnimationFrame(ANIM.raf); document.getElementById('animPanel').hidden = true; if (ANIM.rec) { try { ANIM.rec.stop(); } catch (_) {} } animAudio(false); ANIM.sound = false; document.getElementById('animSound').classList.remove('on'); }
