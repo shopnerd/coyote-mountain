@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="topo">
+<meta name="theme-color" content="#e8e8e4">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Coyote Mountain Topo</title>
 <style>
 :root{
@@ -144,6 +151,7 @@ body.projector main::before{display:none}
 #animPanel canvas{position:static;display:block;width:100%;height:auto;border-radius:2px;background:var(--paper);cursor:default}
 #animPanel .b.on{border-color:var(--accent);color:var(--accent)}
 #aiPanel .aiNote,#animPanel .aiNote{font-size:10.5px;color:var(--ink3);margin-top:6px;line-height:1.45}
+@media (display-mode:standalone){#app{grid-template-rows:calc(38px + env(safe-area-inset-top)) 26px 1fr}header{padding-top:env(safe-area-inset-top)}@media (max-width:760px){#app{grid-template-rows:calc(38px + env(safe-area-inset-top)) 26px 1fr calc(33dvh + env(safe-area-inset-bottom))}aside{padding-bottom:env(safe-area-inset-bottom)}}}
 html[data-depth="simple"] .deep{display:none!important}
 html[data-depth="simple"] #png{grid-column:1/-1}
 </style>
@@ -1987,7 +1995,7 @@ function hintText() {
     else if (S.brush === 'obj') h = 'object · tap to select, drag to move; tap empty ground to move it there';
     else if (S.brush === 'grade') h = 'grade · drag A to B; the strip takes the rail grade from A, sides daylighting';
     else h = `${S.brush} · drag to ${S.brush} the ground · radius and strength in the rail`;
-  } else if (S.mode === 'model') h = S.walk ? 'walk · w a s d or the arrows move · q e turn · shift runs · drag to look · orbit or sculpt leaves the ground' : S.sculpt ? `sculpt · drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj' ? 'raises' : S.brush + 's'} the ground · right drag orbits` : 'model · right drag orbits · wheel zooms · double-click refits · m stepped';
+  } else if (S.mode === 'model') h = S.walk ? 'walk · w a s d or the arrows move · q e turn · shift runs · drag to look · orbit or sculpt leaves the ground' : S.sculpt ? `sculpt · drag ${S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj' ? 'raises' : S.brush + 's'} the ground · ${TOUCH ? 'two fingers orbit' : 'right drag orbits'}` : TOUCH ? 'model · one finger orbits · pinch zooms · two fingers pan · double-tap refits' : 'model · right drag orbits · wheel zooms · double-click refits · m stepped';
   else if (S.mode === 'section') h = 'section · drag a new A–B line in plan · vertical exaggeration in the rail';
   else h = S.tapMode === 'dam' ? 'analysis · tap the sheet or a keypoint for the dam' : 'analysis · tap a keypoint or a spot for the keyline' + (S.rain ? '' : ' · r rain');
   if (S.rain) h += S.rainPaused ? ' · rain paused: p resumes' : ' · rain: p pause, r stop';
@@ -2004,7 +2012,8 @@ document.getElementById('views').onclick = e => { const b = e.target.closest('bu
 document.getElementById('extents').onclick = () => { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } toast('view refitted'); };
 
 /* ---------- rail ---------- */
-const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints, keyline, rain and sun. the model view shows whatever is running here.', plan: 'sketch grade with the brush. contours redraw as you go.', model: 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
+const TOUCH = matchMedia('(pointer: coarse)').matches;   // a finger or a pencil rather than a mouse: the hints say so
+const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints, keyline, rain and sun. the model view shows whatever is running here.', plan: 'sketch grade with the brush. contours redraw as you go.', model: TOUCH ? 'one finger orbits, two fingers pan and pinch to zoom. in sculpt, one finger shapes the ground.' : 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
 function setMode(m) {
   if (m === 'model' && S.mode !== 'model' && (S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj')) { S.planBrush = S.brush; setBrush('raise'); }   // the model sculpts; pen tools wait for the plan
   else if (m !== 'model' && S.mode === 'model' && S.planBrush) { setBrush(S.planBrush); S.planBrush = null; }
@@ -2579,9 +2588,9 @@ function animAudio(on) {                   // wind: brown noise through a low fi
 function animSave() {                      // one loop of the animation as a webm, with the sound if it is on
   if (ANIM.rec || !ANIM.on) return; if (!window.MediaRecorder) { toast('this browser cannot record video'); return; }
   const stream = document.getElementById('animCv').captureStream(30); if (ANIM.audio) ANIM.audio.dest.stream.getAudioTracks().forEach(tr => stream.addTrack(tr));
-  const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp9', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '', chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 6e6 } : undefined);
+  const mime = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp9', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '', ext = /mp4/.test(mime) ? 'mp4' : 'webm', chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 6e6 } : undefined);   // safari records mp4, not webm
   rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
-  rec.onstop = () => { ANIM.rec = null; unbusy(); if (!chunks.length) return; const url = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })); dl(url, `coyote-topo-section-${ANIM.ab.replace('–', '-')}-animated.webm`); setTimeout(() => URL.revokeObjectURL(url), 5000); };
+  rec.onstop = () => { ANIM.rec = null; unbusy(); if (!chunks.length) return; const url = URL.createObjectURL(new Blob(chunks, { type: mime || 'video/webm' })); dl(url, `coyote-topo-section-${ANIM.ab.replace('–', '-')}-animated.${ext}`); setTimeout(() => URL.revokeObjectURL(url), 5000); };
   ANIM.rec = rec; ANIM.t0 = performance.now(); rec.start(250); busy(`recording one loop · ${ANIM.LOOP} s`); setTimeout(() => { if (ANIM.rec === rec && rec.state !== 'inactive') rec.stop(); }, ANIM.LOOP * 1000 + 120);
 }
 async function paintSheet() {             // the drawing sheet: the model as it stands and the section, both painted (two calls), the rest drawn; without a key the two pictures come from the renderer instead
