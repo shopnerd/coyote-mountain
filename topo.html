@@ -934,6 +934,8 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
       const d1 = proj(p1[0], p1[1], zmid)[2], d2 = proj(p2[0], p2[1], zmid)[2]; cutSide = { A, dx, dy, sign: Math.sign(d1 > d2 ? dx * (p1[1] - A[1]) - dy * (p1[0] - A[0]) : dx * (p2[1] - A[1]) - dy * (p2[0] - A[0])) }; } }   // the camera stands on the side with the larger depth value
   const onCamSide = (x, y) => cutSide && Math.sign(cutSide.dx * (y - cutSide.A[1]) - cutSide.dy * (x - cutSide.A[0])) === cutSide.sign;
   rend3D = R ? { proj, s } : null;
+  const eG = Math.max(1, Math.round(W / 150)), gradM = eG === 1 ? grad : (fx, fy) => [(sample(z, fx + eG, fy) - sample(z, fx - eG, fy)) / (2 * eG * s), (sample(z, fx, fy + eG) - sample(z, fx, fy - eG)) / (2 * eG * s)];   // at detail 2x the slope for shading spans the height data's own pixel, or its steps show as stripes
+  const texSrc = groundPainted() ? paintedCache.canvas : (S.aerialM && aerialCache.canvas) ? aerialCache.canvas : null, baked = mode === 'aerial' && texSrc && !cfR && !ovR && !R ? shadeTex(texSrc, lx, ly, lz) : null; const bakedPat = baked ? c.createPattern(baked, 'no-repeat') : null;
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
     if (tm && !tin(i, j)) continue;
     const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
@@ -967,9 +969,9 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const fW = S.seaClip && wF ? [wF[idx(i, j)], wF[idx(i2, j)], wF[idx(i2, j2)], wF[idx(i, j2)]] : null, litC = lit ? [lit[idx(i, j)], lit[idx(i2, j)], lit[idx(i2, j2)], lit[idx(i, j2)]] : null;
     const px = Math.max(Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]), Math.hypot(P[3][0] - P[0][0], P[3][1] - P[0][1]), Math.hypot(P[2][0] - P[1][0], P[2][1] - P[1][1]));
     const sub = !fast && !mini && px > 30 ? Math.min(6, Math.ceil(px / 15)) : 1;
-    if (sub === 1) { const gc = grad(i + step / 2, j + step / 2); emit(i, j, step, za, zb, zc, zd, P, gc[0], gc[1], litC ? (litC[0] + litC[1] + litC[2] + litC[3]) / 4 : 1, [i * AER, j * AER, step * AER, step * AER], fW); }
+    if (sub === 1) { const gc = gradM(i + step / 2, j + step / 2); emit(i, j, step, za, zb, zc, zd, P, gc[0], gc[1], litC ? (litC[0] + litC[1] + litC[2] + litC[3]) / 4 : 1, [i * AER, j * AER, step * AER, step * AER], fW); }
     else {
-      const g4 = [grad(i, j), grad(i2, j), grad(i2, j2), grad(i, j2)], bil = (a, b, cc, d, u, v) => a * (1 - u) * (1 - v) + b * u * (1 - v) + cc * u * v + d * (1 - u) * v;
+      const g4 = [gradM(i, j), gradM(i2, j), gradM(i2, j2), gradM(i, j2)], bil = (a, b, cc, d, u, v) => a * (1 - u) * (1 - v) + b * u * (1 - v) + cc * u * v + d * (1 - u) * v;
       const zAt = (u, v) => bil(za, zb, zc, zd, u, v), fAt = fW ? (u, v) => bil(fW[0], fW[1], fW[2], fW[3], u, v) : null;
       for (let b2 = 0; b2 < sub; b2++) for (let a2 = 0; a2 < sub; a2++) {
         const u0 = a2 / sub, u1 = (a2 + 1) / sub, v0 = b2 / sub, v1 = (b2 + 1) / sub, uc = (u0 + u1) / 2, vc = (v0 + v1) / 2, st = step / sub, ii = i + u0 * step, jj = j + v0 * step;
@@ -1030,17 +1032,25 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     if (it.tex) {   // the photo patch mapped onto the tile: unit square -> the tile's projected corners (affine on three corners); the tile is first filled with its average colour so the fourth corner's miss never shows white
       const big = Math.max(Math.abs(P[2][0] - P[0][0]), Math.abs(P[2][1] - P[0][1]), Math.abs(P[3][0] - P[1][0]), Math.abs(P[3][1] - P[1][1])) > 40;
       const shd = cfR ? 0 : Math.max(0, Math.min(.5, (1 - it.tex[4]) * .45));   // this tile's darkness; the fill under the patch is darkened by the same amount, so whatever shows at a seam is the same tone as the patch
-      const t = it.tex, sz = Math.max(4, Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]), Math.hypot(P[3][0] - P[0][0], P[3][1] - P[0][1])), ov = 0, ow = 1;   // no overlap: a patch that reaches into its neighbour paints raw photo over the neighbour's shade, and that was the pale lattice; the darkened fill below covers the hairline the edge blending leaves
-      { const m = it.tone.match(/\d+/g); c.fillStyle = m ? `rgb(${(m[0] * (1 - shd)) | 0},${(m[1] * (1 - shd)) | 0},${(m[2] * (1 - shd)) | 0})` : it.tone; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k]; if (k) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); } c.closePath(); c.fill(); }
-      if ((S.walk || big) && !cfR) {   // a large patch in perspective: the tile as two triangles, each an exact affine map of its half of the patch, clipped to itself with a hair of overlap
+      const t = it.tex, sz = Math.max(4, Math.hypot(P[1][0] - P[0][0], P[1][1] - P[0][1]), Math.hypot(P[3][0] - P[0][0], P[3][1] - P[0][1])), ov = 0, ow = 1, warp = baked && Math.hypot(P[1][0] + P[3][0] - P[0][0] - P[2][0], P[1][1] + P[3][1] - P[0][1] - P[2][1]) > 1.2;   // no overlap: a patch that reaches into its neighbour paints raw photo over the neighbour's shade, and that was the pale lattice; the darkened fill below covers the hairline the edge blending leaves
+      if (!baked) { const m = it.tone.match(/\d+/g); c.fillStyle = m ? `rgb(${(m[0] * (1 - shd)) | 0},${(m[1] * (1 - shd)) | 0},${(m[2] * (1 - shd)) | 0})` : it.tone; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k]; if (k) c.lineTo(p[0], p[1]); else c.moveTo(p[0], p[1]); } c.closePath(); c.fill(); }
+      if (baked) {   // the shaded picture as a pattern fill: sampled across the whole picture, so no tile edge ever shows; a flat tile is one fill, a folded one two triangles, each an exact affine map, outset a hair over its neighbours
+        const fillTri = (A, B, C2, ua, va, ub, vb, uc, vc, Q) => { const du1 = ub - ua, dv1 = vb - va, du2 = uc - ua, dv2 = vc - va, det = du1 * dv2 - du2 * dv1; if (Math.abs(det) < 1e-9) return;
+          const ax = B[0] - A[0], ay = B[1] - A[1], bx = C2[0] - A[0], by = C2[1] - A[1], m11 = (ax * dv2 - bx * dv1) / det, m12 = (bx * du1 - ax * du2) / det, m21 = (ay * dv2 - by * dv1) / det, m22 = (by * du1 - ay * du2) / det;
+          bakedPat.setTransform(new DOMMatrix([m11, m21, m12, m22, A[0] - m11 * ua - m12 * va, A[1] - m21 * ua - m22 * va])); const gx = Q.reduce((a, q) => a + q[0], 0) / Q.length, gy = Q.reduce((a, q) => a + q[1], 0) / Q.length; c.fillStyle = bakedPat; c.beginPath();
+          Q.forEach((q, k) => { const dx = q[0] - gx, dy = q[1] - gy, d = Math.hypot(dx, dy) || 1, x = q[0] + dx / d * .5, y = q[1] + dy / d * .5; k ? c.lineTo(x, y) : c.moveTo(x, y); }); c.closePath(); c.fill(); };
+        const x0 = t[0], y0 = t[1], x1 = t[0] + t[2], y1 = t[1] + t[3];
+        if (S.walk || big || warp) { fillTri(P[0], P[1], P[2], x0, y0, x1, y0, x1, y1, [P[0], P[1], P[2]]); fillTri(P[0], P[2], P[3], x0, y0, x1, y1, x0, y1, [P[0], P[2], P[3]]); }
+        else fillTri(P[0], P[1], P[3], x0, y0, x1, y0, x0, y1, P); }
+      else if ((S.walk || big) && !cfR) {   // a large patch in perspective, or a tile folded over a ridge (a parallelogram there spills pale photo past the crest): the tile as two triangles, each an exact affine map of its half of the patch, clipped to itself with a hair of overlap
         const src = groundPainted() ? paintedCache.canvas : (S.aerialM && aerialCache.canvas) ? aerialCache.canvas : null;
         if (src) { const tri = (A, B, C2, ua, va, ub, vb, uc, vc) => { const du1 = ub - ua, dv1 = vb - va, du2 = uc - ua, dv2 = vc - va, det = du1 * dv2 - du2 * dv1; if (Math.abs(det) < 1e-9) return;
             const ax = B[0] - A[0], ay = B[1] - A[1], bx = C2[0] - A[0], by = C2[1] - A[1], m11 = (ax * dv2 - bx * dv1) / det, m12 = (bx * du1 - ax * du2) / det, m21 = (ay * dv2 - by * dv1) / det, m22 = (by * du1 - ay * du2) / det;
             const gx = (A[0] + B[0] + C2[0]) / 3, gy = (A[1] + B[1] + C2[1]) / 3, o = q => { const dx = q[0] - gx, dy = q[1] - gy, d = Math.hypot(dx, dy) || 1; return [q[0] + dx / d * .8, q[1] + dy / d * .8]; }, A2 = o(A), B2 = o(B), C3 = o(C2); c.save(); c.beginPath(); c.moveTo(A2[0], A2[1]); c.lineTo(B2[0], B2[1]); c.lineTo(C3[0], C3[1]); c.closePath(); c.clip(); c.transform(m11, m21, m12, m22, A[0] - m11 * ua - m12 * va, A[1] - m21 * ua - m22 * va); c.drawImage(src, t[0], t[1], t[2], t[3], 0, 0, 1, 1); c.restore(); };
           tri(P[0], P[1], P[2], 0, 0, 1, 0, 1, 1); tri(P[0], P[2], P[3], 0, 0, 1, 1, 0, 1); } }
       else { c.save(); c.transform(P[1][0] - P[0][0], P[1][1] - P[0][1], P[3][0] - P[0][0], P[3][1] - P[0][1], P[0][0], P[0][1]); if (cfR) c.drawImage(cfR.canvas, t[0], t[1], t[2], t[3], -ov, -ov, ow, ow); else if (groundPainted()) c.drawImage(paintedCache.canvas, t[0], t[1], t[2], t[3], -ov, -ov, ow, ow); else if (S.aerialM && aerialCache.canvas) c.drawImage(aerialCache.canvas, t[0], t[1], t[2], t[3], -ov, -ov, ow, ow); if (ovR) { c.globalAlpha = .85; c.drawImage(ovR.canvas, t[0], t[1], t[2], t[3], -ov, -ov, ow, ow); c.globalAlpha = 1; } c.restore(); }
-      if (it.pt && S.aop < 1) { c.globalAlpha = 1 - S.aop; c.fillStyle = it.pt; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1; if (k) c.lineTo(p[0] + dx / d * .3, p[1] + dy / d * .3); else c.moveTo(p[0] + dx / d * .3, p[1] + dy / d * .3); } c.closePath(); c.fill(); c.globalAlpha = 1; }   // the paper model laid over the photo by the opacity slider
-      if (shd > .02) { c.fillStyle = `rgba(20,24,20,${shd.toFixed(3)})`; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1; if (k) c.lineTo(p[0] + dx / d * .3, p[1] + dy / d * .3); else c.moveTo(p[0] + dx / d * .3, p[1] + dy / d * .3); } c.closePath(); c.fill(); } }   // the shade, a hair over its own edge only
+      if (it.pt && S.aop < 1 && !baked) { c.globalAlpha = 1 - S.aop; c.fillStyle = it.pt; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1; if (k) c.lineTo(p[0] + dx / d * .3, p[1] + dy / d * .3); else c.moveTo(p[0] + dx / d * .3, p[1] + dy / d * .3); } c.closePath(); c.fill(); c.globalAlpha = 1; }   // the paper model laid over the photo by the opacity slider
+      if (shd > .02 && !baked) { c.fillStyle = `rgba(20,24,20,${shd.toFixed(3)})`; c.beginPath(); for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1; if (k) c.lineTo(p[0] + dx / d * .3, p[1] + dy / d * .3); else c.moveTo(p[0] + dx / d * .3, p[1] + dy / d * .3); } c.closePath(); c.fill(); } }   // the shade, a hair over its own edge only
     else { c.fillStyle = it.tone; c.beginPath();
       for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1, x = p[0] + dx / d * OUT, y = p[1] + dy / d * OUT; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
       c.closePath(); c.fill(); }
@@ -1595,7 +1605,7 @@ function secYaw() {                      // the camera yaw where a and b sit at 
   const [A, B] = S.sec, yaw0 = S.cam.yaw; let best = null;
   for (let k = 0; k < 360; k++) { S.cam.yaw = k * D2R; const { proj } = camera(S.w, S.h), pA = proj(A[0], A[1], 0), pB = proj(B[0], B[1], 0); const score = Math.abs(pA[2] - pB[2]) + (pA[0] < pB[0] ? 0 : 1e6); if (!best || score < best.score) best = { yaw: S.cam.yaw, score }; }
   S.cam.yaw = yaw0; return best ? best.yaw : yaw0; }
-window.__dbg = fn => fn({ S, AI, camera, secYaw, nodeLatLon, setSiteW, aiPrompt, snapshotProject, cs, applyPad, objFromMesh, updateStats, W, H, renderPicture, bakePainted, aerialUI, paintedCache: () => paintedCache, aiControl, aiCall, kmlOut, geoTiff, animStart, animDraw, ANIM, aerialCache: () => aerialCache, AER: () => AER, HIST, CLOUD, loadCloud });   // a hook for the end-to-end tests
+window.__dbg = fn => fn({ S, AI, camera, secYaw, nodeLatLon, setSiteW, aiPrompt, snapshotProject, cs, applyPad, objFromMesh, updateStats, W, H, renderPicture, bakePainted, aerialUI, paintedCache: () => paintedCache, aiControl, aiCall, kmlOut, geoTiff, animStart, animDraw, ANIM, aerialCache: () => aerialCache, AER: () => AER, HIST, CLOUD, loadCloud, z: () => z, drawModel });   // a hook for the end-to-end tests
 document.getElementById('sec3d').onclick = () => paintSection();
 document.getElementById('secAnim').onclick = () => animStart();
 document.getElementById('animClose').onclick = () => animStop();
@@ -3075,6 +3085,20 @@ function cutfillImage() {                  // cut·fill as a soft wash plus hand
     bc.stroke(); oc.drawImage(big, 0, 0); };
   layer(1, [201, 107, 58], Math.PI / 4); layer(-1, [110, 109, 104], -Math.PI / 4);
   cfCache = { key, canvas: out }; return cfCache;
+}
+let shadeCache = { key: '' };
+function shadeTex(src, lx, ly, lz) {        // the ground picture with the model's light multiplied in, smooth per pixel: tiles then draw it with overlap and no shade polygons, so no lattice, no stripes where the grid is finer than the height data
+  const e = Math.max(1, Math.round(W / 150)), key = [S.terrainVer, W, H, AER, S.ve, S.aop, lx.toFixed(3), ly.toFixed(3), lz.toFixed(3), aerialCache.key, aerialCache.status, paintedCache.key, src.width, src.height].join('|');
+  if (shadeCache.key === key && shadeCache.src === src) return shadeCache.canvas;
+  const s = cs(), gx = new Float32Array(W * H), gy = new Float32Array(W * H);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const a = Math.max(0, i - e), b = Math.min(W - 1, i + e), c2 = Math.max(0, j - e), d = Math.min(H - 1, j + e); gx[idx(i, j)] = (z[idx(b, j)] - z[idx(a, j)]) / ((b - a) * s); gy[idx(i, j)] = (z[idx(i, d)] - z[idx(i, c2)]) / ((d - c2) * s); }   // the gradient over e nodes each way: at detail 2x that spans the height data's own pixel
+  const k = 4, SW = (W - 1) * k, SH = (H - 1) * k, sm = document.createElement('canvas'); sm.width = SW; sm.height = SH; const sc = sm.getContext('2d'), im = sc.createImageData(SW, SH), dd = im.data, pp = document.createElement('canvas'); pp.width = SW; pp.height = SH; const pc = pp.getContext('2d'), pim = pc.createImageData(SW, SH), pd = pim.data;
+  for (let y = 0; y < SH; y++) for (let x = 0; x < SW; x++) { const fx = (x + .5) / k, fy = (y + .5) / k, nx = -sample(gx, fx, fy) * S.ve, ny = -sample(gy, fx, fy) * S.ve, light = (nx * lx + ny * ly + lz) / Math.hypot(nx, ny, 1), shd = Math.max(0, Math.min(.5, (1 - light) * .45)), v = Math.round(255 * (1 - shd)), q = (y * SW + x) * 4;
+    dd[q] = dd[q + 1] = dd[q + 2] = v; dd[q + 3] = 255; const pt = mix(TONES[3], TONES[0], Math.max(0, Math.min(1, (light - .25) / .75))); pd[q] = pt[0]; pd[q + 1] = pt[1]; pd[q + 2] = pt[2]; pd[q + 3] = 255; }
+  sc.putImageData(im, 0, 0); pc.putImageData(pim, 0, 0);   // pp: the paper model's own tone under the photo, for the opacity slider
+  const out = shadeCache.src === src && shadeCache.canvas && shadeCache.canvas.width === src.width && shadeCache.canvas.height === src.height ? shadeCache.canvas : document.createElement('canvas'); out.width = src.width; out.height = src.height;
+  const oc = out.getContext('2d'); oc.clearRect(0, 0, out.width, out.height); oc.imageSmoothingEnabled = true; oc.imageSmoothingQuality = 'high'; if (S.aop < 1) oc.drawImage(pp, 0, 0, src.width, src.height); oc.globalAlpha = Math.min(1, S.aop); oc.drawImage(src, 0, 0); oc.globalAlpha = 1; oc.globalCompositeOperation = 'multiply'; oc.imageSmoothingEnabled = true; oc.imageSmoothingQuality = 'high'; oc.drawImage(sm, 0, 0, src.width, src.height); oc.globalCompositeOperation = 'source-over';
+  shadeCache = { key, src, canvas: out }; return out;
 }
 async function buildAerial(key, ppc = 12) {
   const { lat, lon } = S.world, RW = ppc * (W - 1), RH = ppc * (H - 1);
