@@ -289,6 +289,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
         <div class="p deep" id="aerialOp" style="display:none;margin-top:4px"><label>photo opacity<output id="o_aop">55%</output></label><input type="range" id="aop" min="10" max="100" step="5" value="55"></div>
         <div class="seg" id="histRow" style="padding:0;margin-top:6px"><button id="histBtn" style="flex:2">animate history</button><button id="histPlay" style="display:none">pause</button><button id="histSave" style="display:none">save video</button></div>
         <div class="p" id="histPosRow" style="display:none"><label>when<output id="o_histPos"></output></label><input type="range" id="histPos" min="0" max="1000" step="1" value="0"></div>
+        <div class="seg" id="histGlowRow" style="padding:0;margin-top:6px;display:none"><button data-glow="#f0783c" class="on">ember</button><button data-glow="#e8b93a">gold</button><button data-glow="#4aa3e8">sky</button><button data-glow="#7fd67a">green</button><button data-glow="#ffffff">white</button></div>
         <div class="desc" id="histInfo" style="padding:0;display:none"></div>
       </div>
     </div>
@@ -928,7 +929,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const dv = y1 * sp + Z * cp, f = S.cam.persp ? PD / Math.max(PD * .15, PD - dv) : 1; return [ox + x1 * scale * f, oy + (y1 * cp - Z * sp) * scale * f, dv]; };
   if (S.walk && !mini) { const wp = walkProj(w, h); proj = wp.proj; scale = wp.scale; ox = wp.ox; oy = wp.oy; }   // on foot: the eye on the ground, the little preview keeps the orbit view
   const tin = (i, j) => { if (!tm) return true; if (i < 0 || j < 0 || i > W - 2 || j > H - 2) return false; return !!tm.tiles[Math.min(H - 2, j + (step >> 1)) * (W - 1) + Math.min(W - 2, i + (step >> 1))]; };
-  const ovR = overlayRaster(), items = [], iv = interval(), mode = (S.aerialM || groundPainted() || ovR) && S.colorMode !== 'sun' ? 'aerial' : S.colorMode, cfR = mode === 'cutfill' && !fast ? cutfillImage() : null;   // the model photo wins whenever it is on, except under a sun study
+  const MT = mini ? null : modelTex, rawPass = !!(MT && MT.raw), ovR = MT ? null : overlayRaster(), items = [], iv = interval(), mode = (MT || S.aerialM || groundPainted() || ovR) && S.colorMode !== 'sun' ? 'aerial' : S.colorMode, cfR = mode === 'cutfill' && !fast ? cutfillImage() : null;   // the model photo wins whenever it is on, except under a sun study
   let lx = -.5, ly = -.4, lz = .77, lit = null, cutSide = null;  // light from upper left; in the render, from the sun
   if (R) { const lat = S.world ? S.world.lat : 34.1, { alt, az } = sunPos(S.month, S.hour, lat), b = az - S.rot * D2R, ca = Math.cos(Math.max(alt, .06)); lx = Math.sin(b) * ca; ly = -Math.cos(b) * ca; lz = Math.max(.12, Math.sin(alt)); lit = litCached(alt, az, hi);
     drawSky(c, w, h, proj, alt, az, s, zmid, scale, ox, oy, sy, cy);
@@ -937,7 +938,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   const onCamSide = (x, y) => cutSide && Math.sign(cutSide.dx * (y - cutSide.A[1]) - cutSide.dy * (x - cutSide.A[0])) === cutSide.sign;
   rend3D = R ? { proj, s } : null; if (night) drawNightSky(c, w, h);
   const eG = Math.max(1, Math.round(W / 150)), gradM = eG === 1 ? grad : (fx, fy) => [(sample(z, fx + eG, fy) - sample(z, fx - eG, fy)) / (2 * eG * s), (sample(z, fx, fy + eG) - sample(z, fx, fy - eG)) / (2 * eG * s)];   // at detail 2x the slope for shading spans the height data's own pixel, or its steps show as stripes
-  const texSrc = groundPainted() ? paintedCache.canvas : (S.aerialM && aerialCache.canvas) ? aerialCache.canvas : null, baked = mode === 'aerial' && texSrc && !cfR && !ovR && !R && !night ? shadeTex(texSrc, lx, ly, lz) : null; const bakedPat = baked ? c.createPattern(baked, 'no-repeat') : null;
+  const texSrc = MT ? MT.canvas : groundPainted() ? paintedCache.canvas : (S.aerialM && aerialCache.canvas) ? aerialCache.canvas : null, baked = mode === 'aerial' && texSrc && !cfR && !ovR && !R && !night ? (rawPass ? texSrc : shadeTex(texSrc, lx, ly, lz)) : null; const bakedPat = baked ? c.createPattern(baked, 'no-repeat') : null;
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
     if (tm && !tin(i, j)) continue;
     const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
@@ -954,7 +955,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
       if (R) tone = rendTone(tone, light, litv, mode);
       let pt = null; if (mode === 'aerial' && S.aop < 1 && !cfR) { pt = surfaceColor('paper', (za + zb + zc + zd) / 4, gx, gy, light, lo, hi, ii + st / 2, jj + st / 2); if (R) pt = rendTone(pt, light, litv, 'paper'); const m1 = tone.match(/\d+/g), m2 = pt.match(/\d+/g); if (m1 && m2) tone = `rgb(${(m1[0] * S.aop + m2[0] * (1 - S.aop)) | 0},${(m1[1] * S.aop + m2[1] * (1 - S.aop)) | 0},${(m1[2] * S.aop + m2[2] * (1 - S.aop)) | 0})`; }   // photo opacity: the paper model shows through by the rest
       let wet = false, tex = null;
-      if ((mode === 'aerial' && (!fast || S.walk) && ((S.aerialM && aerialCache.canvas) || groundPainted() || ovR)) || cfR) tex = [texRect[0], texRect[1], texRect[2], texRect[3], light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
+      if ((mode === 'aerial' && (!fast || S.walk) && (MT || (S.aerialM && aerialCache.canvas) || groundPainted() || ovR)) || cfR) tex = [texRect[0], texRect[1], texRect[2], texRect[3], light];   // the small preview gets the real texture too; it is cached until the camera or ground changes
       if (f) { const nw = (f[0] >= 0) + (f[1] >= 0) + (f[2] >= 0) + (f[3] >= 0);
         if (nw === 4) { tone = WTONE(light); wet = true; }
         else if (nw > 0) { const cn = [[0, 0], [1, 0], [1, 1], [0, 1]], zs = [za, zb, zc, zd], poly = [], cross = [];
@@ -964,7 +965,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
       const mn = Math.min(za, zb, zc, zd), mx = Math.max(za, zb, zc, zd);
       for (let lv = Math.ceil(mn / iv) * iv; lv <= mx; lv += iv) {
         const tmp = []; isoSegs(za, zb, zc, zd, lv, tmp);
-        if (!R || S.aiCtl) for (let q = 0; q < tmp.length; q += 4) lines.push([proj(ii + tmp[q] * st, jj + tmp[q + 1] * st, lv), proj(ii + tmp[q + 2] * st, jj + tmp[q + 3] * st, lv), isIndex(lv), lv]);
+        if ((!R || S.aiCtl) && !rawPass) for (let q = 0; q < tmp.length; q += 4) lines.push([proj(ii + tmp[q] * st, jj + tmp[q + 1] * st, lv), proj(ii + tmp[q + 2] * st, jj + tmp[q + 3] * st, lv), isIndex(lv), lv]);
       }
       if (night) { const v = 7 + 20 * Math.max(0, light); tone = wet ? `rgb(${v * .5 | 0},${v * .9 | 0},${v * 1.8 | 0})` : `rgb(${v * .85 | 0},${v * .95 | 0},${v * 1.2 | 0})`; tex = null; pt = null; wpart = null; shore = null; }   // night: the ground a dark body, lit only enough to read its form
       items.push({ d: (P[0][2] + P[1][2] + P[2][2] + P[3][2]) / 4, P, tone, pt, lines, wpart, shore, tex: wet ? null : tex });
@@ -1002,7 +1003,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   if (slab) { side(north); side(south); side(west); side(east); }
   walls.sort((a, b) => a.d - b.d);
   c.lineJoin = 'round';
-  for (const wl of walls) { c.fillStyle = night ? '#090c12' : TONES[3]; c.strokeStyle = night ? 'rgba(63,224,207,.3)' : INK2; c.lineWidth = .7; c.beginPath();
+  for (const wl of walls) { c.fillStyle = rawPass ? '#0000ff' : night ? '#090c12' : TONES[3]; c.strokeStyle = night ? 'rgba(63,224,207,.3)' : INK2; c.lineWidth = .7; c.beginPath();
     wl.P.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
   if (S.showBld && S.coast && S.coast.blds && S.coast.blds.length) for (const b of S.coast.blds) { if (cutSide && onCamSide(b.pts.reduce((a, q) => a + q[0], 0) / b.pts.length, b.pts.reduce((a, q) => a + q[1], 0) / b.pts.length)) continue; if (tm && !inTrim(b.pts.reduce((a, q) => a + q[0], 0) / b.pts.length, b.pts.reduce((a, q) => a + q[1], 0) / b.pts.length)) continue;   // blocks: flat roof at the highest ground under the footprint plus the height; walls down to the ground at each corner
     const g = b.pts.map(q => sample(zv, Math.max(0, Math.min(W - 1, q[0])), Math.max(0, Math.min(H - 1, q[1])))), top = S.bldMode === 'mapped' ? Math.max(...g) + b.h : Math.max(...g) + .001;   // pedestal and recess are already in the ground; outline mode draws a flat footprint on it
@@ -1026,11 +1027,11 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     c.globalAlpha = 1; c.globalCompositeOperation = 'source-over'; };
   let run = 0;
   for (const it of items) {
-    if (it.wall) { c.fillStyle = night ? '#090c12' : TONES[3]; c.strokeStyle = night ? 'rgba(63,224,207,.3)' : INK2; c.lineWidth = .7; c.lineJoin = 'round'; c.beginPath(); it.wall.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); continue; }
+    if (it.wall) { c.fillStyle = rawPass ? '#0000ff' : night ? '#090c12' : TONES[3]; c.strokeStyle = night ? 'rgba(63,224,207,.3)' : INK2; c.lineWidth = .7; c.lineJoin = 'round'; c.beginPath(); it.wall.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); continue; }
     if (it.tri) { const P = it.tri, cxt = (P[0][0] + P[1][0] + P[2][0]) / 3, cyt = (P[0][1] + P[1][1] + P[2][1]) / 3; c.fillStyle = it.tone; c.beginPath(); for (let k = 0; k < 3; k++) { const p = P[k], dx = p[0] - cxt, dy = p[1] - cyt, d = Math.hypot(dx, dy) || 1; const x = p[0] + dx / d * .35, y = p[1] + dy / d * .35; k ? c.lineTo(x, y) : c.moveTo(x, y); } c.closePath(); c.fill(); continue; }
     if (it.bld) { const { R, G } = it.bld, n = R.length, walls = []; for (let t = 0; t < n; t++) { const t2 = (t + 1) % n; walls.push({ d: Math.max(G[t][2], G[t2][2]), q: [G[t], G[t2], R[t2], R[t]] }); } walls.sort((a, b2) => a.d - b2.d);
-      c.lineJoin = 'round'; for (const w of walls) { c.fillStyle = night ? '#10141c' : '#b9b6ab'; c.strokeStyle = night ? 'rgba(63,224,207,.35)' : INK2; c.lineWidth = .5; c.beginPath(); w.q.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
-      c.fillStyle = night ? '#171c26' : '#e2dfd5'; c.beginPath(); R.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = .8; c.stroke(); continue; }
+      c.lineJoin = 'round'; for (const w of walls) { c.fillStyle = rawPass ? '#0000ff' : night ? '#10141c' : '#b9b6ab'; c.strokeStyle = night ? 'rgba(63,224,207,.35)' : INK2; c.lineWidth = .5; c.beginPath(); w.q.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); }
+      c.fillStyle = rawPass ? '#0000ff' : night ? '#171c26' : '#e2dfd5'; c.beginPath(); R.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.strokeStyle = INK; c.lineWidth = .8; c.stroke(); continue; }
     const P = it.P, cx = (P[0][0] + P[1][0] + P[2][0] + P[3][0]) * .25, cyy = (P[0][1] + P[1][1] + P[2][1] + P[3][1]) * .25;
     if (it.tex) {   // the photo patch mapped onto the tile: unit square -> the tile's projected corners (affine on three corners); the tile is first filled with its average colour so the fourth corner's miss never shows white
       const big = Math.max(Math.abs(P[2][0] - P[0][0]), Math.abs(P[2][1] - P[0][1]), Math.abs(P[3][0] - P[1][0]), Math.abs(P[3][1] - P[1][1])) > 40;
@@ -1058,10 +1059,10 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
       for (let k = 0; k < 4; k++) { const p = P[k], dx = p[0] - cx, dy = p[1] - cyy, d = Math.hypot(dx, dy) || 1, x = p[0] + dx / d * OUT, y = p[1] + dy / d * OUT; if (k) c.lineTo(x, y); else c.moveTo(x, y); }
       c.closePath(); c.fill(); }
     if (it.wpart) { c.fillStyle = WTONE(.6); c.beginPath(); it.wpart.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); if (it.shore) ls.push(it.shore); }
-    for (const l of it.lines) (l[2] ? li : ln).push(l);
+    if (!rawPass) for (const l of it.lines) (l[2] ? li : ln).push(l);
     if (++run >= 48) { flushLines(); run = 0; }
   }
-  flushLines();
+  flushLines(); if (rawPass) return;   /* the height pass wants the ground alone */
   if (cutSide) drawCutFace(c, proj, cutSide, lo, hi);
   nightInk = night ? 'rgba(214,226,238,.5)' : null; drawRoads(c, (i, j) => proj(i, j, sample(zv, i, j) + .03), mini ? .7 : 1, true); nightInk = null;
   drawStrokes(c, (i, j) => proj(i, j, sample(zv, i, j) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
@@ -1705,6 +1706,7 @@ function frame(now) {
   if (booting) { requestAnimationFrame(frame); return; }
   tickSun(now || performance.now()); updateHint(); zdisp();
   if ((S.mode === 'model' || S.mode === 'analysis') && S.rain) { if (!S.rainPaused) stepRain(); drawRain(); S.dirty = false; drawPip(); }
+  else if (S.mode === 'model' && HIST.on && HIST.frames && !S.lowQ && S.modelStyle !== 'stepped' && !S.walk) { S.dirty = false; try { drawHistoryModel(); if (HIST.rec && HIST.rc) { const o = HIST.rc.getContext('2d'); o.imageSmoothingEnabled = true; o.drawImage(cv, 0, 0, HIST.rc.width, HIST.rc.height); } } catch (e) { HIST.on = false; histUI(); toast('the history stopped: ' + (e.message || e)); } drawPip(); }
   else if (S.mode === 'plan' && HIST.on && HIST.frames) { if (S.dirty || !planShot.canvas) { S.dirty = false; drawPlan(); } try { drawHistory(); if (HIST.rec && HIST.rc) { const o = HIST.rc.getContext('2d'); o.imageSmoothingEnabled = true; o.imageSmoothingQuality = 'high'; o.drawImage(cv, sheet.x * dpr, sheet.y * dpr, sheet.w * dpr, sheet.h * dpr, 0, 0, HIST.rc.width, HIST.rc.height); } } catch (e) { HIST.on = false; histUI(); toast('the history stopped: ' + (e.message || e)); } drawPip(); }   // a bad frame must never take the page's draw loop with it
   else if (S.dirty) { S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel(ctx, S.w, S.h, 1)); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); if (busyFrames > 0 && --busyFrames === 0) unbusy(); }
   requestAnimationFrame(frame);
@@ -2047,7 +2049,7 @@ function setMode(m) {
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
   rendUI(m);
   { const su = document.getElementById('sunSec'); if (m === 'analysis') document.getElementById('sunSlot').appendChild(su); else document.getElementById('colorRow').insertAdjacentElement('afterend', su); }   // the one sun clock: in the sun block in analysis, under the render in the model
-  { const ae = document.getElementById('aerialRow'), op = document.getElementById('aerialOp'); ae.insertAdjacentElement('afterend', op); op.style.padding = m === 'model' ? '0 12px 6px' : ''; if (m === 'model') { document.getElementById('modelStyle').insertAdjacentElement('afterend', ae); ae.style.padding = '0 12px'; ae.style.marginTop = '0'; ae.style.marginBottom = '6px'; } else { document.getElementById('annoRow').insertAdjacentElement('afterend', ae); ae.style.padding = '0'; ae.style.marginTop = '6px'; ae.style.marginBottom = '0'; } ae.insertAdjacentElement('afterend', op); }   // the photo switch travels: under smooth / stepped in the model, with the sheet switches in plan
+  { const ae = document.getElementById('aerialRow'), op = document.getElementById('aerialOp'); ae.insertAdjacentElement('afterend', op); op.style.padding = m === 'model' ? '0 12px 6px' : ''; if (m === 'model') { document.getElementById('modelStyle').insertAdjacentElement('afterend', ae); ae.style.padding = '0 12px'; ae.style.marginTop = '0'; ae.style.marginBottom = '6px'; } else { document.getElementById('annoRow').insertAdjacentElement('afterend', ae); ae.style.padding = '0'; ae.style.marginTop = '6px'; ae.style.marginBottom = '0'; } ae.insertAdjacentElement('afterend', op); let prev = op; for (const id of ['histRow', 'histPosRow', 'histGlowRow', 'histInfo']) { const el = document.getElementById(id); prev.insertAdjacentElement('afterend', el); el.style.paddingLeft = el.style.paddingRight = m === 'model' ? '12px' : '0'; prev = el; } }   // the photo switch travels: under smooth / stepped in the model, with the sheet switches in plan
   document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('sculptSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('sheetSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('geoRow').style.display = m === 'section' ? '' : 'none'; document.getElementById('secRow').style.display = m === 'section' ? '' : 'none'; secTabs(); for (const id of ['worldLbl', 'worldSec']) document.getElementById(id).style.display = m === 'plan' ? '' : 'none'; document.getElementById('geoInfo').style.display = m === 'section' && S.geo ? '' : 'none'; document.getElementById('rainRowM').style.display = m === 'model' ? '' : 'none'; document.getElementById('cloudRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('cloudInfo').style.display = m === 'model' && CLOUD.n ? '' : 'none'; for (const id of ['sculptLbl', 'modelLbl']) document.getElementById(id).style.display = m === 'model' ? '' : 'none'; for (const id of ['secLbl', 'geoLbl']) document.getElementById(id).style.display = m === 'section' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null; aerialUI();
   if (m !== 'model') walkStop(); cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
 }
@@ -2632,7 +2634,7 @@ async function paintSheet() {             // the drawing sheet: the model as it 
 }
 
 /* ---------- animate history: the satellite pictures of this place in order, under the plan ---------- */
-const HIST = { on: false, frames: null, key: '', busy: false, t0: 0, rel: null, green: null, masks: null, diffs: null, tmp: null, per: 1.6, bands: null, rec: null, paused: false, u: 0 };
+const HIST = { on: false, frames: null, key: '', busy: false, t0: 0, rel: null, green: null, masks: null, diffs: null, tmp: null, per: 1.6, bands: null, glow: (() => { try { return localStorage.getItem('coyote-hist-glow') || '#f0783c'; } catch (_) { return '#f0783c'; } })(), tints: new Map(), rec: null, paused: false, u: 0 };
 async function histReleases() {           // every wayback release, oldest first, with its date; the service lists them itself
   if (HIST.rel) return HIST.rel; const j = await (await fetch('https://wayback.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer?f=json')).json();
   HIST.rel = (j.Selection || []).map(r => ({ num: +r.M, date: (r.Name.match(/\d{4}-\d{2}-\d{2}/) || [''])[0] })).filter(r => r.date).sort((a, b) => a.date < b.date ? -1 : 1); return HIST.rel;
@@ -2721,28 +2723,79 @@ async function histStart() {
   } catch (e) { toast(String(e.message || e)); HIST.on = false; } finally { HIST.busy = false; unbusy(); histUI(); S.dirty = true; }
 }
 function histStop() { HIST.on = false; HIST.paused = false; if (HIST.rec) { try { HIST.rec.stop(); } catch (_) {} } histUI(); S.dirty = true; }
-function histUI() { const live = HIST.on && HIST.frames; document.getElementById('histBtn').textContent = HIST.busy ? 'looking back…' : HIST.on ? 'stop the history' : 'animate history'; document.getElementById('histBtn').classList.toggle('on', HIST.on); for (const id of ['histSave', 'histPlay']) document.getElementById(id).style.display = live ? '' : 'none'; document.getElementById('histPosRow').style.display = live ? '' : 'none'; document.getElementById('histPlay').textContent = HIST.paused ? 'play' : 'pause'; document.getElementById('histInfo').style.display = HIST.frames ? '' : 'none'; }
+function histUI() { const live = HIST.on && HIST.frames; document.getElementById('histBtn').textContent = HIST.busy ? 'looking back…' : HIST.on ? 'stop the history' : 'animate history'; document.getElementById('histBtn').classList.toggle('on', HIST.on); for (const id of ['histSave', 'histPlay']) document.getElementById(id).style.display = live ? '' : 'none'; document.getElementById('histGlowRow').style.display = live ? '' : 'none'; document.querySelectorAll('#histGlowRow button').forEach(b => b.classList.toggle('on', b.dataset.glow === HIST.glow)); document.getElementById('histPosRow').style.display = live ? '' : 'none'; document.getElementById('histPlay').textContent = HIST.paused ? 'play' : 'pause'; document.getElementById('histInfo').style.display = HIST.frames ? '' : 'none'; }
+let modelTex = null;                        // {canvas, raw}: a picture at AER px per cell that the model wears instead of the photo; raw skips the light and the line work
+const HM = { key: '', layers: new Map(), height: null, hw: 0, hh: 0, mask: null, band: null, tmp: null, queue: false };
+function histModelKey() { return [HIST.key, S.terrainVer, S.strokeVer, S.cam.yaw.toFixed(3), S.cam.pitch.toFixed(3), S.cam.zoom.toFixed(3), S.cam.pan.x | 0, S.cam.pan.y | 0, S.cam.persp, S.ve, S.w, S.h, dpr, W, S.labels, S.showBld, S.showRoads].join('|'); }
+function histModelRender(tex, raw) {        // one render of the model wearing tex, at the screen's resolution
+  const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; const o = off.getContext('2d'); o.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const was = { aop: S.aop, rend: S.rendOn, cloud: S.cloud }; modelTex = { canvas: tex, raw }; S.aop = 1; S.rendOn = false; if (raw) S.cloud = false;
+  try { drawModel(o, S.w, S.h, 1); } finally { modelTex = null; S.aop = was.aop; S.rendOn = was.rend; S.cloud = was.cloud; }
+  return off;
+}
+function histModelLayer(k) {                // picture k on the model, rendered once for this camera
+  if (HM.layers.has(k)) return HM.layers.get(k);
+  const f = HIST.frames[k], t = document.createElement('canvas'); t.width = AER * (W - 1); t.height = AER * (H - 1); const o = t.getContext('2d'); o.imageSmoothingEnabled = true; o.imageSmoothingQuality = 'high'; o.drawImage(f.canvas, 0, 0, t.width, t.height);
+  const layer = histModelRender(t); HM.layers.set(k, layer); return layer;
+}
+function histModelHeight() {                // the ground's height under every screen pixel, from a raw render wearing the heights as grey, kept at half size
+  const [lo, hi] = range(z), sm = document.createElement('canvas'); sm.width = W; sm.height = H; const so = sm.getContext('2d'), im = so.createImageData(W, H);
+  for (let n = 0; n < W * H; n++) { const v = Math.round(255 * (z[n] - lo) / Math.max(1e-6, hi - lo)); im.data[n * 4] = im.data[n * 4 + 1] = im.data[n * 4 + 2] = v; im.data[n * 4 + 3] = 255; } so.putImageData(im, 0, 0);
+  const t = document.createElement('canvas'); t.width = AER * (W - 1); t.height = AER * (H - 1); const o = t.getContext('2d'); o.imageSmoothingEnabled = true; o.drawImage(sm, -AER / 2, -AER / 2, W * AER, H * AER);   // nodes sit on cell corners
+  const r = histModelRender(t, true), hw = Math.max(1, cv.width >> 1), hh = Math.max(1, cv.height >> 1), hc = document.createElement('canvas'); hc.width = hw; hc.height = hh; const ho = hc.getContext('2d', { willReadFrequently: true }); ho.drawImage(r, 0, 0, hw, hh);
+  const d = ho.getImageData(0, 0, hw, hh).data, h = new Float32Array(hw * hh); for (let q = 0; q < hw * hh; q++) h[q] = d[q * 4 + 3] > 200 && Math.abs(d[q * 4] - d[q * 4 + 2]) < 12 ? d[q * 4] / 255 : -1;   /* grey is ground height; the blue walls and buildings and the empty background are not */
+  HM.height = h; HM.hw = hw; HM.hh = hh; HM.mask = document.createElement('canvas'); HM.mask.width = hw; HM.mask.height = hh; HM.band = document.createElement('canvas'); HM.band.width = hw; HM.band.height = hh; HM.tmp = document.createElement('canvas'); HM.tmp.width = cv.width; HM.tmp.height = cv.height;
+}
+function drawHistoryModel() {               // the history worn by the model: picture i, the next rising up the ground by height, the crest riding the level, the date
+  const key = histModelKey(); if (HM.key !== key) { HM.key = key; HM.layers.clear(); HM.height = null; }
+  const F = HIST.frames, { u, i, j, tr } = histTime();
+  if (!HM.height) { busy('draping the history on the model', 2); histModelHeight(); }
+  const A = histModelLayer(i), B = histModelLayer(j);
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(A, 0, 0);
+  if (tr > 0) {
+    const hw = HM.hw, hh = HM.hh, mo = HM.mask.getContext('2d'), bo = HM.band.getContext('2d'), mi = mo.createImageData(hw, hh), bi = bo.createImageData(hw, hh), md = mi.data, bd = bi.data, h = HM.height, lvl = tr + .05, back = tr - 2 / 24 + .05, ba = .42 * Math.min(1, tr * 8, (1 - tr) * 10), gc = [1, 3, 5].map(q => parseInt(HIST.glow.slice(q, q + 2), 16));
+    for (let q = 0; q < hw * hh; q++) { const v = h[q]; if (v < 0) { md[q * 4 + 3] = tr > .5 ? 255 : 0; continue; } const a = Math.max(0, Math.min(1, (lvl - v) / .12)), b0 = Math.max(0, Math.min(1, (back - v) / .12)); md[q * 4 + 3] = a * 255; const band = Math.max(0, a - b0) * ba; if (band > 0) { bd[q * 4] = gc[0]; bd[q * 4 + 1] = gc[1]; bd[q * 4 + 2] = gc[2]; bd[q * 4 + 3] = band * 255; } }
+    mo.putImageData(mi, 0, 0); bo.putImageData(bi, 0, 0);
+    const t = HM.tmp, o = t.getContext('2d'); o.globalCompositeOperation = 'source-over'; o.clearRect(0, 0, t.width, t.height); o.drawImage(B, 0, 0); o.globalCompositeOperation = 'destination-in'; o.imageSmoothingEnabled = true; o.drawImage(HM.mask, 0, 0, t.width, t.height); o.globalCompositeOperation = 'source-over';
+    ctx.drawImage(t, 0, 0); ctx.imageSmoothingEnabled = true; ctx.drawImage(HM.band, 0, 0, cv.width, cv.height);
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  histStamp(F, u, i, j, tr, { x: 0, y: 0, w: S.w, h: S.h });
+  if (!HM.queue) { const next = [...Array(3)].map((_, q) => (j + 1 + q) % F.length).find(k => !HM.layers.has(k)); if (next !== undefined) { HM.queue = true; setTimeout(() => { HM.queue = false; if (HIST.on && S.mode === 'model' && HM.key === histModelKey()) histModelLayer(next); }, 60); } }   // the next pictures render a little ahead, one at a time
+}
+function histTint(c) {                     // a glow layer (its alpha is the shape) in the chosen colour
+  const k = c.width + 'x' + c.height; let t = HIST.tints.get(k); if (!t) { t = document.createElement('canvas'); t.width = c.width; t.height = c.height; HIST.tints.set(k, t); }
+  const o = t.getContext('2d'); o.globalCompositeOperation = 'source-over'; o.clearRect(0, 0, t.width, t.height); o.drawImage(c, 0, 0); o.globalCompositeOperation = 'source-in'; o.fillStyle = HIST.glow; o.fillRect(0, 0, t.width, t.height); o.globalCompositeOperation = 'source-over'; return t;
+}
+function histTime() {                     // where the history is: picture i rising into j by tr; almost no pause, eased, so it runs as one pulse
+  const n = HIST.frames.length, u = HIST.paused ? HIST.u : Math.max(0, (performance.now() - HIST.t0) / 1000 / HIST.per) % n, i = Math.floor(u) % n, fr = u - Math.floor(u), hold = .1, lin = Math.max(0, (fr - hold) / (1 - hold));
+  return { u, i, j: (i + 1) % n, tr: lin * lin * (3 - 2 * lin) };
+}
 function drawHistory() {                // one picture, then the next rising up the valleys with the changed ground pulsing, then the cached plan over it, then the date and the greenness
-  const F = HIST.frames, n = F.length, u = HIST.paused ? HIST.u : Math.max(0, (performance.now() - HIST.t0) / 1000 / HIST.per) % n, i = Math.floor(u) % n, j = (i + 1) % n, fr = u - Math.floor(u), hold = .1, lin = Math.max(0, (fr - hold) / (1 - hold)), tr = lin * lin * (3 - 2 * lin);   /* almost no pause: each picture starts rising at once, eased, so the history runs as one pulse */
+  const F = HIST.frames, n = F.length, { u, i, j, tr } = histTime();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, S.w, S.h); ctx.save(); ctx.beginPath(); ctx.rect(sheet.x, sheet.y, sheet.w, sheet.h); ctx.clip(); ctx.imageSmoothingEnabled = true;
   ctx.drawImage(F[i].canvas, sheet.x, sheet.y, sheet.w, sheet.h);
   if (tr > 0) { const t = HIST.tmp, o = t.getContext('2d'); o.clearRect(0, 0, t.width, t.height); o.drawImage(F[j].canvas, 0, 0, t.width, t.height); o.globalCompositeOperation = 'destination-in'; o.imageSmoothingEnabled = true; o.drawImage(HIST.masks[Math.min(23, Math.floor(tr * 24))], -t.width / (W - 1) / 2, -t.height / (H - 1) / 2, t.width * W / (W - 1), t.height * H / (H - 1)); o.globalCompositeOperation = 'source-over'; ctx.drawImage(t, sheet.x, sheet.y, sheet.w, sheet.h);
-    if (HIST.bands && tr < .98) { ctx.globalAlpha = .6 * Math.min(1, tr * 8, (1 - tr) * 10); ctx.imageSmoothingEnabled = true; ctx.drawImage(HIST.bands[Math.min(23, Math.floor(tr * 24))], sheet.x - sheet.w / (W - 1) / 2, sheet.y - sheet.h / (H - 1) / 2, sheet.w * W / (W - 1), sheet.h * H / (H - 1)); ctx.globalAlpha = 1; }
-    if (HIST.diffs[i]) { ctx.globalAlpha = Math.sin(tr * Math.PI) * .9; ctx.drawImage(HIST.diffs[i], sheet.x, sheet.y, sheet.w, sheet.h); ctx.globalAlpha = 1; } }
+    if (HIST.bands && tr < .98) { ctx.globalAlpha = .42 * Math.min(1, tr * 8, (1 - tr) * 10); ctx.imageSmoothingEnabled = true; ctx.drawImage(histTint(HIST.bands[Math.min(23, Math.floor(tr * 24))]), sheet.x - sheet.w / (W - 1) / 2, sheet.y - sheet.h / (H - 1) / 2, sheet.w * W / (W - 1), sheet.h * H / (H - 1)); ctx.globalAlpha = 1; }
+    if (HIST.diffs[i]) { ctx.globalAlpha = Math.sin(tr * Math.PI) * .65; ctx.drawImage(histTint(HIST.diffs[i]), sheet.x, sheet.y, sheet.w, sheet.h); ctx.globalAlpha = 1; } }
   ctx.restore();
   if (planShot.canvas) ctx.drawImage(planShot.canvas, 0, 0, S.w, S.h);
-  // the date, large, and the years of greenness as a small chart inside the sheet
+  histStamp(F, u, i, j, tr, sheet);
+}
+function histStamp(F, u, i, j, tr, box) {   // the date, large, and the years of greenness as a small chart inside the box
+  const n = F.length;
   HIST.u = u; if (!HIST.paused) { const el = document.getElementById('histPos'); el.value = Math.round(u / n * 1000); document.getElementById('o_histPos').textContent = F[i].date.slice(0, 7); }   // the slider follows the play; dragging it takes over
-  const date = tr > .5 ? F[j].date : F[i].date, x0 = sheet.x + 14, y0 = sheet.y + 14; const Fd = tr > .5 ? F[j] : F[i], sub = `${i + 1} of ${n} · ${Fd.src || 'looking back'}`; ctx.font = font(9.5); const bx = Math.max(148, ctx.measureText(sub).width + 14); ctx.fillStyle = 'rgba(240,240,236,.82)'; ctx.fillRect(x0 - 6, y0 - 4, bx, 44); ctx.fillStyle = ACC; ctx.font = font(24, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(date.slice(0, 7), x0, y0); ctx.fillStyle = INK2; ctx.font = font(9.5); ctx.fillText(sub, x0, y0 + 28);
-  if (HIST.green && HIST.green.length > 1) { const G = HIST.green, gw = Math.min(220, sheet.w * .3), gh = 44, gx = sheet.x + sheet.w - gw - 14, gy = sheet.y + sheet.h - gh - 14, lo = Math.min(...G.map(q => q.g)), hi = Math.max(...G.map(q => q.g)), yr = +date.slice(0, 4);
+  const date = tr > .5 ? F[j].date : F[i].date, x0 = box.x + 14, y0 = box.y + 14; const Fd = tr > .5 ? F[j] : F[i], sub = `${i + 1} of ${n} · ${Fd.src || 'looking back'}`; ctx.font = font(9.5); const bx = Math.max(148, ctx.measureText(sub).width + 14); ctx.fillStyle = 'rgba(240,240,236,.82)'; ctx.fillRect(x0 - 6, y0 - 4, bx, 44); ctx.fillStyle = ACC; ctx.font = font(24, 600); ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText(date.slice(0, 7), x0, y0); ctx.fillStyle = INK2; ctx.font = font(9.5); ctx.fillText(sub, x0, y0 + 28);
+  if (HIST.green && HIST.green.length > 1) { const G = HIST.green, gw = Math.min(220, box.w * .3), gh = 44, gx = box.x + box.w - gw - 14, gy = box.y + box.h - gh - 14, lo = Math.min(...G.map(q => q.g)), hi = Math.max(...G.map(q => q.g)), yr = +date.slice(0, 4);
     ctx.fillStyle = 'rgba(240,240,236,.82)'; ctx.fillRect(gx - 8, gy - 16, gw + 16, gh + 30); ctx.fillStyle = INK2; ctx.font = font(9); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText('how green each year · sentinel-2', gx, gy - 3);
     const bw = gw / G.length; G.forEach((q, k) => { const h = 4 + (gh - 4) * (hi > lo ? (q.g - lo) / (hi - lo) : .5), on = q.year === yr; ctx.fillStyle = on ? ACC : 'rgba(79,122,58,.55)'; ctx.fillRect(gx + k * bw + 1, gy + gh - h, bw - 2, h); ctx.fillStyle = on ? ACC : INK3; ctx.font = font(8); ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(String(q.year).slice(2), gx + (k + .5) * bw, gy + gh + 2); }); }
 }
+document.getElementById('histGlowRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; HIST.glow = b.dataset.glow; try { localStorage.setItem('coyote-hist-glow', HIST.glow); } catch (_) {} histUI(); S.dirty = true; };
 document.getElementById('histBtn').onclick = () => { if (HIST.on) histStop(); else histStart(); };
 document.getElementById('histPlay').onclick = () => { HIST.paused = !HIST.paused; if (!HIST.paused) HIST.t0 = performance.now() - HIST.u * HIST.per * 1000; histUI(); };   // play carries on from wherever the slider left it
 document.getElementById('histPos').oninput = e => { if (!HIST.frames) return; const n = HIST.frames.length; HIST.paused = true; HIST.u = Math.min(n - .001, +e.target.value / 1000 * n); document.getElementById('o_histPos').textContent = HIST.frames[Math.floor(HIST.u)].date.slice(0, 7); histUI(); };
 document.getElementById('histSave').onclick = () => { if (HIST.rec || !HIST.on || !HIST.frames) return; if (!window.MediaRecorder) { toast('this browser cannot record video'); return; }
-  const k = Math.min(1, 1920 / (sheet.w * dpr)), rc = document.createElement('canvas'); rc.width = Math.round(sheet.w * dpr * k / 2) * 2; rc.height = Math.round(sheet.h * dpr * k / 2) * 2; HIST.rc = rc;   // the video is the sheet alone, at most 1920 wide, even sides (odd ones break players)
+  const vw = S.mode === 'model' ? cv.width : sheet.w * dpr, vh = S.mode === 'model' ? cv.height : sheet.h * dpr, k = Math.min(1, 1920 / vw), rc = document.createElement('canvas'); rc.width = Math.round(vw * k / 2) * 2; rc.height = Math.round(vh * k / 2) * 2; HIST.rc = rc;   // the video is the sheet alone, at most 1920 wide, even sides (odd ones break players)
   HIST.paused = false; histUI();   // a saved video always plays the whole history; a paused one recorded a still, and a still stream decodes as grey blocks
   const stream = rc.captureStream(30), mime = ['video/mp4;codecs=avc1', 'video/webm;codecs=vp9', 'video/webm', 'video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '', ext = /mp4/.test(mime) ? 'mp4' : 'webm', chunks = [], rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : undefined), secs = HIST.frames.length * HIST.per;
   rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); }; rec.onstop = () => { HIST.rec = null; HIST.rc = null; unbusy(); if (!chunks.length) return; const url = URL.createObjectURL(new Blob(chunks, { type: mime || 'video/webm' })); dl(url, `coyote-topo-history-${(S.world.name || 'site').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}.${ext}`); setTimeout(() => URL.revokeObjectURL(url), 5000); };
