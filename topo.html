@@ -359,6 +359,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="sec">exports</div>
     <div class="actions" id="exports">
       <button class="btn" id="png">save png</button>
+      <div class="p deep" style="grid-column:1/-1;margin-top:2px"><label>3d model</label><select id="meshFmt"><option value="stl">stl · solid to print, no texture</option><option value="obj">obj + mtl + png · textured, three files zipped</option><option value="glb">glb · textured, one file</option><option value="wrl">wrl · vrml, textured, for colour printing</option></select></div>
       <button class="btn deep" id="stl">export stl</button>
       <div class="deep" style="display:flex;gap:6px"><button class="btn" id="laser" style="flex:1">export laser</button><button class="btn" id="laserDxf" title="the same cut file as DXF, for laser software that prefers it">dxf</button></div>
       <button class="btn wide deep" id="cncDxf" title="a dxf at the model's scale, in inches or millimetres to match the units setting: site edge, contours, building footprints, path edges, lot line, on their own layers. for engraving on the cnc, or any cad">cnc lines · dxf</button>
@@ -1933,7 +1934,7 @@ const TIPS = {
   'p:unit': 'imperial or metric, everywhere: sheet, notes, exports', 'p:relief': 'height of the invented hills, low point to high point', 'p:interval': 'vertical spacing between contour lines; every fifth one is an index contour', 'p:hach': 'how many short downhill ticks between contours; 0 for none', 'p:ve': 'stretch heights so relief reads in the model and section; 1 is true',
   'p:mm': 'how much the site shrinks to become the object, and how wide it comes out', 'p:thick': 'thickness of the cardboard or plywood you will cut', 'p:sheet': 'the laser bed in mm; layers get nested onto sheets this size', 'p:ledge': 'hollow each layer, leaving a ledge this wide for the next one to sit on; 0 keeps them solid', 'p:paper': 'paper size for the drawing sheet set',
   'p:radius': () => S.brush === 'pen' ? 'width of new pen strokes' : S.brush === 'erase' ? 'how wide the eraser reaches' : 'brush size; it scales with the site width', 'p:strength': () => S.brush === 'pen' ? 'ink opacity of new pen strokes' : 'how hard each pass moves the ground',
-  shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', newProj: 'start over: a blank flat sheet with default settings, nothing kept (undo brings it back)', png: 'save the current view as an image', stl: 'a printable 3d model on a base slab, sized in the fabricate section', sheetBtn: 'the drawing sheet: the model as it stands and the active section, both painted in the chosen style, over the plan, the analysis and the notes at true scale, with the title block. two calls to the painter; without a key the two pictures are drawn instead', laserDxf: 'the same laser file as a DXF in millimetres: layers CUT (red), ENGRAVE (blue), MATERIAL (yellow); for laser software that takes DXF better than SVG', laser: 'cardboard layers nested on sheets for the laser cutter', 'v:top': 'straight down, north up; orbit again to tilt', 'v:front': 'from the south at eye level: an elevation with the buildings', 'v:back': 'from the north at eye level', 'v:left': 'from the west at eye level', 'v:right': 'from the east at eye level', 'v:axon': 'a 45° corner at the isometric tilt', 'v:persp': 'switch between parallel projection (measurable) and perspective (as the eye sees it)', extents: 'refit the view (0)'
+  shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', newProj: 'start over: a blank flat sheet with default settings, nothing kept (undo brings it back)', png: 'save the current view as an image', stl: 'the model on its base slab at the fabricate scale, written in the file chosen above', 'p:meshFmt': 'which file the model export writes. stl is the solid to print. obj, glb and wrl carry the ground as a texture: the photo, the painted ground, or the surface colour showing on the model, with the base in plain paper. glb is one file in metres; obj and wrl come zipped with their picture', sheetBtn: 'the drawing sheet: the model as it stands and the active section, both painted in the chosen style, over the plan, the analysis and the notes at true scale, with the title block. two calls to the painter; without a key the two pictures are drawn instead', laserDxf: 'the same laser file as a DXF in millimetres: layers CUT (red), ENGRAVE (blue), MATERIAL (yellow); for laser software that takes DXF better than SVG', laser: 'cardboard layers nested on sheets for the laser cutter', 'v:top': 'straight down, north up; orbit again to tilt', 'v:front': 'from the south at eye level: an elevation with the buildings', 'v:back': 'from the north at eye level', 'v:left': 'from the west at eye level', 'v:right': 'from the east at eye level', 'v:axon': 'a 45° corner at the isometric tilt', 'v:persp': 'switch between parallel projection (measurable) and perspective (as the eye sees it)', extents: 'refit the view (0)'
 };
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
@@ -2669,7 +2670,74 @@ document.getElementById('png').onclick = () => {
   o.fillStyle = PAPER; o.fillRect(0, 0, out.width, out.height); o.drawImage(cv, 0, 0);
   dl(out.toDataURL('image/png'), `coyote-topo-${S.mode}.png`);
 };
-document.getElementById('stl').onclick = () => runBusy('building the stl', () => { const blob = new Blob([stl()], { type: 'model/stl' }); dl(URL.createObjectURL(blob), `coyote-topo-${S.mm}mm.stl`); });
+try { const v = localStorage.getItem('coyote-mesh'); if (['stl', 'obj', 'glb', 'wrl'].includes(v)) document.getElementById('meshFmt').value = v; } catch (_) {}
+const meshFmtUI = () => { document.getElementById('stl').textContent = 'export ' + document.getElementById('meshFmt').value; }; meshFmtUI();
+document.getElementById('meshFmt').onchange = () => { meshFmtUI(); try { localStorage.setItem('coyote-mesh', document.getElementById('meshFmt').value); } catch (_) {} };
+document.getElementById('stl').onclick = () => { const fmt = document.getElementById('meshFmt').value, name = `coyote-topo-${S.mm}mm`;
+  if (fmt === 'stl') return runBusy('building the stl', () => { const blob = new Blob([stl()], { type: 'model/stl' }); dl(URL.createObjectURL(blob), name + '.stl'); });
+  busy('building the ' + fmt); setTimeout(async () => { try { const m = modelParts(), tex = modelTexture(), png = new Uint8Array(await (await new Promise(r => tex.toBlob(r, 'image/png'))).arrayBuffer()), enc = t => new TextEncoder().encode(t);
+      if (fmt === 'glb') dl(URL.createObjectURL(glbOut(m, png, name)), name + '.glb');
+      else { const files = fmt === 'obj' ? (o => [{ name: name + '.obj', data: enc(o.obj) }, { name: name + '.mtl', data: enc(o.mtl) }])(objOut(m, name)) : [{ name: name + '.wrl', data: enc(wrlOut(m, name)) }]; files.push({ name: name + '.png', data: png }); dl(URL.createObjectURL(zipStored(files)), `${name}-${fmt}.zip`); }
+      toast(`${fmt} · ${(m.top.length / 3).toLocaleString()} textured faces on the ground · ${tex.width} × ${tex.height} picture · ${fmt === 'glb' ? 'metres' : 'millimetres'} at 1:${Math.round(S.siteW * 1000 / S.mm)}`); }
+    catch (e) { toast(String(e.message || e)); } finally { unbusy(); } }, 30); };
+function modelParts() {                   // the model as two meshes in millimetres, z up: the ground with a texture coordinate per node, and everything plain (base, walls, placed objects)
+  return withModelSurf(() => { zdisp(); const k = S.mm / S.siteW, [lo] = rangeT(), baseT = 3, s = cs() * k, X = i => i * s, Y = j => (H - 1 - j) * s, Z = n => (zv[n] - lo) * S.ve * k + baseT, tm = trimMask(), tin = (i, j) => i >= 0 && j >= 0 && i < W - 1 && j < H - 1 && (!tm || !!tm.tiles[j * (W - 1) + i]);
+    const pos = new Float32Array(W * H * 3), uv = new Float32Array(W * H * 2); for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j); pos[n * 3] = X(i); pos[n * 3 + 1] = Y(j); pos[n * 3 + 2] = Z(n); uv[n * 2] = i / (W - 1); uv[n * 2 + 1] = j / (H - 1); }   // v runs down the picture as the raster does; writers flip it where a format's v runs up
+    const top = []; for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { if (!tin(i, j)) continue; const a = idx(i, j), b = a + 1, c = a + W + 1, d = a + W; top.push(a, c, b, a, d, c); }
+    const rest = [], T = (p, q, r) => rest.push(p[0], p[1], p[2], q[0], q[1], q[2], r[0], r[1], r[2]), wall = (p, q) => { T(p, q, [q[0], q[1], 0]); T(p, [q[0], q[1], 0], [p[0], p[1], 0]); }, N = (i, j) => [X(i), Y(j), Z(idx(i, j))], f0 = p => [p[0], p[1], 0];
+    for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { if (!tin(i, j)) continue; const a = N(i, j), b = N(i + 1, j), c = N(i + 1, j + 1), d = N(i, j + 1); T(f0(a), f0(b), f0(c)); T(f0(a), f0(c), f0(d)); if (!tin(i, j - 1)) wall(b, a); if (!tin(i, j + 1)) wall(d, c); if (!tin(i - 1, j)) wall(a, d); if (!tin(i + 1, j)) wall(c, b); }
+    for (const st of S.strokes) { if (st.kind !== 'obj' || !st.c) continue; const v = objPlace(st); for (let q = 0; q < v.length; q += 9) { const p = []; for (let a = 0; a < 9; a += 3) p.push([X(v[q + a]), Y(v[q + a + 1]), (v[q + a + 2] - lo) * S.ve * k + baseT]); T(p[0], p[1], p[2]); } }
+    return { pos, uv, top: Uint32Array.from(top), rest: Float32Array.from(rest) }; });
+}
+function modelTexture() {                  // what the ground wears, as a picture over the whole site: the painted ground, the photo, or the surface colour the model shows
+  if (groundPainted()) return paintedCache.canvas; if (S.aerialM && aerialCache.canvas) return aerialCache.canvas;
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const o = c.getContext('2d'), im = o.createImageData(W, H), d = im.data, [lo, hi] = rangeT(), mode = S.colorMode === 'aerial' ? 'paper' : S.colorMode;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j), g = grad(i, j), nx = -g[0] * S.ve, ny = -g[1] * S.ve, light = (nx * -.5 + ny * -.4 + .77) / Math.hypot(nx, ny, 1), col = String(surfaceColor(mode, zv[n], g[0], g[1], light, lo, hi, i, j)), m = col[0] === '#' ? hex2(col) : col.match(/\d+/g); d[n * 4] = +m[0]; d[n * 4 + 1] = +m[1]; d[n * 4 + 2] = +m[2]; d[n * 4 + 3] = 255; }
+  o.putImageData(im, 0, 0); const big = document.createElement('canvas'); big.width = W * 4; big.height = H * 4; const b = big.getContext('2d'); b.imageSmoothingEnabled = true; b.drawImage(c, 0, 0, big.width, big.height); return big;
+}
+let crcTable = null;
+function crc32(u8) { if (!crcTable) { crcTable = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? (c >>> 1) ^ 0xedb88320 : c >>> 1; crcTable[n] = c; } } let crc = 0xffffffff; for (let n = 0; n < u8.length; n++) crc = crcTable[(crc ^ u8[n]) & 0xff] ^ (crc >>> 8); return (crc ^ 0xffffffff) >>> 0; }
+function zipStored(files) {                // [{ name, data: Uint8Array }] -> a plain zip, nothing compressed
+  const enc = new TextEncoder(), parts = [], central = []; let off = 0, cdLen = 0;
+  for (const f of files) { const name = enc.encode(f.name), crc = crc32(f.data), n = f.data.length, lh = new DataView(new ArrayBuffer(30)), cd = new DataView(new ArrayBuffer(46));
+    lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true); lh.setUint16(12, 0x21, true); lh.setUint32(14, crc, true); lh.setUint32(18, n, true); lh.setUint32(22, n, true); lh.setUint16(26, name.length, true);
+    cd.setUint32(0, 0x02014b50, true); cd.setUint16(4, 20, true); cd.setUint16(6, 20, true); cd.setUint16(14, 0x21, true); cd.setUint32(16, crc, true); cd.setUint32(20, n, true); cd.setUint32(24, n, true); cd.setUint16(28, name.length, true); cd.setUint32(42, off, true);
+    parts.push(lh.buffer, name, f.data); central.push(cd.buffer, name); off += 30 + name.length + n; cdLen += 46 + name.length; }
+  const e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, cdLen, true); e.setUint32(16, off, true);
+  return new Blob([...parts, ...central, e.buffer], { type: 'application/zip' });
+}
+function objOut(m, name) {                 // wavefront obj + mtl: the ground textured, the rest in paper; millimetres, z up
+  const L = ['# coyote mountain topo · millimetres · z up', `mtllib ${name}.mtl`, 'o ground'], N = W * H;
+  for (let n = 0; n < N; n++) L.push(`v ${m.pos[n * 3].toFixed(2)} ${m.pos[n * 3 + 1].toFixed(2)} ${m.pos[n * 3 + 2].toFixed(2)}`);
+  for (let n = 0; n < N; n++) L.push(`vt ${m.uv[n * 2].toFixed(4)} ${(1 - m.uv[n * 2 + 1]).toFixed(4)}`);
+  L.push('usemtl ground'); for (let q = 0; q < m.top.length; q += 3) L.push(`f ${m.top[q] + 1}/${m.top[q] + 1} ${m.top[q + 1] + 1}/${m.top[q + 1] + 1} ${m.top[q + 2] + 1}/${m.top[q + 2] + 1}`);
+  L.push('o base', 'usemtl paper'); for (let q = 0; q < m.rest.length; q += 3) L.push(`v ${m.rest[q].toFixed(2)} ${m.rest[q + 1].toFixed(2)} ${m.rest[q + 2].toFixed(2)}`);
+  for (let t = 0; t < m.rest.length / 9; t++) L.push(`f ${N + 3 * t + 1} ${N + 3 * t + 2} ${N + 3 * t + 3}`);
+  return { obj: L.join('\n') + '\n', mtl: `# coyote mountain topo\nnewmtl ground\nKd 1 1 1\nmap_Kd ${name}.png\n\nnewmtl paper\nKd 0.94 0.94 0.92\n` };
+}
+function wrlOut(m, name) {                 // vrml 2.0: y up, the ground textured, the rest in paper; millimetres
+  const N = W * H, pt = [], tc = [], ci = [], rp = [], ri = [];
+  for (let n = 0; n < N; n++) { pt.push(`${m.pos[n * 3].toFixed(2)} ${m.pos[n * 3 + 2].toFixed(2)} ${(-m.pos[n * 3 + 1]).toFixed(2)}`); tc.push(`${m.uv[n * 2].toFixed(4)} ${(1 - m.uv[n * 2 + 1]).toFixed(4)}`); }
+  for (let q = 0; q < m.top.length; q += 3) ci.push(`${m.top[q]} ${m.top[q + 1]} ${m.top[q + 2]} -1`);
+  for (let q = 0; q < m.rest.length; q += 3) rp.push(`${m.rest[q].toFixed(2)} ${m.rest[q + 2].toFixed(2)} ${(-m.rest[q + 1]).toFixed(2)}`); for (let t = 0; t < m.rest.length / 9; t++) ri.push(`${3 * t} ${3 * t + 1} ${3 * t + 2} -1`);
+  return `#VRML V2.0 utf8\n# coyote mountain topo · millimetres · y up\nShape { appearance Appearance { texture ImageTexture { url "${name}.png" } } geometry IndexedFaceSet { creaseAngle 0.6 coord Coordinate { point [ ${pt.join(', ')} ] } texCoord TextureCoordinate { point [ ${tc.join(', ')} ] } coordIndex [ ${ci.join(', ')} ] } }\nShape { appearance Appearance { material Material { diffuseColor 0.94 0.94 0.92 } } geometry IndexedFaceSet { coord Coordinate { point [ ${rp.join(', ')} ] } coordIndex [ ${ri.join(', ')} ] } }\n`;
+}
+function glbOut(m, png, name) {            // gltf binary: one node, the ground textured and the rest in paper, y up, metres
+  const N = W * H, pos = new Float32Array(N * 3), rest = new Float32Array(m.rest.length), mn = [1e9, 1e9, 1e9], mx = [-1e9, -1e9, -1e9], rmn = [1e9, 1e9, 1e9], rmx = [-1e9, -1e9, -1e9];
+  const yup = (src, dst, lo2, hi2) => { for (let q = 0; q < src.length; q += 3) { const x = src[q] / 1000, y = src[q + 2] / 1000, z = -src[q + 1] / 1000; dst[q] = x; dst[q + 1] = y; dst[q + 2] = z; lo2[0] = Math.min(lo2[0], x); lo2[1] = Math.min(lo2[1], y); lo2[2] = Math.min(lo2[2], z); hi2[0] = Math.max(hi2[0], x); hi2[1] = Math.max(hi2[1], y); hi2[2] = Math.max(hi2[2], z); } };
+  yup(m.pos, pos, mn, mx); yup(m.rest, rest, rmn, rmx);
+  const chunks = [pos, m.uv, m.top, rest, png], views = [], pad4 = n => (n + 3) & ~3; let off = 0; for (const ch of chunks) { const bytes = ch.byteLength; views.push({ buffer: 0, byteOffset: off, byteLength: bytes }); off += pad4(bytes); }
+  views[0].target = views[1].target = views[3].target = 34962; views[2].target = 34963;
+  const json = { asset: { version: '2.0', generator: 'coyote mountain topo' }, scene: 0, scenes: [{ nodes: [0] }], nodes: [{ mesh: 0, name }],
+    meshes: [{ name, primitives: [{ attributes: { POSITION: 0, TEXCOORD_0: 1 }, indices: 2, material: 0 }, { attributes: { POSITION: 3 }, material: 1 }] }],
+    materials: [{ name: 'ground', pbrMetallicRoughness: { baseColorTexture: { index: 0 }, metallicFactor: 0, roughnessFactor: 1 } }, { name: 'paper', pbrMetallicRoughness: { baseColorFactor: [.94, .94, .92, 1], metallicFactor: 0, roughnessFactor: 1 } }],
+    textures: [{ source: 0, sampler: 0 }], samplers: [{ magFilter: 9729, minFilter: 9987, wrapS: 33071, wrapT: 33071 }], images: [{ bufferView: 4, mimeType: 'image/png' }],
+    bufferViews: views, accessors: [{ bufferView: 0, componentType: 5126, count: N, type: 'VEC3', min: mn, max: mx }, { bufferView: 1, componentType: 5126, count: N, type: 'VEC2' }, { bufferView: 2, componentType: 5125, count: m.top.length, type: 'SCALAR' }, { bufferView: 3, componentType: 5126, count: rest.length / 3, type: 'VEC3', min: rmn, max: rmx }], buffers: [{ byteLength: off }] };
+  const jb = new TextEncoder().encode(JSON.stringify(json)), jl = pad4(jb.length), total = 12 + 8 + jl + 8 + off, buf = new ArrayBuffer(total), dv = new DataView(buf), u8 = new Uint8Array(buf);
+  dv.setUint32(0, 0x46546c67, true); dv.setUint32(4, 2, true); dv.setUint32(8, total, true); dv.setUint32(12, jl, true); dv.setUint32(16, 0x4e4f534a, true); u8.set(jb, 20); for (let q = 20 + jb.length; q < 20 + jl; q++) u8[q] = 0x20;
+  const b0 = 20 + jl; dv.setUint32(b0, off, true); dv.setUint32(b0 + 4, 0x004e4942, true); let p = b0 + 8; for (const ch of chunks) { u8.set(new Uint8Array(ch.buffer, ch.byteOffset, ch.byteLength), p); p += pad4(ch.byteLength); }
+  return new Blob([buf], { type: 'model/gltf-binary' });
+}
 function dl(href, name) { const a = document.createElement('a'); a.href = href; a.download = name; a.click(); toast('saved ' + name); }
 function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1600); }
 
@@ -2680,7 +2748,7 @@ function stl0() { zdisp();
   const X = i => i * s, Y = j => (H - 1 - j) * s, Z = n => (zv[n] - lo) * S.ve * k + baseT;
   const tris = [];
   const T = (a, b, c) => tris.push(a, b, c);
-  const tm = trimMask(), tin = (i, j) => !tm || (i >= 0 && j >= 0 && i < W - 1 && j < H - 1 && !!tm.tiles[j * (W - 1) + i]);
+  const tm = trimMask(), tin = (i, j) => i >= 0 && j >= 0 && i < W - 1 && j < H - 1 && (!tm || !!tm.tiles[j * (W - 1) + i]);   // outside the site is outside: the edges get walls whether or not a lot trims the model
   const wallQuad = (p, q) => { const p0 = [p[0], p[1], 0], q0 = [q[0], q[1], 0]; T(p, q, q0); T(p, q0, p0); };
   const N = (i, j) => [X(i), Y(j), Z(idx(i, j))];
   for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) { if (!tin(i, j)) continue;
