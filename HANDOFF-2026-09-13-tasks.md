@@ -99,7 +99,7 @@ Written at Will's request on 13 September. Read this first. The earlier record i
   - previews for CNC and GIS;
   - a "none here" style note when a tool's rows are all hidden (Study · section in plan shows only its buttons);
   - phone-width testing of both new layouts.
-- The voice version's `system.md` "what the tool can do" list is written against classic block names, with a note to use tasks and tools in the new layout; rewrite it for the new layout now that it's the default (next up).
+- The voice version's `system.md` "what the tool can do" list is written against classic block names, with a note to use tasks and tools in the new layout; ~~rewrite it~~ DONE 13 Sept (coyote-voice `dcdbad6`): blocks as look lists them, every feature as task · tool with real labels, press-with-block for duplicate labels (paint), helper restarted. Also 13 Sept: task names run vertically in capitals (`aec09d4`).
 - The private gallery artifact is out of date against the site gallery (39 pieces).
 
 ## How to verify quickly
