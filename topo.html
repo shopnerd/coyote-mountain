@@ -4048,6 +4048,229 @@ setTimeout(() => { let seen = null; try { seen = localStorage.getItem(TOUR_KEY);
   c.style.left = ((innerWidth - c.offsetWidth) / 2) + 'px'; c.style.top = (innerHeight - c.offsetHeight - 24) + 'px'; }, 2500);
 
 surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseGeoTiff(rec.buf).then(sv => { sv.name = rec.name; S.survey = sv; if (S.world) applySurvey(true); toast('survey ground on: ' + rec.name); }).catch(() => {}); });   // a survey loaded in either tool follows you here
+/* ---------- the task layout (?new): Site · Shape · Study · Make over the same engine. The original rail stays in the page, hidden; its rows move into the new panels (keeping every handler) and the new tool buttons press the original ones ---------- */
+if (/[?&]new(=|&|$)/.test(location.search)) (() => {
+  const $ = s => document.querySelector(s), app = $('#app');
+  const make = (t, a = {}, kids = []) => { const e = document.createElement(t); for (const k in a) { if (k === 'text') e.textContent = a[k]; else if (k === 'cls') e.className = a[k]; else e.setAttribute(k, a[k]); } kids.forEach(k => e.append(k)); return e; };
+  const press = sel => { const e = $(sel); if (e) e.click(); };
+  const on = sel => { const e = $(sel); return !!(e && e.classList.contains('on')); };
+  // a tool: pick = the original button(s) its choice presses; view = the view it needs ('plan' or '3d'); analysis = in plan it draws the water analysis; rows / more = original rows mounted under it; acts = extra buttons that press originals
+  const TASKS = [
+    { id: 'site', name: 'Site', tools: [
+      { id: 'place', name: 'place', rows: ['#place', '#fetch', '#siteW', '#worldStatus'], more: ['#rot', '#gridRow'], note: 'site width sets how much ground is fetched; detail sets the grid; contours are set in layers & look' },
+      { id: 'survey', name: 'lot and survey', rows: ['#kmlBtn', '#trimRow', '#surveyBtn', '#surveyInfo'], acts: [['load a points file', '#cloudLoad']], more: ['#flightBtn'] },
+      { id: 'history', name: 'site history', rows: ['#histRow', '#histPosRow', '#histInfo'], more: ['#histGlowRow', '#histGlowOpRow'] },
+      { id: 'sand', name: 'sandbox', rows: ['#sandBtn', '#sandSec'] },
+    ] },
+    { id: 'shape', name: 'Shape', tools: [
+      { id: 'sculpt', name: 'sculpt', pick: '#sculptBrushes button[data-b=raise]', keepBrush: ['raise', 'lower', 'smooth', 'flatten'], rows: ['#sculptBrushes', '#brushParams'], sculpt3d: true, note: 'drag on the ground, in plan or 3d' },
+      { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['#padRow', '#padLevelRow', '#padEdgeRow'], more: ['#sideRow', '#padGradeRow', '#strip', '#swell'] },
+      { id: 'grade', name: 'grade a→b', pick: '#brushes button[data-b=grade]', view: 'plan', rows: ['#gradeRow'], more: ['#sideRow'] },
+      { id: 'path', name: 'path', pick: '#brushes button[data-b=path]', view: 'plan', rows: ['#pathWRow'], more: ['#pathSurfRow', '#pathHRow'] },
+      { id: 'plant', name: 'plant', pick: '#brushes button[data-b=pen]', view: 'plan', rows: ['#plantRow', '#brushParams'], note: 'pick a plant, then draw' },
+      { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', view: 'plan', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']] },
+      { id: 'object', name: 'object', pick: '#brushes button[data-b=obj]', view: 'plan', rows: ['#objRow'], more: ['#objUnitRow', '#objRotRow', '#objScaleRow', '#objLiftRow'] },
+    ] },
+    { id: 'study', name: 'Study', tools: [
+      { id: 'section', name: 'section', pick: '#brushes button[data-b=section]', rows: ['#secTabs'], acts: [['draw in plan', () => { state.view = 'plan'; applyView(); press('#brushes button[data-b=section]'); }], ['look at it in section', () => { state.view = 'section'; applyView(); }]], note: 'draw a line across the ground in plan, then look at it in section; the tabs pick which line' },
+      { id: 'water', name: 'water', analysis: true, rows: ['#anaLayers', '#rainBtn', '#anaDesc'], more: ['#tapRow', '#rain', '#thr', '#runoff', '#plow', '#swale', '#dam', '#riseRow'] },
+      { id: 'sun', name: 'sun', analysis: true, rows: ['#sunRow', '#sunSec'] },
+    ] },
+    { id: 'make', name: 'Make', tools: [
+      { id: 'render', name: 'render', view: '3d', rows: ['#rendRow', '#rendSel'], more: ['#sunSec'] },
+      { id: 'paint', name: 'paint', view: '3d', renderOn: true, rows: ['#paintRow', '#aiStyleRow', '#aiWordsRow', '#aiRow'], more: ['#aiEngRow', '#aiRefRow', '#aiRefList', '#aiLinesRow'] },
+      { id: 'video', name: 'video', rows: ['#recView'], acts: [['animate the section', '#secAnim']], note: 'record video captures the view until you press it again' },
+      { id: 'sheet', name: 'drawing sheet', rows: ['#paper', '#sheetBtn', '#sheetInfo', '#png'] },
+      { id: 'print', name: '3d print', rows: ['#mm', '#meshFmt', '#stl', '#footInfo'] },
+      { id: 'laser', name: 'laser-cut model', rows: ['#thick', '#sheet', '#ledge', '#layersInfo', '#laser', '#laserDxf'] },
+      { id: 'files', name: 'cnc and maps', rows: ['#cncDxf', '#kmlOut', '#tifOut'] },
+    ] },
+  ];
+  const LAYERS = [
+    { name: 'map layers', rows: ['#aerialRow', '#seaRow', '#roadRow', '#bldRow', '#ovRow', '#cloudRow', '#geoRow'], more: ['#aerialOp', '#bldModeRow', '#bldMMRow', '#cloudInfo', '#geoInfo'] },
+    { name: 'look', rows: ['#colorRow', '#interval', '#labelRow', '#cfRow'], more: ['#modelStyle', '#hach', '#annoRow', '#ve'] },
+  ];
+  const unit = sel => {   // the row a selector stands for: a row by its id, an input's labelled row, a lone button, or a small button pair
+    const e = $(sel); if (!e) return null;
+    if (e.matches('.seg, .p, .desc, .params') || (e.id && /(Row|Sec|Info|Sel|Tabs|Brushes|Layers|Params)$/.test(e.id))) return e;
+    if (e.matches('input, select, textarea')) return e.closest('.p') || e;
+    if (e.tagName === 'BUTTON') { const g = e.parentElement; return g && g.matches('.seg') && !g.id && g.children.length <= 3 ? g : e; }
+    return e.closest('.seg, .p') || e;
+  };
+  const state = { task: 'site', tool: { site: 'place', shape: 'sculpt', study: 'water', make: 'render' }, view: 'plan', busy: false };
+  try { Object.assign(state, JSON.parse(localStorage.getItem('coyote-ui2') || '{}'), { busy: false }); } catch (_) {}
+  const save = () => { try { localStorage.setItem('coyote-ui2', JSON.stringify({ task: state.task, tool: state.tool })); } catch (_) {} };
+  const task = () => TASKS.find(t => t.id === state.task) || TASKS[0], tool = () => task().tools.find(t => t.id === state.tool[state.task]) || task().tools[0];
+
+  /* the frame */
+  document.documentElement.classList.add('ui2');
+  const style = make('style', { text: `
+.ui2 #app{grid-template-rows:40px 26px minmax(0,1fr) 28px;grid-template-columns:clamp(250px,24vw,330px) minmax(0,1fr)}
+.ui2 #app>header,.ui2 #app>aside,.ui2 #railGrip{display:none!important}
+.ui2 .cmd{grid-row:2;grid-column:1/-1}.ui2 main{grid-row:3;grid-column:2}
+#u2head{grid-row:1;grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);min-width:0}
+#u2head .logo{font-weight:600;font-size:15px;color:var(--ink);text-decoration:none;white-space:nowrap}#u2head .logo b{color:var(--accent);font-weight:600}
+#u2head .place{color:var(--ink2);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26vw}
+#u2head .sp{flex:1}
+.u2b{font:inherit;font-size:11px;padding:3px 10px;border:1px solid #9a9992;background:transparent;color:var(--ink);border-radius:3px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.u2b:hover,.u2b:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+#u2head details{position:relative}#u2head summary{list-style:none}#u2head summary::-webkit-details-marker{display:none}
+#u2proj{position:absolute;top:28px;left:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);padding:8px;width:260px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+#u2proj .actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#u2find{position:relative}#u2find input{font:inherit;font-size:11.5px;width:clamp(150px,18vw,240px);padding:3px 8px;border:1px solid #9a9992;border-radius:3px;background:var(--paper);color:var(--ink)}
+#u2find input:focus{outline:none;border-color:var(--accent)}
+#u2hits{position:absolute;top:28px;right:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);width:320px;max-height:60vh;overflow:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+#u2hits.show{display:block}#u2hits button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;font:inherit;font-size:12px;padding:6px 10px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+#u2hits button em{font-style:normal;color:var(--ink3);font-size:10.5px}#u2hits button.sel,#u2hits button:hover{background:#fdf3ea}
+#u2rail{grid-row:3;grid-column:1;display:grid;grid-template-columns:78px minmax(0,1fr);background:var(--panel);border-right:1px solid var(--line);min-height:0}
+#u2tasks{border-right:1px solid var(--line);display:flex;flex-direction:column}
+#u2tasks button{font:inherit;font-size:12px;padding:14px 8px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;text-align:left}
+#u2tasks button.on{background:#fdf3ea;color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+#u2tasks button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#u2side{overflow-y:auto;padding:10px 10px 30px;display:flex;flex-direction:column;gap:10px}
+#u2tools{display:flex;flex-wrap:wrap;gap:4px}
+#u2tools button{font:inherit;font-size:12px;padding:6px 9px;border:1px solid #9a9992;background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
+#u2tools button.on{background:#fdf3ea;border-color:#d9895d;box-shadow:0 0 6px rgba(201,107,58,.28)}
+.u2panel{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.u2panel h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:500}
+.u2note{color:var(--ink3);font-size:11px;line-height:1.45}
+.u2rows{display:flex;flex-direction:column;gap:8px}
+.u2rows>.seg,.u2rows>.p,.u2rows>.desc,.u2rows>.params,.u2rows>div{padding-left:0!important;padding-right:0!important;margin-top:0!important;margin-bottom:0!important}
+.u2rows>.btn,.u2acts .btn{min-height:32px;width:100%}
+.u2acts{display:flex;flex-wrap:wrap;gap:6px}.u2acts .btn{width:auto;flex:1 1 45%}
+details.u2more>summary{cursor:pointer;color:var(--accent);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;list-style:none;padding:2px 0}
+details.u2more>summary::-webkit-details-marker{display:none}details.u2more>summary::before{content:'+ ';}details.u2more[open]>summary::before{content:'– ';}
+details.u2more[open]>.u2rows{margin-top:8px}
+#u2views{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:6;display:flex;background:var(--panel);border:1px solid var(--ink2);border-radius:3px;overflow:hidden}
+#u2views button{font:inherit;font-size:12px;padding:5px 14px;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+#u2views button:first-child{border-left:0}#u2views button.on{background:var(--ink);color:var(--paper)}
+#u2views button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#u2layBtn{position:absolute;top:10px;left:12px;z-index:6;background:var(--panel)}
+#u2layers{position:absolute;top:44px;left:12px;z-index:7;width:min(320px,calc(100% - 24px));max-height:calc(100% - 60px);overflow:auto;background:var(--panel);border:1px solid var(--ink2);padding:10px;display:none;flex-direction:column;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+#u2layers.show{display:flex}
+#u2status{grid-row:4;grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);min-width:0}
+#u2status b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+#u2status .p{flex-direction:row;align-items:center;gap:6px}#u2status .p label{font-size:10px}#u2status select{font:inherit;font-size:11px}
+.u2flash{outline:2px solid var(--accent)!important;outline-offset:2px;transition:outline-color .3s}
+` });
+  document.head.append(style);
+  const head = make('div', { id: 'u2head' }), rail = make('div', { id: 'u2rail' }), tasksEl = make('div', { id: 'u2tasks', role: 'tablist', 'aria-label': 'tasks' }), side = make('div', { id: 'u2side' }), toolsEl = make('div', { id: 'u2tools' }), panelEl = make('div', { cls: 'u2panel' }), status = make('div', { id: 'u2status' });
+  const legacyHeader = $('#app > header'); app.insertBefore(head, legacyHeader);
+  rail.append(tasksEl, side); side.append(toolsEl, panelEl); app.insertBefore(rail, $('#app > aside'));
+  app.append(status);
+  const park = make('div', { id: 'u2park', hidden: '' }); app.append(park);   // rows not in use wait here, still in the page, so the engine always finds them
+
+  /* the top bar: name and place, project, undo, find a tool, gallery, flight, theme, back to the classic layout */
+  const placeEl = make('span', { cls: 'place' });
+  const projDet = make('details'), projPop = make('div', { id: 'u2proj' }); projDet.append(make('summary', { cls: 'u2b', text: 'project' }), projPop);
+  projPop.append($('#project'));
+  const undoBtn = make('button', { cls: 'u2b', type: 'button', text: 'undo' }); undoBtn.onclick = () => press('#undo');
+  const findWrap = make('div', { id: 'u2find' }), findIn = make('input', { type: 'search', placeholder: 'find a tool…  /', 'aria-label': 'find a tool' }), hits = make('div', { id: 'u2hits', role: 'listbox' }); findWrap.append(findIn, hits);
+  const themeBtn = make('button', { cls: 'u2b', type: 'button' }); const themeLab = () => { themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; themeBtn.onclick = () => { press('#themeBtn'); themeLab(); };
+  const classic = make('a', { cls: 'u2b', href: location.pathname + location.search.replace(/[?&]new(=[^&]*)?/, '').replace(/^&/, '?') + location.hash, text: 'classic layout' });
+  head.append(make('a', { cls: 'logo', href: 'index.html' }, [document.createTextNode('coyote_mountain'), make('b', { text: '_topo' })]), placeEl, projDet, undoBtn, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), make('a', { cls: 'u2b', href: 'flight.html', text: 'flight' }), themeBtn, classic);
+  document.addEventListener('click', e => { if (!projDet.contains(e.target)) projDet.open = false; if (!findWrap.contains(e.target)) hits.classList.remove('show'); });
+
+  /* the canvas: views and layers */
+  const main = $('main'), viewsEl = make('div', { id: 'u2views', role: 'tablist', 'aria-label': 'view' }), layBtn = make('button', { id: 'u2layBtn', cls: 'u2b', type: 'button', text: 'layers & look' }), layPanel = make('div', { id: 'u2layers' });
+  for (const [v, label] of [['plan', 'Plan'], ['3d', '3D'], ['section', 'Section']]) { const b = make('button', { type: 'button', 'data-v': v, text: label }); b.onclick = () => { state.view = v; applyView(); }; viewsEl.append(b); }
+  layBtn.onclick = () => { layPanel.classList.toggle('show'); if (layPanel.classList.contains('show')) mountLayers(); };
+  main.append(viewsEl, layBtn, layPanel);
+  const layerGroups = LAYERS.map(g => { const box = make('div', { cls: 'u2panel' }), rows = make('div', { cls: 'u2rows' }), more = make('details', { cls: 'u2more' }), mrows = make('div', { cls: 'u2rows' }); more.append(make('summary', { text: 'more' }), mrows); box.append(make('h3', { text: g.name }), rows, more); layPanel.append(box); return { g, rows, mrows }; });
+
+  /* the status bar: what the tool does is in the line above the canvas; here the place, cut and fill, units */
+  const stPlace = make('span'), stCut = make('span'), stFill = make('span'), stUnits = make('div');
+  status.append(stPlace, make('span', { cls: 'sp', style: 'flex:1' }), stCut, stFill, stUnits);
+  stUnits.append(unit('#unit'));
+
+  /* mounting */
+  const mount = (box, list) => { for (const sel of list || []) { const u = unit(sel); if (u) box.append(u); } };
+  function mountLayers() { for (const { g, rows, mrows } of layerGroups) { mount(rows, g.rows); mount(mrows, g.more); } }
+  let panelRows = null, panelMore = null, panelActs = null;
+  function renderTool() {
+    const t = tool(); for (const box of [panelRows, panelMore]) if (box) while (box.firstChild) park.append(box.firstChild); panelEl.textContent = '';
+    const rows = make('div', { cls: 'u2rows' }), more = make('details', { cls: 'u2more' }), mrows = make('div', { cls: 'u2rows' }), acts = make('div', { cls: 'u2acts' });
+    panelEl.append(make('h3', { text: t.name })); if (t.note) panelEl.append(make('p', { cls: 'u2note', text: t.note }));
+    panelEl.append(rows);
+    for (const [label, sel] of t.acts || []) { const b = make('button', { cls: 'btn', type: 'button', text: label }); b.onclick = () => { if (typeof sel === 'function') sel(); else press(sel); refresh(); }; acts.append(b); }
+    if (t.acts) panelEl.append(acts);
+    if (t.more && t.more.length) { more.append(make('summary', { text: 'more' }), mrows); panelEl.append(more); }
+    panelRows = rows; panelMore = mrows; panelActs = acts;
+    remount();
+  }
+  function remount() {   // after the engine moves rows around (a view change, a brush change), put the active tool's rows and the layers back where they belong
+    if (state.busy) return; const t = tool();
+    if (panelRows) mount(panelRows, t.rows); if (panelMore) mount(panelMore, t.more);
+    if (layPanel.classList.contains('show')) mountLayers();
+    const us = unit('#unit'); if (us && us.parentElement !== stUnits) stUnits.append(us);
+  }
+  function renderTasks() {
+    tasksEl.textContent = '';
+    for (const t of TASKS) { const b = make('button', { type: 'button', role: 'tab', 'aria-selected': String(t.id === state.task), cls: t.id === state.task ? 'on' : '', text: t.name }); b.onclick = () => chooseTask(t.id); tasksEl.append(b); }
+    toolsEl.textContent = '';
+    for (const t of task().tools) { const b = make('button', { type: 'button', cls: t.id === tool().id ? 'on' : '', text: t.name }); b.onclick = () => chooseTool(t.id); toolsEl.append(b); }
+  }
+  function modeFor(v, t) { return v === '3d' ? 'model' : v === 'section' ? 'section' : (t && t.analysis ? 'analysis' : 'plan'); }
+  function applyView() {
+    const t = tool(), m = modeFor(state.view, t);
+    state.busy = true; try { if (S.mode !== m) setMode(m); } finally { state.busy = false; }
+    if (t.renderOn && S.mode === 'model' && !S.rendOn) press('#rendRow button[data-rd="1"]');
+    if (t.sculpt3d) press(state.view === '3d' ? '#sculptRow button[data-k=sculpt]' : '#sculptRow button[data-k=orbit]');
+    else if (state.view === '3d' && S.sculpt) press('#sculptRow button[data-k=orbit]');
+    viewsEl.querySelectorAll('button').forEach(b => { const onv = b.dataset.v === state.view; b.classList.toggle('on', onv); b.setAttribute('aria-selected', String(onv)); });
+    remount(); refresh();
+  }
+  function chooseTask(id) { state.task = id; save(); chooseTool(state.tool[id]); }
+  function chooseTool(id) {
+    state.tool[state.task] = id; save(); const t = tool();
+    if (t.view === '3d') state.view = '3d';
+    else if (t.view === 'plan' && state.view === '3d') state.view = 'plan';
+    if (t.pick && !(t.keepBrush && t.keepBrush.includes(S.brush))) { state.busy = true; try { if (t.view === 'plan' && S.mode === 'model') setMode('plan'); press(t.pick); } finally { state.busy = false; } }
+    if (t.unplant && S.plant) { const b = $(`#plantRow button[data-pm="${S.plant}"]`); if (b) b.click(); }
+    renderTasks(); renderTool(); applyView();
+  }
+  function refresh() {
+    placeEl.textContent = S.world ? S.world.name : 'sample sheet'; stPlace.textContent = S.world ? S.world.name : '';
+    const cut = $('#cut'), fill = $('#fill'); stCut.innerHTML = ''; stFill.innerHTML = '';
+    stCut.append('cut ', make('b', { text: cut ? cut.textContent : '' })); stFill.append('fill ', make('b', { text: fill ? fill.textContent : '' }));
+    themeLab();
+  }
+  // the engine's own view and brush changes (keys 1-4, the voice, the tour) keep the new layout in step
+  { const legacySetMode = setMode; setMode = m => { legacySetMode(m); if (!state.busy) state.view = m === 'model' ? '3d' : m === 'section' ? 'section' : 'plan'; viewsEl.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === state.view)); remount(); }; }
+  { const legacySetBrush = setBrush; setBrush = b => { legacySetBrush(b); remount(); }; }
+  setInterval(refresh, 700);
+
+  /* find a tool: every tool and every labelled control inside the tools and layers */
+  function catalogue() {
+    const out = [];
+    for (const tk of TASKS) for (const t of tk.tools) {
+      out.push({ label: t.name, where: tk.name, go: () => { state.task = tk.id; chooseTool(t.id); } });
+      for (const [list, isMore] of [[t.rows, false], [t.more, true]]) for (const sel of list || []) { const u = unit(sel); if (!u) continue;
+        const labels = [...u.querySelectorAll('button, label')].map(x => (x.tagName === 'LABEL' ? [...x.childNodes].filter(n => n.tagName !== 'OUTPUT').map(n => n.textContent).join(' ') : x.textContent).replace(/\s+/g, ' ').trim()).filter(Boolean);
+        for (const l of labels.length ? labels : [u.textContent.replace(/\s+/g, ' ').trim().slice(0, 40)]) out.push({ label: l, where: `${tk.name} · ${t.name}`, go: () => { state.task = tk.id; chooseTool(t.id); if (isMore) { const d = panelEl.querySelector('details.u2more'); if (d) d.open = true; } flash(u); } }); }
+    }
+    for (const g of layerGroups) for (const [list, isMore] of [[g.g.rows, false], [g.g.more, true]]) for (const sel of list) { const u = unit(sel); if (!u) continue;
+      for (const x of u.querySelectorAll('button, label')) { const l = x.textContent.replace(/\s+/g, ' ').trim(); if (l) out.push({ label: l, where: `layers & look · ${g.g.name}`, go: () => { layPanel.classList.add('show'); mountLayers(); if (isMore) layPanel.querySelectorAll('details.u2more').forEach(d => { if (d.contains(u)) d.open = true; }); flash(u); } }); } }
+    return out;
+  }
+  const flash = u => { u.scrollIntoView({ block: 'nearest' }); u.classList.add('u2flash'); setTimeout(() => u.classList.remove('u2flash'), 1600); };
+  let found = [], sel = 0;
+  function showHits() {
+    const q = findIn.value.trim().toLowerCase(); hits.textContent = ''; if (!q) { hits.classList.remove('show'); return; }
+    const seen = new Set(); found = catalogue().filter(c => c.label.toLowerCase().includes(q)).sort((a, b) => (a.label.toLowerCase().startsWith(q) ? 0 : 1) - (b.label.toLowerCase().startsWith(q) ? 0 : 1)).filter(c => { const k = c.label + c.where; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 14);
+    sel = 0; found.forEach((c, i) => { const b = make('button', { type: 'button', role: 'option', cls: i === sel ? 'sel' : '' }, [make('span', { text: c.label }), make('em', { text: c.where })]); b.onclick = () => pick(i); hits.append(b); });
+    if (!found.length) hits.append(make('button', { type: 'button', disabled: '' }, [make('span', { text: 'nothing by that name' })]));
+    hits.classList.add('show');
+  }
+  function pick(i) { const c = found[i]; if (!c) return; findIn.value = ''; hits.classList.remove('show'); findIn.blur(); c.go(); }
+  findIn.addEventListener('input', showHits);
+  findIn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + found.length) % Math.max(1, found.length); hits.querySelectorAll('button').forEach((b, i) => b.classList.toggle('sel', i === sel)); } else if (e.key === 'Enter') { e.preventDefault(); pick(sel); } else if (e.key === 'Escape') { findIn.value = ''; hits.classList.remove('show'); findIn.blur(); } e.stopPropagation(); });
+  addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { e.preventDefault(); findIn.focus(); } });
+
+  /* start: every control shown (no global simple/deep; "more" folds instead), the remembered task and tool, the size of the new frame */
+  setTimeout(() => { document.documentElement.dataset.depth = 'deep'; state.view = S.mode === 'model' ? '3d' : S.mode === 'section' ? 'section' : 'plan'; renderTasks(); renderTool(); applyView(); resize(); }, 0);
+  window.__ui2 = { state, chooseTask, chooseTool, TASKS, catalogue, applyView };   // for the tests
+})();
 })();
 { const db = document.getElementById('depthBtn'), lab = () => { db.textContent = document.documentElement.dataset.depth === 'simple' ? 'deep' : 'simple'; };   // simple or deep, remembered; first visit is simple
   let d = 'simple'; try { d = localStorage.getItem('coyote-depth') || 'simple'; } catch (_) {} document.documentElement.dataset.depth = d; lab();
