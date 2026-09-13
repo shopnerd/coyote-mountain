@@ -4499,5 +4499,19 @@ details.u2more[open]>.u2rows{margin-top:8px}
   tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
 </script>
 <script>if (/[?&]design(=|&|$)/.test(location.search)) { const s = document.createElement('script'); s.src = location.protocol === 'file:' ? 'design-mode.js' : '/design-mode.js'; document.body.appendChild(s); }</script>
+<script>/* the task column of the task layout: drag its right edge to make it wider or narrower (remembered) */
+if (document.documentElement.classList.contains('ui2')) (() => {
+  const rail = document.getElementById('u2rail'), tasks = document.getElementById('u2tasks'); if (!rail || !tasks) return;
+  const st = document.createElement('style'); st.textContent = '#u2tasks{position:relative}#u2tasks button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#u2taskGrip{position:absolute;top:0;right:-5px;width:10px;height:100%;cursor:col-resize;z-index:5;touch-action:none}#u2taskGrip::after{content:"";position:absolute;left:4px;top:50%;width:3px;height:36px;margin-top:-18px;border-radius:2px;background:#b3b2aa}#u2taskGrip:hover,#u2taskGrip.on{background:rgba(201,107,58,.10)}#u2taskGrip:hover::after,#u2taskGrip.on::after{background:var(--accent)}'; document.head.append(st);
+  const grip = document.createElement('div'); grip.id = 'u2taskGrip'; tasks.append(grip);
+  const zoom = () => parseFloat(rail.style.zoom) || 1;
+  const set = (w, keep) => { w = Math.max(44, Math.min(240, Math.round(w))); rail.style.gridTemplateColumns = w + 'px minmax(0,1fr)'; if (keep) try { localStorage.setItem('u2tasksW', w); } catch (_) {} };
+  try { const v = +localStorage.getItem('u2tasksW'); if (v) set(v, false); } catch (_) {}
+  let d = null;
+  grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); d = { x: e.clientX, w: tasks.getBoundingClientRect().width / zoom() }; grip.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
+  grip.addEventListener('pointermove', e => { if (d) set(d.w + (e.clientX - d.x) / zoom(), true); });
+  const end = () => { d = null; grip.classList.remove('on'); }; grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
+})();
+</script>
 </body>
 </html>
