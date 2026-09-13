@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>coyote mountain · gallery</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Pieces made with Coyote Mountain Topo: history animations, painted views of the model, drawing sheets and a drone survey as points.">
+<style>
+:root {
+  --page: #d9d9d4; --paper: #f0f0ec; --panel: #e8e8e4; --ink: #1a1a18; --ink2: #454440; --ink3: #6e6d68; --line: #c8c8c2; --accent: #C96B3A; --shadow: rgba(26,26,24,.10);
+  --mono: 'SF Mono', 'Cascadia Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page: #121211; --paper: #161615; --panel: #1f1f1e; --ink: #ecebe6; --ink2: #c3c1ba; --ink3: #8f8d86; --line: #34332f; --accent: #d9804f; --shadow: rgba(0,0,0,.4); } }
+:root[data-theme="dark"] { --page: #121211; --paper: #161615; --panel: #1f1f1e; --ink: #ecebe6; --ink2: #c3c1ba; --ink3: #8f8d86; --line: #34332f; --accent: #d9804f; --shadow: rgba(0,0,0,.4); }
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 13px/1.55 var(--mono); }
+a { color: inherit; }
+.top { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; padding: 12px clamp(14px, 3vw, 32px); border-bottom: 1px solid var(--line); }
+.mark { font-weight: 600; font-size: 15px; letter-spacing: .01em; }
+.mark span { color: var(--accent); }
+.top .keys { color: var(--ink3); font-size: 11px; }
+.top .theme { border: 1px solid var(--line); background: transparent; color: var(--ink3); font: inherit; font-size: 10px; padding: 2px 8px; border-radius: 3px; cursor: pointer; }
+.top .theme:hover, .top .theme:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
+.top .live { margin-left: auto; font-size: 11px; color: var(--ink3); text-decoration: none; border-bottom: 1px solid var(--line); }
+.top .live:hover, .top .live:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
+main { max-width: 1480px; margin: 0 auto; padding: clamp(18px, 3vw, 40px) clamp(14px, 3vw, 32px) 56px; display: grid; gap: 44px; }
+.intro { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px 40px; align-items: end; }
+.intro h1 { margin: 0; font-size: clamp(22px, 3.2vw, 34px); font-weight: 500; line-height: 1.15; letter-spacing: -.01em; text-wrap: balance; max-width: 24ch; }
+.intro p { margin: 0; color: var(--ink2); max-width: 62ch; grid-column: 1; }
+.titleblock { grid-row: 1 / span 2; grid-column: 2; border: 1px solid var(--ink2); font-size: 11px; color: var(--ink2); min-width: 240px; }
+.titleblock div { display: flex; justify-content: space-between; gap: 18px; padding: 5px 10px; border-top: 1px solid var(--line); }
+.titleblock div:first-child { border-top: 0; }
+.titleblock b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+section { display: grid; gap: 14px; }
+.sh { display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.sh h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+.sh span { color: var(--ink3); font-size: 11px; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--min, 300px)), 1fr)); }
+.grid.films { --min: 380px; }
+.grid.sheets, .grid.studies { --min: 400px; }
+.studies .shot img { --ar: 3 / 2; object-fit: contain; background: var(--panel); }
+figure { margin: 0; display: grid; gap: 7px; align-content: start; }
+.shot { display: block; width: 100%; padding: 0; border: 0; background: var(--panel); cursor: zoom-in; position: relative; overflow: hidden; }
+.shot img, .shot video { display: block; width: 100%; height: auto; aspect-ratio: var(--ar, 16 / 9); object-fit: cover; transition: transform .5s cubic-bezier(.2,.7,.2,1); }
+.shot:hover img, .shot:hover video { transform: scale(1.025); }
+.shot:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.sheets .shot img { --ar: 4 / 3; object-fit: contain; background: var(--panel); }
+figcaption { display: flex; justify-content: space-between; gap: 12px; font-size: 11.5px; color: var(--ink2); }
+figcaption em { font-style: normal; color: var(--ink3); white-space: nowrap; }
+.voice { color: var(--accent); }
+footer { border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--ink3); font-size: 11px; }
+dialog { padding: 0; border: 0; background: transparent; max-width: 96vw; max-height: 96vh; color: var(--ink); }
+dialog::backdrop { background: rgba(14,14,13,.9); }
+.lb { display: grid; gap: 10px; }
+.lb img, .lb video { display: block; max-width: 96vw; max-height: 84vh; width: auto; height: auto; margin: 0 auto; background: #0e0e0d; }
+.lbbar { display: flex; align-items: center; gap: 10px; color: #e8e7e2; font-size: 12px; }
+.lbbar p { margin: 0; flex: 1; }
+.lbbar button { font: inherit; font-size: 12px; color: #e8e7e2; background: transparent; border: 1px solid #55544f; padding: 5px 12px; cursor: pointer; }
+.lbbar button:hover, .lbbar button:focus-visible { border-color: var(--accent); color: #fff; outline: none; }
+@media (max-width: 720px) { .intro { grid-template-columns: 1fr; } .titleblock { grid-row: auto; grid-column: 1; min-width: 0; } }
+@media (prefers-reduced-motion: reduce) { .shot img, .shot video { transition: none; } .shot:hover img, .shot:hover video { transform: none; } }
+</style>
+</head>
+<body>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('coyote-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(_){}</script>
+<header class="top">
+  <a class="mark" href="../" style="text-decoration:none">coyote_mountain<span>_farm</span></a>
+  <div class="keys">gallery · a selection from the first two weeks</div>
+  <a class="live" href="../topo.html">open the tool</a>
+  <button class="theme" id="themeBtn" type="button">dark</button>
+</header>
+
+<main>
+  <div class="intro">
+    <h1>Ground, drawn from real terrain and painted from the model</h1>
+    <p>Every piece here began as elevation data for a real place, fetched, shaped and viewed in Coyote Mountain Topo, then exported as a drawing sheet, recorded as video, or handed to an image painter as a structured control. Most of it is Encino Solo, a ranch near Ensenada in Baja California. Near-duplicates are left out.</p>
+    <div class="titleblock" aria-label="gallery details">
+      <div><span>home site</span><b>Encino Solo</b></div>
+      <div><span>lat, lng</span><b>32.0151, −116.7778</b></div>
+      <div><span>drone survey</span><b>1,021,033 pts</b></div>
+      <div><span>pieces</span><b>35</b></div>
+    </div>
+  </div>
+
+  <section aria-labelledby="h-motion">
+    <div class="sh"><h2 id="h-motion">In motion</h2><span>recorded straight from the tool</span></div>
+    <div class="grid films" id="films"></div>
+  </section>
+
+  <section aria-labelledby="h-painted">
+    <div class="sh"><h2 id="h-painted">Painted from the model</h2><span>the 3d view as control, a painter's picture on top</span></div>
+    <div class="grid" id="painted"></div>
+  </section>
+
+  <section aria-labelledby="h-sheets">
+    <div class="sh"><h2 id="h-sheets">Drawing sheets</h2><span>plan, model and section at a standard scale, with a title block</span></div>
+    <div class="grid sheets" id="sheets"></div>
+  </section>
+
+  <section aria-labelledby="h-studies">
+    <div class="sh"><h2 id="h-studies">Survey and studies</h2><span>points, sun, sections</span></div>
+    <div class="grid studies" id="studies"></div>
+  </section>
+
+  <footer><span><a href="../">coyotemountainfarm.com</a></span><span>imagery in the history: Esri Wayback, Landsat (NASA, Microsoft Planetary Computer), USGS historical topographic maps · map data © OpenStreetMap contributors</span></footer>
+</main>
+
+<dialog id="lb" aria-label="full size view">
+  <div class="lb">
+    <div id="lbmedia"></div>
+    <div class="lbbar"><button id="lbprev" type="button">previous</button><p id="lbcap"></p><button id="lbnext" type="button">next</button><button id="lbclose" type="button">close</button></div>
+  </div>
+</dialog>
+
+<script>
+const FILMS = [
+  { v: 'vid/la-history.mp4', p: 'vid/la-history.jpg', cap: 'Los Angeles, 1900 to now', note: 'animate history on the model' },
+  { v: 'vid/encino-night-rain.mp4', p: 'vid/encino-night-rain.jpg', cap: 'Encino Solo, rain on the survey', note: 'points, night view' },
+  { v: 'vid/san-diego-history.mp4', p: 'vid/san-diego-history.jpg', cap: 'San Diego downtown through time', note: 'history with buildings' },
+];
+const PAINTED = [
+  ['img/15.jpg', 'Smoke rising off the mountain', 'photograph'],
+  ['img/12.jpg', 'Centro Equino study, Encino Solo', 'photograph'],
+  ['img/17.jpg', 'A wildfire on the ridge', 'made by voice', true],
+  ['img/18.jpg', 'A freak snowstorm over the hills', 'made by voice', true],
+  ['img/19.jpg', 'The same hills at night', 'made by voice', true],
+  ['img/13.jpg', 'Fields and paddocks from above', 'photograph'],
+  ['img/10.jpg', 'A reservoir in Los Angeles', 'photograph'],
+  ['img/14.jpg', 'Ridges at golden hour', 'photograph'],
+  ['img/16.jpg', 'A coast city burning', 'photograph'],
+  ['img/9.jpg', 'Valley floor, late light', 'map mash-up'],
+  ['img/3.jpg', 'A hill model among clouds', 'map mash-up'],
+  ['img/8.jpg', 'The model on a dark ground', 'map mash-up'],
+  ['img/11.jpg', 'Forest on black', 'photograph'],
+  ['img/1.jpg', 'A city of towers', 'map mash-up'],
+  ['img/2.jpg', 'A city at sunset', 'map mash-up'],
+  ['img/0.jpg', 'The contour sheet printed onto the city', 'map mash-up'],
+  ['img/5.jpg', 'Encino Solo in watercolour', 'watercolour'],
+  ['img/6.jpg', 'Encino Solo in ink', 'ink wash'],
+  ['img/4.jpg', 'White model with trees', 'white model'],
+  ['img/7.jpg', 'White model with pools', 'white model'],
+];
+const SHEETS = [
+  ['img/23.jpg', 'Encino Solo, painted', 'drawing sheet'],
+  ['img/24.jpg', 'Centro Equino, 32.0002, −116.7637', 'drawing sheet'],
+  ['img/20.jpg', 'Los Angeles', 'drawing sheet'],
+  ['img/21.jpg', 'San Diego', 'drawing sheet'],
+  ['img/22.jpg', '48.8292, −123.3785', 'drawing sheet'],
+  ['img/30.jpg', 'Encino Solo, ink model', 'drawing sheet'],
+];
+const STUDIES = [
+  ['img/25.jpg', 'The drone survey as light', '1,021,033 points'],
+  ['img/26.jpg', 'The survey, contours rising', 'points, night view'],
+  ['img/27.jpg', 'Sun study set, Encino Solo', 'render'],
+  ['img/29.jpg', 'Painted set, Encino Solo', 'painted set'],
+  ['img/28.jpg', 'Section A–B, painted', 'section'],
+  ['img/31.jpg', 'Section A–B at sunset', 'section'],
+];
+const ALL = [];
+const el = (t, a = {}, kids = []) => { const e = document.createElement(t); for (const k in a) { if (k === 'style') e.style.cssText = a[k]; else if (k in e) e[k] = a[k]; else e.setAttribute(k, a[k]); } kids.forEach(k => e.append(k)); return e; };
+function tile(host, item) {
+  const idx = ALL.push(item) - 1;
+  const media = item.v ? el('video', { src: item.v, poster: item.p, muted: true, loop: true, autoplay: true, playsInline: true, preload: 'metadata' }) : el('img', { src: item.src, alt: item.cap, loading: 'lazy', decoding: 'async' });
+  if (item.v) media.setAttribute('aria-label', item.cap);
+  const btn = el('button', { className: 'shot', type: 'button', style: item.ar ? `--ar:${item.ar}` : '' }, [media]);
+  btn.setAttribute('aria-label', 'open ' + item.cap);
+  btn.addEventListener('click', () => openAt(idx));
+  const cap = el('figcaption', {}, [el('span', { textContent: item.cap }), el('em', { textContent: item.note, className: item.voice ? 'voice' : '' })]);
+  host.append(el('figure', {}, [btn, cap]));
+}
+FILMS.forEach(f => tile(document.getElementById('films'), f));
+PAINTED.forEach(([src, cap, note, voice]) => tile(document.getElementById('painted'), { src, cap, note, voice }));
+SHEETS.forEach(([src, cap, note]) => tile(document.getElementById('sheets'), { src, cap, note }));
+STUDIES.forEach(([src, cap, note]) => tile(document.getElementById('studies'), { src, cap, note }));
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.shot video').forEach(v => { v.autoplay = false; v.pause(); });
+
+const lb = document.getElementById('lb'), lbm = document.getElementById('lbmedia'), lbc = document.getElementById('lbcap'); let at = 0;
+function show(i) {
+  at = (i + ALL.length) % ALL.length; const it = ALL[at]; lbm.textContent = '';
+  lbm.append(it.v ? el('video', { src: it.v, poster: it.p, controls: true, autoplay: true, loop: true, muted: true, playsInline: true }) : el('img', { src: it.src, alt: it.cap }));
+  lbc.textContent = `${it.cap} · ${it.note}`;
+}
+function openAt(i) { show(i); if (!lb.open) lb.showModal(); }
+document.getElementById('lbprev').onclick = () => show(at - 1);
+document.getElementById('lbnext').onclick = () => show(at + 1);
+document.getElementById('lbclose').onclick = () => lb.close();
+lb.addEventListener('click', e => { if (e.target === lb) lb.close(); });
+lb.addEventListener('close', () => { lbm.textContent = ''; });
+{ const tb = document.getElementById('themeBtn'), lab = () => { tb.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; lab();
+  tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
+addEventListener('keydown', e => { if (!lb.open) return; if (e.key === 'ArrowRight') show(at + 1); if (e.key === 'ArrowLeft') show(at - 1); });
+</script>
+</body>
+</html>
