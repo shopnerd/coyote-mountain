@@ -213,7 +213,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="sec" id="secLbl" style="display:none">sections</div>
     <div class="seg wrap" id="secTabs" style="display:none;margin-bottom:6px"></div>
     <div class="seg" id="secRow" style="display:none;margin-bottom:6px"><button id="sec3d">paint this section</button><button id="secAnim">animate</button></div>
-    <div class="sec" id="geoLbl" style="display:none">geology</div>
+    <div class="sec deep" id="geoLbl" style="display:none">geology</div>
     <div class="seg deep" id="geoRow" style="display:none;margin-bottom:6px"><button data-geo="1">geology</button><button data-geo="0" class="on">no geology</button></div>
     <div class="desc deep" id="geoInfo" style="display:none;padding-bottom:4px"></div>
 
@@ -316,7 +316,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
         <div class="p" title="vertical drop between swales"><label>swale drop<output id="o_swale">0.5 m</output></label><input type="range" id="swale" min="1" max="100" step="1" value="30"></div>
         <div class="p" title="wall height of a dam at the keypoint"><label>dam height<output id="o_dam">2 m</output></label><input type="range" id="dam" min="0.5" max="12" step=".5" value="2"></div>
       </div>
-      <div class="desc" id="anaDesc">tap a keypoint or any spot to set the keyline. switch to "tap places dam" to put the dam anywhere.</div>
+      <div class="desc" id="anaDesc">tap a keypoint or any spot to set the keyline.<span class="deep"> switch to "tap: dam" to put the dam anywhere.</span></div>
       <div class="sec">sun</div>
       <div class="seg" id="sunRow" style="margin-top:6px"><button data-a="sun">sun study</button></div>
       <div id="sunSlot"></div>
