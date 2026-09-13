@@ -111,7 +111,7 @@ canvas.orbit{cursor:grab}
   .cmd .views{display:none}
   main{grid-row:3}
   header .read{font-size:9.5px}
-  header a{display:none}
+  header a:not(.theme){display:none}
   .actions{grid-template-columns:repeat(4,1fr)}
 }
 @media (prefers-reduced-motion:reduce){.toast{transition:none}}
@@ -163,6 +163,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <a class="logo" href="index.html" style="text-decoration:none;color:inherit">coyote_mountain<b>_topo</b></a>
     <a href="flight.html">flight</a>
     <span class="read" id="read">keys · 1 plan · 2 model · 3 section · 4 analysis · 0 refits · wheel zooms · middle drag pans · ctrl+z undo</span>
+    <a class="theme" href="gallery/">gallery</a>
     <button class="theme" id="depthBtn" title="simple shows the tools you see on the sheet at once; deep shows everything: tuning, calibration, fabrication and the other exports">deep</button>
     <button class="theme" id="tourBtn" title="a five-minute guided tour of every tool on a sample site; your own work comes back after">tour</button>
     <button class="theme" id="themeBtn" title="dark or light around the drawing; the paper stays paper">dark</button>

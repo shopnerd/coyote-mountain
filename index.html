@@ -29,6 +29,10 @@ a.card:hover{border-color:var(--accent);background:var(--hover)}
 .card .name b{color:var(--accent);font-weight:600}
 .card .tag{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin:2px 0 10px}
 .card p{color:var(--ink2);font-size:12px;line-height:1.55}
+a.card.wide{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr);gap:18px;align-items:center;min-height:0}
+.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.strip img{display:block;width:100%;aspect-ratio:3/2;object-fit:cover;border-radius:2px;background:var(--panel)}
+@media (max-width:700px){a.card.wide{grid-template-columns:1fr}.strip{grid-template-columns:repeat(2,1fr)}}
 .foot{grid-column:1/-1;text-align:center;color:var(--ink3);font-size:10px;margin-top:10px}
 </style>
 </head>
@@ -42,7 +46,8 @@ a.card:hover{border-color:var(--accent);background:var(--hover)}
   <div class="cards">
     <a class="card" href="topo.html"><div class="name">coyote_mountain<b>_topo</b></div><div class="tag">site grading and drawing</div><p>real terrain anywhere on earth. grade it, sculpt it, watch the water, then export a drawing set, a print file, or a laser-cut cardboard model.</p></a>
     <a class="card" href="flight.html"><div class="name">coyote_mountain<b>_flight</b></div><div class="tag">drone survey planning</div><p>lay out a photogrammetry flight over the same terrain: overlap, ground sample size, batteries, terrain following, and mission files for the aircraft.</p></a>
-    <div class="foot">the two tools share a place, a boundary, and any drone survey you load<br><a href="gallery/" style="color:var(--ink3)">gallery</a> · <a href="teachers.html" style="color:var(--ink3)">for teachers</a> · <a href="LICENSE.md" style="color:var(--ink3)">free for teaching, source available</a></div>
+    <a class="card wide" href="gallery/"><div><div class="name">coyote_mountain<b>_gallery</b></div><div class="tag">made with the tools</div><p>history animations, painted views of the model, drawing sheets and a drone survey as points.</p></div><div class="strip"><img src="gallery/thumbs/33.jpg" alt="" loading="lazy"><img src="gallery/thumbs/17.jpg" alt="" loading="lazy"><img src="gallery/thumbs/32.jpg" alt="" loading="lazy"><img src="gallery/thumbs/18.jpg" alt="" loading="lazy"></div></a>
+    <div class="foot">the two tools share a place, a boundary, and any drone survey you load<br><a href="teachers.html" style="color:var(--ink3)">for teachers</a> · <a href="LICENSE.md" style="color:var(--ink3)">free for teaching, source available</a></div>
   </div>
 </main>
 <script>
