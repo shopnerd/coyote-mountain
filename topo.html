@@ -4033,14 +4033,14 @@ let tour = null, tourIntro = false;
 const tourEls = (() => { const card = document.createElement('div'); card.id = 'tourCard'; card.innerHTML = '<div class="t"></div><div class="row"><span class="n"></span><button class="b back">back</button><button class="b next">next</button><button class="b skip">skip</button></div>'; const spot = document.createElement('div'); spot.id = 'tourSpot'; document.body.append(spot, card); return { card, spot }; })();
 const tourEl = st => !st.el ? null : typeof st.el === 'function' ? st.el() : document.querySelector(st.el);
 function tourPlace() { if (!tour) return; const st = tour.steps[tour.i], el = tourEl(st), { card, spot } = tourEls; if (el) { el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); spot.style.display = 'block'; spot.style.left = (r.left - 6) + 'px'; spot.style.top = (r.top - 6) + 'px'; spot.style.width = (r.width + 12) + 'px'; spot.style.height = (r.height + 12) + 'px'; } else spot.style.display = 'none';
-  const cw = card.offsetWidth, ch = card.offsetHeight, rail = document.querySelector('aside').getBoundingClientRect(); let x, y;
+  const cw = card.offsetWidth, ch = card.offsetHeight, rail = document.querySelector(document.documentElement.classList.contains('ui2') ? '#u2rail' : 'aside').getBoundingClientRect(); let x, y;
   if (el && innerWidth > 760) { const r = el.getBoundingClientRect(), inRail = r.left < rail.right - 2; x = inRail ? rail.right + 14 : Math.min(innerWidth - cw - 12, Math.max(12, r.left)); y = inRail ? Math.max(48, Math.min(innerHeight - ch - 12, r.top)) : (r.bottom + 12 + ch < innerHeight ? r.bottom + 12 : Math.max(48, r.top - ch - 12)); }
   else { x = (innerWidth - cw) / 2; y = innerHeight - ch - 24; }
   card.style.left = x + 'px'; card.style.top = y + 'px'; }
 async function tourGo(i) { if (!tour) return; if (i < 0) i = 0; if (i >= tour.steps.length) { tourEnd(true); return; } tour.i = i; const st = tour.steps[i]; try { if (st.do) await st.do(); } catch (_) {} if (!tour) return;
   tourEls.card.querySelector('.t').textContent = st.text; tourEls.card.querySelector('.n').textContent = (i + 1) + ' of ' + tour.steps.length; tourEls.card.querySelector('.next').textContent = i === tour.steps.length - 1 ? 'done' : 'next'; tourEls.card.querySelector('.back').disabled = i === 0; tourEls.card.classList.add('show'); requestAnimationFrame(() => requestAnimationFrame(tourPlace)); }
-async function tourStart() { if (tour) return; tourIntroClose(); tour = { i: 0, saved: snapshotProject(), steps: TOUR.filter(st => !st.deep || document.documentElement.dataset.depth !== 'simple') }; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} try { await TOUR_SETUP(); } catch (_) {} tourGo(0); }
-function tourEnd(finished) { if (!tour) return; const saved = tour.saved; tour = null; tourEls.card.classList.remove('show'); tourEls.spot.style.display = 'none'; try { TOUR_RESTORE(saved); } catch (_) {} toast(finished ? 'tour done · your project is back' : 'tour skipped · your project is back'); }
+async function tourStart(steps) { if (tour) return; tourIntroClose(); if (!Array.isArray(steps) && document.documentElement.classList.contains('ui2') && window.__ui2learn) { window.__ui2learn(); return; } tour = { i: 0, saved: snapshotProject(), steps: Array.isArray(steps) ? steps : TOUR.filter(st => !st.deep || document.documentElement.dataset.depth !== 'simple') }; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} try { await TOUR_SETUP(); } catch (_) {} tourGo(0); }
+function tourEnd(finished) { if (!tour) return; const saved = tour.saved, done = tour.onDone; tour = null; if (finished && done) try { done(); } catch (_) {} tourEls.card.classList.remove('show'); tourEls.spot.style.display = 'none'; try { TOUR_RESTORE(saved); } catch (_) {} toast(finished ? 'tour done · your project is back' : 'tour skipped · your project is back'); }
 function tourIntroClose() { if (!tourIntro) return; tourIntro = false; const c = tourEls.card; c.classList.remove('show'); c.querySelector('.back').style.display = ''; c.querySelector('.skip').textContent = 'skip'; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} }
 tourEls.card.querySelector('.next').onclick = () => tourIntro ? tourStart() : tourGo(tour.i + 1); tourEls.card.querySelector('.back').onclick = () => tourGo(tour.i - 1); tourEls.card.querySelector('.skip').onclick = () => tourIntro ? tourIntroClose() : tourEnd(false);
 addEventListener('resize', () => tourPlace()); document.querySelector('aside').addEventListener('scroll', () => tourPlace());
@@ -4122,6 +4122,9 @@ if (/[?&]new(=|&|$)/.test(location.search)) (() => {
 #u2head details{position:relative}#u2head summary{list-style:none}#u2head summary::-webkit-details-marker{display:none}
 #u2proj{position:absolute;top:28px;left:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);padding:8px;width:260px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
 #u2proj .actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#u2learn{position:absolute;top:28px;right:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);padding:8px;width:300px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:4px}
+#u2learn button{display:flex;justify-content:space-between;gap:10px;font:inherit;font-size:12px;text-align:left;padding:7px 8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
+#u2learn button em{font-style:normal;color:var(--ink3);font-size:10.5px}#u2learn button:hover{border-color:var(--accent)}
 #u2find{position:relative}#u2find input{font:inherit;font-size:11.5px;width:clamp(150px,18vw,240px);padding:3px 8px;border:1px solid #9a9992;border-radius:3px;background:var(--paper);color:var(--ink)}
 #u2find input:focus{outline:none;border-color:var(--accent)}
 #u2hits{position:absolute;top:28px;right:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);width:320px;max-height:60vh;overflow:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.14)}
@@ -4177,7 +4180,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
   const themeBtn = make('button', { cls: 'u2b', type: 'button' }); const themeLab = () => { themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; themeBtn.onclick = () => { press('#themeBtn'); themeLab(); };
   const classic = make('a', { cls: 'u2b', href: location.pathname + location.search.replace(/[?&]new(=[^&]*)?/, '').replace(/^&/, '?') + location.hash, text: 'classic layout' });
   head.append(make('a', { cls: 'logo', href: 'index.html' }, [document.createTextNode('coyote_mountain'), make('b', { text: '_topo' })]), placeEl, projDet, undoBtn, redoBtn, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), make('a', { cls: 'u2b', href: 'flight.html', text: 'flight' }), themeBtn, classic);
-  document.addEventListener('click', e => { if (!projDet.contains(e.target)) projDet.open = false; if (!findWrap.contains(e.target)) hits.classList.remove('show'); });
+  document.addEventListener('click', e => { if (!projDet.contains(e.target)) projDet.open = false; if (typeof learnDet !== 'undefined' && !learnDet.contains(e.target)) learnDet.open = false; if (!findWrap.contains(e.target)) hits.classList.remove('show'); });
 
   /* the canvas: views and layers */
   const main = $('main'), viewsEl = make('div', { id: 'u2views', role: 'tablist', 'aria-label': 'view' }), layBtn = make('button', { id: 'u2layBtn', cls: 'u2b', type: 'button', text: 'layers & look' }), layPanel = make('div', { id: 'u2layers' });
@@ -4278,6 +4281,61 @@ details.u2more[open]>.u2rows{margin-top:8px}
   findIn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + found.length) % Math.max(1, found.length); hits.querySelectorAll('button').forEach((b, i) => b.classList.toggle('sel', i === sel)); } else if (e.key === 'Enter') { e.preventDefault(); pick(sel); } else if (e.key === 'Escape') { findIn.value = ''; hits.classList.remove('show'); findIn.blur(); } e.stopPropagation(); });
   addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { e.preventDefault(); findIn.focus(); } });
 
+
+  /* learn: short chapters on the sample site, each ending with your own project back */
+  const demo = el => { const st = TOUR.find(t => t.el === el); return st && st.do ? st.do() : null; };
+  const go = (tk, tl, view) => { state.task = tk; chooseTool(tl); if (view) { state.view = view; applyView(); } };
+  const openLayers = show => { layPanel.classList.toggle('show', show); if (show) mountLayers(); };
+  const CHAPTERS = [
+    { id: 'around', name: 'find your way', steps: [
+      { el: '#u2tasks', text: 'four tasks down the left. site is where you are, shape changes the ground, study reads it, make turns it into drawings, pictures and files. each task lists its tools, and the chosen tool\u2019s settings sit right under them.', do: async () => { openLayers(false); go('site', 'place', 'plan'); } },
+      { el: '#u2views', text: 'plan, 3d and section change how you look without closing the tool you are using. keys 1, 2 and 3 do the same.', do: async () => go('shape', 'pad', 'plan') },
+      { el: '#u2find', text: 'find a tool: press / and type what you want, like rain, pad or contour. enter takes you there.' },
+      { el: '#u2layBtn', text: 'layers & look: what shows on the map and how it is drawn. the photo, water, roads and buildings, the contours and their labels. layers a site does not have say so.', do: async () => openLayers(true) },
+      { el: '#u2status', text: 'the bottom line keeps the place, cut and fill, and the units in sight whatever you are doing.', do: async () => openLayers(false) },
+    ] },
+    { id: 'contours', name: 'read a contour map', steps: [
+      { el: '#interval', text: 'contour lines join points of the same height. here a line every 10 ft and a heavier index line every 50. where the lines crowd the ground is steep, where they spread it is gentle.', do: async () => { go('site', 'place', 'plan'); openLayers(true); } },
+      { el: '#u2views', text: 'the same ground in 3d. the steep sides are where the lines crowded on the sheet. right drag orbits, the wheel zooms.', do: async () => { openLayers(false); go('site', 'place', '3d'); } },
+      { el: '#aerialRow', text: 'the photo under the contours ties the lines to what is really on the ground: trees in the gullies, tracks along the ridges.', do: async () => { go('site', 'place', 'plan'); openLayers(true); await demo('#aerialRow'); openLayers(true); } },
+    ] },
+    { id: 'pad', name: 'grade a pad', steps: [
+      { el: '#padRow', text: 'a pad flattens a shape. balance cut and fill finds the level that moves the least earth; the edges slope away, or become walls where a slope will not fit. here is one, drawn for you.', do: async () => { openLayers(false); go('shape', 'pad', 'plan'); await demo('#padRow'); go('shape', 'pad', 'plan'); } },
+      { el: '#u2status', text: 'cut and fill for the whole design stay here while you grade. draw another pad and watch them change.' },
+      { el: '#side', text: 'side slopes set how steep the new edges are. 3:1 is three across for one up; steeper saves earth but may need a wall.' },
+      { el: '#u2views', text: 'look at the pad in 3d to see the cut into the hill and the fill below it.', do: async () => go('shape', 'pad', '3d') },
+    ] },
+    { id: 'water', name: 'trace water', steps: [
+      { el: '#anaLayers', text: 'study \u00b7 water reads where rain goes: flow lines down the valleys, catchments that drain to one point, ridges that split them. each is a switch.', do: async () => go('study', 'water', 'plan') },
+      { el: '#u2views', text: 'rain on the 3d ground: drops follow the slope and gather in the low places.', do: async () => { go('study', 'water', '3d'); try { setRain(true); } catch (_) {} } },
+      { el: '#u2tasks', text: 'change the ground and the water answers: add a pad across a stream in shape, then come back to water and look again.', do: async () => { try { setRain(false); } catch (_) {} go('study', 'water', 'plan'); } },
+    ] },
+    { id: 'history', name: 'a site through time', steps: [
+      { el: '#histRow', text: 'site history plays every picture of this place, from old maps and early satellites to now, each rising up the ground over the last. press animate history; the pictures take a little while to arrive.', do: async () => go('site', 'history', 'plan') },
+      { el: '#u2side', text: 'once it plays, more appears here: pause, a when slider to scrub through time, save video for the whole run, and the colour and strength of the glowing edge that follows the rising ground.' },
+    ] },
+    { id: 'present', name: 'prepare a presentation', steps: [
+      { el: '#rendRow', text: 'make \u00b7 render turns the model into a perspective with the real sun, for any month and hour.', do: async () => { go('make', 'render', '3d'); await demo('#rendRow'); go('make', 'render', '3d'); } },
+      { el: '#paintRow', text: 'paint sends that render to a painter. press paint, pick a photograph, a watercolour, an ink wash or a map mash-up, describe the scene in the picture, then paint it.', do: async () => go('make', 'paint', '3d') },
+      { el: '#sheetBtn', text: 'the drawing sheet sets plan, model and section on one page at a standard scale, with a title block, as a pdf and a png.', do: async () => go('make', 'sheet') },
+    ] },
+    { id: 'model', name: 'build a physical model', steps: [
+      { el: '#mm', text: 'make \u00b7 3d print: set how wide the printed model is; the scale follows. export gives an stl to print, or a textured obj or glb.', do: async () => go('make', 'print') },
+      { el: '#thick', text: 'make \u00b7 laser-cut model: the material thickness sets how many layers the ground becomes, the sheet size how they are laid out, hollow layers save material. then export the cut file.', do: async () => go('make', 'laser') },
+    ] },
+  ];
+  let learnDone = {}; try { learnDone = JSON.parse(localStorage.getItem('coyote-learn') || '{}'); } catch (_) {}
+  const learnDet = make('details'), learnPop = make('div', { id: 'u2learn' }); learnDet.append(make('summary', { cls: 'u2b', text: 'learn' }), learnPop);
+  function learnMenu() {
+    learnPop.textContent = ''; learnPop.append(make('p', { cls: 'u2note', text: 'short chapters on the sample site. your own project comes back at the end of each.' }));
+    CHAPTERS.forEach(ch => { const b = make('button', { type: 'button' }, [make('span', { text: ch.name }), make('em', { text: learnDone[ch.id] ? 'done' : ch.steps.length + ' steps' })]);
+      b.onclick = async () => { learnDet.open = false; await tourStart(ch.steps); if (tour) tour.onDone = () => { learnDone[ch.id] = true; try { localStorage.setItem('coyote-learn', JSON.stringify(learnDone)); } catch (_) {} }; }; learnPop.append(b); });
+    const all = make('button', { type: 'button' }, [make('span', { text: 'the full classic tour' }), make('em', { text: 'in the classic layout' })]); all.onclick = () => { location.href = classic.href + '#tour'; }; learnPop.append(all);
+  }
+  learnDet.addEventListener('toggle', () => { if (learnDet.open) learnMenu(); });
+  head.insertBefore(learnDet, findWrap.nextSibling);
+  window.__ui2learn = () => { learnMenu(); learnDet.open = true; };
+  side.addEventListener('scroll', () => tourPlace());
   /* start: every control shown (no global simple/deep; "more" folds instead), the remembered task and tool, the size of the new frame */
   setTimeout(() => { document.documentElement.dataset.depth = 'deep'; { let v = 0; try { v = +localStorage.getItem('rail2'); } catch (_) {} setRail(v >= 200 && innerWidth > 760 ? v : 300); } state.view = S.mode === 'model' ? '3d' : S.mode === 'section' ? 'section' : 'plan'; renderTasks(); renderTool(); applyView(); resize(); }, 0);
   window.__ui2 = { state, chooseTask, chooseTool, TASKS, catalogue, applyView };   // for the tests
