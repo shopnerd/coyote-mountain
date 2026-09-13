@@ -1808,7 +1808,7 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot() { undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, secs: S.secs.map(q => [q[0].slice(), q[1].slice()]), secI: S.secI, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot(keepRedo) { if (!keepRedo) redoStack.length = 0; undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, secs: S.secs.map(q => [q[0].slice(), q[1].slice()]), secI: S.secI, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function setGrid(f, quiet) {              // rebuild the ground at 150f × 100f; everything in grid coords is rescaled; terrain refetches
   const nw = Math.round(150 * f), nh = Math.round(100 * f); if (nw === W && nh === H) return; const k = nw / W;
   W = nw; H = nh; base = new Float32Array(W * H); z = new Float32Array(W * H); zv = z; zvKey = ''; rawBase = null; waterMask = null; waterLevel = null; wF = null; S.hasSea = S.hasWater = false; S.coast = null;
@@ -1824,8 +1824,12 @@ function setGrid(f, quiet) {              // rebuild the ground at 150f × 100f;
   resize(); toast(`grid ${W} × ${H}`);
 }
 document.getElementById('gridRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; setGrid(+b.dataset.g); };
+const redoStack = [];
+function applySnap(u) { z.set(u.z); base.set(u.base); S.world = u.world; secSet(u.secs || [], u.secI); S.strokes = u.strokes || []; S.strokeVer++; S.terrainVer++; S.dirty = true; updateStats(); }
 function undo() { const u = undoStack.pop(); if (!u) { toast('nothing to undo'); return; }
-  z.set(u.z); base.set(u.base); S.world = u.world; secSet(u.secs || [], u.secI); S.strokes = u.strokes || []; S.strokeVer++; S.terrainVer++; S.dirty = true; updateStats(); toast(`undo · ${undoStack.length} left`); }
+  snapshot(true); redoStack.push(undoStack.pop()); applySnap(u); toast(`undo · ${undoStack.length} left`); }
+function redo() { const r = redoStack.pop(); if (!r) { toast('nothing to redo'); return; }
+  snapshot(true); applySnap(r); toast(`redo · ${redoStack.length} left`); }
 let drag = null, pinch = null; const pts = new Map();
 const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 cv.addEventListener('pointerdown', e => {
@@ -2004,7 +2008,7 @@ document.addEventListener('click', e => { const el = e.target.closest('button');
 document.addEventListener('scroll', hideTip, true);
 
 /* ---------- rail width: drag the edge; the menu scales with it ---------- */
-function setRail(px) { px = Math.max(200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); document.querySelector('aside').style.zoom = (px / 256).toFixed(3); try { localStorage.setItem('rail', px); } catch (_) {} resize(); }
+function setRail(px) { px = Math.max(200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); { const u2 = document.documentElement.classList.contains('ui2'); document.querySelector(u2 ? '#u2rail' : 'aside').style.zoom = (px / (u2 ? 300 : 256)).toFixed(3); } try { localStorage.setItem(document.documentElement.classList.contains('ui2') ? 'rail2' : 'rail', px); } catch (_) {} resize(); }
 try { const v = +localStorage.getItem('rail'); if (v >= 200 && innerWidth > 760) setRail(v); } catch (_) {}
 { const grip = document.getElementById('railGrip'); let rd = null;
   grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); rd = e.clientX; grip.classList.add('on'); e.preventDefault(); });
@@ -3970,7 +3974,7 @@ buildExisting(); resetGrading();
   document.getElementById('radius').dispatchEvent(new Event('input')); S.strength = +document.getElementById('strength').value;
   secSet([[[20, 85], [120, 15]]]);
 })();
-addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section', '4': 'analysis' }[e.key]; if (m) setMode(m); if (e.key === '0') { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } } if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); if (e.key === 'r' && (S.mode === 'model' || S.mode === 'analysis')) setRain(!S.rain);
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) { e.preventDefault(); redo(); return; } if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; } const m = { '1': 'plan', '2': 'model', '3': 'section', '4': 'analysis' }[e.key]; if (m) setMode(m); if (e.key === '0') { planReset(); if (S.mode === 'model') { S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; } } if (e.key === 'm' && S.mode === 'model') document.querySelector('#modelStyle button:not(.on)').click(); if (e.key === 'r' && (S.mode === 'model' || S.mode === 'analysis')) setRain(!S.rain);
   if (e.key === 'p') { if (S.rain) setRainPause(!S.rainPaused); if (S.sunPlay) { S.sunHeld = S.sunPlay; setSunPlay(S.sunPlay); } else if (S.sunHeld) { const k = S.sunHeld; S.sunHeld = null; setSunPlay(k); } } });
 updateStats(); setMode('plan'); addEventListener('resize', resize); resize(); requestAnimationFrame(frame);
 setBrush('pen');
@@ -4105,8 +4109,9 @@ if (/[?&]new(=|&|$)/.test(location.search)) (() => {
   /* the frame */
   document.documentElement.classList.add('ui2');
   const style = make('style', { text: `
-.ui2 #app{grid-template-rows:40px 26px minmax(0,1fr) 28px;grid-template-columns:clamp(250px,24vw,330px) minmax(0,1fr)}
-.ui2 #app>header,.ui2 #app>aside,.ui2 #railGrip{display:none!important}
+.ui2 #app{grid-template-rows:40px 26px minmax(0,1fr) 28px;grid-template-columns:var(--rail) minmax(0,1fr)}
+.ui2 #app>header,.ui2 #app>aside{display:none!important}
+.ui2 #railGrip{top:66px;bottom:28px}
 .ui2 .cmd{grid-row:2;grid-column:1/-1}.ui2 main{grid-row:3;grid-column:2}
 #u2head{grid-row:1;grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);min-width:0}
 #u2head .logo{font-weight:600;font-size:15px;color:var(--ink);text-decoration:none;white-space:nowrap}#u2head .logo b{color:var(--accent);font-weight:600}
@@ -4138,6 +4143,8 @@ if (/[?&]new(=|&|$)/.test(location.search)) (() => {
 .u2rows>.seg,.u2rows>.p,.u2rows>.desc,.u2rows>.params,.u2rows>div{padding-left:0!important;padding-right:0!important;margin-top:0!important;margin-bottom:0!important}
 .u2rows>.btn,.u2acts .btn{min-height:32px;width:100%}
 .u2acts{display:flex;flex-wrap:wrap;gap:6px}.u2acts .btn{width:auto;flex:1 1 45%}
+.u2rows.u2second{border-top:1px dashed var(--line);padding-top:8px}
+.u2none{color:var(--ink3);font-size:11px;padding:2px 0}
 details.u2more>summary{cursor:pointer;color:var(--accent);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;list-style:none;padding:2px 0}
 details.u2more>summary::-webkit-details-marker{display:none}details.u2more>summary::before{content:'+ ';}details.u2more[open]>summary::before{content:'– ';}
 details.u2more[open]>.u2rows{margin-top:8px}
@@ -4164,11 +4171,12 @@ details.u2more[open]>.u2rows{margin-top:8px}
   const placeEl = make('span', { cls: 'place' });
   const projDet = make('details'), projPop = make('div', { id: 'u2proj' }); projDet.append(make('summary', { cls: 'u2b', text: 'project' }), projPop);
   projPop.append($('#project'));
-  const undoBtn = make('button', { cls: 'u2b', type: 'button', text: 'undo' }); undoBtn.onclick = () => press('#undo');
+  const undoBtn = make('button', { cls: 'u2b', type: 'button', text: 'undo' }); undoBtn.onclick = () => undo();
+  const redoBtn = make('button', { cls: 'u2b', type: 'button', text: 'redo' }); redoBtn.onclick = () => redo();
   const findWrap = make('div', { id: 'u2find' }), findIn = make('input', { type: 'search', placeholder: 'find a tool…  /', 'aria-label': 'find a tool' }), hits = make('div', { id: 'u2hits', role: 'listbox' }); findWrap.append(findIn, hits);
   const themeBtn = make('button', { cls: 'u2b', type: 'button' }); const themeLab = () => { themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; themeBtn.onclick = () => { press('#themeBtn'); themeLab(); };
   const classic = make('a', { cls: 'u2b', href: location.pathname + location.search.replace(/[?&]new(=[^&]*)?/, '').replace(/^&/, '?') + location.hash, text: 'classic layout' });
-  head.append(make('a', { cls: 'logo', href: 'index.html' }, [document.createTextNode('coyote_mountain'), make('b', { text: '_topo' })]), placeEl, projDet, undoBtn, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), make('a', { cls: 'u2b', href: 'flight.html', text: 'flight' }), themeBtn, classic);
+  head.append(make('a', { cls: 'logo', href: 'index.html' }, [document.createTextNode('coyote_mountain'), make('b', { text: '_topo' })]), placeEl, projDet, undoBtn, redoBtn, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), make('a', { cls: 'u2b', href: 'flight.html', text: 'flight' }), themeBtn, classic);
   document.addEventListener('click', e => { if (!projDet.contains(e.target)) projDet.open = false; if (!findWrap.contains(e.target)) hits.classList.remove('show'); });
 
   /* the canvas: views and layers */
@@ -4176,7 +4184,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
   for (const [v, label] of [['plan', 'Plan'], ['3d', '3D'], ['section', 'Section']]) { const b = make('button', { type: 'button', 'data-v': v, text: label }); b.onclick = () => { state.view = v; applyView(); }; viewsEl.append(b); }
   layBtn.onclick = () => { layPanel.classList.toggle('show'); if (layPanel.classList.contains('show')) mountLayers(); };
   main.append(viewsEl, layBtn, layPanel);
-  const layerGroups = LAYERS.map(g => { const box = make('div', { cls: 'u2panel' }), rows = make('div', { cls: 'u2rows' }), more = make('details', { cls: 'u2more' }), mrows = make('div', { cls: 'u2rows' }); more.append(make('summary', { text: 'more' }), mrows); box.append(make('h3', { text: g.name }), rows, more); layPanel.append(box); return { g, rows, mrows }; });
+  const layerGroups = LAYERS.map(g => { const box = make('div', { cls: 'u2panel' }), rows = make('div', { cls: 'u2rows' }), mrows = make('div', { cls: 'u2rows u2second' }); box.append(make('h3', { text: g.name }), rows, mrows); layPanel.append(box); return { g, rows, mrows }; });
 
   /* the status bar: what the tool does is in the line above the canvas; here the place, cut and fill, units */
   const stPlace = make('span'), stCut = make('span'), stFill = make('span'), stUnits = make('div');
@@ -4185,16 +4193,19 @@ details.u2more[open]>.u2rows{margin-top:8px}
 
   /* mounting */
   const mount = (box, list) => { for (const sel of list || []) { const u = unit(sel); if (u) box.append(u); } };
-  function mountLayers() { for (const { g, rows, mrows } of layerGroups) { mount(rows, g.rows); mount(mrows, g.more); } }
+  const NONE = { '#seaRow': 'water · none in this site', '#roadRow': 'roads · none mapped here', '#bldRow': 'buildings · none here (sites wider than 8 km skip them)', '#ovRow': 'lot image · load a kml or kmz with an image, in site · lot and survey', '#cloudRow': 'survey points · shown in 3D', '#geoRow': 'geology · shown in the section view', '#colorRow': 'surface colour · shown in 3D' };
+  const noneEls = {};
+  function mountLayers() { for (const { g, rows, mrows } of layerGroups) { for (const sel of g.rows) { const u = unit(sel); if (!u) continue; rows.append(u); if (NONE[sel]) { noneEls[sel] = noneEls[sel] || make('div', { cls: 'u2none', text: NONE[sel] }); rows.append(noneEls[sel]); } } mount(mrows, g.more); } noneUI(); }
+  function noneUI() { for (const sel in noneEls) { const u = unit(sel); noneEls[sel].hidden = !u || getComputedStyle(u).display !== 'none'; } }
   let panelRows = null, panelMore = null, panelActs = null;
   function renderTool() {
     const t = tool(); for (const box of [panelRows, panelMore]) if (box) while (box.firstChild) park.append(box.firstChild); panelEl.textContent = '';
-    const rows = make('div', { cls: 'u2rows' }), more = make('details', { cls: 'u2more' }), mrows = make('div', { cls: 'u2rows' }), acts = make('div', { cls: 'u2acts' });
+    const rows = make('div', { cls: 'u2rows' }), mrows = make('div', { cls: 'u2rows u2second' }), acts = make('div', { cls: 'u2acts' });
     panelEl.append(make('h3', { text: t.name })); if (t.note) panelEl.append(make('p', { cls: 'u2note', text: t.note }));
     panelEl.append(rows);
     for (const [label, sel] of t.acts || []) { const b = make('button', { cls: 'btn', type: 'button', text: label }); b.onclick = () => { if (typeof sel === 'function') sel(); else press(sel); refresh(); }; acts.append(b); }
     if (t.acts) panelEl.append(acts);
-    if (t.more && t.more.length) { more.append(make('summary', { text: 'more' }), mrows); panelEl.append(more); }
+    if (t.more && t.more.length) panelEl.append(mrows);
     panelRows = rows; panelMore = mrows; panelActs = acts;
     remount();
   }
@@ -4233,7 +4244,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
     placeEl.textContent = S.world ? S.world.name : 'sample sheet'; stPlace.textContent = S.world ? S.world.name : '';
     const cut = $('#cut'), fill = $('#fill'); stCut.innerHTML = ''; stFill.innerHTML = '';
     stCut.append('cut ', make('b', { text: cut ? cut.textContent : '' })); stFill.append('fill ', make('b', { text: fill ? fill.textContent : '' }));
-    themeLab();
+    themeLab(); if (layPanel.classList.contains('show')) noneUI();
   }
   // the engine's own view and brush changes (keys 1-4, the voice, the tour) keep the new layout in step
   { const legacySetMode = setMode; setMode = m => { legacySetMode(m); if (!state.busy) state.view = m === 'model' ? '3d' : m === 'section' ? 'section' : 'plan'; viewsEl.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === state.view)); remount(); }; }
@@ -4247,10 +4258,10 @@ details.u2more[open]>.u2rows{margin-top:8px}
       out.push({ label: t.name, where: tk.name, go: () => { state.task = tk.id; chooseTool(t.id); } });
       for (const [list, isMore] of [[t.rows, false], [t.more, true]]) for (const sel of list || []) { const u = unit(sel); if (!u) continue;
         const labels = [...u.querySelectorAll('button, label')].map(x => (x.tagName === 'LABEL' ? [...x.childNodes].filter(n => n.tagName !== 'OUTPUT').map(n => n.textContent).join(' ') : x.textContent).replace(/\s+/g, ' ').trim()).filter(Boolean);
-        for (const l of labels.length ? labels : [u.textContent.replace(/\s+/g, ' ').trim().slice(0, 40)]) out.push({ label: l, where: `${tk.name} · ${t.name}`, go: () => { state.task = tk.id; chooseTool(t.id); if (isMore) { const d = panelEl.querySelector('details.u2more'); if (d) d.open = true; } flash(u); } }); }
+        for (const l of labels.length ? labels : [u.textContent.replace(/\s+/g, ' ').trim().slice(0, 40)]) out.push({ label: l, where: `${tk.name} · ${t.name}`, go: () => { state.task = tk.id; chooseTool(t.id); flash(u); } }); }
     }
     for (const g of layerGroups) for (const [list, isMore] of [[g.g.rows, false], [g.g.more, true]]) for (const sel of list) { const u = unit(sel); if (!u) continue;
-      for (const x of u.querySelectorAll('button, label')) { const l = x.textContent.replace(/\s+/g, ' ').trim(); if (l) out.push({ label: l, where: `layers & look · ${g.g.name}`, go: () => { layPanel.classList.add('show'); mountLayers(); if (isMore) layPanel.querySelectorAll('details.u2more').forEach(d => { if (d.contains(u)) d.open = true; }); flash(u); } }); } }
+      for (const x of u.querySelectorAll('button, label')) { const l = x.textContent.replace(/\s+/g, ' ').trim(); if (l) out.push({ label: l, where: `layers & look · ${g.g.name}`, go: () => { layPanel.classList.add('show'); mountLayers(); flash(u); } }); } }
     return out;
   }
   const flash = u => { u.scrollIntoView({ block: 'nearest' }); u.classList.add('u2flash'); setTimeout(() => u.classList.remove('u2flash'), 1600); };
@@ -4268,7 +4279,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
   addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { e.preventDefault(); findIn.focus(); } });
 
   /* start: every control shown (no global simple/deep; "more" folds instead), the remembered task and tool, the size of the new frame */
-  setTimeout(() => { document.documentElement.dataset.depth = 'deep'; state.view = S.mode === 'model' ? '3d' : S.mode === 'section' ? 'section' : 'plan'; renderTasks(); renderTool(); applyView(); resize(); }, 0);
+  setTimeout(() => { document.documentElement.dataset.depth = 'deep'; { let v = 0; try { v = +localStorage.getItem('rail2'); } catch (_) {} setRail(v >= 200 && innerWidth > 760 ? v : 300); } state.view = S.mode === 'model' ? '3d' : S.mode === 'section' ? 'section' : 'plan'; renderTasks(); renderTool(); applyView(); resize(); }, 0);
   window.__ui2 = { state, chooseTask, chooseTool, TASKS, catalogue, applyView };   // for the tests
 })();
 })();
