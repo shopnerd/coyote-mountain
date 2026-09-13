@@ -87,7 +87,7 @@ Written at Will's request on 13 September. Read this first. The earlier record i
 
 ## Open, waiting on Will
 
-- **Making the task layout the default** on topo and flight (keep the classic layout link for a while). He is using it; ask when he's ready.
+- ~~Making the task layout the default~~ DONE 13 Sept evening (`ee68506`): default on topo and flight, `?classic` for the old layout (it has a "new layout" link back), old `?new` links still work. Will's design-mode spacing applied as rules first (`4442991`). Classic tests now load `?classic`.
 - **Further tweaks** as he uses it: he said "there might be a few things that I'll continue to tweak".
 - **The painter key on `localhost:8790`:** Will pastes it himself with the key button.
 - **Older open items**, still open: tour voice-over, Walker's iPad report, opening the obj/glb exports in his CAD, animation references.
@@ -99,7 +99,7 @@ Written at Will's request on 13 September. Read this first. The earlier record i
   - previews for CNC and GIS;
   - a "none here" style note when a tool's rows are all hidden (Study · section in plan shows only its buttons);
   - phone-width testing of both new layouts.
-- The voice version's `system.md` "what the tool can do" list is written against classic block names, with a note to use tasks and tools in the new layout; rewrite it for the new layout once that's the default.
+- The voice version's `system.md` "what the tool can do" list is written against classic block names, with a note to use tasks and tools in the new layout; rewrite it for the new layout now that it's the default (next up).
 - The private gallery artifact is out of date against the site gallery (39 pieces).
 
 ## How to verify quickly
