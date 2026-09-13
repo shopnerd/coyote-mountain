@@ -4056,8 +4056,8 @@ setTimeout(() => { let seen = null; try { seen = localStorage.getItem(TOUR_KEY);
   c.style.left = ((innerWidth - c.offsetWidth) / 2) + 'px'; c.style.top = (innerHeight - c.offsetHeight - 24) + 'px'; }, 2500);
 
 surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseGeoTiff(rec.buf).then(sv => { sv.name = rec.name; S.survey = sv; if (S.world) applySurvey(true); toast('survey ground on: ' + rec.name); }).catch(() => {}); });   // a survey loaded in either tool follows you here
-/* ---------- the task layout (?new): Site · Shape · Study · Make over the same engine. The original rail stays in the page, hidden; its rows move into the new panels (keeping every handler) and the new tool buttons press the original ones ---------- */
-if (/[?&]new(=|&|$)/.test(location.search)) (() => {
+/* ---------- the task layout, the default (?classic keeps the old one): Site · Shape · Study · Make over the same engine. The original rail stays in the page, hidden; its rows move into the new panels (keeping every handler) and the new tool buttons press the original ones ---------- */
+if (!/[?&]classic(=|&|$)/.test(location.search)) (() => {
   const $ = s => document.querySelector(s), app = $('#app');
   const make = (t, a = {}, kids = []) => { const e = document.createElement(t); for (const k in a) { if (k === 'text') e.textContent = a[k]; else if (k === 'cls') e.className = a[k]; else e.setAttribute(k, a[k]); } kids.forEach(k => e.append(k)); return e; };
   const press = sel => { const e = $(sel); if (e) e.click(); };
@@ -4193,7 +4193,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
   const redoBtn = make('button', { cls: 'u2b', type: 'button', text: 'redo' }); redoBtn.onclick = () => redo();
   const findWrap = make('div', { id: 'u2find' }), findIn = make('input', { type: 'search', placeholder: 'find a tool…  /', 'aria-label': 'find a tool' }), hits = make('div', { id: 'u2hits', role: 'listbox' }); findWrap.append(findIn, hits);
   const themeBtn = make('button', { cls: 'u2b', type: 'button' }); const themeLab = () => { themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; themeBtn.onclick = () => { press('#themeBtn'); themeLab(); };
-  const classic = make('a', { cls: 'u2b', href: location.pathname + location.search.replace(/[?&]new(=[^&]*)?/, '').replace(/^&/, '?') + location.hash, text: 'classic layout' });
+  const classic = make('a', { cls: 'u2b', href: location.pathname + '?' + ['classic'].concat(location.search.slice(1).split('&').filter(p => p && !/^(new|classic)(=|$)/.test(p))).join('&') + location.hash, text: 'classic layout' });
   head.append(make('a', { cls: 'logo', href: 'index.html' }, [document.createTextNode('coyote_mountain'), make('b', { text: '_topo' })]), placeEl, projDet, undoBtn, redoBtn, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), make('a', { cls: 'u2b', href: 'flight.html', text: 'flight' }), themeBtn, classic);
   document.addEventListener('click', e => { if (!projDet.contains(e.target)) projDet.open = false; if (typeof learnDet !== 'undefined' && !learnDet.contains(e.target)) learnDet.open = false; if (!findWrap.contains(e.target)) hits.classList.remove('show'); });
 
@@ -4515,6 +4515,15 @@ if (document.documentElement.classList.contains('ui2')) (() => {
   grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); d = { x: e.clientX, w: tasks.getBoundingClientRect().width / zoom() }; grip.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
   grip.addEventListener('pointermove', e => { if (d) set(d.w + (e.clientX - d.x) / zoom(), true); });
   const end = () => { d = null; grip.classList.remove('on'); }; grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
+})();
+</script>
+<script>/* the classic layout (?classic): a link back to the task layout, and the link to the other page stays classic */
+if (/[?&]classic(=|&|$)/.test(location.search)) (() => {
+  const head = document.querySelector('#app > header'); if (!head) return;
+  const x = head.querySelector('a[href="flight.html"]'); if (x) x.href = 'flight.html?classic';
+  const back = document.createElement('a'); back.className = 'theme'; back.textContent = 'new layout';
+  back.href = location.pathname + location.search.slice(1).split('&').filter(p => p && !/^(new|classic)(=|$)/.test(p)).reduce((q, p) => q + (q ? '&' : '?') + p, '') + location.hash.replace('#tour', '');
+  head.append(back);
 })();
 </script>
 </body>
