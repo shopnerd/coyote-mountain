@@ -890,8 +890,8 @@ if (!/[?&]classic(=|&|$)/.test(location.search)) (() => {
 :root[data-theme=dark] #u2hits button.sel,:root[data-theme=dark] #u2hits button:hover,:root[data-theme=dark] #u2tasks button.on,:root[data-theme=dark] #u2tools button.on{background:#3a2a20}
 #u2rail{grid-row:3;grid-column:1;display:grid;grid-template-columns:78px minmax(0,1fr);background:var(--panel);border-right:1px solid var(--line);min-height:0}
 #u2tasks{border-right:1px solid var(--line);display:flex;flex-direction:column;gap:60px;margin-top:11px}
-#u2tasks button{font:inherit;font-size:12px;padding:18px 0;border:0;border-top:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;text-align:center;text-transform:uppercase;letter-spacing:.12em;writing-mode:vertical-rl;transform:rotate(180deg)}
-#u2tasks button.on{background:#fdf3ea;color:var(--accent);font-weight:600;box-shadow:inset -3px 0 0 var(--accent)}
+#u2tasks button{font:inherit;font-size:12px;padding:16px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;text-align:center;text-transform:uppercase;letter-spacing:-.1em;line-height:1;writing-mode:vertical-rl;text-orientation:upright}
+#u2tasks button.on{background:#fdf3ea;color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
 #u2tasks button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 #u2side{overflow-y:auto;padding:10px 10px 30px;display:flex;flex-direction:column;gap:10px}
 #u2tools{display:grid;grid-template-columns:minmax(110px,max-content);gap:4px}
