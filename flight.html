@@ -784,7 +784,7 @@ const tipEl = $('tip'); let tipTimer = null;
 document.querySelectorAll('[title]').forEach(el => { const t = el.getAttribute('title'); el.removeAttribute('title'); el.dataset.tip = t; });
 document.addEventListener('pointerover', e => { const el = e.target.closest('[data-tip]'); clearTimeout(tipTimer); if (!el) { tipEl.classList.remove('show'); return; } tipTimer = setTimeout(() => { tipEl.textContent = el.dataset.tip; tipEl.classList.add('show'); const r = el.getBoundingClientRect(), tw = Math.min(250, tipEl.offsetWidth || 200); let x = r.left + r.width / 2 - tw / 2; x = Math.max(6, Math.min(innerWidth - tw - 6, x)); const below = r.bottom + 8 + tipEl.offsetHeight < innerHeight; tipEl.style.left = x + 'px'; tipEl.style.top = (below ? r.bottom + 6 : r.top - tipEl.offsetHeight - 6) + 'px'; }, 350); });
 document.addEventListener('pointerout', e => { if (e.target.closest('[data-tip]')) { clearTimeout(tipTimer); tipEl.classList.remove('show'); } });
-function setRail(px) { px = Math.max(200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); document.querySelector('aside').style.zoom = (px / 256).toFixed(3); try { localStorage.setItem('rail', px); } catch (_) {} resize(); }
+function setRail(px) { px = Math.max(200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); const u2 = document.documentElement.classList.contains('ui2'); document.querySelector(u2 ? '#u2rail' : 'aside').style.zoom = (px / (u2 ? 300 : 256)).toFixed(3); try { localStorage.setItem(u2 ? 'rail2' : 'rail', px); } catch (_) {} resize(); }
 { const g = $('railGrip'); let rd = null; g.addEventListener('pointerdown', e => { rd = { x: e.clientX, w: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--rail')) }; g.classList.add('on'); g.setPointerCapture(e.pointerId); }); g.addEventListener('pointermove', e => { if (rd) setRail(rd.w + e.clientX - rd.x); }); const up = () => { rd = null; g.classList.remove('on'); }; g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up); try { const r = +localStorage.getItem('rail'); if (r && innerWidth > 760) setRail(r); } catch (_) {} }
 addEventListener('resize', resize); resize(); syncUI(); updateHint(); requestAnimationFrame(frame);
 if (!openFromLink() && !restoreSession()) { $('place').value = HOME.lat + ', ' + HOME.lon; refresh(); fetchWorld(HOME, true); }
@@ -809,15 +809,15 @@ const TOUR = [
 let tour = null, tourIntro = false;
 const tourEls = (() => { const card = document.createElement('div'); card.id = 'tourCard'; card.innerHTML = '<div class="t"></div><div class="row"><span class="n"></span><button class="b back">back</button><button class="b next">next</button><button class="b skip">skip</button></div>'; const spot = document.createElement('div'); spot.id = 'tourSpot'; document.body.append(spot, card); return { card, spot }; })();
 const tourEl = st => !st.el ? null : typeof st.el === 'function' ? st.el() : document.querySelector(st.el);
-function tourPlace() { if (!tour) return; const st = TOUR[tour.i], el = tourEl(st), { card, spot } = tourEls; if (el) { el.scrollIntoView({ block: 'nearest' }); const r = el.getBoundingClientRect(); spot.style.display = 'block'; spot.style.left = (r.left - 6) + 'px'; spot.style.top = (r.top - 6) + 'px'; spot.style.width = (r.width + 12) + 'px'; spot.style.height = (r.height + 12) + 'px'; } else spot.style.display = 'none';
-  const cw = card.offsetWidth, ch = card.offsetHeight, rail = document.querySelector('aside').getBoundingClientRect(); let x, y;
+function tourPlace() { if (!tour) return; const st = tour.steps[tour.i], el = tourEl(st), { card, spot } = tourEls; if (el) { el.scrollIntoView({ block: 'nearest' }); const r = el.getBoundingClientRect(); spot.style.display = 'block'; spot.style.left = (r.left - 6) + 'px'; spot.style.top = (r.top - 6) + 'px'; spot.style.width = (r.width + 12) + 'px'; spot.style.height = (r.height + 12) + 'px'; } else spot.style.display = 'none';
+  const cw = card.offsetWidth, ch = card.offsetHeight, rail = document.querySelector(document.documentElement.classList.contains('ui2') ? '#u2rail' : 'aside').getBoundingClientRect(); let x, y;
   if (el && innerWidth > 760) { const r = el.getBoundingClientRect(), inRail = r.left < rail.right - 2; x = inRail ? rail.right + 14 : Math.min(innerWidth - cw - 12, Math.max(12, r.left)); y = inRail ? Math.max(48, Math.min(innerHeight - ch - 12, r.top)) : (r.bottom + 12 + ch < innerHeight ? r.bottom + 12 : Math.max(48, r.top - ch - 12)); }
   else { x = (innerWidth - cw) / 2; y = innerHeight - ch - 24; }
   card.style.left = x + 'px'; card.style.top = y + 'px'; }
-async function tourGo(i) { if (!tour) return; if (i < 0) i = 0; if (i >= TOUR.length) { tourEnd(true); return; } tour.i = i; const st = TOUR[i]; try { if (st.do) await st.do(); } catch (_) {} if (!tour) return;
-  tourEls.card.querySelector('.t').textContent = st.text; tourEls.card.querySelector('.n').textContent = (i + 1) + ' of ' + TOUR.length; tourEls.card.querySelector('.next').textContent = i === TOUR.length - 1 ? 'done' : 'next'; tourEls.card.querySelector('.back').disabled = i === 0; tourEls.card.classList.add('show'); requestAnimationFrame(() => requestAnimationFrame(tourPlace)); }
-async function tourStart() { if (tour) return; tourIntroClose(); tour = { i: 0, saved: snapshotProject() }; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} try { await TOUR_SETUP(); } catch (_) {} tourGo(0); }
-function tourEnd(finished) { if (!tour) return; const saved = tour.saved; tour = null; tourEls.card.classList.remove('show'); tourEls.spot.style.display = 'none'; try { TOUR_RESTORE(saved); } catch (_) {} toast(finished ? 'tour done · your project is back' : 'tour skipped · your project is back'); }
+async function tourGo(i) { if (!tour) return; if (i < 0) i = 0; if (i >= tour.steps.length) { tourEnd(true); return; } tour.i = i; const st = tour.steps[i]; try { if (st.do) await st.do(); } catch (_) {} if (!tour) return;
+  tourEls.card.querySelector('.t').textContent = st.text; tourEls.card.querySelector('.n').textContent = (i + 1) + ' of ' + tour.steps.length; tourEls.card.querySelector('.next').textContent = i === tour.steps.length - 1 ? 'done' : 'next'; tourEls.card.querySelector('.back').disabled = i === 0; tourEls.card.classList.add('show'); requestAnimationFrame(() => requestAnimationFrame(tourPlace)); }
+async function tourStart(steps) { if (tour) return; tourIntroClose(); if (!Array.isArray(steps) && document.documentElement.classList.contains('ui2') && window.__ui2learn) { window.__ui2learn(); return; } tour = { i: 0, saved: snapshotProject(), steps: Array.isArray(steps) ? steps : TOUR }; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} try { await TOUR_SETUP(); } catch (_) {} tourGo(0); }
+function tourEnd(finished) { if (!tour) return; const saved = tour.saved, done = tour.onDone; tour = null; if (finished && done) try { done(); } catch (_) {} tourEls.card.classList.remove('show'); tourEls.spot.style.display = 'none'; try { TOUR_RESTORE(saved); } catch (_) {} toast(finished ? 'tour done · your project is back' : 'tour skipped · your project is back'); }
 function tourIntroClose() { if (!tourIntro) return; tourIntro = false; const c = tourEls.card; c.classList.remove('show'); c.querySelector('.back').style.display = ''; c.querySelector('.skip').textContent = 'skip'; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} }
 tourEls.card.querySelector('.next').onclick = () => tourIntro ? tourStart() : tourGo(tour.i + 1); tourEls.card.querySelector('.back').onclick = () => tourGo(tour.i - 1); tourEls.card.querySelector('.skip').onclick = () => tourIntro ? tourIntroClose() : tourEnd(false);
 addEventListener('resize', () => tourPlace()); document.querySelector('aside').addEventListener('scroll', () => tourPlace());
@@ -826,6 +826,203 @@ document.getElementById('tourBtn').onclick = tourStart;
 setTimeout(() => { let seen = null; try { seen = localStorage.getItem(TOUR_KEY); } catch (_) {} if (seen || tour) return; tourIntro = true; const c = tourEls.card;   // first visit: offer, never force
   c.querySelector('.t').textContent = 'new here? a two-minute tour shows the tool on a sample site, then hands your own work back.'; c.querySelector('.n').textContent = ''; c.querySelector('.back').style.display = 'none'; c.querySelector('.next').textContent = 'start the tour'; c.querySelector('.skip').textContent = 'no thanks'; tourEls.spot.style.display = 'none'; c.classList.add('show');
   c.style.left = ((innerWidth - c.offsetWidth) / 2) + 'px'; c.style.top = (innerHeight - c.offsetHeight - 24) + 'px'; }, 2500);
+if (location.hash === '#tour') setTimeout(tourStart, 3500);   // the learn menu of the task layout links straight into the classic tour
+
+/* ---------- the task layout (?new): Area · Aircraft · Flight · Plan over the same engine. The original rail stays in the page, hidden; its rows move into the new panels, keeping every handler ---------- */
+if (/[?&]new(=|&|$)/.test(location.search)) (() => {
+  const q = s => document.querySelector(s), app = q('#app');
+  const make = (t, a = {}, kids = []) => { const e = document.createElement(t); for (const k in a) { if (k === 'text') e.textContent = a[k]; else if (k === 'cls') e.className = a[k]; else e.setAttribute(k, a[k]); } kids.forEach(k => e.append(k)); return e; };
+  // a tool: rows = original rows mounted under it; more = secondary rows after a dashed rule; note = one line of help
+  const TASKS = [
+    { id: 'area', name: 'Area', tools: [
+      { id: 'site', name: 'site', rows: ['#place', '#fetch', '#siteW', '#worldStatus'], more: ['#aerialRow'], note: 'type a place or lat, lng and fetch the terrain; site width sets how much ground comes in' },
+      { id: 'draw', name: 'survey area', rows: ['#tools', '#clearPoly', '#s_area'], more: ['#kmlBtn'], note: 'click the corners on the map and double-click to close; takeoff places the home point' },
+      { id: 'survey', name: 'drone survey', rows: ['#surveyBtn', '#surveyInfo'], more: ['#topoBtn'], note: 'your own elevation model replaces the public ground where it has coverage' },
+    ] },
+    { id: 'aircraft', name: 'Aircraft', tools: [
+      { id: 'drone', name: 'drone and camera', rows: ['#drone', '#customSec', '#droneInfo'], note: 'the sensor and rated flight time drive every number in the plan' },
+    ] },
+    { id: 'flight', name: 'Flight', tools: [
+      { id: 'height', name: 'height and overlap', rows: ['#agl', '#fo', '#so'], more: ['#followRow'], note: 'height and the two overlaps set line spacing, photo spacing and ground sample' },
+      { id: 'lines', name: 'lines and speed', rows: ['#hd', '#hdAuto', '#speed'], more: ['#crossRow', '#pitch'] },
+    ] },
+    { id: 'plan', name: 'Plan', tools: [
+      { id: 'numbers', name: 'plan', rows: ['#s_gsd', '#notes'] },
+      { id: 'export', name: 'export', rows: ['#kmlOut', '#geoOut', '#litchiOut', '#wpmlOut'], more: ['#png'], note: 'kml and geojson for maps, litchi csv for the older aircraft, dji fly kmz for the newer ones; aircraft says which flies yours' },
+    ] },
+  ];
+  const unit = sel => {   // the row a selector stands for: a row by its id, an input's labelled row, a lone button or a small button pair, a stats block
+    const e = q(sel); if (!e) return null;
+    if (e.matches('.seg, .p, .desc, .params, .notes') || (e.id && /(Row|Sec|Info|Status)$/.test(e.id)) || e.id === 'tools') return e;
+    if (e.closest('.stats')) return e.closest('.stats');
+    if (e.matches('input, select, textarea')) return e.closest('.p') || e;
+    if (e.tagName === 'BUTTON') { const g = e.parentElement; return g && g.matches('.seg') && !g.id && g.children.length <= 3 ? g : e; }
+    return e.closest('.seg, .p') || e;
+  };
+  const state = { task: 'area', tool: { area: 'site', aircraft: 'drone', flight: 'height', plan: 'numbers' } };
+  try { const s = JSON.parse(localStorage.getItem('coyote-ui2-flight') || '{}'); if (s.task) state.task = s.task; if (s.tool) Object.assign(state.tool, s.tool); } catch (_) {}
+  const save = () => { try { localStorage.setItem('coyote-ui2-flight', JSON.stringify(state)); } catch (_) {} };
+  const task = () => TASKS.find(t => t.id === state.task) || TASKS[0], tool = () => task().tools.find(t => t.id === state.tool[task().id]) || task().tools[0];
+
+  /* the frame */
+  document.documentElement.classList.add('ui2');
+  document.head.append(make('style', { text: `
+.ui2 #app{grid-template-rows:40px 26px minmax(0,1fr) 28px;grid-template-columns:var(--rail) minmax(0,1fr)}
+.ui2 #app>header,.ui2 #app>aside{display:none!important}
+.ui2 #railGrip{top:66px;bottom:28px}
+.ui2 .cmd{grid-row:2;grid-column:1/-1}.ui2 main{grid-row:3;grid-column:2}
+#u2head{grid-row:1;grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:0 12px;background:var(--panel);border-bottom:1px solid var(--line);min-width:0}
+#u2head .logo{font-weight:600;font-size:15px;color:var(--ink);text-decoration:none;white-space:nowrap}#u2head .logo b{color:var(--accent);font-weight:600}
+#u2head .place{color:var(--ink2);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26vw}
+#u2head .sp{flex:1}
+.u2b{font:inherit;font-size:11px;padding:3px 10px;border:1px solid #9a9992;background:transparent;color:var(--ink);border-radius:3px;cursor:pointer;white-space:nowrap;text-decoration:none}
+.u2b:hover,.u2b:focus-visible{border-color:var(--accent);color:var(--accent);outline:none}
+#u2head details{position:relative}#u2head summary{list-style:none}#u2head summary::-webkit-details-marker{display:none}
+#u2proj{position:absolute;top:28px;left:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);padding:8px;width:260px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#u2learn{position:absolute;top:28px;right:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);padding:8px;width:300px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:4px}
+#u2learn button{display:flex;justify-content:space-between;gap:10px;font:inherit;font-size:12px;text-align:left;padding:7px 8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
+#u2learn button em{font-style:normal;color:var(--ink3);font-size:10.5px}#u2learn button:hover{border-color:var(--accent)}
+#u2find{position:relative}#u2find input{font:inherit;font-size:11.5px;width:clamp(150px,18vw,240px);padding:3px 8px;border:1px solid #9a9992;border-radius:3px;background:var(--paper);color:var(--ink)}
+#u2find input:focus{outline:none;border-color:var(--accent)}
+#u2hits{position:absolute;top:28px;right:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);width:320px;max-height:60vh;overflow:auto;display:none;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+#u2hits.show{display:block}#u2hits button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;font:inherit;font-size:12px;padding:6px 10px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
+#u2hits button em{font-style:normal;color:var(--ink3);font-size:10.5px}#u2hits button.sel,#u2hits button:hover{background:#fdf3ea}
+:root[data-theme=dark] #u2hits button.sel,:root[data-theme=dark] #u2hits button:hover,:root[data-theme=dark] #u2tasks button.on,:root[data-theme=dark] #u2tools button.on{background:#3a2a20}
+#u2rail{grid-row:3;grid-column:1;display:grid;grid-template-columns:78px minmax(0,1fr);background:var(--panel);border-right:1px solid var(--line);min-height:0}
+#u2tasks{border-right:1px solid var(--line);display:flex;flex-direction:column}
+#u2tasks button{font:inherit;font-size:12px;padding:14px 8px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;text-align:left}
+#u2tasks button.on{background:#fdf3ea;color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
+#u2tasks button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#u2side{overflow-y:auto;padding:10px 10px 30px;display:flex;flex-direction:column;gap:10px}
+#u2tools{display:flex;flex-wrap:wrap;gap:4px}
+#u2tools button{font:inherit;font-size:12px;padding:6px 9px;border:1px solid #9a9992;background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
+#u2tools button.on{background:#fdf3ea;border-color:#d9895d;box-shadow:0 0 6px rgba(201,107,58,.28)}
+.u2panel{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.u2panel h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:500}
+.u2note{color:var(--ink3);font-size:11px;line-height:1.45}
+.u2rows{display:flex;flex-direction:column;gap:8px}
+.u2rows>.seg,.u2rows>.p,.u2rows>.desc,.u2rows>.params,.u2rows>.stats,.u2rows>.notes,.u2rows>div{padding-left:0!important;padding-right:0!important;margin-top:0!important;margin-bottom:0!important}
+.u2rows>.btn{min-height:32px;width:100%}
+.u2rows.u2second{border-top:1px dashed var(--line);padding-top:8px}
+#u2status{grid-row:4;grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);min-width:0;white-space:nowrap;overflow:hidden}
+#u2status b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+#u2status .p{flex-direction:row;align-items:center;gap:6px}#u2status .p label{font-size:10px}#u2status select{font:inherit;font-size:11px;min-height:20px;padding:0 4px;width:auto}
+.u2flash{outline:2px solid var(--accent)!important;outline-offset:2px}
+@media (max-width:760px){.ui2 #app{grid-template-columns:minmax(0,1fr);grid-template-rows:40px 26px 1fr 36dvh 28px}.ui2 main{grid-row:3;grid-column:1}#u2rail{grid-row:4;grid-column:1;border-right:0;border-top:1px solid var(--line);zoom:1!important}#u2status{grid-row:5}#u2head .place,#u2find,#u2head a.u2b{display:none}}
+` }));
+  const head = make('div', { id: 'u2head' }), rail = make('div', { id: 'u2rail' }), tasksEl = make('div', { id: 'u2tasks', role: 'tablist', 'aria-label': 'tasks' }), side = make('div', { id: 'u2side' }), toolsEl = make('div', { id: 'u2tools' }), panelEl = make('div', { cls: 'u2panel' }), status = make('div', { id: 'u2status' });
+  app.insertBefore(head, q('#app > header'));
+  rail.append(tasksEl, side); side.append(toolsEl, panelEl); app.insertBefore(rail, q('#app > aside'));
+  app.append(status);
+  const park = make('div', { id: 'u2park', hidden: '' }); app.append(park);   // rows not in use wait here, still in the page, so the engine always finds them
+
+  /* the top bar: name and place, project, find a tool, learn, topo, gallery, theme, back to the classic layout */
+  const placeEl = make('span', { cls: 'place' });
+  const projDet = make('details'), projPop = make('div', { id: 'u2proj' }); projDet.append(make('summary', { cls: 'u2b', text: 'project' }), projPop);
+  projPop.append(q('#saveProj'), q('#openProj'), q('#shareBtn'));
+  const findWrap = make('div', { id: 'u2find' }), findIn = make('input', { type: 'search', placeholder: 'find a tool…  /', 'aria-label': 'find a tool' }), hits = make('div', { id: 'u2hits', role: 'listbox' }); findWrap.append(findIn, hits);
+  const themeBtn = make('button', { cls: 'u2b', type: 'button' }); const themeLab = () => { themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; themeBtn.onclick = () => { q('#themeBtn').click(); themeLab(); };
+  const classic = make('a', { cls: 'u2b', href: location.pathname + location.search.replace(/[?&]new(=[^&]*)?/, '').replace(/^&/, '?') + location.hash, text: 'classic layout' });
+  head.append(make('a', { cls: 'logo', href: 'index.html' }, [document.createTextNode('coyote_mountain'), make('b', { text: '_flight' })]), placeEl, projDet, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'topo.html?new', text: 'topo' }), make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), themeBtn, classic);
+  document.addEventListener('click', e => { if (!projDet.contains(e.target)) projDet.open = false; if (!learnDet.contains(e.target)) learnDet.open = false; if (!findWrap.contains(e.target)) hits.classList.remove('show'); });
+
+  /* the status bar: the place and the numbers that decide the flight */
+  const stPlace = make('span'), stNums = make('span', { style: 'display:flex;gap:14px;min-width:0;overflow:hidden' }), stUnits = make('div');
+  status.append(stPlace, make('span', { style: 'flex:1' }), stNums, stUnits);
+  stUnits.append(unit('#unit'));
+  function statusUI() {
+    const name = S.world ? S.world.name : ''; placeEl.textContent = name; stPlace.textContent = name; stNums.textContent = '';
+    for (const [label, id] of [['area', 's_area'], ['ground sample', 's_gsd'], ['photos', 's_photos'], ['time', 's_time'], ['batteries', 's_batt']]) stNums.append(make('span', {}, [document.createTextNode(label + ' '), make('b', { text: $(id).textContent })]));
+    themeLab();
+  }
+  { const legacyShowStats = showStats; showStats = () => { legacyShowStats(); statusUI(); }; }
+
+  /* mounting */
+  const mount = (box, list) => { for (const sel of list || []) { const u = unit(sel); if (u) box.append(u); } };
+  let panelRows = null, panelMore = null;
+  function renderTool() {
+    const t = tool(); for (const box of [panelRows, panelMore]) if (box) while (box.firstChild) park.append(box.firstChild); panelEl.textContent = '';
+    const rows = make('div', { cls: 'u2rows' }), mrows = make('div', { cls: 'u2rows u2second' });
+    panelEl.append(make('h3', { text: t.name })); if (t.note) panelEl.append(make('p', { cls: 'u2note', text: t.note }));
+    panelEl.append(rows); if (t.more && t.more.length) panelEl.append(mrows);
+    panelRows = rows; panelMore = mrows; mount(rows, t.rows); mount(mrows, t.more);
+  }
+  function renderTasks() {
+    tasksEl.textContent = '';
+    for (const t of TASKS) { const b = make('button', { type: 'button', role: 'tab', 'aria-selected': String(t.id === task().id), cls: t.id === task().id ? 'on' : '', text: t.name }); b.onclick = () => chooseTask(t.id); tasksEl.append(b); }
+    toolsEl.textContent = '';
+    for (const t of task().tools) { const b = make('button', { type: 'button', cls: t.id === tool().id ? 'on' : '', text: t.name }); b.onclick = () => chooseTool(t.id); toolsEl.append(b); }
+  }
+  function chooseTask(id) { state.task = id; save(); chooseTool(state.tool[id]); }
+  function chooseTool(id) { state.tool[task().id] = id; save(); renderTasks(); renderTool(); }
+
+  /* find a tool: every tool and every labelled control inside them */
+  function catalogue() {
+    const out = [];
+    for (const tk of TASKS) for (const t of tk.tools) {
+      out.push({ label: t.name, where: tk.name, go: () => { state.task = tk.id; chooseTool(t.id); } });
+      for (const sel of (t.rows || []).concat(t.more || [])) { const u = unit(sel); if (!u) continue;
+        const labels = [...u.querySelectorAll('button, label, .stat span')].map(x => (x.tagName === 'LABEL' ? [...x.childNodes].filter(n => n.tagName !== 'OUTPUT').map(n => n.textContent).join(' ') : x.textContent).replace(/\s+/g, ' ').trim()).filter(Boolean);
+        if (u.tagName === 'BUTTON') labels.push(u.textContent.trim());
+        for (const l of labels.length ? labels : [u.textContent.replace(/\s+/g, ' ').trim().slice(0, 40)]) if (l) out.push({ label: l, where: `${tk.name} · ${t.name}`, go: () => { state.task = tk.id; chooseTool(t.id); flash(u); } }); }
+    }
+    return out;
+  }
+  const flash = u => { u.scrollIntoView({ block: 'nearest' }); u.classList.add('u2flash'); setTimeout(() => u.classList.remove('u2flash'), 1600); };
+  let found = [], sel = 0;
+  function showHits() {
+    const v = findIn.value.trim().toLowerCase(); hits.textContent = ''; if (!v) { hits.classList.remove('show'); return; }
+    const seen = new Set(); found = catalogue().filter(c => c.label.toLowerCase().includes(v)).sort((a, b) => (a.label.toLowerCase().startsWith(v) ? 0 : 1) - (b.label.toLowerCase().startsWith(v) ? 0 : 1)).filter(c => { const k = c.label + c.where; if (seen.has(k)) return false; seen.add(k); return true; }).slice(0, 14);
+    sel = 0; found.forEach((c, i) => { const b = make('button', { type: 'button', role: 'option', cls: i === sel ? 'sel' : '' }, [make('span', { text: c.label }), make('em', { text: c.where })]); b.onclick = () => pick(i); hits.append(b); });
+    if (!found.length) hits.append(make('button', { type: 'button', disabled: '' }, [make('span', { text: 'nothing by that name' })]));
+    hits.classList.add('show');
+  }
+  function pick(i) { const c = found[i]; if (!c) return; findIn.value = ''; hits.classList.remove('show'); findIn.blur(); c.go(); }
+  findIn.addEventListener('input', showHits);
+  findIn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); sel = (sel + (e.key === 'ArrowDown' ? 1 : -1) + found.length) % Math.max(1, found.length); hits.querySelectorAll('button').forEach((b, i) => b.classList.toggle('sel', i === sel)); } else if (e.key === 'Enter') { e.preventDefault(); pick(sel); } else if (e.key === 'Escape') { findIn.value = ''; hits.classList.remove('show'); findIn.blur(); } e.stopPropagation(); });
+  addEventListener('keydown', e => { if (e.key === '/' && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { e.preventDefault(); findIn.focus(); } });
+
+  /* learn: short chapters on the sample site, each ending with your own project back */
+  const demo = i => TOUR[i] && TOUR[i].do ? TOUR[i].do() : null;   // the classic tour's own actions: 1 draws the sample area, 4 flies it at a fixed altitude, 5 places the takeoff
+  const go = (tk, tl) => { state.task = tk; chooseTool(tl); };
+  const CHAPTERS = [
+    { id: 'around', name: 'find your way', steps: [
+      { el: '#u2tasks', text: 'four tasks down the left, in the order you plan a flight: the area to cover, the aircraft, how it flies, and the plan with its mission files. each task lists its tools, and the chosen tool’s settings sit right under them.', do: async () => go('area', 'site') },
+      { el: '#u2find', text: 'find a tool: press / and type what you want, like overlap, speed or litchi. enter takes you there.' },
+      { el: '#u2status', text: 'the bottom line keeps the place, the area, the ground sample, photos, flight time, batteries and the units in sight whatever you are doing.' },
+    ] },
+    { id: 'plan', name: 'plan a survey flight', steps: [
+      { el: '#tools', text: TOUR[1].text, do: async () => { go('area', 'draw'); await demo(1); } },
+      { el: () => $('agl').closest('.p'), text: TOUR[2].text.replace('watch the rail', 'watch the numbers in the bottom line'), do: async () => go('flight', 'height') },
+      { text: TOUR[3].text },
+      { el: '#followRow', text: TOUR[4].text.replace('the warnings below say so', 'the warnings in plan say so'), do: async () => { go('flight', 'height'); await demo(4); } },
+      { el: '#tools', text: TOUR[5].text, do: async () => { go('area', 'draw'); await demo(5); } },
+    ] },
+    { id: 'fly', name: 'aircraft and files', steps: [
+      { el: '#drone', text: 'pick the aircraft; its sensor and rated flight time drive every number in the plan. the line under it says which app flies it.', do: async () => { go('aircraft', 'drone'); await demo(1); } },
+      { el: '#surveyBtn', text: TOUR[6].text, do: async () => go('area', 'survey') },
+      { el: '#notes', text: 'plan lists the numbers and the warnings: the height ceiling, climbs above takeoff, photo timing, waypoint limits and battery swaps.', do: async () => go('plan', 'numbers') },
+      { el: '#kmlOut', text: 'export: kml and geojson for maps, litchi csv for the older aircraft, dji fly kmz for the newer ones.', do: async () => go('plan', 'export') },
+    ] },
+  ];
+  let learnDone = {}; try { learnDone = JSON.parse(localStorage.getItem('coyote-learn-flight') || '{}'); } catch (_) {}
+  const learnDet = make('details'), learnPop = make('div', { id: 'u2learn' }); learnDet.append(make('summary', { cls: 'u2b', text: 'learn' }), learnPop);
+  function learnMenu() {
+    learnPop.textContent = ''; learnPop.append(make('p', { cls: 'u2note', text: 'short chapters on the sample site. your own project comes back at the end of each.' }));
+    CHAPTERS.forEach(ch => { const b = make('button', { type: 'button', 'data-ch': ch.id }, [make('span', { text: ch.name }), make('em', { text: learnDone[ch.id] ? 'done' : ch.steps.length + ' steps' })]);
+      b.onclick = () => { learnDet.open = false; tourStart(ch.steps); if (tour) tour.onDone = () => { learnDone[ch.id] = true; try { localStorage.setItem('coyote-learn-flight', JSON.stringify(learnDone)); } catch (_) {} }; }; learnPop.append(b); });   // tourStart sets the tour before its first await
+    const all = make('button', { type: 'button' }, [make('span', { text: 'the full classic tour' }), make('em', { text: 'in the classic layout' })]); all.onclick = () => { location.href = classic.href.replace(/#.*$/, '') + '#tour'; }; learnPop.append(all);
+  }
+  learnDet.addEventListener('toggle', () => { if (learnDet.open) learnMenu(); });
+  head.insertBefore(learnDet, findWrap.nextSibling);
+  window.__ui2learn = () => { learnMenu(); learnDet.open = true; };
+  side.addEventListener('scroll', () => tourPlace());
+
+  /* start: the remembered task and tool, the size of the new frame */
+  { let v = 0; try { v = +localStorage.getItem('rail2'); } catch (_) {} setRail(v >= 200 && innerWidth > 760 ? v : 300); }
+  renderTasks(); renderTool(); statusUI(); resize();
+  window.__ui2 = { state, chooseTask, chooseTool, TASKS, catalogue, unit, CHAPTERS };   // for the tests
+})();
 })();
 { const tb = document.getElementById('themeBtn'), lab = () => { tb.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; lab();   // dark or light chrome, remembered across the studio's pages; the drawing itself stays paper
   tb.onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; try { localStorage.setItem('coyote-theme', t); } catch (_) {} lab(); }; }
