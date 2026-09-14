@@ -109,3 +109,11 @@ Written at Will's request on 13 September. Read this first. The earlier record i
   - **Classic regressions:** `e2e164`, `e2e173` (previous session's scratchpad).
 - **Page hooks:** `window.__ui2` = `{ state, chooseTask, chooseTool, TASKS, catalogue, applyView }`, and `window.__ui2probe(gx, gy)` gives a grid point's sheet position. `window.__dbg` also hands out `z` and `drawModel`.
 - **Live:** curl `https://coyotemountainfarm.com/topo.html` for a marker; Pages takes 40–55 s.
+
+Late 13 September (continued)
+
+* The classic layout is removed (`9f6b41d`): no `?classic`, no link, no classic tour; `#tour` (teachers page) opens learn. The old rail stays hidden in the page because the task layout borrows its rows.
+* Rail: task names stacked upright, 20 px capitals, 32 px column, equal-height tabs, hover descriptions on every new button; the settings column lays out at 220 px on both pages (localStorage `rail3`); lot and survey's clear sits alone at the bottom.
+* Voice prompt rewritten for the task layout and stripped of classic (coyote-voice `dcdbad6`, `74a85f1`), helper restarted.
+* Tests: classic tests are obsolete; e2e204 and the flight drag check read `rail2` and need `rail3`.
+* Astra's review, verified: Shape · pad in 3D shows only topsoil and swell; laser-cut model has no scale control (it's under 3d print). Candidates next: pad settings that stay in 3D, a shared model size & scale for print/laser/CNC, typed numbers beside sliders, small group labels inside pad and make.
