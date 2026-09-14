@@ -194,3 +194,20 @@ Test: e2e230 (23 checks) in session fb8fbb82's scratchpad. Regression 203, 205 a
   - Layers are terrain, after, water and design. Outputs are a PNG, one plate per layer, and an Inkscape-layer SVG at the paper size.
   - The drawing sheet's model picture offers all nine styles through `sheetLines`.
   - Test: e2e233, including a synthetic ridge that hides exactly the rows in its shadow.
+
+## G. Four tools from two Grasshopper plugins (14 September, later)
+
+Will asked to build Groundhog and Docofossor into topo, after a Food4Rhino sweep ([Topo Plugin Scout](https://claude.ai/code/artifact/e38c3647-2697-438b-9bb4-366d61b073ac)). Most of both plugins already existed here (flow, catchments, ponds, flood pooling, wetness, pad, grade, path corridors, ground change), so only the missing parts were built. Methods were rebuilt from the plugins' docs, examples and published equations; no plugin code was copied (Groundhog is GPL-3).
+
+| tool | task | from | stored | what it does |
+| --- | --- | --- | --- | --- |
+| stream crossing | study | Groundhog channel region + channel info | `rec.xing` | tap a stream; section square across it; rational-method storm flow; water level by halving until Manning's equation carries it; spill vs bank-full capacity; Kirpich arrival time; scour vs Fortier and Scobey bed speeds; ARR 2019 hazard H1–H6; Froude |
+| what you can see | study | Docofossor dfViewshed | `rec.view` | viewpoints, a line, or mapped roads (≤150 sampled sources); eye height and target height; or where a building/tower shows from; edge-ray horizon sweep plus a direct sightline for cells the rays skip; earth curve less refraction |
+| best route | shape | Docofossor dfShortestPath | `rec.routes` | A* with 16 moves, hard grade limit (foot 15, track 12, trucks 10, step-free 5%), cost above the preferred grade, stream crossings cost extra, protected ground (fit, recovery, ungrazed paddocks) and open water closed; Tobler time; build it as a path via `applyPath` |
+| ditch and berm | shape | Docofossor dfCutOnPath + dfFillOnPath | `rec.ditches` | contour walk from a tap or a drawn line; trapezoid ditch (level, follows the ground, or falls 0.5–2%); berm height solved so it holds the dug soil; section; dig it into `z` with `snapshot()` (undoable) |
+
+Test `e2e234.js` in session scratchpad `7d4521fc-d03a-4274-b332-fc532b15a7b4` (31 checks): Manning depth in a V valley vs the closed form (<2%), bank-full capacity, a wall's hidden zone vs geometry, no hidden specks on open ground, a 12% route up a 25% slope, no step-free route, protected ground avoided, contour held within 1 cm, ditch cut vs the node sum (0.4%) and vs the smooth integral (6%, the 1 m grid), balanced berm downhill, dig and undo, saved records, hover tips. Regression: e2e203, e2e205, e2e210–e2e233 all pass (e2e220 must run with its own scratchpad as the out dir, for field.jpg and rain.csv). tipaudit: 0 missing. `book/reference.md` regenerated. Voice `system.md` updated (coyote-voice `6a56f2d`).
+
+Hooks: `__xgCalc(k)`, `__vwCompute()`, `__vwSeen(gx, gy)`, `__rtSolve(A, B, kind, cross)`, `__rtStats(k)`, `__dbCalc(k)`, `__dbContour(gx, gy, len)`, `__dbNew(pts)`.
+
+Estimates, not verified: Manning's n and bed speeds are textbook values; storm intensity is an example until entered; views ignore trees and buildings; routes are first lines to walk, not alignments. On the Baja relief tiles (about 10–15 m real detail) small channels read wider and shallower than they are.

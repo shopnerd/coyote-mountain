@@ -822,7 +822,7 @@ const FIRE = { show: true, wind: 45, cover: 'chaparral', ver: 0, key: '', img: n
 const NAT = { inat: [], total: 0, ver: 0, show: true, off: {}, quality: 'any', status: '', hl: null, busy: false };   /* nature records: iNaturalist observations plus imported bird lists */
 const CHG = { before: null, after: null, pick: 'after', align: true, lod: .15, show: true, ver: 0, key: '', diff: null, stats: null, img: null };   /* ground change: two surveys of the same ground, compared cell by cell */
 function drawPlan() {                     // cached picture + live overlay; the picture is redrawn only when something on it changes
-  const key = [window.__laKey ? window.__laKey() : '', window.__dwKey ? window.__dwKey() : '', window.__ckKey ? window.__ckKey() : '', window.__suitKey ? window.__suitKey() : '', window.__stepsKey ? window.__stepsKey() : '', window.__stakesKey ? window.__stakesKey() : '', window.__visKey ? window.__visKey() : '', window.__fitKey ? window.__fitKey() : '', window.__recKey ? window.__recKey() : '', window.__bioKey ? window.__bioKey() : '', window.__grazeKey ? window.__grazeKey() : '', window.__obsKey ? window.__obsKey() : '', window.__stakeKey ? window.__stakeKey() : '', AGRO.ver, window.__agroActive ? window.__agroActive() : 0, FIRE.ver, FIRE.show, window.__fireActive ? window.__fireActive() : 0, NAT.ver, NAT.show, NAT.hl, CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
+  const key = [window.__xgKey ? window.__xgKey() : '', window.__vwKey ? window.__vwKey() : '', window.__rtKey ? window.__rtKey() : '', window.__dbKey ? window.__dbKey() : '', window.__laKey ? window.__laKey() : '', window.__dwKey ? window.__dwKey() : '', window.__ckKey ? window.__ckKey() : '', window.__suitKey ? window.__suitKey() : '', window.__stepsKey ? window.__stepsKey() : '', window.__stakesKey ? window.__stakesKey() : '', window.__visKey ? window.__visKey() : '', window.__fitKey ? window.__fitKey() : '', window.__recKey ? window.__recKey() : '', window.__bioKey ? window.__bioKey() : '', window.__grazeKey ? window.__grazeKey() : '', window.__obsKey ? window.__obsKey() : '', window.__stakeKey ? window.__stakeKey() : '', AGRO.ver, window.__agroActive ? window.__agroActive() : 0, FIRE.ver, FIRE.show, window.__fireActive ? window.__fireActive() : 0, NAT.ver, NAT.show, NAT.hl, CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
@@ -882,6 +882,7 @@ function drawPlanBase() {
   if (window.__bioDraw) window.__bioDraw(ctx);
   if (window.__recDraw) window.__recDraw(ctx);
   if (window.__fitDraw) window.__fitDraw(ctx);
+  if (window.__vwDraw) window.__vwDraw(ctx);   /* what you can see: the seen and hidden wash, under the contours */
   if (window.__suitDraw) window.__suitDraw(ctx);
   if (window.__dwDraw) window.__dwDraw(ctx);
   if (window.__visDraw) window.__visDraw(ctx);
@@ -893,6 +894,9 @@ function drawPlanBase() {
   drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt'))); drawWater(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false, .55); drawRoads(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false); drawBuildings2D(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
   if (window.__ckDraw) window.__ckDraw(ctx);   /* check dams, headcuts and media lunas: field structures, drawn whichever tool is open */
   if (window.__stepsDraw) window.__stepsDraw(ctx);   /* flights of steps: part of the design, so drawn whichever tool is open */
+  if (window.__dbDraw) window.__dbDraw(ctx);   /* ditches and berms: part of the design */
+  if (window.__rtDraw) window.__rtDraw(ctx);   /* best routes, until built as paths */
+  if (window.__xgDraw) window.__xgDraw(ctx);   /* stream crossings, while their tool is open */
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   if (!S.noFoot) {
@@ -4663,7 +4667,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
   const on = sel => { const e = $(sel); return !!(e && e.classList.contains('on')); };
   // a tool: pick = the original button(s) its choice presses; view = the view it needs ('plan' or '3d'); analysis = in plan it draws the water analysis; rows / more = original rows mounted under it; acts = extra buttons that press originals
   // hover descriptions for the buttons this layout adds (the rows it moves keep their own)
-  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "obs": "field notes on the map: photos, soil tests, erosion, vegetation, and readings from rain gauges and probes", "bio": "a biodiversity atlas: survey spots and routes, visits with counts, compared fairly by effort and season", "nature": "plants and animals people have recorded here on iNaturalist, plus bird lists from eBird, Merlin or BirdNET", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "story": "one captioned video of the place: today, the ground, the water, the design and the planting growing", "build": "grade stakes, landxml surfaces for machine control, keep-out zones and the as-built check", "stake": "follow a designed line on the ground with your phone and flag it", "agro": "orchards, shelterbelts and hedgerows from a species library, grown with a year slider", "graze": "rotate animals by recovery: paddocks drawn on the terrain, forage, rest and water", "visit": "ecotourism walks routed around sensitive ground, with seasons, limits and costs beside revenue", "budget": "price the earthwork, walls, surfaces and planting on this plan with your own rates", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "wbudget": "how much water the design holds from a storm and a year, against what the planting needs", "fit": "suitability: hard limits never traded, preferences weighed, the three best spots and their tradeoffs", "suit": "what grows where: each plant in the library read against slope, sun side, wetness and frost pockets, as zones on the plan", "lines": "line drawings: nine ways to draw the site only in lines, in separate layers and inks, as a png, plates or a layered svg for a pen plotter", "damwall": "dam and spillway: wall height, length and earth, spillway width for the flood, storage ratio, a year of water", "checks": "check dams: one-rock dams laid out along a gully, headcut treatments, rock counts, and a log after rain", "steps": "steps up a slope: draw the line, get the risers, treads, stride check and cut and fill", "recover": "plan and track the recovery of eroded, bare or damaged ground against goals and an untreated comparison", "fire": "a wildfire planning layer: slope, sunny sides, wind and cover, with defensible space around buildings", "carbon": "a carbon and biomass ledger: estimates as ranges, soil samples as measurements", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
+  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "obs": "field notes on the map: photos, soil tests, erosion, vegetation, and readings from rain gauges and probes", "bio": "a biodiversity atlas: survey spots and routes, visits with counts, compared fairly by effort and season", "nature": "plants and animals people have recorded here on iNaturalist, plus bird lists from eBird, Merlin or BirdNET", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "story": "one captioned video of the place: today, the ground, the water, the design and the planting growing", "build": "grade stakes, landxml surfaces for machine control, keep-out zones and the as-built check", "stake": "follow a designed line on the ground with your phone and flag it", "agro": "orchards, shelterbelts and hedgerows from a species library, grown with a year slider", "graze": "rotate animals by recovery: paddocks drawn on the terrain, forage, rest and water", "visit": "ecotourism walks routed around sensitive ground, with seasons, limits and costs beside revenue", "budget": "price the earthwork, walls, surfaces and planting on this plan with your own rates", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "wbudget": "how much water the design holds from a storm and a year, against what the planting needs", "fit": "suitability: hard limits never traded, preferences weighed, the three best spots and their tradeoffs", "suit": "what grows where: each plant in the library read against slope, sun side, wetness and frost pockets, as zones on the plan", "lines": "line drawings: nine ways to draw the site only in lines, in separate layers and inks, as a png, plates or a layered svg for a pen plotter", "damwall": "dam and spillway: wall height, length and earth, spillway width for the flood, storage ratio, a year of water", "checks": "check dams: one-rock dams laid out along a gully, headcut treatments, rock counts, and a log after rain", "route": "best route: the easiest line between two spots within a grade limit, around protected ground, built as a path", "ditch": "ditch and berm: a swale on the contour or a ditch with a fall, the dug soil built into a balanced berm", "xing": "stream crossing: storm flow, depth, speed, spill, scour and hazard where a road or path meets a stream", "view": "what you can see: the ground in view from spots, lines or roads, or where a building would show from", "steps": "steps up a slope: draw the line, get the risers, treads, stride check and cut and fill", "recover": "plan and track the recovery of eroded, bare or damaged ground against goals and an untreated comparison", "fire": "a wildfire planning layer: slope, sunny sides, wind and cover, with defensible space around buildings", "carbon": "a carbon and biomass ledger: estimates as ranges, soil samples as measurements", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
   { const kc = $('#kmlClear'); if (kc) { const row = make('div', { cls: 'seg deep', style: 'padding:0;margin-top:6px' }); kc.parentElement.after(row); row.append(kc); } }   // clear the lot sits alone at the bottom of lot and survey
   const TASKS = [
     { id: 'site', name: 'Site', tools: [
@@ -4681,6 +4685,8 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['=footprint', '#padRow', '=level and grade', '#padLevelRow', '#padGradeRow', '=edges', '#padEdgeRow', '#sideRow', '=earthwork', '#strip', '#swell'] },
       { id: 'grade', name: 'grade a→b', pick: '#brushes button[data-b=grade]', view: 'plan', rows: ['#gradeRow'], more: ['#sideRow'] },
       { id: 'path', name: 'path', pick: '#brushes button[data-b=path]', view: 'plan', rows: ['#pathWRow'], more: ['#pathSurfRow', '#pathHRow'] },
+      { id: 'route', name: 'best route', view: 'plan', planLabel: 'see it in plan', panel: box => rtPanel(box), note: 'the easiest way between two spots within a grade limit, around protected ground and open water, ready to build as a path' },
+      { id: 'ditch', name: 'ditch and berm', view: 'plan', planLabel: 'draw in plan', panel: box => dbPanel(box), note: 'a ditch along a contour or a line, its soil built into a berm beside it, sized and balanced before you dig it into the ground' },
       { id: 'damwall', name: 'dam and spillway', view: 'plan', planLabel: 'see it in plan', panel: box => dwPanel(box), note: 'the wall across the valley at the dam site and the spillway beside it, sized from the pond and the flood: a planning check, not a design' },
       { id: 'checks', name: 'check dams', view: 'plan', planLabel: 'see them in plan', panel: box => ckPanel(box), note: 'one-rock dams along a gully, Zuni bowls at headcuts and media lunas on sheet flow, laid out for a work day and logged after rain' },
       { id: 'steps', name: 'steps', view: 'plan', planLabel: 'draw in plan', panel: box => stepsPanel(box), note: 'a flight of steps up a slope: risers and treads from the ground under a drawn line, checked against an easy stride' },
@@ -4695,7 +4701,9 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
     { id: 'study', name: 'Study', tools: [
       { id: 'section', name: 'section', pick: '#brushes button[data-b=section]', rows: ['#secTabs'], acts: [['draw in plan', () => { state.view = 'plan'; applyView(); press('#brushes button[data-b=section]'); }], ['look at it in section', () => { state.view = 'section'; applyView(); }]], note: 'draw a line across the ground in plan, then look at it in section; the tabs pick which line' },
       { id: 'water', name: 'water', analysis: true, rows: ['#anaLayers', '#rainBtn', '#anaDesc'], more: ['#tapRow', '#rain', '#thr', '#runoff', '#plow', '#swale', '#dam', '#riseRow'] },
+      { id: 'xing', name: 'stream crossing', view: 'plan', planLabel: 'see it in plan', panel: box => xgPanel(box), note: 'how deep and fast a stream runs in a storm where a road or path meets it: whether it spills, scours, or is safe to cross' },
       { id: 'sun', name: 'sun', analysis: true, rows: ['#sunRow', '#sunSec'] },
+      { id: 'view', name: 'what you can see', view: 'plan', planLabel: 'see it in plan', panel: box => vwPanel(box), note: 'the ground seen from your spots, a line or the roads, or everywhere a building or tower would show from' },
       { id: 'wbudget', name: 'water budget', rows: ['#rain', '#runoff'], panel: box => waterPanel(box), note: 'one storm and one year on this ground: what soaks in, what the hollows, ponds, swales and tanks hold, and what leaves' },
       { id: 'suit', name: 'what grows where', view: 'plan', planLabel: 'see it in plan', panel: box => suitPanel(box), note: 'which plants in the library suit which ground: slope, the sunny or shaded side, where water gathers, where frost settles' },
       { id: 'fit', name: 'landscape fit', view: 'plan', planLabel: 'see it in plan', panel: box => fitPanel(box), note: 'where an orchard, road, basin, classroom or building fits with the least conflict, limits kept firm' },
@@ -6075,6 +6083,353 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
       if (bd > 3) toast('the water ran past your bottom tap; the gully ends where it came closest');
     } else C.points.push({ ll: nodeLatLon(g[0], g[1], S.world.lat, S.world.lon), kind: CK.mode === 'luna' ? 'luna' : 'zuni', h: .45 }), CK.mode = null;
     CK.ver++; S.dirty = true; ckRender(); }, true);
+  /* ---------- four tools from two Grasshopper plugins, their methods rebuilt from the documentation and example files, not the code: Groundhog (Philip Belesky, GPL-3) gives the stream crossing, a water level found by halving until a cross-section carries the flow, then Manning's equation; Docofossor (ETH Zurich, MIT) gives what you can see (its viewshed), the best route (its least-cost path over the ground) and the ditch and berm (its trapezoid cut and fill along a line) ---------- */
+  const ghGrid = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left - sheet.x) / sheet.k, (e.clientY - r.top - sheet.y) / sheet.k]; };
+  const ghOn = g => g[0] >= 0 && g[1] >= 0 && g[0] <= W - 1 && g[1] <= H - 1;
+  const ghLL = g => nodeLatLon(g[0], g[1], S.world.lat, S.world.lon), ghG = q => latLonToGrid(q[0], q[1]);
+  const gh3 = v => { const a = Math.abs(v); return a >= 100 ? sig2(v).toLocaleString() : tz(v.toFixed(a >= 10 ? 1 : a >= 1 ? 2 : 3)); };
+  const fQ = q => isFt() ? gh3(q * 35.3147) + ' ft³/s' : gh3(q) + ' m³/s', fVel = v => isFt() ? tz((v * FT).toFixed(1)) + ' ft/s' : tz(v.toFixed(2)) + ' m/s';
+  const ghSel = (label, tip, opts, val, onch) => { const el = make('select', { 'aria-label': label, 'data-tip': tip }); for (const [v, t] of opts) el.append(make('option', { value: String(v), text: t })); el.value = String(val); el.onchange = () => onch(el.value); return el; };
+  const ghNum = (label, tip, get, setv, mUnit, ftUnit, toFt, flagged, upd) => { const inp = make('input', { type: 'number', step: 'any', 'aria-label': label, 'data-tip': tip }); const f = isFt() ? toFt : 1; inp.value = String(+(get() * f).toFixed(2)); inp.onkeydown = e => e.stopPropagation(); inp.onchange = () => { const v = +inp.value; if (isFinite(v) && v >= 0) { setv(v / f); upd(); } }; const lab = make('span', { text: `${label} · ${isFt() ? ftUnit : mUnit}${flagged ? ' (example)' : ''}` }); if (flagged) lab.style.color = '#b0452a'; return [lab, inp]; };
+  const ghBtn = (text, tip, fn) => { const b = make('button', { cls: 'btn', type: 'button', text, 'data-tip': tip }); b.onclick = fn; return b; };
+  const ghCanvas = label => make('canvas', { width: '400', height: '220', style: 'position:static;inset:auto;width:100%;height:auto;display:block;margin:4px 0;border:1px solid var(--line)', 'aria-label': label });
+  function ghProtect() {   /* the ground nothing may go on: drawn in landscape fit, recovery areas, paddocks left ungrazed */
+    const out = [], R = S.rec || {}; if (R.fit && Array.isArray(R.fit.protect)) for (const p of R.fit.protect) out.push(p.map(ghG));
+    if (R.recovery) for (const a of R.recovery.areas) out.push(a.pts.map(ghG)); if (R.graze) for (const pd of R.graze.paddocks) if (pd.protect) out.push(pd.pts.map(ghG)); return out.filter(p => p.length > 2);
+  }
+
+  /* ===== study · stream crossing (Groundhog: channel region + channel info) ===== */
+  const XING_N = [[.013, 'concrete · 0.013'], [.022, 'smooth earth or sand · 0.022'], [.03, 'gravel bed · 0.030'], [.04, 'cobbles and stones · 0.040'], [.05, 'weeds and brush · 0.050'], [.08, 'dense brush or trees · 0.080']];   /* Manning's n, typical values after Chow (1959) */
+  const XING_BED = [[.46, 'fine sand'], [.53, 'sandy loam'], [.61, 'silt loam'], [.76, 'firm loam'], [.761, 'fine gravel'], [1.14, 'stiff clay'], [1.22, 'coarse gravel'], [1.52, 'cobbles and shingles'], [1.83, 'shale and hardpan']];   /* the fastest clear water each bed stands, m/s, Fortier and Scobey (1926) */
+  const XG = { ver: 0, tap: false, pick: 0 };
+  let xgBoxEl = null;
+  window.__xgActive = () => state.task === 'study' && tool().id === 'xing';
+  const xgSet = () => { S.rec = S.rec || {}; const X = S.rec.xing = S.rec.xing || {}; if (!Array.isArray(X.list)) X.list = []; if (X.i === undefined) X.i = 60; if (X.iSet === undefined) X.iSet = false; return X; };
+  const xgHazard = (d, v) => { const dv = d * v; if (dv <= .3 && d <= .3 && v <= 2) return ['H1', 'generally safe for people and vehicles']; if (dv <= .6 && d <= .5 && v <= 2) return ['H2', 'unsafe for small vehicles']; if (dv <= .6 && d <= 1.2 && v <= 2) return ['H3', 'unsafe for vehicles, children and the elderly']; if (dv <= 1 && d <= 2 && v <= 2) return ['H4', 'unsafe for people and vehicles']; if (dv <= 4 && d <= 4 && v <= 4) return ['H5', 'unsafe for everyone; buildings need engineering']; return ['H6', 'unsafe for everyone; any building is at risk']; };   /* Australian Rainfall and Runoff 2019, flood hazard curves */
+  function xgWet(g, dx, t0, wl) {   /* the water in one cross-section at level wl: the wetted stretch around the lowest point, its area, wetted perimeter and top width; spill when it reaches an end of the section */
+    let a = t0, b = t0; while (a > 0 && g[a - 1] < wl) a--; while (b < g.length - 1 && g[b + 1] < wl) b++;
+    const spill = (a === 0 && g[0] < wl) || (b === g.length - 1 && g[g.length - 1] < wl); let A = 0, P = 0, T = 0;
+    for (let k = Math.max(0, a - 1); k <= Math.min(g.length - 2, b); k++) { const d0 = wl - g[k], d1 = wl - g[k + 1]; if (d0 <= 0 && d1 <= 0) continue;
+      if (d0 > 0 && d1 > 0) { A += (d0 + d1) / 2 * dx; P += Math.hypot(dx, g[k + 1] - g[k]); T += dx; }
+      else { const dd = Math.max(d0, d1), w = dd / (Math.abs(d0) + Math.abs(d1)) * dx; A += dd * w / 2; P += Math.hypot(w, dd); T += w; } }
+    return { A, P, T, spill, a, b };
+  }
+  function xgCalc(c) {
+    const an = analyzeSoon(); if (!S.world || !an || !an.acc || an.acc.length !== W * H || !an.down) return null;
+    const X = xgSet(), g0 = ghG(c.ll), s = cs(), ci = Math.round(g0[0]), cj = Math.round(g0[1]); let kn = -1, best = -1;
+    for (let dj = -3; dj <= 3; dj++) for (let di = -3; di <= 3; di++) { const i = ci + di, j = cj + dj; if (i < 0 || j < 0 || i >= W || j >= H) continue; const n = j * W + i; if (an.acc[n] > best) { best = an.acc[n]; kn = n; } }
+    if (kn < 0) return null;
+    const up1 = n => { const i = n % W, j = (n / W) | 0; let bm = -1, ba = 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { if (!di && !dj) continue; const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; const m = jj * W + ii; if (an.down[m] === n && an.acc[m] > ba) { ba = an.acc[m]; bm = m; } } return bm; };
+    const walk = (n, step, lim) => { const out = [n]; let d = 0; for (let t = 0; t < W * H && d < lim; t++) { const p = out[out.length - 1], m = step(p); if (m < 0) break; d += s * Math.hypot(m % W - p % W, ((m / W) | 0) - ((p / W) | 0)); out.push(m); } return { cells: out, d }; };
+    const reach = Math.max(20, 6 * s), dn = walk(kn, n => an.down[n], reach), upw = walk(kn, up1, reach), ea = upw.cells[upw.cells.length - 1], eb = dn.cells[dn.cells.length - 1];
+    let ux = eb % W - ea % W, uy = ((eb / W) | 0) - ((ea / W) | 0); { const L = Math.hypot(ux, uy); if (L < 1e-6) { ux = 0; uy = 1; } else { ux /= L; uy /= L; } }
+    const run = upw.d + dn.d, slopeRaw = run > 0 ? (z[ea] - z[eb]) / run : 0, S0 = Math.max(.001, slopeRaw);
+    const top = walk(kn, up1, 1e12), Lup = top.d, Hup = z[top.cells[top.cells.length - 1]] - z[kn], tc = Lup > s && Hup > 0 ? .0195 * Math.pow(Lup, .77) * Math.pow(Hup / Lup, -.385) : null;   /* Kirpich: minutes for water to arrive from the far end of the catchment */
+    const gi = kn % W, gj = (kn / W) | 0, px = -uy, py = ux, half = c.half || 20, dx0 = Math.max(.02, Math.min(.1, s / 8)), hN = Math.min(2000, Math.round(half / dx0)), dx = half / hN, nS = 2 * hN + 1, prof = new Float64Array(nS); let clipped = false;   /* an odd count, so the middle sample sits on the tapped stream */
+    for (let k = 0; k < nS; k++) { const t = (k - hN) * dx / s, x = gi + px * t, y = gj + py * t; if (x < 0 || y < 0 || x > W - 1 || y > H - 1) clipped = true; prof[k] = sample(z, Math.max(0, Math.min(W - 1, x)), Math.max(0, Math.min(H - 1, y))); }
+    const mid = (nS - 1) / 2, win = Math.max(1, Math.round(nS / 6)); let t0 = Math.round(mid); for (let k = Math.round(mid - win); k <= Math.round(mid + win); k++) if (k >= 0 && k < nS && prof[k] < prof[t0]) t0 = k;
+    let lMax = -Infinity, rMax = -Infinity; for (let k = 0; k <= t0; k++) lMax = Math.max(lMax, prof[k]); for (let k = t0; k < nS; k++) rMax = Math.max(rMax, prof[k]); const bank = Math.min(lMax, rMax);
+    const n = c.n || .03, Qat = wl => { const w = xgWet(prof, dx, t0, wl); return w.P > 0 ? w.A * Math.pow(w.A / w.P, 2 / 3) * Math.sqrt(S0) / n : 0; };
+    const catchHa = an.acc[kn] * an.A / 1e4, C = Math.max(.05, Math.min(1, (S.runoff || 70) / 100)), Q = C * X.i * catchHa / 360;   /* the rational method: i in mm/h, the catchment in ha, m³/s */
+    const Qbf = bank > prof[t0] ? Qat(bank - 1e-6) : 0, over = Q >= Qbf; let wl = bank;
+    if (!over) { let lo = prof[t0], hi = bank; for (let it = 0; it < 60; it++) { const m = (lo + hi) / 2; if (Qat(m) < Q) lo = m; else hi = m; } wl = (lo + hi) / 2; }   /* Groundhog's search: halve the range of levels until the section carries the flow */
+    const w = xgWet(prof, dx, t0, wl), depth = wl - prof[t0], Qw = Qat(wl), V = w.A > 0 ? Qw / w.A : 0, Fr = w.T > 0 && w.A > 0 ? V / Math.sqrt(9.81 * w.A / w.T) : 0, Vok = c.bed || .53, hz = xgHazard(depth, V);
+    return { kn, gi, gj, ux, uy, px, py, half, dx, prof, t0, bank, clipped, S0, slopeRaw, catchHa, C, i: X.i, iSet: X.iSet, Q, Qbf, over, wl, depth, A: w.A, P: w.P, T: w.T, R: w.P > 0 ? w.A / w.P : 0, a: w.a, b: w.b, V, Fr, Vok, scour: V > Vok, hz, tc, Lup, n, Qat };
+  }
+  window.__xgKey = () => { const X = S.rec && S.rec.xing; return [XG.ver, window.__xgActive() ? 1 : 0, XG.pick, X ? JSON.stringify(X) : '', window.__xgActive() && typeof ana !== 'undefined' && ana ? ana.key + ':' + ana.stale : '', S.runoff, S.unit].join('|'); };
+  window.__xgDraw = c => { if (!window.__xgActive() || !S.world) return; const an = analyzeSoon(); if (!an || !an.acc || an.acc.length !== W * H) return; const thr = Math.max(3, thrArea(S.thrV) / (cs() * cs())), k = sheet.k; c.save(); c.strokeStyle = WATER; c.lineCap = 'round';
+    for (let n = 0; n < W * H; n++) { if (an.acc[n] < thr) continue; const m = an.down[n]; if (m < 0) continue; c.lineWidth = Math.max(.6, Math.min(3.5, .5 * Math.log(an.acc[n] / thr + 1) * 1.6)); const p = toSheet(n % W, (n / W) | 0), q = toSheet(m % W, (m / W) | 0); c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); c.stroke(); }
+    const L = xgSet().list; L.forEach((it, idx) => { const r = xgCalc(it); if (!r) return; const col = idx === XG.pick ? ACC : INK, s = cs(), P = t => toSheet(r.gi + r.px * t / s, r.gj + r.py * t / s);
+      c.setLineDash([4, 3]); c.strokeStyle = col; c.lineWidth = 1.2; { const a = P(-r.half), b = P(r.half); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.setLineDash([]);
+      c.strokeStyle = r.over ? '#b0452a' : WATER; c.lineWidth = 5; c.globalAlpha = .8; { const a = P(-r.half + r.a * r.dx), b = P(-r.half + r.b * r.dx); c.beginPath(); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); c.stroke(); } c.globalAlpha = 1;
+      const m = toSheet(r.gi, r.gj), ang = Math.atan2(r.uy, r.ux); c.fillStyle = col; c.beginPath(); c.moveTo(m[0] + 10 * Math.cos(ang), m[1] + 10 * Math.sin(ang)); c.lineTo(m[0] + 4 * Math.cos(ang + 2.4), m[1] + 4 * Math.sin(ang + 2.4)); c.lineTo(m[0] + 4 * Math.cos(ang - 2.4), m[1] + 4 * Math.sin(ang - 2.4)); c.closePath(); c.fill();
+      c.font = font(10.5, 700); c.textAlign = 'center'; c.textBaseline = 'middle'; const e = P(r.half + 6); haloText(c, `${idx + 1} · ${fQ(r.Q)}${r.over ? ' spills' : ' · ' + fL(r.depth, 2)}`, e[0], e[1], r.over ? '#b0452a' : col); });
+    c.restore(); };
+  cv.addEventListener('pointerdown', e => { if (!window.__xgActive() || !S.world || !XG.tap) return; e.stopImmediatePropagation(); e.preventDefault(); const g = ghGrid(e); if (!ghOn(g)) return; const L = xgSet().list; L.push({ ll: ghLL(g), half: 20, n: .03, bed: .53 }); XG.pick = L.length - 1; XG.tap = false; XG.ver++; S.dirty = true; xgRender(); }, true);
+  function xgSection(cvp, r) {   /* the cross-section looking downstream, the water at the storm level, the top of the banks dashed */
+    const o = cvp.getContext('2d'), Wc = cvp.width, Hc = cvp.height; o.fillStyle = PAPER; o.fillRect(0, 0, Wc, Hc); let lo = Infinity, hi = -Infinity; for (const v of r.prof) { lo = Math.min(lo, v); hi = Math.max(hi, v); } hi = Math.max(hi, r.wl);
+    const bx = { x: 14, y: 14, w: Wc - 28, h: Hc - 40 }, x = k => bx.x + k / (r.prof.length - 1) * bx.w, ve = Math.max(1, (bx.w / (2 * r.half)) / (bx.h / Math.max(.2, hi - lo))), y = v => bx.y + bx.h - (v - lo) / Math.max(.2, hi - lo) * bx.h;
+    o.fillStyle = 'rgba(95,134,168,.55)'; o.beginPath(); o.moveTo(x(r.a), y(r.wl)); for (let k = r.a; k <= r.b; k++) o.lineTo(x(k), y(Math.min(r.wl, r.prof[k]))); o.lineTo(x(r.b), y(r.wl)); o.closePath(); o.fill();
+    o.strokeStyle = INK3; o.setLineDash([5, 4]); o.lineWidth = 1; o.beginPath(); o.moveTo(bx.x, y(r.bank)); o.lineTo(bx.x + bx.w, y(r.bank)); o.stroke(); o.setLineDash([]);
+    o.strokeStyle = INK; o.lineWidth = 2; o.beginPath(); for (let k = 0; k < r.prof.length; k++) k ? o.lineTo(x(k), y(r.prof[k])) : o.moveTo(x(k), y(r.prof[k])); o.stroke();
+    o.fillStyle = INK3; o.font = '600 14px ' + getComputedStyle(document.body).fontFamily; o.textBaseline = 'bottom'; o.textAlign = 'left'; o.fillText(`looking downstream · ${fL(2 * r.half, 0)} across · heights × ${Math.round(ve)}`, bx.x, Hc - 4); o.textAlign = 'right'; o.fillText('- - top of the banks', bx.x + bx.w, Hc - 4);
+  }
+  function xgPanel(box) { xgBoxEl = box; S.dirty = true; xgRender(); }
+  function xgRender() {
+    if (!xgBoxEl || !xgBoxEl.isConnected) return; xgBoxEl.textContent = ''; const w = make('div', { cls: 'u2wb' }); xgBoxEl.append(w); const X = xgSet(), L = X.list; if (XG.pick >= L.length) XG.pick = Math.max(0, L.length - 1); const upd = () => { XG.ver++; S.dirty = true; xgRender(); };
+    w.append(ghBtn(XG.tap ? 'tap a stream on the plan…' : 'tap a stream to measure a crossing', 'tap on or beside a stream; the crossing snaps to the stream and runs square across it', () => { XG.tap = !XG.tap; if (XG.tap && state.view !== 'plan') { state.view = 'plan'; applyView(); } upd(); }));
+    if (!L.length) { w.append(make('p', { cls: 'u2note', text: 'no crossings yet. tap where a road, a path or a fence meets a stream: the tool finds how deep and fast the water runs there in a storm.' })); return; }
+    if (L.length > 1) w.append(ghSel('which crossing', 'the crossing these numbers are for; it shows in ember on the plan', L.map((_, k) => [k, `crossing ${k + 1}`]), XG.pick, v => { XG.pick = +v; upd(); }));
+    const it = L[XG.pick], r = xgCalc(it); if (!r) { w.append(make('p', { cls: 'u2note', text: 'still reading the water: a moment' })); setTimeout(() => { if (xgBoxEl && xgBoxEl.isConnected) xgRender(); }, 700); return; }
+    const big = make('p', { cls: 'big' }); big.append('the storm brings ', make('b', { text: fQ(r.Q) }), make('br'));
+    if (r.over) big.append(make('b', { text: 'spills over the banks' }), r.Qbf > 0 ? ` · ${(r.Q / r.Qbf).toFixed(1)} times what the channel holds (${fQ(r.Qbf)})` : ' · no channel to hold it');
+    else big.append(make('b', { text: fL(r.depth, 2) }), ' deep · ', make('b', { text: fVel(r.V) }), ` · ${fL(r.T, 1)} wide`);
+    w.append(big);
+    w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: `${fBig(r.catchHa * 1e4)} drains here · the bed falls ${tz((r.S0 * 100).toFixed(1))}%${r.tc ? ` · water from the far end arrives in about ${Math.max(1, Math.round(r.tc))} min, so use the storm intensity for a burst that long` : ''}` }));
+    const set = make('div', { cls: 'set' });
+    set.append(...ghNum('storm intensity', 'the heaviest rain for a burst as long as the water takes to arrive: ask the local weather service for the 1 in 10 or 1 in 50 year figure', () => X.i, v => { X.i = v; X.iSet = true; }, 'mm/h', 'in/h', 1 / 25.4, !X.iSet, upd));
+    set.append(make('span', { text: 'section width' }), ghSel('section width', 'how far the cross-section reaches either side of the stream; wide enough to reach ground above the flood', [[10, fL(20, 0)], [20, fL(40, 0)], [40, fL(80, 0)], [80, fL(160, 0)]], it.half, v => { it.half = +v; upd(); }));
+    set.append(make('span', { text: 'bed roughness' }), ghSel('bed roughness', "what lines the channel, as Manning's n: rougher beds slow the water and raise it", XING_N, it.n, v => { it.n = +v; upd(); }));
+    set.append(make('span', { text: 'bed soil' }), ghSel('bed soil', 'what the bed is made of, for the fastest water it stands before it scours', XING_BED, it.bed, v => { it.bed = +v; upd(); }));
+    w.append(set);
+    const cvp = ghCanvas('the crossing in section'); w.append(cvp); xgSection(cvp, r);
+    const warn = [];
+    if (r.over) warn.push(`water spreads past the banks: a crossing here floods in this storm. a culvert or ford must pass ${fQ(r.Q)}.`);
+    if (r.clipped) warn.push('the section runs off the edge of the site: the banks may be higher than shown');
+    if (!r.over && r.scour) warn.push(`${fVel(r.V)} is faster than a ${XING_BED.find(q => q[0] === it.bed)[1]} bed stands (${fVel(r.Vok)}): expect the bed and banks to scour. armour the crossing with rock.`);
+    if (!r.over && r.Fr > 1) warn.push(`fast, shallow flow (Froude ${r.Fr.toFixed(1)}): standing waves, and a hydraulic jump where it slows`);
+    if (r.slopeRaw < .001) warn.push('the bed is almost level here; the numbers assume a fall of 0.1%');
+    for (const t of warn) w.append(make('p', { cls: 'u2note', style: 'color:#b0452a', text: t }));
+    if (!r.over) w.append(make('p', { cls: 'u2note', style: `color:${r.hz[0] <= 'H1' ? 'var(--ink)' : '#b0452a'}`, text: `hazard ${r.hz[0]}: ${r.hz[1]} · depth × speed ${tz((r.depth * r.V).toFixed(2))} m²/s` }));
+    w.append(make('p', { cls: 'u2note', text: `area ${fA(r.A)} · wetted edge ${fL(r.P, 1)} · hydraulic radius ${fL(r.R, 2)} · Manning's n ${r.n}` }));
+    w.append(ghBtn(`delete crossing ${XG.pick + 1}`, 'remove this crossing', () => { L.splice(XG.pick, 1); XG.pick = Math.max(0, XG.pick - 1); upd(); }));
+    w.append(make('p', { cls: 'u2note', text: `a planning check, not a hydraulic design. flow by the rational method with ${Math.round(r.C * 100)}% runoff; the water level found as Groundhog does, by halving the range of levels until the section carries the flow, with Manning's equation for a steady, uniform stream. roughness after Chow (1959), bed speeds after Fortier and Scobey (1926), hazard classes from Australian Rainfall and Runoff (2019). the ground is the site's height data: on coarse data a small channel reads wider and shallower than it is.` }));
+  }
+  window.__xgCalc = k => { const L = xgSet().list; return L[k] ? xgCalc(L[k]) : null; };   /* test hook */
+
+  /* ===== study · what you can see (Docofossor: dfViewshed) ===== */
+  const VW = { ver: 0, tap: null, key: '', img: null, cnt: null, stats: null, drawing: null };
+  let vwBoxEl = null;
+  window.__vwActive = () => state.task === 'study' && tool().id === 'view';
+  const vwSet = () => { S.rec = S.rec || {}; const V = S.rec.view = S.rec.view || {}; if (!Array.isArray(V.eyes)) V.eyes = []; if (!Array.isArray(V.line)) V.line = []; const def = { mode: 'from', eyeH: 1.6, tgtH: 0, objH: 6, roads: false }; for (const k in def) if (V[k] === undefined) V[k] = def[k]; return V; };
+  function vwCast(sx, sy, h0, h1, cnt, stamp, id, vis) {   /* one source: rays to every edge cell, each keeping the steepest sightline so far; a cell is seen when its top (ground + h1) rises above it. heights drop with the earth's curve, less a seventh for refraction */
+    const s = cs(), e0 = sample(z, sx, sy) + h0, kR = (1 - .13) / (2 * 6371000), ray = (tx, ty) => { const dxg = tx - sx, dyg = ty - sy, Lg = Math.hypot(dxg, dyg); if (Lg < 1e-9) return; const ux = dxg / Lg, uy = dyg / Lg; let mx = -Infinity;
+      for (let t = 1; t <= Lg + 1e-9; t++) { const x = sx + ux * t, y = sy + uy * t, i = Math.round(x), j = Math.round(y); if (i < 0 || j < 0 || i >= W || j >= H) break; const n = j * W + i, d = t * s, cur = d * d * kR;
+        vis[n] = id; if ((z[n] + h1 - cur - e0) / d >= mx && stamp[n] !== id) { stamp[n] = id; cnt[n]++; } mx = Math.max(mx, (sample(z, x, y) - cur - e0) / d); } };
+    { const i = Math.round(sx), j = Math.round(sy); if (i >= 0 && j >= 0 && i < W && j < H && stamp[j * W + i] !== id) { stamp[j * W + i] = id; cnt[j * W + i]++; } }
+    for (let i = 0; i < W; i++) { ray(i, 0); ray(i, H - 1); } for (let j = 1; j < H - 1; j++) { ray(0, j); ray(W - 1, j); }
+    for (let n = 0; n < W * H; n++) { if (vis[n] === id || stamp[n] === id) continue; const i = n % W, j = (n / W) | 0, dxg = i - sx, dyg = j - sy, Lg = Math.hypot(dxg, dyg), D = Lg * s, slopeT = (z[n] + h1 - D * D * kR - e0) / D; let ok = true;   /* cells the rays stepped past: their own sightline */
+      for (let t = 1; t < Lg; t++) { const f = t / Lg, d = f * D; if ((sample(z, sx + dxg * f, sy + dyg * f) - d * d * kR - e0) / d > slopeT + 1e-9) { ok = false; break; } } if (ok) { stamp[n] = id; cnt[n]++; } }
+  }
+  function vwSources() {
+    const V = vwSet(), src = [], s = cs(); for (const q of V.eyes) src.push(ghG(q));
+    if (V.mode === 'from') { const step = Math.max(1, 10 / s); if (V.line.length > 1) for (const p of resample(V.line.map(ghG), step, false)) src.push(p);
+      if (V.roads && S.coast && S.coast.roads) for (const r of S.coast.roads) if (r.pts && r.pts.length > 1) for (const p of resample(r.pts.map(q => [q[0], q[1]]), Math.max(1, 20 / s), false)) src.push(p); }
+    const ok = src.filter(ghOn), cap = 150; if (ok.length <= cap) return { pts: ok, all: ok.length }; const out = []; for (let k = 0; k < cap; k++) out.push(ok[Math.floor(k * ok.length / cap)]); return { pts: out, all: ok.length };
+  }
+  function vwCompute() {
+    const V = vwSet(), key = [S.terrainVer, W, H, JSON.stringify(V), S.coast && S.coast.roads ? S.coast.roads.length : 0].join('|'); if (VW.key === key) return VW.stats; VW.key = key;
+    const { pts, all } = vwSources(), N = W * H, cnt = new Uint16Array(N), stamp = new Int32Array(N).fill(-1), vis = new Int32Array(N).fill(-1), h0 = V.mode === 'seen' ? V.objH : V.eyeH, h1 = V.mode === 'seen' ? 1.6 : V.tgtH;
+    pts.forEach((p, k) => vwCast(p[0], p[1], h0, h1, cnt, stamp, k, vis));
+    let seen = 0; for (let n = 0; n < N; n++) if (cnt[n]) seen++;
+    VW.cnt = cnt; VW.stats = { n: pts.length, all, seen, frac: seen / N, area: seen * cs() * cs(), total: N * cs() * cs() };
+    if (!pts.length) { VW.img = null; return VW.stats; }
+    const off = document.createElement('canvas'); off.width = W; off.height = H; const o = off.getContext('2d'), im = o.createImageData(W, H), mx = Math.max(1, pts.length);
+    for (let n = 0; n < N; n++) { const q = n * 4; if (cnt[n]) { const f = .35 + .65 * Math.min(1, cnt[n] / Math.max(1, Math.min(mx, 6))); im.data[q] = 201; im.data[q + 1] = 107; im.data[q + 2] = 58; im.data[q + 3] = Math.round(40 + 80 * f); } else { im.data[q] = 60; im.data[q + 1] = 60; im.data[q + 2] = 56; im.data[q + 3] = 70; } }
+    o.putImageData(im, 0, 0); VW.img = off; return VW.stats;
+  }
+  window.__vwKey = () => [VW.ver, window.__vwActive() ? 1 : 0, VW.drawing ? VW.drawing.length : -1, S.rec && S.rec.view ? JSON.stringify(S.rec.view) : ''].join('|');
+  window.__vwDraw = c => { if (!window.__vwActive() || !S.world) return; const V = vwSet(); vwCompute(); c.save();
+    if (VW.img) { c.imageSmoothingEnabled = false; c.drawImage(VW.img, sheet.x - sheet.k / 2, sheet.y - sheet.k / 2, W * sheet.k, H * sheet.k); }
+    c.strokeStyle = INK; c.fillStyle = PAPER; c.lineWidth = 2;
+    V.eyes.forEach((q, k) => { const g = ghG(q), p = toSheet(g[0], g[1]); c.beginPath(); c.arc(p[0], p[1], 6, 0, TAU); c.fill(); c.stroke(); c.beginPath(); c.arc(p[0], p[1], 2, 0, TAU); c.fillStyle = INK; c.fill(); c.fillStyle = PAPER; c.font = font(10.5, 700); c.textAlign = 'left'; c.textBaseline = 'middle'; haloText(c, V.mode === 'seen' ? `${fL(V.objH, 0)} tall` : String(k + 1), p[0] + 9, p[1], INK); });
+    const drawLine = (L, dash) => { if (L.length < 2) return; c.setLineDash(dash); c.beginPath(); L.forEach((q, t) => { const g = ghG(q), p = toSheet(g[0], g[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.stroke(); c.setLineDash([]); };
+    if (V.mode === 'from') { c.strokeStyle = INK; drawLine(V.line, [6, 3]); } if (VW.drawing) { c.strokeStyle = ACC; drawLine(VW.drawing, [4, 3]); }
+    c.restore(); };
+  cv.addEventListener('pointerdown', e => { if (!window.__vwActive() || !S.world || !(VW.tap || VW.drawing)) return; e.stopImmediatePropagation(); e.preventDefault(); const g = ghGrid(e); if (!ghOn(g)) return; const V = vwSet();
+    if (VW.drawing) VW.drawing.push(ghLL(g)); else { V.eyes.push(ghLL(g)); VW.tap = null; } VW.ver++; S.dirty = true; vwRender(); }, true);
+  function vwPanel(box) { vwBoxEl = box; S.dirty = true; vwRender(); }
+  function vwRender() {
+    if (!vwBoxEl || !vwBoxEl.isConnected) return; vwBoxEl.textContent = ''; const w = make('div', { cls: 'u2wb' }); vwBoxEl.append(w); const V = vwSet(), upd = () => { VW.ver++; S.dirty = true; vwRender(); };
+    const toPlan = () => { if (state.view !== 'plan') { state.view = 'plan'; applyView(); } };
+    w.append(make('div', { cls: 'seg' }, [['from', 'seen from here'], ['seen', 'where it shows']].map(([m, t]) => { const b = make('button', { type: 'button', cls: V.mode === m ? 'on' : '', text: t, 'data-tip': m === 'from' ? 'the ground someone standing at your spots, walking your line or driving the roads can see' : 'everywhere a building, tower or tank at your spot can be seen from, by a person standing' }); b.onclick = () => { V.mode = m; VW.drawing = null; upd(); }; return b; })));
+    w.append(ghBtn(VW.tap ? 'tap the plan…' : V.mode === 'seen' ? 'place a building or tower' : 'add a viewpoint', V.mode === 'seen' ? 'tap where it would stand' : 'tap where someone stands and looks', () => { VW.tap = VW.tap ? null : 'eye'; VW.drawing = null; toPlan(); upd(); }));
+    if (V.mode === 'from') {
+      w.append(ghBtn(VW.drawing ? (VW.drawing.length ? `tap along the line… ${VW.drawing.length} so far` : 'tap where the line starts') : V.line.length ? 'draw the line again' : 'draw a line to walk or drive', 'a trail, a drive or a boundary: the ground seen from anywhere along it', () => { VW.drawing = VW.drawing ? null : []; VW.tap = null; toPlan(); upd(); }));
+      if (VW.drawing && VW.drawing.length >= 2) w.append(ghBtn('finish the line', 'keep this line as a place people see from', () => { V.line = VW.drawing; VW.drawing = null; upd(); }));
+      if (S.coast && S.coast.roads && S.coast.roads.length) { const b = make('button', { type: 'button', cls: 'btn' + (V.roads ? ' on' : ''), text: V.roads ? 'from the mapped roads · on' : 'from the mapped roads', 'data-tip': 'count the roads from the map as places people see from: the view from passing traffic' }); b.onclick = () => { V.roads = !V.roads; upd(); }; w.append(b); }
+    }
+    const set = make('div', { cls: 'set' });
+    if (V.mode === 'from') { set.append(make('span', { text: 'eye height' }), ghSel('eye height', 'how high the eyes are above the ground: standing, on a horse or a truck, upstairs, a lookout', [[1.6, 'standing · ' + fL(1.6, 1)], [2.5, 'horse or truck · ' + fL(2.5, 1)], [4.5, 'upstairs · ' + fL(4.5, 1)], [10, 'lookout · ' + fL(10, 0)]], V.eyeH, v => { V.eyeH = +v; upd(); }));
+      set.append(make('span', { text: 'what is seen' }), ghSel('what is seen', 'the ground itself, or the top of something that tall standing anywhere: where a cabin roof would show', [[0, 'the ground'], [3, 'a cabin · ' + fL(3, 0)], [6, 'two storeys · ' + fL(6, 0)], [12, 'a tree · ' + fL(12, 0)]], V.tgtH, v => { V.tgtH = +v; upd(); })); }
+    else set.append(make('span', { text: 'its height' }), ghSel('its height', 'the top of what stands at your spot', [[3, 'cabin · ' + fL(3, 0)], [6, 'two storeys · ' + fL(6, 0)], [12, 'water tank on a stand · ' + fL(12, 0)], [30, 'tower · ' + fL(30, 0)]], V.objH, v => { V.objH = +v; upd(); }));
+    w.append(set);
+    const st = vwCompute();
+    if (!st || !st.n) w.append(make('p', { cls: 'u2note', text: V.mode === 'seen' ? 'place a building or a tower to see where it would show from.' : 'add a viewpoint or draw a line: the ground seen from it turns ember, the ground hidden from it goes grey.' }));
+    else { const big = make('p', { cls: 'big' }); big.append(make('b', { text: `${Math.round(st.frac * 100)}%` }), ` of the site ${V.mode === 'seen' ? 'can see it' : V.tgtH ? 'shows something ' + fL(V.tgtH, 0) + ' tall' : 'is in view'}`, make('br'), `${fBig(st.area)} of ${fBig(st.total)}`); w.append(big);
+      w.append(make('p', { cls: 'u2note', text: `ember is seen, deeper where more of your ${st.n} viewpoint${st.n === 1 ? '' : 's'} see it; grey is hidden.${st.all > st.n ? ` the line and roads are sampled at ${st.n} of ${st.all} points.` : ''}` })); }
+    if (V.eyes.length || V.line.length) w.append(ghBtn('clear the viewpoints', 'remove the spots and the line', () => { V.eyes = []; V.line = []; VW.drawing = null; upd(); }));
+    w.append(make('p', { cls: 'u2note', text: 'Docofossor\'s viewshed: a sightline from each viewpoint to every cell over the bare ground, bent down by the earth\'s curve less a seventh for refraction. trees, buildings and haze are not counted, so real views are smaller; on coarse height data a low rise may hide or show more than it should.' }));
+  }
+  window.__vwCompute = () => { VW.key = ''; return vwCompute(); };   /* test hook */
+  window.__vwSeen = (gx, gy) => { vwCompute(); return VW.cnt ? VW.cnt[Math.round(gy) * W + Math.round(gx)] : 0; };
+
+  /* ===== shape · best route (Docofossor: dfShortestPath, with a grade limit) ===== */
+  const RT_KIND = { foot: ['foot trail', .15, .08, 1.2], track: ['farm track', .12, .08, 3.5], truck: ['road for trucks', .1, .06, 4.5], step: ['step-free path', .05, .05, 1.5] };   /* name, steepest grade allowed, grade it keeps to where it can, width */
+  const RT = { ver: 0, tap: null, a: null, pick: 0 };
+  let rtBoxEl = null;
+  window.__rtActive = () => state.task === 'shape' && tool().id === 'route';
+  const rtList = () => { S.rec = S.rec || {}; if (!Array.isArray(S.rec.routes)) S.rec.routes = []; return S.rec.routes; };
+  function rtSolve(A, B, kind, cross) {   /* A* over the grid with sixteen moves, so a route can hold a grade across a slope; a move steeper than the limit is not allowed, a move steeper than the preferred grade costs more, a stream crossing costs extra, protected ground and open water are closed */
+    const [, gMax, gPref] = RT_KIND[kind], s = cs(), N = W * H, an = analyzeSoon(), thr = Math.max(3, thrArea(S.thrV) / (s * s));
+    const closed = new Uint8Array(N), extra = new Float32Array(N), prot = ghProtect();
+    if (prot.length) for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) for (const P of prot) if (inPoly(P, i, j)) { closed[j * W + i] = 1; break; }
+    if (waterMask && waterMask.length === N) for (let n = 0; n < N; n++) if (waterMask[n]) closed[n] = 1;
+    if (an && an.acc && an.acc.length === N) for (let n = 0; n < N; n++) if (an.acc[n] >= thr) extra[n] = cross * Math.min(3, 1 + Math.log10(an.acc[n] / thr));
+    const a = [Math.round(A[0]), Math.round(A[1])], b = [Math.round(B[0]), Math.round(B[1])], na = a[1] * W + a[0], nb = b[1] * W + b[0]; closed[na] = 0; closed[nb] = 0;
+    const MV = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1], [2, 1], [2, -1], [-2, 1], [-2, -1], [1, 2], [1, -2], [-1, 2], [-1, -2]];
+    const gs = new Float64Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), done = new Uint8Array(N), hk = [], hv = [];
+    const push = (n, v) => { hk.push(v); hv.push(n); let q = hk.length - 1; while (q > 0) { const p = (q - 1) >> 1; if (hk[p] <= hk[q]) break; [hk[p], hk[q]] = [hk[q], hk[p]]; [hv[p], hv[q]] = [hv[q], hv[p]]; q = p; } };
+    const pop = () => { const n = hv[0], lk = hk.pop(), lv = hv.pop(); if (hk.length) { hk[0] = lk; hv[0] = lv; let q = 0; for (;;) { const l = 2 * q + 1, r = l + 1; let m = q; if (l < hk.length && hk[l] < hk[m]) m = l; if (r < hk.length && hk[r] < hk[m]) m = r; if (m === q) break; [hk[m], hk[q]] = [hk[q], hk[m]]; [hv[m], hv[q]] = [hv[q], hv[m]]; q = m; } } return n; };
+    const hEst = n => Math.hypot(n % W - b[0], ((n / W) | 0) - b[1]) * s;
+    gs[na] = 0; push(na, hEst(na)); let found = false, iter = 0;
+    while (hk.length) { const c = pop(); if (done[c]) continue; done[c] = 1; if (c === nb) { found = true; break; } if (++iter > N * 4) break; const ci = c % W, cj = (c / W) | 0;
+      for (const [di, dj] of MV) { const i = ci + di, j = cj + dj; if (i < 0 || j < 0 || i >= W || j >= H) continue; const m = j * W + i; if (done[m] || closed[m]) continue;
+        if (Math.abs(di) + Math.abs(dj) === 3 && closed[(cj + Math.round(dj / 2)) * W + ci + Math.round(di / 2)]) continue;
+        const d = Math.hypot(di, dj) * s, dz = z[m] - z[c]; let g = Math.abs(dz) / d;
+        if (Math.abs(di) + Math.abs(dj) === 3) { const zm = sample(z, ci + di / 2, cj + dj / 2); g = Math.max(g, Math.abs(zm - z[c]) / (d / 2), Math.abs(z[m] - zm) / (d / 2)); }
+        if (g > gMax + 1e-9) continue;
+        const cost = d * (1 + (g > gPref ? 4 * ((g - gPref) / Math.max(.01, gMax - gPref)) ** 2 : 0)) + extra[m], ng = gs[c] + cost; if (ng < gs[m]) { gs[m] = ng; from[m] = c; push(m, ng + hEst(m)); } } }
+    if (!found) return null;
+    const cells = []; for (let n = nb; n >= 0; n = from[n]) { cells.push([n % W, (n / W) | 0]); if (n === na) break; } cells.reverse();
+    return cells;
+  }
+  function rtStats(P, kind) {   /* length, climb, steepest stretch over at least 5 m, share at the preferred grade, walking time by Tobler's hiking function */
+    const [, gMax, gPref] = RT_KIND[kind], s = cs(), R = resample(P, .5, false); if (R.length < 2) return null; const zs = R.map(p => sample(z, p[0], p[1])), D = [0]; for (let k = 1; k < R.length; k++) D.push(D[k - 1] + Math.hypot(R[k][0] - R[k - 1][0], R[k][1] - R[k - 1][1]) * s);
+    let up = 0, down = 0, steep = 0, okLen = 0, hours = 0; for (let k = 1; k < R.length; k++) { const dz = zs[k] - zs[k - 1], dd = D[k] - D[k - 1]; if (dz > 0) up += dz; else down -= dz; if (dd > 0) hours += dd / 1000 / (6 * Math.exp(-3.5 * Math.abs(dz / dd + .05))); }
+    const win = Math.max(5, s), tot = D[D.length - 1]; let q = 0, lastG = tot > 0 ? Math.abs(zs[zs.length - 1] - zs[0]) / tot : 0; if (tot < win) steep = lastG; for (let k = 0; k < R.length - 1; k++) { while (q < R.length - 1 && D[q] - D[k] < win) q++; const span = D[q] - D[k]; if (span >= win * .99) { lastG = Math.abs(zs[q] - zs[k]) / span; steep = Math.max(steep, lastG); } if (lastG <= gPref + 1e-9) okLen += D[k + 1] - D[k]; }
+    return { len: D[D.length - 1], up, down, steep, share: okLen / Math.max(1e-9, D[D.length - 1]), hours, direct: Math.hypot(P[P.length - 1][0] - P[0][0], P[P.length - 1][1] - P[0][1]) * s, gMax, gPref };
+  }
+  function rtFind(rt) {
+    const A = ghG(rt.a), B = ghG(rt.b), cells = rtSolve(A, B, rt.kind, rt.cross ? 25 : 0); if (!cells) { rt.pts = null; rt.fail = true; return; } rt.fail = false;
+    const [, gMax] = RT_KIND[rt.kind]; let P = cells.map(p => [p[0], p[1]]); P[0] = A.slice(); P[P.length - 1] = B.slice();
+    const chaikin = Q => { if (Q.length < 3) return Q; const out = [Q[0]]; for (let k = 0; k < Q.length - 1; k++) { const p = Q[k], q = Q[k + 1]; out.push([p[0] * .75 + q[0] * .25, p[1] * .75 + q[1] * .25], [p[0] * .25 + q[0] * .75, p[1] * .25 + q[1] * .75]); } out.push(Q[Q.length - 1]); return out; };
+    const sm = chaikin(P), st = rtStats(sm, rt.kind); if (st && st.steep <= gMax * 1.1) P = sm;   /* smooth the corners unless that makes it steeper than the limit */
+    rt.pts = P.map(ghLL); rt.ver = S.terrainVer;
+  }
+  window.__rtKey = () => [RT.ver, window.__rtActive() ? RT.pick : -1, RT.a ? RT.a.join(',') : '', S.rec && Array.isArray(S.rec.routes) ? S.rec.routes.map(r => (r.pts ? r.pts.length : 0) + ':' + r.kind + ':' + !!r.built).join(',') : ''].join('|');
+  window.__rtDraw = c => { const L = S.rec && Array.isArray(S.rec.routes) ? S.rec.routes : []; if (!S.world || (!L.length && !RT.a)) return; const act = window.__rtActive(); c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+    L.forEach((rt, idx) => { if (!rt.pts || (rt.built && !act)) return; const P = rt.pts.map(ghG), R = resample(P, 1, false), [, , gPref] = RT_KIND[rt.kind], col = act && idx === RT.pick ? ACC : INK, s = cs();
+      c.lineWidth = act && idx === RT.pick ? 2.4 : 1.6; c.setLineDash(rt.built ? [] : [7, 4]);
+      for (let k = 1; k < R.length; k++) { const g = Math.abs(sample(z, R[k][0], R[k][1]) - sample(z, R[k - 1][0], R[k - 1][1])) / (Math.hypot(R[k][0] - R[k - 1][0], R[k][1] - R[k - 1][1]) * s || 1); c.strokeStyle = g > gPref + .005 ? '#b0452a' : col; const p = toSheet(R[k - 1][0], R[k - 1][1]), q = toSheet(R[k][0], R[k][1]); c.beginPath(); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); c.stroke(); }
+      c.setLineDash([]); c.font = font(10.5, 700); c.textAlign = 'center'; c.textBaseline = 'middle';
+      for (const [q, t] of [[P[0], 'A'], [P[P.length - 1], 'B']]) { const p = toSheet(q[0], q[1]); c.fillStyle = PAPER; c.strokeStyle = col; c.lineWidth = 1.5; c.beginPath(); c.arc(p[0], p[1], 7, 0, TAU); c.fill(); c.stroke(); c.fillStyle = col; c.fillText(t, p[0], p[1] + .5); } });
+    if (act && RT.a) { const g = ghG(RT.a), p = toSheet(g[0], g[1]); c.fillStyle = ACC; c.beginPath(); c.arc(p[0], p[1], 5, 0, TAU); c.fill(); }
+    c.restore(); };
+  cv.addEventListener('pointerdown', e => { if (!window.__rtActive() || !S.world || !RT.tap) return; e.stopImmediatePropagation(); e.preventDefault(); const g = ghGrid(e); if (!ghOn(g)) return;
+    if (!RT.a) { RT.a = ghLL(g); RT.ver++; S.dirty = true; rtRender(); return; }
+    const L = rtList(), rt = { a: RT.a, b: ghLL(g), kind: RT.tap, cross: true }; RT.a = null; RT.tap = null; runBusy('finding the route', () => { rtFind(rt); L.push(rt); RT.pick = L.length - 1; RT.ver++; S.dirty = true; rtRender(); }); }, true);
+  function rtPanel(box) { rtBoxEl = box; S.dirty = true; rtRender(); }
+  function rtRender() {
+    if (!rtBoxEl || !rtBoxEl.isConnected) return; rtBoxEl.textContent = ''; const w = make('div', { cls: 'u2wb' }); rtBoxEl.append(w); const L = rtList(); if (RT.pick >= L.length) RT.pick = Math.max(0, L.length - 1); const upd = () => { RT.ver++; S.dirty = true; rtRender(); };
+    const kinds = make('div', { cls: 'seg' }); for (const k of Object.keys(RT_KIND)) { const [nm, gm] = RT_KIND[k], b = make('button', { type: 'button', cls: RT.tap === k ? 'on' : '', text: nm, 'data-tip': `find a ${nm}: never steeper than ${Math.round(gm * 100)}%, then tap its two ends on the plan` }); b.onclick = () => { RT.tap = RT.tap === k ? null : k; RT.a = null; if (RT.tap && state.view !== 'plan') { state.view = 'plan'; applyView(); } upd(); }; kinds.append(b); } w.append(kinds);
+    if (RT.tap) w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: RT.a ? 'now tap where it ends' : `tap where the ${RT_KIND[RT.tap][0]} starts` }));
+    if (!L.length) { w.append(make('p', { cls: 'u2note', text: 'no routes yet. pick the kind of route, then tap its two ends: it winds within the grade limit, around protected ground and open water, and crosses streams as little as it can.' })); return; }
+    if (L.length > 1) w.append(ghSel('which route', 'the route these numbers are for; it shows in ember on the plan', L.map((r, k) => [k, `route ${k + 1} · ${RT_KIND[r.kind][0]}`]), RT.pick, v => { RT.pick = +v; upd(); }));
+    const rt = L[RT.pick];
+    if (rt.fail || !rt.pts) w.append(make('p', { cls: 'u2note', style: 'color:#b0452a', text: `no way between these ends within ${Math.round(RT_KIND[rt.kind][1] * 100)}%: the ground between is too steep all round, or protected ground closes it off. try a route that allows steeper grades, or other ends.` }));
+    else { const P = rt.pts.map(ghG), st = rtStats(P, rt.kind);
+      const big = make('p', { cls: 'big' }); big.append(make('b', { text: fL(st.len, 0) }), ` long · ${(st.len / Math.max(1, st.direct)).toFixed(1)} times the straight line`, make('br'), make('b', { text: `${Math.round(st.steep * 100)}%` }), ` at its steepest · ${Math.round(st.share * 100)}% of it at ${Math.round(st.gPref * 100)}% or less`); w.append(big);
+      w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: `climbs ${fL(st.up, 1)} and drops ${fL(st.down, 1)} · about ${st.hours < 1 ? Math.max(1, Math.round(st.hours * 60)) + ' min' : st.hours.toFixed(1) + ' h'} on foot one way${rt.ver !== S.terrainVer ? ' · the ground has changed since: find it again' : ''}` }));
+      w.append(make('p', { cls: 'u2note', text: 'on the plan, stretches steeper than the preferred grade are red: water will want to run down them, so give them drains or a harder surface.' }));
+      if (RT_KIND[rt.kind][1] >= .12 && st.steep > .1) w.append(make('p', { cls: 'u2note', text: 'grades over 10% need a gravel or paved surface for trucks, and turnouts to drain' }));
+    }
+    const set = make('div', { cls: 'set' });
+    set.append(make('span', { text: 'kind' }), ghSel('kind of route', 'the grade limit it keeps to', Object.keys(RT_KIND).map(k => [k, `${RT_KIND[k][0]} · ${Math.round(RT_KIND[k][1] * 100)}%`]), rt.kind, v => { rt.kind = v; runBusy('finding the route', () => { rtFind(rt); upd(); }); }));
+    set.append(make('span', { text: 'streams' }), ghSel('streams', 'whether to count each stream crossing as extra work, so the route crosses as few as it can', [[1, 'cross as few as it can'], [0, 'ignore them']], rt.cross ? 1 : 0, v => { rt.cross = v === '1'; runBusy('finding the route', () => { rtFind(rt); upd(); }); }));
+    w.append(set);
+    if (!rt.built && rt.pts) w.append(ghBtn(`build it as a ${fL(RT_KIND[rt.kind][3], 1)} path`, 'grade the route into the ground as a path with side slopes, the way the path tool does; undo puts the ground back', () => {
+      const P = rt.pts.map(ghG), ow = S.pathW, oh = S.pathH; snapshot(); S.pathW = RT_KIND[rt.kind][3]; S.pathH = 0; let r; try { r = applyPath(P); } finally { S.pathW = ow; S.pathH = oh; }
+      S.strokes.push({ kind: 'path', color: 'ink', w: 1, a: 1, c: P[0].slice(), pts: P.map(q => [q[0], q[1], .5]), pw: RT_KIND[rt.kind][3], ph: 0, sf: rt.kind === 'truck' || rt.kind === 'step' ? 'gravel' : undefined }); rt.built = true; S.strokeVer++; updateStats(); toast(`built ${fL(r.len, 0)} of ${RT_KIND[rt.kind][0]} · cut ${fV(r.cut)} · fill ${fV(r.fill)}`); upd(); }));
+    if (rt.pts && rt.ver !== S.terrainVer && !rt.built) w.append(ghBtn('find it again', 'the ground has changed: work the route out again', () => runBusy('finding the route', () => { rtFind(rt); upd(); })));
+    w.append(ghBtn(`delete route ${RT.pick + 1}`, 'remove this route from the plan (a path already built stays)', () => { L.splice(RT.pick, 1); RT.pick = Math.max(0, RT.pick - 1); upd(); }));
+    w.append(make('p', { cls: 'u2note', text: 'Docofossor\'s shortest path over the ground, with a grade limit: every step is checked against it, steeper steps below the limit cost more, protected ground (drawn in landscape fit, recovery areas, paddocks left ungrazed) and open water are closed. a first line to walk and flag, not a surveyed alignment.' }));
+  }
+  window.__rtSolve = (A, B, kind, cross) => rtSolve(A, B, kind, cross || 0);   /* test hooks */
+  window.__rtStats = (k) => { const rt = rtList()[k]; return rt && rt.pts ? rtStats(rt.pts.map(ghG), rt.kind) : null; };
+
+  /* ===== shape · ditch and berm (Docofossor: dfCutOnPath with dfFillOnPath beside it) ===== */
+  const DB = { ver: 0, drawing: null, contour: false, pick: 0, key: '', res: null };
+  let dbBoxEl = null;
+  window.__dbActive = () => state.task === 'shape' && tool().id === 'ditch';
+  const dbList = () => { S.rec = S.rec || {}; if (!Array.isArray(S.rec.ditches)) S.rec.ditches = []; return S.rec.ditches; };
+  function dbContour(g0, len) {   /* walk along the contour through a point, both ways, stepping across the slope and settling back onto the level each step */
+    const s = cs(), zl = sample(z, g0[0], g0[1]), half = len / 2 / s, st = .5, out = [[g0[0], g0[1]]], back = [];
+    for (const sg of [1, -1]) { let p = g0.slice(), prev = null, d = 0; const arr = sg > 0 ? out : back;
+      while (d < half) { const gr = grad(p[0], p[1]), gl = Math.hypot(gr[0], gr[1]); if (gl < .004) break; let ux = -gr[1] / gl * sg, uy = gr[0] / gl * sg; if (prev && ux * prev[0] + uy * prev[1] < 0) { ux = -ux; uy = -uy; } prev = [ux, uy];
+        let q = [p[0] + ux * st, p[1] + uy * st]; for (let it = 0; it < 4; it++) { const g2 = grad(q[0], q[1]), l2 = g2[0] * g2[0] + g2[1] * g2[1]; if (l2 < 1e-10) break; const dz = sample(z, q[0], q[1]) - zl; q = [q[0] - g2[0] * dz / l2 / s, q[1] - g2[1] * dz / l2 / s]; }
+        if (!ghOn(q)) break; d += Math.hypot(q[0] - p[0], q[1] - p[1]); p = q; arr.push(q); } }
+    return back.reverse().concat(out);
+  }
+  function dbShape(f, src, hb) {   /* the ground with the ditch and berm on a copy: Docofossor's trapezoid, a cut surface at the ditch bottom rising at the side slope, and a berm raised off the ground on the downhill side */
+    const s = cs(), P = resample(f.pts.map(ghG), .25, false); if (P.length < 2) return null; const nP = P.length, g = P.map(p => sample(src, p[0], p[1])), D = [0]; for (let k = 1; k < nP; k++) D.push(D[k - 1] + Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]) * s);
+    const r = f.side, bw = f.bw, dep = f.depth, bot = new Float64Array(nP);
+    if (f.bottom === 'level') { const m = g.reduce((a, v) => a + v, 0) / nP; bot.fill(m - dep); }
+    else if (f.bottom === 'ground') { const win = Math.max(1, Math.round(3 / (.25 * s))); for (let k = 0; k < nP; k++) { let a = 0, n = 0; for (let q = Math.max(0, k - win); q <= Math.min(nP - 1, k + win); q++) { a += g[q]; n++; } bot[k] = a / n - dep; } }
+    else { const fall = +f.bottom / 100, hiStart = g[0] >= g[nP - 1]; for (let k = 0; k < nP; k++) bot[k] = (hiStart ? g[0] - fall * D[k] : g[nP - 1] - fall * (D[nP - 1] - D[k])) - dep; }
+    let sdSum = 0; for (let k = 0; k < nP; k++) { const a = P[Math.max(0, k - 1)], b = P[Math.min(nP - 1, k + 1)], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, gr = grad(P[k][0], P[k][1]); sdSum += -((-(b[1] - a[1]) / L) * gr[0] + ((b[0] - a[0]) / L) * gr[1]); }
+    const sd = sdSum >= 0 ? 1 : -1, oc = bw / 2 + dep * r + f.gap + hb * r + f.tb / 2, dMax = Math.max(0, ...Array.from(bot, (v, k) => g[k] - v));
+    const reach = Math.ceil((Math.max(oc + f.tb / 2 + hb * r, bw / 2 + (dMax + .5) * r) + 1) / s) + 1; let x0 = W, x1 = -1, y0 = H, y1 = -1; for (const p of P) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+    const out = new Map(); let cut = 0, fill = 0; const i0 = Math.max(0, Math.floor(x0) - reach), i1 = Math.min(W - 1, Math.ceil(x1) + reach), j0 = Math.max(0, Math.floor(y0) - reach), j1 = Math.min(H - 1, Math.ceil(y1) + reach);
+    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) { let bd = 1e18, bk = 0; for (let k = 0; k < nP; k++) { const d2 = (P[k][0] - i) ** 2 + (P[k][1] - j) ** 2; if (d2 < bd) { bd = d2; bk = k; } } const dm = Math.sqrt(bd) * s; if (dm > reach * s) continue;
+      const a = P[Math.max(0, bk - 1)], b = P[Math.min(nP - 1, bk + 1)], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, side = (-(b[1] - a[1]) / L) * (i - P[bk][0]) + ((b[0] - a[0]) / L) * (j - P[bk][1]) >= 0 ? 1 : -1;
+      const n = j * W + i, z0 = src[n]; let nz = Math.min(z0, bot[bk] + Math.max(0, dm - bw / 2) / r);
+      if (hb > 0 && f.berm !== 'none' && (f.berm === 'both' || side === sd)) { const rise = hb - Math.max(0, Math.abs(dm - oc) - f.tb / 2) / r; if (rise > 0 && dm > bw / 2 + dep * r) nz = Math.max(nz, z0 + rise); }
+      if (Math.abs(nz - z0) > 1e-6) { out.set(n, nz); const v = (nz - z0) * s * s; if (v > 0) fill += v; else cut -= v; } }
+    let dLo = Infinity, dHi = -Infinity; for (let k = 0; k < nP; k++) { const d = g[k] - bot[k]; dLo = Math.min(dLo, d); dHi = Math.max(dHi, d); }
+    return { P, g, bot, D, len: D[nP - 1], out, cut, fill, sd, oc, dLo, dHi, box: [i0, j0, i1, j1] };
+  }
+  function dbCalc(f) {   /* the berm height that holds the soil dug from the ditch, found by halving */
+    const base = dbShape(f, z, 0); if (!base) return null; if (f.berm === 'none') return Object.assign(base, { hb: 0, held: (f.bw + f.depth * f.side) * f.depth * base.len });
+    let lo = 0, hi = Math.max(.2, f.depth * 3), r = null; for (let it = 0; it < 28; it++) { const m = (lo + hi) / 2; r = dbShape(f, z, m); if (r.fill < base.cut) lo = m; else hi = m; } r = dbShape(f, z, (lo + hi) / 2); r.hb = (lo + hi) / 2; r.cutOnly = base.cut; r.held = (f.bw + f.depth * f.side) * f.depth * r.len; return r;
+  }
+  window.__dbKey = () => [DB.ver, window.__dbActive() ? DB.pick : -1, DB.drawing ? DB.drawing.length : -1, S.rec && Array.isArray(S.rec.ditches) ? JSON.stringify(S.rec.ditches) : ''].join('|');
+  window.__dbDraw = c => { const L = S.rec && Array.isArray(S.rec.ditches) ? S.rec.ditches : []; if (!S.world || (!L.length && !DB.drawing)) return; const act = window.__dbActive(); c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+    L.forEach((f, idx) => { const P = f.pts.map(ghG); if (P.length < 2) return; const col = act && idx === DB.pick ? ACC : WATER, off = (f.bw / 2 + f.depth * f.side + f.gap + (f.hb || .3) * f.side + f.tb / 2) / cs(), sd = f.sd || 1;
+      c.strokeStyle = col; c.lineWidth = act && idx === DB.pick ? 2.6 : 2; c.setLineDash(f.dug ? [] : [6, 3]); c.beginPath(); P.forEach((q, t) => { const p = toSheet(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.stroke();
+      if (f.berm !== 'none') { c.strokeStyle = act && idx === DB.pick ? ACC : INK3; c.lineWidth = 3; c.setLineDash([]); for (const sg of f.berm === 'both' ? [1, -1] : [sd]) { c.beginPath(); P.forEach((q, t) => { const a = P[Math.max(0, t - 1)], b = P[Math.min(P.length - 1, t + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, p = toSheet(q[0] - (b[1] - a[1]) / l * off * sg, q[1] + (b[0] - a[0]) / l * off * sg); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.stroke(); } }
+      c.setLineDash([]); const m = P[Math.floor(P.length / 2)], p = toSheet(m[0], m[1]); c.font = font(10.5, 700); c.textAlign = 'center'; c.textBaseline = 'middle'; haloText(c, `ditch ${fL(f.depth, 1)}${f.berm !== 'none' && f.hb ? ' · berm ' + fL(f.hb, 1) : ''}${f.dug ? '' : ' · to dig'}`, p[0], p[1] - 12, col); });
+    if (act && DB.drawing && DB.drawing.length) { c.strokeStyle = ACC; c.fillStyle = ACC; c.setLineDash([4, 3]); c.lineWidth = 1.5; c.beginPath(); DB.drawing.forEach((q, t) => { const g = ghG(q), p = toSheet(g[0], g[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.stroke(); c.setLineDash([]); for (const q of DB.drawing) { const g = ghG(q), p = toSheet(g[0], g[1]); c.beginPath(); c.arc(p[0], p[1], 3, 0, TAU); c.fill(); } }
+    c.restore(); };
+  const dbNew = pts => { const L = dbList(); L.push({ pts, depth: .5, bw: .6, side: 2, berm: 'down', tb: .6, gap: .3, bottom: 'level', dug: false }); DB.pick = L.length - 1; };
+  cv.addEventListener('pointerdown', e => { if (!window.__dbActive() || !S.world || !(DB.drawing || DB.contour)) return; e.stopImmediatePropagation(); e.preventDefault(); const g = ghGrid(e); if (!ghOn(g)) return;
+    if (DB.contour) { const pts = dbContour(g, DB.contour); DB.contour = false; if (pts.length < 3) toast('the ground is too flat there to find a contour: draw the line instead'); else dbNew(pts.map(ghLL)); } else DB.drawing.push(ghLL(g));
+    DB.ver++; S.dirty = true; dbRender(); }, true);
+  function dbSection(cvp, f, r) {   /* the ditch and berm across the middle of the line, before (dashed) and after */
+    const o = cvp.getContext('2d'), Wc = cvp.width, Hc = cvp.height, s = cs(); o.fillStyle = PAPER; o.fillRect(0, 0, Wc, Hc); const k = Math.floor(r.P.length / 2), a = r.P[Math.max(0, k - 1)], b = r.P[Math.min(r.P.length - 1, k + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = -(b[1] - a[1]) / l * r.sd, ny = (b[0] - a[0]) / l * r.sd;
+    const span = Math.max(3, r.oc + f.tb / 2 + (r.hb || 0) * f.side + 1.5, f.bw / 2 + f.depth * f.side + 1.5), nS = 161, xs = [], before = [], after = [], tmp = Float32Array.from(z); for (const [n, v] of r.out) tmp[n] = v;
+    for (let q = 0; q < nS; q++) { const t = -span + 2 * span * q / (nS - 1), x = r.P[k][0] + nx * t / s, y = r.P[k][1] + ny * t / s; xs.push(t); before.push(sample(z, x, y)); after.push(sample(tmp, x, y)); }
+    let lo = Infinity, hi = -Infinity; for (const v of before.concat(after)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } const pad = (hi - lo) * .15 + .05; lo -= pad; hi += pad;
+    const bx = { x: 14, y: 12, w: Wc - 28, h: Hc - 38 }, kk = Math.min(bx.w / (2 * span), bx.h / (hi - lo)), X = t => bx.x + bx.w / 2 + t * kk, Y = v => bx.y + bx.h / 2 - (v - (hi + lo) / 2) * kk;
+    for (let q = 1; q < nS; q++) { const dz = (after[q] + after[q - 1]) / 2 - (before[q] + before[q - 1]) / 2; if (Math.abs(dz) < 1e-4) continue; o.fillStyle = dz < 0 ? 'rgba(110,110,104,.45)' : 'rgba(201,107,58,.5)'; o.beginPath(); o.moveTo(X(xs[q - 1]), Y(before[q - 1])); o.lineTo(X(xs[q]), Y(before[q])); o.lineTo(X(xs[q]), Y(after[q])); o.lineTo(X(xs[q - 1]), Y(after[q - 1])); o.closePath(); o.fill(); }
+    o.strokeStyle = INK3; o.setLineDash([4, 3]); o.lineWidth = 1.2; o.beginPath(); before.forEach((v, q) => q ? o.lineTo(X(xs[q]), Y(v)) : o.moveTo(X(xs[q]), Y(v))); o.stroke(); o.setLineDash([]);
+    o.strokeStyle = INK; o.lineWidth = 2; o.beginPath(); after.forEach((v, q) => q ? o.lineTo(X(xs[q]), Y(v)) : o.moveTo(X(xs[q]), Y(v))); o.stroke();
+    o.fillStyle = INK3; o.font = '600 14px ' + getComputedStyle(document.body).fontFamily; o.textBaseline = 'bottom'; o.textAlign = 'left'; o.fillText('uphill', bx.x, Hc - 4); o.textAlign = 'right'; o.fillText('downhill · true scale', bx.x + bx.w, Hc - 4);
+  }
+  function dbPanel(box) { dbBoxEl = box; S.dirty = true; dbRender(); }
+  function dbRender() {
+    if (!dbBoxEl || !dbBoxEl.isConnected) return; dbBoxEl.textContent = ''; const w = make('div', { cls: 'u2wb' }); dbBoxEl.append(w); const L = dbList(); if (DB.pick >= L.length) DB.pick = Math.max(0, L.length - 1); const upd = () => { DB.ver++; S.dirty = true; dbRender(); }, toPlan = () => { if (state.view !== 'plan') { state.view = 'plan'; applyView(); } };
+    w.append(ghBtn(DB.contour ? 'tap a point on the slope…' : 'on the contour from a tap', 'tap a point: the line follows the level ground through it, so the ditch holds water instead of running it off', () => { DB.contour = DB.contour ? false : 40; DB.drawing = null; toPlan(); upd(); }));
+    if (DB.contour) w.append(ghSel('contour length', 'how long a line to follow along the contour', [[20, fL(20, 0)], [40, fL(40, 0)], [80, fL(80, 0)], [160, fL(160, 0)]], DB.contour, v => { DB.contour = +v; upd(); }));
+    w.append(ghBtn(DB.drawing ? (DB.drawing.length ? `tap along the line… ${DB.drawing.length} so far` : 'tap where the ditch starts') : 'draw the line', 'tap the ditch\'s line on the plan, a point at each bend', () => { DB.drawing = DB.drawing ? null : []; DB.contour = false; toPlan(); upd(); }));
+    if (DB.drawing && DB.drawing.length >= 2) w.append(ghBtn('finish the line', 'keep this line as a ditch to size', () => { dbNew(DB.drawing); DB.drawing = null; upd(); }));
+    if (!L.length) { w.append(make('p', { cls: 'u2note', text: 'no ditches yet. follow a contour for a swale that holds water, or draw a line with a fall for a ditch that carries it away. the soil dug out builds the berm beside it.' })); return; }
+    if (L.length > 1) w.append(ghSel('which ditch', 'the ditch these numbers are for; it shows in ember on the plan', L.map((f, k) => [k, `ditch ${k + 1}${f.dug ? ' · dug' : ''}`]), DB.pick, v => { DB.pick = +v; upd(); }));
+    const f = L[DB.pick], r = dbCalc(f); if (!r) { w.append(make('p', { cls: 'u2note', text: 'this line is too short to size' })); return; } f.hb = r.hb; f.sd = r.sd;
+    const big = make('p', { cls: 'big' }); big.append(make('b', { text: fV(f.berm === 'none' ? r.cut : (r.cutOnly || r.cut)) }), ` dug over ${fL(r.len, 0)}`, make('br'));
+    if (f.berm === 'none') big.append('no berm: the soil is carried away'); else big.append('builds a berm ', make('b', { text: fL(r.hb, 2) }), ' high ', `on the ${f.berm === 'both' ? 'both sides' : 'downhill side'}`);
+    w.append(big);
+    w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: `the ditch holds about ${fV(r.held)} of water when full${f.bottom === 'level' ? '' : ' where it is ponded'} · ${fL(r.dLo, 2)} to ${fL(r.dHi, 2)} deep along its length` }));
+    const set = make('div', { cls: 'set' });
+    set.append(make('span', { text: 'depth' }), ghSel('ditch depth', 'how deep the ditch is dug below the ground along its line', [.2, .3, .5, .75, 1, 1.5].map(v => [v, fL(v, 2)]), f.depth, v => { f.depth = +v; upd(); }));
+    set.append(make('span', { text: 'bottom width' }), ghSel('bottom width', 'the flat width at the bottom of the ditch: a narrow V for a hand dug swale, a bucket or blade width for a machine', [0, .3, .6, 1, 1.5, 2].map(v => [v, fL(v, 1)]), f.bw, v => { f.bw = +v; upd(); }));
+    set.append(make('span', { text: 'side slope' }), ghSel('ditch side slope', 'how steep the sides are, across to up: 1 in 1.5 stands in firm soil, 1 in 3 is gentle enough to mow', [[1, '1 : 1'], [1.5, '1 : 1.5'], [2, '1 : 2'], [3, '1 : 3']], f.side, v => { f.side = +v; upd(); }));
+    set.append(make('span', { text: 'bottom' }), ghSel('ditch bottom', 'level holds water on the contour; following the ground keeps the depth even; a fall carries water to one end', [['level', 'level'], ['ground', 'follows the ground'], ['0.5', 'falls 0.5%'], ['1', 'falls 1%'], ['2', 'falls 2%']], f.bottom, v => { f.bottom = v; upd(); }));
+    set.append(make('span', { text: 'berm' }), ghSel('berm', 'where the dug soil goes', [['down', 'downhill side'], ['both', 'both sides'], ['none', 'none, carried away']], f.berm, v => { f.berm = v; upd(); }));
+    w.append(set);
+    const cvp = ghCanvas('the ditch and berm in section'); w.append(cvp); dbSection(cvp, f, r);
+    w.append(make('p', { cls: 'u2note', text: `grey is dug, ember is built · dug ${fV(r.cutOnly || r.cut)} · berm ${fV(r.fill)}` }));
+    if (f.bottom === 'level' && r.dHi > 1.8 * Math.max(.05, r.dLo)) w.append(make('p', { cls: 'u2note', style: 'color:#b0452a', text: 'the depth changes a lot along a level bottom: the line leaves the contour. follow the contour from a tap, or let the bottom follow the ground.' }));
+    if (f.bottom !== 'level' && f.bottom !== 'ground' && +f.bottom >= 2) w.append(make('p', { cls: 'u2note', text: 'at 2% the water moves fast enough to scour bare soil: seed or line the ditch and give it a stable outlet' }));
+    if (!f.dug) w.append(ghBtn('dig it into the ground', 'cut the ditch and build the berm in the model, so contours, water and cut and fill see it; undo puts the ground back', () => { const res = dbCalc(f); if (!res) return; snapshot(); for (const [n, v] of res.out) z[n] = v; S.terrainVer++; contourDirty(res.box[0] - 1, res.box[1] - 1, res.box[2] + 1, res.box[3] + 1); f.dug = true; f.hb = res.hb; updateStats(); toast(`dug ${fV(res.cutOnly || res.cut)} · berm ${fL(res.hb, 2)} high`); upd(); }));
+    else w.append(make('p', { cls: 'u2note', text: 'dug into the ground. undo (ctrl z) puts the ground back; then press dig again, or delete the ditch.' }));
+    if (f.dug) w.append(ghBtn('mark it not dug', 'after an undo, let this ditch be dug again', () => { f.dug = false; upd(); }));
+    w.append(ghBtn(`delete ditch ${DB.pick + 1}`, 'remove this ditch from the plan (ground already dug stays)', () => { L.splice(DB.pick, 1); DB.pick = Math.max(0, DB.pick - 1); upd(); }));
+    w.append(make('p', { cls: 'u2note', text: 'Docofossor\'s cut on a path with a fill on a path beside it: a trapezoid dug below the ground and a berm raised off it, the berm\'s height found so it holds what the ditch gives, placed and tamped. set a level line on site with a laser or an A-frame before digging.' }));
+  }
+  window.__dbCalc = k => { const L = dbList(); return L[k] ? dbCalc(L[k]) : null; };   /* test hooks */
+  window.__dbContour = (gx, gy, len) => dbContour([gx, gy], len);
+  window.__dbNew = pts => { dbNew(pts); DB.ver++; S.dirty = true; };
   /* shape · steps: a flight of steps up a slope from a centreline drawn on the plan. from the week 8 class script: the rise and the run shared out equally over the risers; checked against an easy outdoor stride (twice the riser plus the tread) */
   const STEP = { drawing: null, pick: 0, ver: 0 };
   let stepBoxEl = null;

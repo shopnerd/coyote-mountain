@@ -248,6 +248,32 @@ A path or road carved into the ground.
 | raise or sink (slider) | raised for a berm or a built-up road, sunk for a trail or a swale; sunk about 6 in is easy to see on a print |
 | draw it in plan · 3D | this tool works on the plan; its settings stay here in every view |
 
+### Shape · best route
+
+Best route: the easiest line between two spots within a grade limit, around protected ground, built as a path.
+
+*the easiest way between two spots within a grade limit, around protected ground and open water, ready to build as a path*
+
+| control | what it does |
+| --- | --- |
+| foot trail | find a foot trail: never steeper than 15%, then tap its two ends on the plan |
+| farm track | find a farm track: never steeper than 12%, then tap its two ends on the plan |
+| road for trucks | find a road for trucks: never steeper than 10%, then tap its two ends on the plan |
+| step-free path | find a step-free path: never steeper than 5%, then tap its two ends on the plan |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
+### Shape · ditch and berm
+
+Ditch and berm: a swale on the contour or a ditch with a fall, the dug soil built into a balanced berm.
+
+*a ditch along a contour or a line, its soil built into a berm beside it, sized and balanced before you dig it into the ground*
+
+| control | what it does |
+| --- | --- |
+| on the contour from a tap | tap a point: the line follows the level ground through it, so the ditch holds water instead of running it off |
+| draw the line | tap the ditch's line on the plan, a point at each bend |
+| draw in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Shape · dam and spillway
 
 Dam and spillway: wall height, length and earth, spillway width for the flood, storage ratio, a year of water.
@@ -457,6 +483,17 @@ Where water flows, gathers and could be held; rain shows it falling.
 | swale drop (slider) | vertical drop from one swale to the next |
 | dam height (slider) | wall height of the dam; the pond fills to its crest |
 
+### Study · stream crossing
+
+Stream crossing: storm flow, depth, speed, spill, scour and hazard where a road or path meets a stream.
+
+*how deep and fast a stream runs in a storm where a road or path meets it: whether it spills, scours, or is safe to cross*
+
+| control | what it does |
+| --- | --- |
+| tap a stream to measure a crossing | tap on or beside a stream; the crossing snaps to the stream and runs square across it |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Study · sun
 
 Sun and shadow through the day and the year.
@@ -464,6 +501,22 @@ Sun and shadow through the day and the year.
 | control | what it does |
 | --- | --- |
 | sun study | shadows at an hour, or sun hours per day, for the site's latitude |
+
+### Study · what you can see
+
+What you can see: the ground in view from spots, lines or roads, or where a building would show from.
+
+*the ground seen from your spots, a line or the roads, or everywhere a building or tower would show from*
+
+| control | what it does |
+| --- | --- |
+| seen from here | the ground someone standing at your spots, walking your line or driving the roads can see |
+| where it shows | everywhere a building, tower or tank at your spot can be seen from, by a person standing |
+| add a viewpoint | tap where someone stands and looks |
+| draw a line to walk or drive | a trail, a drive or a boundary: the ground seen from anywhere along it |
+| eye height (menu) | how high the eyes are above the ground: standing, on a horse or a truck, upstairs, a lookout |
+| what is seen (menu) | the ground itself, or the top of something that tall standing anywhere: where a cabin roof would show |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
 
 ### Study · water budget
 
