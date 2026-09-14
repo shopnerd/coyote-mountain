@@ -161,3 +161,4 @@ Fixes found along the way:
 Numbers that are estimates, not verified: carbon per species, agroforestry canopy and water ranges, herd intake, fire factors, example budget rates. They are labelled as such in each panel.
 
 Open: shared records (Supabase) so Walker and helpers add to the same notes; phone-width testing of the field tools on a real phone; the voice prompt covers the new tools (coyote-voice, helper restarted).
+* Hover descriptions everywhere (`859a3fb`): topo `LABEL_TIPS` (regex on a control's label or aria-label) is the fallback in `tipFor`, and hover now includes selects; flight's `tipsIn()` sets data-tip on moved rows and menus. Audit scripts `tipaudit.js` (topo, every task/tool/view) and `flighttips.js` in this session's scratchpad: both find none missing. New buttons: give them a data-tip or add a LABEL_TIPS line.
