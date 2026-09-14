@@ -813,10 +813,11 @@ function drawBuildings2D(c, toXY, k) {   // hatched footprints with an ink outli
   c.restore();
 }
 let planShot = { key: '' };
+const FIRE = { show: true, wind: 45, cover: 'chaparral', ver: 0, key: '', img: null, risk: null, marking: false };   /* fire ready: a planning layer, never a forecast */
 const NAT = { inat: [], total: 0, ver: 0, show: true, off: {}, quality: 'any', status: '', hl: null, busy: false };   /* nature records: iNaturalist observations plus imported bird lists */
 const CHG = { before: null, after: null, pick: 'after', align: true, lod: .15, show: true, ver: 0, key: '', diff: null, stats: null, img: null };   /* ground change: two surveys of the same ground, compared cell by cell */
 function drawPlan() {                     // cached picture + live overlay; the picture is redrawn only when something on it changes
-  const key = [NAT.ver, NAT.show, NAT.hl, CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
+  const key = [FIRE.ver, FIRE.show, window.__fireActive ? window.__fireActive() : 0, NAT.ver, NAT.show, NAT.hl, CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
@@ -869,6 +870,7 @@ function drawPlanBase() {
     ctx.stroke(); ctx.globalAlpha = 1;
   }
   if (S.showCF && S.earth && S.earth.dist > 0) { const cf = cutfillImage(); if (cf.canvas) { ctx.save(); ctx.globalAlpha = .9; ctx.imageSmoothingEnabled = true; ctx.drawImage(cf.canvas, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); } }   // the same wash the model shows: ember fill, grey cut
+  if (FIRE.show && window.__fireActive && window.__fireActive()) fireDraw(ctx);
   if (NAT.show) natDraw(ctx);
   if (CHG.show && CHG.after) { const d = chgCompute(); if (d && CHG.img) { ctx.save(); ctx.globalAlpha = .95; ctx.imageSmoothingEnabled = true; ctx.drawImage(CHG.img, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); } }   /* ground change: ember where soil was lost, blue where it built up */
   if (S.showBase) drawBaseContours();
@@ -3705,6 +3707,55 @@ document.getElementById('flightBtn').onclick = () => {   // hand this place to t
 document.getElementById('surveyFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (!S.world) { toast('fetch the real terrain around the survey first, then load it'); return; }
   busy('reading the survey'); try { const buf = await f.arrayBuffer(), sv = await parseGeoTiff(buf); sv.name = f.name.replace(/\.tiff?$/i, ''); snapshot(); S.survey = sv; applySurvey(false); surveyStore.put(sv.name, buf); } catch (err) { toast(String(err.message || err)); } finally { unbusy(); } };
 document.getElementById('surveyClear').onclick = () => { S.survey = null; surveyStore.del(); document.getElementById('surveyInfo').style.display = 'none'; document.getElementById('surveyClear').style.display = 'none'; if (S.world) { S.world.survey = null; fetchWorld({ lat: S.world.lat, lon: S.world.lon, name: S.world.name }, true); } };
+/* ---------- fire ready: where fire would run hardest (slope, sun-facing sides, wind blowing upslope, what covers the ground), defensible space around buildings stretched downhill, the most exposed buildings ---------- */
+const FIRE_COVER = { grass: [1.0, 'dry grass'], chaparral: [1.3, 'chaparral and brush'], oak: [.9, 'oak woodland'], mixed: [1.1, 'mixed'], irrigated: [.35, 'irrigated or green'] };
+const FIRE_CLASS = [[0, 'low', null], [1.6, 'moderate', [233, 194, 90, .22]], [2.6, 'high', [232, 131, 74, .38]], [4, 'very high', [200, 68, 42, .55]]];
+function fireBuildings() {   // mapped footprints, placed objects and buildings marked by tapping, as centre + radius in grid cells
+  const out = []; if (S.coast && S.coast.blds) for (const b of S.coast.blds) { if (!b.pts || b.pts.length < 3) continue; let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of b.pts) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); } if (x1 < 0 || y1 < 0 || x0 > W - 1 || y0 > H - 1) continue; out.push({ c: [(x0 + x1) / 2, (y0 + y1) / 2], r: Math.hypot(x1 - x0, y1 - y0) / 2, src: 'mapped' }); }
+  for (const st of S.strokes) if (st.kind === 'obj' && st.c) { let rr = 5 / cs(); if (st.foot && st.foot.length) { let m = 0; for (const q of st.foot) m = Math.max(m, Math.hypot(q[0], q[1])); rr = m * (st.sc || 1) / cs(); } out.push({ c: st.c.slice(), r: rr, src: 'object' }); }
+  for (const q of (S.rec && S.rec.fireBld) || []) out.push({ c: q.slice(), r: 6 / cs(), src: 'marked' });
+  return out;
+}
+function fireCompute() {
+  const key = [FIRE.ver, S.terrainVer, S.strokeVer, W, H, S.world ? S.world.lat : 0].join('|'); if (FIRE.key === key) return FIRE.risk; FIRE.key = key;
+  const N = W * H, risk = new Float32Array(N), lat = S.world ? S.world.lat : 32, sunAz = (lat >= 0 ? 225 : 315) * D2R, sun = [Math.sin(sunAz), -Math.cos(sunAz)], wa = (FIRE.wind + 180) * D2R, wto = [Math.sin(wa), -Math.cos(wa)], cover = (FIRE_COVER[FIRE.cover] || FIRE_COVER.mixed)[0];
+  const m = document.createElement('canvas'); m.width = W; m.height = H; const mc = m.getContext('2d');   // what the design puts on the ground: bare surfaces lower the fuel, planting raises it
+  const poly = pts => { mc.beginPath(); pts.forEach((q, t) => t ? mc.lineTo(q[0], q[1]) : mc.moveTo(q[0], q[1])); mc.closePath(); };
+  mc.fillStyle = 'rgb(0,0,255)'; for (const st of S.strokes) if ((st.kind === 'gravel' || st.kind === 'paving') && st.pts.length > 2) { poly(st.pts); mc.fill(); } else if (st.kind === 'path' && st.pts.length > 1) { mc.strokeStyle = 'rgb(0,0,255)'; mc.lineWidth = Math.max(1, (st.pw || 1.5) / cs()); mc.beginPath(); st.pts.forEach((q, t) => t ? mc.lineTo(q[0], q[1]) : mc.moveTo(q[0], q[1])); mc.stroke(); }
+  mc.fillStyle = 'rgb(255,0,0)'; for (const st of S.strokes) if (st.kind === 'shrub' && st.pts.length > 2) { poly(st.pts); mc.fill(); } else if (st.kind === 'tree') { mc.beginPath(); mc.arc(st.c[0], st.c[1], Math.max(.6, st.r), 0, TAU); mc.fill(); } else if (st.kind === 'hedge' && st.pts.length > 1) { mc.strokeStyle = 'rgb(255,0,0)'; mc.lineWidth = Math.max(1, 1.5 / cs()); mc.beginPath(); st.pts.forEach((q, t) => t ? mc.lineTo(q[0], q[1]) : mc.moveTo(q[0], q[1])); mc.stroke(); }
+  const md = mc.getImageData(0, 0, W, H).data;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = j * W + i, g = grad(i, j), sl = Math.hypot(g[0], g[1]), deg = Math.atan(sl) / D2R;
+    const slopeF = 2 ** (Math.min(45, deg) / 10);   // spread roughly doubles every 10 degrees of upslope
+    const up = sl > 1e-6 ? [g[0] / sl, g[1] / sl] : [0, 0], face = [-up[0], -up[1]];   // grad points uphill in grid terms
+    const sunF = deg > 5 ? 1 + .25 * Math.max(0, face[0] * sun[0] + face[1] * sun[1]) : 1;
+    const windF = 1 + .5 * Math.max(0, up[0] * wto[0] + up[1] * wto[1]) * Math.min(1, deg / 15);
+    let local = cover; if (md[n * 4 + 2] > 128) local = .1; else if (md[n * 4] > 128) local = cover * 1.25; else if (Math.abs(z[n] - base[n]) > .05) local = cover * .4;
+    risk[n] = slopeF * sunF * windF * local; }
+  FIRE.risk = risk;
+  const c = document.createElement('canvas'); c.width = W; c.height = H; const cx = c.getContext('2d'), im = cx.createImageData(W, H);
+  for (let n = 0; n < N; n++) { let cl = null; for (const k of FIRE_CLASS) if (risk[n] >= k[0]) cl = k; if (!cl || !cl[2]) continue; const [r, g, b, a] = cl[2]; im.data[n * 4] = r; im.data[n * 4 + 1] = g; im.data[n * 4 + 2] = b; im.data[n * 4 + 3] = Math.round(255 * a); }
+  cx.putImageData(im, 0, 0); FIRE.img = c; return risk;
+}
+const fireClass = v => { let cl = FIRE_CLASS[0]; for (const k of FIRE_CLASS) if (v >= k[0]) cl = k; return cl[1]; };
+function fireRing(b, zoneM) {   // a ring around the building, pushed further out on the downhill side where fire climbs toward it
+  const g = grad(Math.max(0, Math.min(W - 1, b.c[0])), Math.max(0, Math.min(H - 1, b.c[1]))), sl = Math.hypot(g[0], g[1]), deg = Math.atan(sl) / D2R, down = sl > 1e-6 ? [-g[0] / sl, -g[1] / sl] : [0, 0], stretch = Math.min(1, deg / 30), out = [];
+  for (let t = 0; t < 48; t++) { const a = t / 48 * TAU, u = [Math.cos(a), Math.sin(a)], k = 1 + stretch * Math.max(0, u[0] * down[0] + u[1] * down[1]); out.push([b.c[0] + u[0] * (b.r + zoneM * k / cs()), b.c[1] + u[1] * (b.r + zoneM * k / cs())]); }
+  return { pts: out, deg };
+}
+function fireExposure() {
+  const risk = fireCompute(), out = []; fireBuildings().forEach((b, k) => { const ring = fireRing(b, 30.5); let sum = 0, cnt = 0, worst = 0; const R = b.r + 30.5 * 2 / cs();
+    for (let j = Math.max(0, Math.floor(b.c[1] - R)); j <= Math.min(H - 1, Math.ceil(b.c[1] + R)); j++) for (let i = Math.max(0, Math.floor(b.c[0] - R)); i <= Math.min(W - 1, Math.ceil(b.c[0] + R)); i++) { if (!inPoly(ring.pts, i, j)) continue; const v = risk[j * W + i]; sum += v; cnt++; worst = Math.max(worst, v); }
+    out.push({ k, b, mean: cnt ? sum / cnt : 0, worst, deg: ring.deg }); });
+  return out.sort((a, b) => b.mean - a.mean);
+}
+function fireDraw(c) {
+  if (!S.world && !S.terrainVer) return; fireCompute(); if (!FIRE.img) return;
+  c.save(); c.imageSmoothingEnabled = true; c.drawImage(FIRE.img, sheet.x, sheet.y, sheet.w, sheet.h);
+  const ft = isFt(); c.strokeStyle = ACC; c.fillStyle = ACC; c.font = font(10, 600);
+  for (const b of fireBuildings()) { for (const [zone, dash, lw] of [[9.1, [], 1.4], [30.5, [5, 4], 1]]) { const r = fireRing(b, zone); c.setLineDash(dash); c.lineWidth = lw; c.beginPath(); r.pts.forEach((q, t) => { const p = toSheet(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke(); }
+    const p = toSheet(b.c[0], b.c[1]); c.setLineDash([]); c.beginPath(); c.arc(p[0], p[1], 2.5, 0, TAU); c.fill(); }
+  c.restore();
+}
 /* ---------- nature records: iNaturalist observations over the site, and bird lists from eBird (where Merlin checklists go) or BirdNET, as marks on the plan and a species list ---------- */
 const NAT_GROUPS = [['plants', ['Plantae'], '#58703f'], ['birds', ['Aves'], '#3f6f8c'], ['insects & spiders', ['Insecta', 'Arachnida'], '#a27c1c'], ['mammals', ['Mammalia'], '#7a5470'], ['reptiles & amphibians', ['Reptilia', 'Amphibia'], '#a0522d'], ['fungi', ['Fungi'], '#6f5a48'], ['other', [], '#454440']];
 const natGroup = iconic => { for (const g of NAT_GROUPS) if (g[1].includes(iconic)) return g[0]; return 'other'; };
@@ -4198,7 +4249,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
   const on = sel => { const e = $(sel); return !!(e && e.classList.contains('on')); };
   // a tool: pick = the original button(s) its choice presses; view = the view it needs ('plan' or '3d'); analysis = in plan it draws the water analysis; rows / more = original rows mounted under it; acts = extra buttons that press originals
   // hover descriptions for the buttons this layout adds (the rows it moves keep their own)
-  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "nature": "plants and animals people have recorded here on iNaturalist, plus bird lists from eBird, Merlin or BirdNET", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "budget": "price the earthwork, walls, surfaces and planting on this plan with your own rates", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "wbudget": "how much water the design holds from a storm and a year, against what the planting needs", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
+  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "nature": "plants and animals people have recorded here on iNaturalist, plus bird lists from eBird, Merlin or BirdNET", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "budget": "price the earthwork, walls, surfaces and planting on this plan with your own rates", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "wbudget": "how much water the design holds from a storm and a year, against what the planting needs", "fire": "a wildfire planning layer: slope, sunny sides, wind and cover, with defensible space around buildings", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
   { const kc = $('#kmlClear'); if (kc) { const row = make('div', { cls: 'seg deep', style: 'padding:0;margin-top:6px' }); kc.parentElement.after(row); row.append(kc); } }   // clear the lot sits alone at the bottom of lot and survey
   const TASKS = [
     { id: 'site', name: 'Site', tools: [
@@ -4224,6 +4275,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'water', name: 'water', analysis: true, rows: ['#anaLayers', '#rainBtn', '#anaDesc'], more: ['#tapRow', '#rain', '#thr', '#runoff', '#plow', '#swale', '#dam', '#riseRow'] },
       { id: 'sun', name: 'sun', analysis: true, rows: ['#sunRow', '#sunSec'] },
       { id: 'wbudget', name: 'water budget', rows: ['#rain', '#runoff'], panel: box => waterPanel(box), note: 'one storm and one year on this ground: what soaks in, what the hollows, ponds, swales and tanks hold, and what leaves' },
+      { id: 'fire', name: 'fire ready', view: 'plan', planLabel: 'see it in plan', panel: box => firePanel(box), note: 'where fire would run hardest, and the defensible space each building needs' },
       { id: 'change', name: 'ground change', view: 'plan', planLabel: 'see it in plan', rows: ['#chgFiles', '#chgInfo', '=settings', '#chgAlignRow', '#chgLodRow', '#chgShowRow'], note: 'two drone surveys of the same ground, before and after: ember where soil was lost, blue where it built up' },
     ] },
     { id: 'make', name: 'Make', tools: [
@@ -4569,6 +4621,34 @@ details.u2more[open]>.u2rows{margin-top:8px}
       t.append(make('tr', {}, [make('th', { text: '' }), make('th', { text: 'A' }), make('th', { text: 'B' })])); const vu = isFt() ? 'yd³' : 'm³', vn = m3 => sig2(isFt() ? m3 * 1.30795 : m3).toLocaleString(), an = m2 => isFt() ? tz((m2 / 4046.86).toFixed(1)) : tz((m2 / 1e4).toFixed(1));
       row('held, ' + vu, x => vn(x.held)); row('leaves, ' + vu, x => vn(x.leaves)); row('can hold, ' + vu, x => vn(x.cap)); row('dug, ' + vu, x => vn(x.cut)); row('disturbed, ' + (isFt() ? 'ac' : 'ha'), x => an(x.dist)); cmp.append(t); }
   }
+  /* study · fire ready panel */
+  let fireBoxEl = null;
+  window.__fireActive = () => state.task === 'study' && tool().id === 'fire';
+  try { const v = JSON.parse(localStorage.getItem('coyote-fire') || '{}'); if (v.wind != null) FIRE.wind = v.wind; if (v.cover) FIRE.cover = v.cover; } catch (_) {}
+  const fireSave = () => { try { localStorage.setItem('coyote-fire', JSON.stringify({ wind: FIRE.wind, cover: FIRE.cover })); } catch (_) {} };
+  let fireSeen = '';
+  function firePanel(box) { fireBoxEl = box; S.dirty = true; fireRender(); }
+  function fireRender() {
+    if (!fireBoxEl || !fireBoxEl.isConnected) return; fireBoxEl.textContent = ''; fireBoxEl.dataset.unit = S.unit; const w = make('div', { cls: 'u2wb' }); fireBoxEl.append(w);
+    const risk = fireCompute(); fireSeen = FIRE.key; let hi = 0, vh = 0; for (let n = 0; n < W * H; n++) { if (risk[n] >= 4) vh++; else if (risk[n] >= 2.6) hi++; }
+    w.append(make('div', { cls: 'big' }));
+    w.lastChild.append(make('b', { text: Math.round(100 * (hi + vh) / (W * H)) + '%' }), document.createTextNode(` of the site would burn hard: ${Math.round(100 * vh / (W * H))}% very high, ${Math.round(100 * hi / (W * H))}% high, with ${(FIRE_COVER[FIRE.cover] || FIRE_COVER.mixed)[1]} and wind from the ${['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'][Math.round(FIRE.wind / 45) % 8]}`));
+    const leg = make('div', { cls: 'leg' }); for (const [, name, col] of FIRE_CLASS) if (col) leg.append(make('div', {}, [make('b', { style: `background:rgba(${col[0]},${col[1]},${col[2]},${Math.min(1, col[3] * 1.8)})` }), make('span', { text: name }), make('span', { text: '' })])); w.append(leg);
+    const set = make('div', { cls: 'set' });
+    const wind = make('select', { 'aria-label': 'wind from' }); ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'].forEach((d, k) => { const o = make('option', { value: String(k * 45), text: d }); if (k * 45 === FIRE.wind) o.selected = true; wind.append(o); }); wind.onchange = () => { FIRE.wind = +wind.value; FIRE.ver++; fireSave(); S.dirty = true; fireRender(); };
+    const cov = make('select', { 'aria-label': 'ground cover' }); for (const k in FIRE_COVER) { const o = make('option', { value: k, text: FIRE_COVER[k][1] }); if (k === FIRE.cover) o.selected = true; cov.append(o); } cov.onchange = () => { FIRE.cover = cov.value; FIRE.ver++; fireSave(); S.dirty = true; fireRender(); };
+    set.append(make('span', { text: 'wind from', 'data-tip': 'the dangerous wind for the place: Santa Ana winds blow from the east and northeast in Baja and southern California' }), wind, make('span', { text: 'the ground is mostly' }), cov);
+    w.append(make('div', { cls: 'u2group', text: 'settings' }), set);
+    const blds = fireBuildings(), ex = fireExposure(); w.append(make('div', { cls: 'u2group', text: `buildings · ${blds.length}` }));
+    if (!blds.length) w.append(make('p', { cls: 'u2note', text: 'no buildings on this site yet: mark the house, barn or sheds by tapping the plan.' }));
+    for (const e of ex.slice(0, 5)) w.append(make('p', { cls: 'u2note', text: `${e.b.src === 'marked' ? 'marked building' : e.b.src === 'object' ? 'placed object' : 'mapped building'} ${e.k + 1}: ${fireClass(e.mean)} around it, ${fireClass(e.worst)} at worst · ground ${Math.round(e.deg)}° under it` }));
+    const mark = make('button', { cls: 'btn', type: 'button', text: FIRE.marking ? 'tap the plan where a building is…' : 'mark a building' }); mark.onclick = () => { FIRE.marking = !FIRE.marking; if (FIRE.marking && state.view !== 'plan') { state.view = 'plan'; applyView(); } fireRender(); }; w.append(mark);
+    if ((S.rec && S.rec.fireBld || []).length) { const clr = make('button', { cls: 'btn', type: 'button', text: 'clear marked buildings' }); clr.onclick = () => { S.rec.fireBld = []; FIRE.ver++; S.dirty = true; fireRender(); }; w.append(clr); }
+    const seg = make('div', { cls: 'seg' }); for (const [v, t] of [[true, 'show on plan'], [false, 'hide']]) { const x = make('button', { type: 'button', cls: FIRE.show === v ? 'on' : '', text: t }); x.onclick = () => { FIRE.show = v; S.dirty = true; fireRender(); }; seg.append(x); } w.append(seg);
+    w.append(make('p', { cls: 'u2note', text: `solid ring: ${isFt() ? '30 ft' : '9 m'} kept lean, clean and green; dashed: ${isFt() ? '100 ft' : '30 m'} of reduced fuel, both pushed further out downhill where fire climbs toward the building. graded ground, gravel and paving burn less; planting more.` }));
+    w.append(make('p', { cls: 'u2note', text: 'a planning aid from slope, sun, wind and cover, not a fire forecast: ask the local fire service before relying on it.' }));
+  }
+  cv.addEventListener('pointerdown', e => { if (!FIRE.marking || !window.__fireActive()) return; e.stopImmediatePropagation(); e.preventDefault(); const r = cv.getBoundingClientRect(), gx = (e.clientX - r.left - sheet.x) / sheet.k, gy = (e.clientY - r.top - sheet.y) / sheet.k; if (gx < 0 || gy < 0 || gx > W - 1 || gy > H - 1) return; S.rec = S.rec || {}; S.rec.fireBld = (S.rec.fireBld || []).concat([[gx, gy]]); FIRE.marking = false; FIRE.ver++; S.dirty = true; fireRender(); toast('building marked'); }, true);
   function renderTasks() {
     tasksEl.textContent = '';
     for (const t of TASKS) { const b = make('button', { type: 'button', role: 'tab', 'aria-selected': String(t.id === state.task), cls: t.id === state.task ? 'on' : '', text: t.name, 'data-tip': U2TIP[t.id] || '' }); b.onclick = () => chooseTask(t.id); tasksEl.append(b); }
@@ -4600,6 +4680,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
     const cut = $('#cut'), fill = $('#fill'); stCut.innerHTML = ''; stFill.innerHTML = '';
     stCut.append('cut ', make('b', { text: cut ? cut.textContent : '' })); stFill.append('fill ', make('b', { text: fill ? fill.textContent : '' }));
     themeLab(); if (layPanel.classList.contains('show')) noneUI();
+    if (fireBoxEl && fireBoxEl.isConnected && !fireBoxEl.contains(document.activeElement)) { fireCompute(); if (FIRE.key !== fireSeen || fireBoxEl.dataset.unit !== S.unit) fireRender(); }
     if (wbBox && wbBox.isConnected) { const typing = wbBox.contains(document.activeElement) && document.activeElement.tagName === 'INPUT'; if (!typing) { if (wbBox.dataset.unit !== S.unit) wbBuild(); else wbUpdate(); } }
     if (budBox && budBox.isConnected) { const typing = budBox.contains(document.activeElement) && document.activeElement.tagName === 'INPUT'; if (budBox.dataset.unit !== S.unit) { if (!typing) budBuild(); } else if (!typing) budUpdate(); }
   }
