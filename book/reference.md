@@ -53,6 +53,10 @@ Opened with the layers & look button over the drawing. Some appear only in 3D or
 - **read uphill**: contour numbers face uphill, the old drafting convention; off, they simply never read upside down
 - **existing dashed**: existing contours dashed wherever the ground has been graded, so proposed reads against existing
 - **vertical exaggeration**: stretch heights so relief reads in the model and section; 1 is true
+- **show it**: chips on the map for every look or moving picture that is on, each with a way to turn it off
+- **hide it**: no strip: looks stay where they were set, as before
+- **stops history and rain**: animate history stops when you leave site history, and rain when you leave water; undo on the strip brings it back
+- **keeps them running**: history and rain keep running wherever you go, as before
 - **points**: the loaded point cloud drawn over the model as dust: every point a speck of its own colour, brighter near the eye, thinner far away. from a drone survey or a lidar file, converted with tools/cloud2bin.py
 - **no points**: no points
 - **night**: survey points glowing on a dark ground

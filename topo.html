@@ -4673,6 +4673,13 @@ details.u2more[open]>.u2rows{margin-top:8px}
 #u2layBtn{position:absolute;top:10px;left:12px;z-index:6;background:#fdf1e6;border-color:#e3ab86;font-size:12.5px;padding:5px 14px}
 #u2layBtn:hover,#u2layBtn:focus-visible{background:#fbe6d4}
 :root[data-theme=dark] #u2layBtn{background:#3a2a20;border-color:#b0623a}
+#u2onnow{position:absolute;top:50px;left:12px;z-index:6;display:flex;flex-wrap:wrap;gap:6px;max-width:min(560px,calc(100% - 24px))}
+.u2chip{display:inline-flex;align-items:stretch;border:1px solid #e3ab86;background:#fdf1e6;border-radius:3px;font:inherit;font-size:11px;overflow:hidden}
+.u2chip button{font:inherit;font-size:11px;border:0;background:transparent;color:var(--ink);padding:3px 8px;cursor:pointer}
+.u2chip button.x{border-left:1px solid #e3ab86;padding:3px 7px;color:var(--ink2)}
+.u2chip button:hover,.u2chip button:focus-visible{color:var(--accent);outline:none}
+button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:dashed;background:var(--panel)}
+:root[data-theme=dark] .u2chip{background:#3a2a20;border-color:#b0623a}:root[data-theme=dark] .u2chip button.x{border-color:#b0623a}
 #u2layers{position:absolute;top:44px;left:12px;z-index:7;width:min(320px,calc(100% - 24px));max-height:calc(100% - 60px);overflow:auto;background:var(--panel);border:1px solid var(--ink2);padding:10px;display:none;flex-direction:column;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
 #u2layers.show{display:flex}
 #u2status{grid-row:4;grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);min-width:0}
@@ -4704,6 +4711,58 @@ details.u2more[open]>.u2rows{margin-top:8px}
   layBtn.onclick = () => { layPanel.classList.toggle('show'); if (layPanel.classList.contains('show')) mountLayers(); };
   main.append(viewsEl, layBtn, layPanel);
   const layerGroups = LAYERS.map(g => { const box = make('div', { cls: 'u2panel' }), rows = make('div', { cls: 'u2rows' }), mrows = make('div', { cls: 'u2rows u2second' }); box.append(make('h3', { text: g.name }), rows, mrows); layPanel.append(box); return { g, rows, mrows }; });
+
+  /* on now: every look or moving picture that is not at its default, as a chip on the map. its name goes to the tool that sets it, its × turns it off, and undo brings it back. layers & look can hide the strip, and choose whether leaving a tool stops history and rain */
+  const ON = (() => { const d = { strip: true, stop: true }; try { return Object.assign(d, JSON.parse(localStorage.getItem('coyote-onnow') || '{}')); } catch (_) { return d; } })();
+  const onSave = () => { try { localStorage.setItem('coyote-onnow', JSON.stringify(ON)); } catch (_) {} };
+  const segOn = (row, attr) => { const b = document.querySelector(`#${row} button.on`); return b ? b.dataset[attr] : null; };
+  const pressSeg = (row, attr, v) => { const b = document.querySelector(`#${row} button[data-${attr}="${v}"]`); if (b) b.click(); };
+  const onBase = {};   /* how each look stood when the site or project opened: the strip shows what changed since, and × goes back to it */
+  const segChip = (id, row, attr, def, go, name) => { const home = () => onBase[id] != null ? onBase[id] : def; return { id, val: () => segOn(row, attr), label: () => name(segOn(row, attr)), on: () => { const v = segOn(row, attr); return v != null && v !== home(); }, off: () => { const was = segOn(row, attr); pressSeg(row, attr, home()); return () => pressSeg(row, attr, was); }, go }; };
+  const toTool = (task, id) => () => { chooseTask(task); chooseTool(id); };
+  const toLayers = () => { layPanel.classList.add('show'); mountLayers(); onSig = ''; onRender(); };
+  const ONCHIPS = [
+    { id: 'history', label: () => 'history', on: () => !!HIST.on, off: () => { histStop(); return () => { if (!HIST.on) document.getElementById('histBtn').click(); }; }, go: toTool('site', 'history'), owners: ['history'] },
+    { id: 'rain', label: () => 'rain', on: () => !!S.rain, off: () => { setRain(false); return () => setRain(true); }, go: toTool('study', 'water'), owners: ['water', 'wbudget'] },
+    { id: 'walk', label: () => 'walk mode', on: () => !!S.walk, off: () => { walkStop(); return () => walkStart(); }, go: () => { state.view = '3d'; applyView(); } },
+    { id: 'rec', label: () => 'recording video', on: () => !!REC.rec, off: () => { recStop(); return null; }, go: toTool('make', 'video') },
+    segChip('render', 'rendRow', 'rd', '0', toTool('make', 'render'), () => 'render'),
+    segChip('paint', 'paintRow', 'pt', '0', toTool('make', 'paint'), () => 'painted'),
+    { id: 'cut', label: () => `${S.rendCut} cut`, on: () => !!S.rendOn && S.rendCut !== 'none', off: () => { const was = S.rendCut, el = document.getElementById('cutSel'); el.value = 'none'; el.dispatchEvent(new Event('change')); return () => { el.value = was; el.dispatchEvent(new Event('change')); }; }, go: toTool('make', 'render') },
+    segChip('photo', 'aerialRow', 'ae', '0', toLayers, v => v === '2' ? 'painted photo' : 'aerial photo'),
+    { id: 'overlay', label: () => 'overlay picture', on: () => !!(S.overlay && S.overlay.img && S.overlayOn), off: () => { pressSeg('ovRow', 'ov', '0'); return () => pressSeg('ovRow', 'ov', '1'); }, go: toLayers },
+    segChip('colour', 'colorRow', 'c', 'paper', toLayers, v => `${v} colours`),
+  ];
+  const onStrip = make('div', { id: 'u2onnow', role: 'toolbar', 'aria-label': 'on now' }); main.append(onStrip);
+  function onBaseline() { for (const c of ONCHIPS) if (c.val) { try { onBase[c.id] = c.val(); } catch (_) {} } onSig = ''; }
+  { const lp0 = loadProject; loadProject = function () { const r = lp0.apply(this, arguments); setTimeout(onBaseline, 0); return r; }; }
+  let onBased = false;
+  let onSig = '', onUndo = null, onUndoT = 0;
+  function onRender() {
+    if (!onBased && S.terrainVer) { onBased = true; onBaseline(); }
+    const act = ON.strip ? ONCHIPS.filter(c => { try { return c.on(); } catch (_) { return false; } }) : [], open = layPanel.classList.contains('show');
+    const sig = act.map(c => c.id + ':' + c.label()).join('|') + '#' + (onUndo ? onUndo.label : '') + '#' + open + '#' + ON.strip; if (sig === onSig) return; onSig = sig;
+    onStrip.textContent = ''; onStrip.hidden = open || (!act.length && !onUndo);
+    for (const c of act) { const L = c.label(), chip = make('span', { cls: 'u2chip' }), nm = make('button', { type: 'button', text: L, 'data-tip': `on now, changed since this site opened: ${L}. press to go to where it is set` }), x = make('button', { type: 'button', cls: 'x', text: '×', 'aria-label': `turn off ${L}`, 'data-tip': `turn off ${L}, back to how the site opened; undo brings it back` });
+      nm.onclick = () => c.go(); x.onclick = () => onOff(c); chip.append(nm, x); onStrip.append(chip); }
+    if (onUndo) { const u = make('button', { type: 'button', cls: 'u2chip undo', text: `undo · ${onUndo.label}`, 'data-tip': `bring ${onUndo.label} back` }); u.onclick = () => { const f = onUndo.fn; onUndo = null; clearTimeout(onUndoT); try { f(); } catch (_) {} S.dirty = true; onSig = ''; onRender(); }; onStrip.append(u); }
+  }
+  function onOff(c) {   // turn one off, keeping the way back for a few seconds
+    const label = c.label(); let back = null; try { back = c.off(); } catch (_) {}
+    onUndo = back ? { label, fn: back } : null; clearTimeout(onUndoT); if (onUndo) onUndoT = setTimeout(() => { onUndo = null; onSig = ''; onRender(); }, 10000);
+    S.dirty = true; onSig = ''; onRender();
+  }
+  let onLastTool = null;
+  function onToolChanged() {   // leaving the tool that runs a moving picture stops it (not during a tour, and not if layers & look says keep them running)
+    const cur = state.task + '/' + tool().id, prev = onLastTool; onLastTool = cur; if (!prev || prev === cur || !ON.stop || tour) return;
+    const prevId = prev.split('/')[1]; for (const c of ONCHIPS) if (c.owners && c.owners.includes(prevId) && !c.owners.includes(tool().id)) { let on = false; try { on = c.on(); } catch (_) {} if (on) onOff(c); }
+  }
+  window.__onnow = { ON, chips: () => ONCHIPS.filter(c => { try { return c.on(); } catch (_) { return false; } }).map(c => c.id), undo: () => onUndo && onUndo.label };   /* test hook */
+  setInterval(onRender, 400);
+  { const box = make('div', { cls: 'u2panel' }), rows = make('div', { cls: 'u2rows' }); box.append(make('h3', { text: 'on now' }), rows); layPanel.append(box);
+    const seg = (pairs, get, set, tips) => { const sg = make('div', { cls: 'seg' }), draw = () => sg.querySelectorAll('button').forEach(b => b.classList.toggle('on', String(get()) === b.dataset.v)); pairs.forEach(([v, t], q) => { const b = make('button', { type: 'button', text: t, 'data-v': String(v), 'data-tip': tips[q] }); b.onclick = () => { set(v); onSave(); draw(); onSig = ''; onRender(); }; sg.append(b); }); draw(); return sg; };
+    rows.append(make('div', { cls: 'u2group', text: 'the strip of what is on' }), seg([[true, 'show it'], [false, 'hide it']], () => ON.strip, v => { ON.strip = v; }, ['chips on the map for every look or moving picture that is on, each with a way to turn it off', 'no strip: looks stay where they were set, as before']),
+      make('div', { cls: 'u2group', text: 'leaving a tool' }), seg([[true, 'stops history and rain'], [false, 'keeps them running']], () => ON.stop, v => { ON.stop = v; }, ['animate history stops when you leave site history, and rain when you leave water; undo on the strip brings it back', 'history and rain keep running wherever you go, as before'])); }
 
   /* the status bar: what the tool does is in the line above the canvas; here the place, cut and fill, units */
   const stPlace = make('span'), stCut = make('span'), stFill = make('span'), stUnits = make('div');
@@ -6118,7 +6177,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
     if (t.pick && !(t.keepBrush && t.keepBrush.includes(S.brush))) { state.busy = true; try { if (t.view === 'plan' && S.mode === 'model') setMode('plan'); press(t.pick); } finally { state.busy = false; } }
     if (!t.pick && !t.sculpt3d && S.brush !== 'look') { state.busy = true; try { setBrush('look'); } finally { state.busy = false; } }   /* a tool with no brush of its own must not leave the last brush digging */
     if (t.unplant && S.plant) { const b = $(`#plantRow button[data-pm="${S.plant}"]`); if (b) b.click(); }
-    renderTasks(); renderTool(); applyView();
+    renderTasks(); renderTool(); applyView(); onToolChanged();
   }
   function refresh() {
     placeEl.textContent = S.world ? S.world.name : 'sample sheet'; stPlace.textContent = S.world ? S.world.name : '';
