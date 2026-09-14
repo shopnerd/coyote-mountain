@@ -132,6 +132,7 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
 :root[data-theme=dark] .toast{background:#e6e5df;color:#1a1a18}
 :root[data-theme=dark] #tip{border-color:#b0623a}
 #tourSpot{position:fixed;z-index:60;pointer-events:none;border:2px solid var(--accent);border-radius:4px;box-shadow:0 0 0 9999px rgba(20,20,18,.32);display:none}
+#tourCard.try .t::before{content:'your turn  ';color:var(--accent);font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:10.5px}#tourCard .next:disabled{opacity:.45;cursor:default}
 #tourCard{position:fixed;z-index:61;width:300px;max-width:calc(100vw - 24px);background:var(--paper);color:var(--ink);border:1px solid var(--accent);border-radius:3px;padding:12px 14px;box-shadow:0 6px 24px rgba(0,0,0,.25);font-size:12px;line-height:1.5;display:none}
 #tourCard.show{display:block}
 #tourCard .row{display:flex;align-items:center;gap:6px;margin-top:10px}
@@ -2180,7 +2181,7 @@ function drawStrokes(c, toXY, k, dense) {   // pen strokes through any projectio
   c.lineCap = 'butt'; c.globalAlpha = 1; c.setLineDash([]);
 }
 const relabels = [];
-const bind = (id, fmt, fn) => { const el = document.getElementById(id), out = document.getElementById('o_' + id);
+const bind = (id, fmt, fn) => { const el = document.getElementById(id), out = document.getElementById('o_' + id); el._fmt = fmt;
   const apply = () => { const v = +el.value; out.textContent = fmt(v); fn(v); S.dirty = true; }; el.oninput = apply; relabels.push(() => { out.textContent = fmt(+el.value); }); apply(); };
 const radiusFor = v => S.siteW * (.003 + .25 * (v / 100) ** 2);   // 0.3% to 25% of the site width, fine at the small end
 const penWidth = v => .4 + 3.6 * (v / 100) ** 1.3;
@@ -4033,7 +4034,7 @@ const TOUR = [
 ];
 
 /* ---------- guided tour: a spotlight and a card that walk through the tool on a sample site, then hand the project back ---------- */
-let tour = null, tourIntro = false;
+let tour = null, tourIntro = false; window.__tourNow = () => tour;   /* test hook */
 const tourEls = (() => { const card = document.createElement('div'); card.id = 'tourCard'; card.innerHTML = '<div class="t"></div><div class="row"><span class="n"></span><button class="b back">back</button><button class="b next">next</button><button class="b skip">skip</button></div>'; const spot = document.createElement('div'); spot.id = 'tourSpot'; document.body.append(spot, card); return { card, spot }; })();
 const tourEl = st => !st.el ? null : typeof st.el === 'function' ? st.el() : document.querySelector(st.el);
 function tourPlace() { if (!tour) return; const st = tour.steps[tour.i], el = tourEl(st), { card, spot } = tourEls; if (el) { el.scrollIntoView({ block: 'center' }); const r = el.getBoundingClientRect(); spot.style.display = 'block'; spot.style.left = (r.left - 6) + 'px'; spot.style.top = (r.top - 6) + 'px'; spot.style.width = (r.width + 12) + 'px'; spot.style.height = (r.height + 12) + 'px'; } else spot.style.display = 'none';
@@ -4041,14 +4042,15 @@ function tourPlace() { if (!tour) return; const st = tour.steps[tour.i], el = to
   if (el && innerWidth > 760) { const r = el.getBoundingClientRect(), inRail = r.left < rail.right - 2; x = inRail ? rail.right + 14 : Math.min(innerWidth - cw - 12, Math.max(12, r.left)); y = inRail ? Math.max(48, Math.min(innerHeight - ch - 12, r.top)) : (r.bottom + 12 + ch < innerHeight ? r.bottom + 12 : Math.max(48, r.top - ch - 12)); }
   else { x = (innerWidth - cw) / 2; y = innerHeight - ch - 24; }
   card.style.left = x + 'px'; card.style.top = y + 'px'; }
-async function tourGo(i) { if (!tour) return; if (i < 0) i = 0; if (i >= tour.steps.length) { tourEnd(true); return; } tour.i = i; const st = tour.steps[i]; try { if (st.do) await st.do(); } catch (_) {} if (!tour) return;
-  tourEls.card.querySelector('.t').textContent = st.text; tourEls.card.querySelector('.n').textContent = (i + 1) + ' of ' + tour.steps.length; tourEls.card.querySelector('.next').textContent = i === tour.steps.length - 1 ? 'done' : 'next'; tourEls.card.querySelector('.back').disabled = i === 0; tourEls.card.classList.add('show'); requestAnimationFrame(() => requestAnimationFrame(tourPlace)); }
+async function tourGo(i) { if (!tour) return; if (i < 0) i = 0; if (i >= tour.steps.length) { tourEnd(true); return; } tour.i = i; clearInterval(tour.poll); const st = tour.steps[i]; try { if (st.do) await st.do(); } catch (_) {} if (!tour) return;
+  tourEls.card.querySelector('.t').textContent = st.text;
+  { const nx = tourEls.card.querySelector('.next'), c = tourEls.card; c.classList.toggle('try', !!st.wait); nx.disabled = false; if (st.wait) { const start = st.start ? st.start() : null; nx.disabled = true; tour.poll = setInterval(() => { let ok = false; try { ok = st.wait(start); } catch (_) {} if (ok && tour && tour.steps[tour.i] === st) { clearInterval(tour.poll); nx.disabled = false; c.querySelector('.t').textContent = st.text + '  \u2713 done, press next'; } }, 400); } }   /* a try step: next waits until you have done it (skip still leaves) */ tourEls.card.querySelector('.n').textContent = (i + 1) + ' of ' + tour.steps.length; tourEls.card.querySelector('.next').textContent = i === tour.steps.length - 1 ? 'done' : 'next'; tourEls.card.querySelector('.back').disabled = i === 0; tourEls.card.classList.add('show'); requestAnimationFrame(() => requestAnimationFrame(tourPlace)); }
 async function tourStart(steps) { if (tour) return; tourIntroClose(); if (!Array.isArray(steps) && document.documentElement.classList.contains('ui2') && window.__ui2learn) { window.__ui2learn(); return; } tour = { i: 0, saved: snapshotProject(), steps: Array.isArray(steps) ? steps : TOUR.filter(st => !st.deep || document.documentElement.dataset.depth !== 'simple') }; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} try { await TOUR_SETUP(); } catch (_) {} tourGo(0); }
-function tourEnd(finished) { if (!tour) return; const saved = tour.saved, done = tour.onDone; tour = null; if (finished && done) try { done(); } catch (_) {} tourEls.card.classList.remove('show'); tourEls.spot.style.display = 'none'; try { TOUR_RESTORE(saved); } catch (_) {} toast(finished ? 'tour done · your project is back' : 'tour skipped · your project is back'); }
+function tourEnd(finished) { if (!tour) return; clearInterval(tour.poll); tourEls.card.querySelector('.next').disabled = false; tourEls.card.classList.remove('try'); const saved = tour.saved, done = tour.onDone; tour = null; if (finished && done) try { done(); } catch (_) {} tourEls.card.classList.remove('show'); tourEls.spot.style.display = 'none'; try { TOUR_RESTORE(saved); } catch (_) {} toast(finished ? 'tour done · your project is back' : 'tour skipped · your project is back'); }
 function tourIntroClose() { if (!tourIntro) return; tourIntro = false; const c = tourEls.card; c.classList.remove('show'); c.querySelector('.back').style.display = ''; c.querySelector('.skip').textContent = 'skip'; try { localStorage.setItem(TOUR_KEY, '1'); } catch (_) {} }
 tourEls.card.querySelector('.next').onclick = () => tourIntro ? tourStart() : tourGo(tour.i + 1); tourEls.card.querySelector('.back').onclick = () => tourGo(tour.i - 1); tourEls.card.querySelector('.skip').onclick = () => tourIntro ? tourIntroClose() : tourEnd(false);
 addEventListener('resize', () => tourPlace()); document.querySelector('aside').addEventListener('scroll', () => tourPlace());
-addEventListener('keydown', e => { if (!tour) return; if (e.key === 'Escape') tourEnd(false); else if (e.key === 'ArrowRight') tourGo(tour.i + 1); else if (e.key === 'ArrowLeft') tourGo(tour.i - 1); else return; e.preventDefault(); e.stopPropagation(); }, true);
+addEventListener('keydown', e => { if (!tour) return; if (e.key === 'Escape') tourEnd(false); else if (e.key === 'ArrowRight') { if (!tourEls.card.querySelector('.next').disabled) tourGo(tour.i + 1); } else if (e.key === 'ArrowLeft') tourGo(tour.i - 1); else return; e.preventDefault(); e.stopPropagation(); }, true);
 document.getElementById('tourBtn').onclick = tourStart;
 if (location.hash === '#tour') setTimeout(() => window.__ui2learn ? window.__ui2learn() : tourStart(), 3500);   // teachers.html links straight into the learn chapters
 setTimeout(() => { let seen = null; try { seen = localStorage.getItem(TOUR_KEY); } catch (_) {} if (seen || tour) return; tourIntro = true; const c = tourEls.card;   // first visit: offer, never force
@@ -4076,7 +4078,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
     { id: 'shape', name: 'Shape', tools: [
       { id: 'select', name: 'select', view: 'plan', panel: box => selectPanel(box), note: 'click a drawing, a plant or an object on the plan to pick it; drag to move it' },
       { id: 'sculpt', name: 'sculpt', pick: '#sculptBrushes button[data-b=raise]', keepBrush: ['raise', 'lower', 'smooth', 'flatten'], rows: ['#sculptBrushes', '#brushParams'], sculpt3d: true, note: 'drag on the ground, in plan or 3d' },
-      { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['#padRow', '#padLevelRow', '#padEdgeRow'], more: ['#sideRow', '#padGradeRow', '#strip', '#swell'] },
+      { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['=footprint', '#padRow', '=level and grade', '#padLevelRow', '#padGradeRow', '=edges', '#padEdgeRow', '#sideRow', '=earthwork', '#strip', '#swell'] },
       { id: 'grade', name: 'grade a→b', pick: '#brushes button[data-b=grade]', view: 'plan', rows: ['#gradeRow'], more: ['#sideRow'] },
       { id: 'path', name: 'path', pick: '#brushes button[data-b=path]', view: 'plan', rows: ['#pathWRow'], more: ['#pathSurfRow', '#pathHRow'] },
       { id: 'plant', name: 'plant', pick: '#brushes button[data-b=pen]', view: 'plan', rows: ['#plantRow', '#brushParams'], note: 'pick a plant, then draw' },
@@ -4089,20 +4091,20 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'sun', name: 'sun', analysis: true, rows: ['#sunRow', '#sunSec'] },
     ] },
     { id: 'make', name: 'Make', tools: [
-      { id: 'render', name: 'render', view: '3d', rows: ['#rendRow', '#rendSel'], more: ['#sunSec'] },
+      { id: 'render', group: 'pictures and sheets', name: 'render', view: '3d', rows: ['#rendRow', '#rendSel'], more: ['#sunSec'] },
       { id: 'paint', name: 'paint', view: '3d', renderOn: true, rows: ['#paintRow', '#aiStyleRow', '#aiWordsRow', '#aiRow'], more: ['#aiEngRow', '#aiRefRow', '#aiRefList', '#aiLinesRow'] },
       { id: 'video', name: 'video', rows: ['#recView'], acts: [['animate the section', '#secAnim']], note: 'record video captures the view until you press it again' },
       { id: 'sheet', name: 'drawing sheet', rows: ['#paper', '#sheetBtn', '#sheetInfo', '#png'], preview: c => previewSheet(c), note: 'the preview draws the sheet without painting; the export paints it when a painter key is set' },
-      { id: 'print', name: '3d print', rows: ['#mm', '#meshFmt', '#stl', '#footInfo'], preview: c => previewPrint(c) },
-      { id: 'laser', name: 'laser-cut model', rows: ['#thick', '#sheet', '#ledge', '#layersInfo', '#laser', '#laserDxf'], preview: c => previewLaser(c) },
-      { id: 'files', name: 'cnc and maps', rows: ['#cncDxf', '#kmlOut', '#tifOut'] },
+      { id: 'print', group: 'physical models', name: '3d print', rows: ['#mm', '#meshFmt', '#stl', '#footInfo'], preview: c => previewPrint(c) },
+      { id: 'laser', name: 'laser-cut model', rows: ['#mm', '#thick', '#sheet', '#ledge', '#layersInfo', '#laser', '#laserDxf'], preview: c => previewLaser(c) },
+      { id: 'files', group: 'files', name: 'cnc and maps', rows: ['#mm', '#cncDxf', '#kmlOut', '#tifOut'] },
     ] },
   ];
   const LAYERS = [
     { name: 'map layers', rows: ['#aerialRow', '#seaRow', '#roadRow', '#bldRow', '#ovRow', '#cloudRow', '#geoRow'], more: ['#aerialOp', '#bldModeRow', '#bldMMRow', '#cloudInfo', '#geoInfo'] },
     { name: 'look', rows: ['#colorRow', '#interval', '#labelRow', '#cfRow'], more: ['#modelStyle', '#hach', '#annoRow', '#ve'] },
   ];
-  const unit = sel => {   // the row a selector stands for: a row by its id, an input's labelled row, a lone button, or a small button pair
+  const unit = sel => { if (sel[0] === '=') return null;   // '=name' is a small group label, not a row. the row a selector stands for: a row by its id, an input's labelled row, a lone button, or a small button pair
     const e = $(sel); if (!e) return null;
     if (e.matches('.seg, .p, .desc, .params') || (e.id && /(Row|Sec|Info|Sel|Tabs|Brushes|Layers|Params)$/.test(e.id))) return e;
     if (e.matches('input, select, textarea')) return e.closest('.p') || e;
@@ -4161,6 +4163,8 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
 .u2panel .seg{flex-wrap:wrap}.u2panel .seg>button{flex:1 0 auto;max-width:100%}.u2panel .seg>button[style*="flex:2"]{flex:2 0 auto!important}
 .u2panel h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:500}
 .u2note{color:var(--ink3);font-size:11px;line-height:1.45}
+.u2group{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);border-bottom:1px solid var(--line);padding:6px 0 3px;margin-top:2px}#u2tools .u2group{padding-top:8px}#u2tools .u2group:first-child{padding-top:0}
+output.u2edit{cursor:text;border-bottom:1px dotted var(--ink3)}output.u2edit:hover{color:var(--accent);border-bottom-color:var(--accent)}.u2numIn{width:84px;font:inherit;font-size:11px;text-align:right;padding:1px 4px;border:1px solid var(--accent);border-radius:2px;background:var(--paper);color:var(--ink)}
 .u2rows{display:flex;flex-direction:column;gap:8px}
 .u2rows>.seg,.u2rows>.p,.u2rows>.desc,.u2rows>.params,.u2rows>div{padding-left:0!important;padding-right:0!important;margin-top:0!important;margin-bottom:0!important}
 .u2rows>.btn,.u2acts .btn{min-height:32px;width:100%}
@@ -4213,16 +4217,18 @@ details.u2more[open]>.u2rows{margin-top:8px}
   stUnits.append(unit('#unit'));
 
   /* mounting */
-  const mount = (box, list) => { for (const sel of list || []) { const u = unit(sel); if (u) box.append(u); } };
+  const groupEls = {};
+  const mount = (box, list, skip) => { for (const sel of list || []) { if (sel[0] === '=') { box.append(groupEls[sel] = groupEls[sel] || make('div', { cls: 'u2group', text: sel.slice(1) })); continue; } if (skip && skip.includes(sel)) continue; const u = unit(sel); if (u) box.append(u); } };
   const NONE = { '#seaRow': 'water · none in this site', '#roadRow': 'roads · none mapped here', '#bldRow': 'buildings · none here (sites wider than 8 km skip them)', '#ovRow': 'lot image · load a kml or kmz with an image, in site · lot and survey', '#cloudRow': 'survey points · shown in 3D', '#geoRow': 'geology · shown in the section view', '#colorRow': 'surface colour · shown in 3D' };
   const noneEls = {};
   function mountLayers() { for (const { g, rows, mrows } of layerGroups) { for (const sel of g.rows) { const u = unit(sel); if (!u) continue; rows.append(u); if (NONE[sel]) { noneEls[sel] = noneEls[sel] || make('div', { cls: 'u2none', text: NONE[sel] }); rows.append(noneEls[sel]); } } mount(mrows, g.more); } noneUI(); }
   function noneUI() { for (const sel in noneEls) { const u = unit(sel); noneEls[sel].hidden = !u || getComputedStyle(u).display !== 'none'; } }
-  let panelRows = null, panelMore = null, panelActs = null;
+  let panelRows = null, panelMore = null, panelActs = null, planGo = null;
   function renderTool() {
     const t = tool(); for (const box of [panelRows, panelMore]) if (box) while (box.firstChild) park.append(box.firstChild); panelEl.textContent = '';
     const rows = make('div', { cls: 'u2rows' }), mrows = make('div', { cls: 'u2rows u2second' }), acts = make('div', { cls: 'u2acts' });
     panelEl.append(make('h3', { text: t.name })); if (t.note) panelEl.append(make('p', { cls: 'u2note', text: t.note }));
+    planGo = null; if (t.view === 'plan') { planGo = make('button', { cls: 'btn', type: 'button', text: 'draw it in plan', 'data-tip': 'this tool draws on the plan; its settings stay here in every view' }); planGo.onclick = () => { state.view = 'plan'; applyView(); }; panelEl.append(planGo); }
     panelEl.append(rows);
     for (const [label, sel] of t.acts || []) { const b = make('button', { cls: 'btn', type: 'button', text: label }); b.onclick = () => { if (typeof sel === 'function') sel(); else press(sel); refresh(); }; acts.append(b); }
     if (t.acts) panelEl.append(acts);
@@ -4234,15 +4240,36 @@ details.u2more[open]>.u2rows{margin-top:8px}
   }
   function remount() {   // after the engine moves rows around (a view change, a brush change), put the active tool's rows and the layers back where they belong
     if (state.busy) return; const t = tool();
-    if (panelRows) mount(panelRows, t.rows); if (panelMore) mount(panelMore, t.more);
+    const away = t.view === 'plan' && state.view !== 'plan', skip = away ? ['#brushParams'] : null;   // 3d sculpts, so the engine hides the plan brushes' rows; keep them showing, without the sculpt brush's sliders
+    if (panelRows) mount(panelRows, t.rows, skip); if (panelMore) mount(panelMore, t.more, skip);
+    if (away) for (const sel of [...(t.rows || []), ...(t.more || [])]) { if (sel === '#brushParams') continue; const u = unit(sel); if (u && u.style.display === 'none') u.style.display = ''; }
+    if (planGo) planGo.hidden = !away;
+    exactValues(panelEl); if (layPanel.classList.contains('show')) exactValues(layPanel);
     if (layPanel.classList.contains('show')) mountLayers();
     const us = unit('#unit'); if (us && us.parentElement !== stUnits) stUnits.append(us);
+  }
+  const numsOf = txt => (String(txt).match(/-?\d[\d,]*\.?\d*/g) || []).map(x => +x.replace(/,/g, ''));
+  function exactSet(el, typed) {   // the slider position whose shown value is nearest the typed number, whichever of its numbers moves (scale or width, ft or %)
+    const fmt = el._fmt, min = +el.min, max = +el.max, step = +el.step || 1, n = Math.round((max - min) / step), stride = Math.max(1, Math.ceil(n / 4000)), cands = [];
+    for (let i = 0; i <= n; i += stride) { const v = +(min + i * step).toFixed(6); cands.push([v, numsOf(fmt(v))]); }
+    const L = Math.max(0, ...cands.map(c => c[1].length)), vary = []; for (let j = 0; j < L; j++) if (new Set(cands.map(c => c[1][j])).size > 1) vary.push(j);
+    let best = null, bd = Infinity;
+    for (const [v, ns] of cands) { if (!ns.length && typed === 0) { best = v; bd = 0; break; } for (const j of vary) { const x = ns[j]; if (x === undefined) continue; const d = Math.abs(Math.abs(x) - Math.abs(typed)) / Math.max(Math.abs(typed), 1e-6); if (d < bd) { bd = d; best = v; } } }
+    if (best === null) return; el.value = best; el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true })); refresh();
+  }
+  function exactValues(root) {   // click a slider's value to type an exact number
+    root.querySelectorAll('input[type=range]').forEach(el => { const out = $('#o_' + el.id); if (!el._fmt || !out || out.dataset.exact) return; out.dataset.exact = '1'; out.classList.add('u2edit'); out.dataset.tip = 'click to type an exact value';
+      out.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); if (out.querySelector('input')) return; const was = out.textContent, box = make('input', { cls: 'u2numIn', type: 'text', value: was, 'aria-label': 'exact value' });
+        out.textContent = ''; out.append(box); box.focus(); box.select(); let done = false;
+        const finish = ok => { if (done) return; done = true; const txt = box.value; out.textContent = was; if (ok && txt.trim() && txt !== was) { const ns = numsOf(txt.replace(/^\s*1\s*:/, '').replace(/:\s*1\b/, '')); if (ns.length) exactSet(el, ns[0]); } };
+        box.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') finish(true); else if (ev.key === 'Escape') finish(false); });
+        box.addEventListener('blur', () => finish(true)); box.addEventListener('click', ev => ev.stopPropagation()); }); });
   }
   function renderTasks() {
     tasksEl.textContent = '';
     for (const t of TASKS) { const b = make('button', { type: 'button', role: 'tab', 'aria-selected': String(t.id === state.task), cls: t.id === state.task ? 'on' : '', text: t.name, 'data-tip': U2TIP[t.id] || '' }); b.onclick = () => chooseTask(t.id); tasksEl.append(b); }
-    toolsEl.textContent = '';
-    for (const t of task().tools) { const b = make('button', { type: 'button', cls: t.id === tool().id ? 'on' : '', text: t.name, 'data-tip': U2TIP[task().id + '/' + t.id] || U2TIP[t.id] || '' }); b.onclick = () => chooseTool(t.id); toolsEl.append(b); }
+    toolsEl.textContent = ''; let grp = null;
+    for (const t of task().tools) { if (t.group && t.group !== grp) { grp = t.group; toolsEl.append(make('div', { cls: 'u2group', text: grp })); } const b = make('button', { type: 'button', cls: t.id === tool().id ? 'on' : '', text: t.name, 'data-tip': U2TIP[task().id + '/' + t.id] || U2TIP[t.id] || '' }); b.onclick = () => chooseTool(t.id); toolsEl.append(b); }
     document.querySelectorAll('#u2head .u2b, #u2head summary, #u2views button, #u2layBtn').forEach(e => { const t = U2BARTIP[e.textContent.trim()]; if (t) e.dataset.tip = t; });
   }
   function modeFor(v, t) { return v === '3d' ? 'model' : v === 'section' ? 'section' : (t && t.analysis ? 'analysis' : 'plan'); }
@@ -4457,16 +4484,18 @@ details.u2more[open]>.u2rows{margin-top:8px}
       { el: '#interval', text: 'contour lines join points of the same height. here a line every 10 ft and a heavier index line every 50. where the lines crowd the ground is steep, where they spread it is gentle.', do: async () => { go('site', 'place', 'plan'); openLayers(true); } },
       { el: '#u2views', text: 'the same ground in 3d. the steep sides are where the lines crowded on the sheet. right drag orbits, the wheel zooms.', do: async () => { openLayers(false); go('site', 'place', '3d'); } },
       { el: '#aerialRow', text: 'the photo under the contours ties the lines to what is really on the ground: trees in the gullies, tracks along the ridges.', do: async () => { go('site', 'place', 'plan'); openLayers(true); await demo('#aerialRow'); openLayers(true); } },
+      { el: '#interval', text: 'change the contour interval: fewer lines read the big shape, more lines show every small rise.', do: async () => { go('site', 'place', 'plan'); openLayers(true); }, start: () => $('#interval').value, wait: v0 => $('#interval').value !== v0 },
     ] },
     { id: 'pad', name: 'grade a pad', steps: [
       { el: '#padRow', text: 'a pad flattens a shape. balance cut and fill finds the level that moves the least earth; the edges slope away, or become walls where a slope will not fit. here is one, drawn for you.', do: async () => { openLayers(false); go('shape', 'pad', 'plan'); await demo('#padRow'); go('shape', 'pad', 'plan'); } },
-      { el: '#u2status', text: 'cut and fill for the whole design stay here while you grade. draw another pad and watch them change.' },
-      { el: '#side', text: 'side slopes set how steep the new edges are. 3:1 is three across for one up; steeper saves earth but may need a wall.' },
-      { el: '#u2views', text: 'look at the pad in 3d to see the cut into the hill and the fill below it.', do: async () => go('shape', 'pad', '3d') },
+      { el: '#u2status', text: 'cut and fill for the whole design stay here while you grade.' },
+      { el: null, text: 'draw a pad of your own: drag a box across a slope on the sheet and watch cut and fill change.', do: async () => go('shape', 'pad', 'plan'), start: () => ($('#cut') || {}).textContent, wait: c0 => ($('#cut') || {}).textContent !== c0 },
+      { el: '#side', text: 'side slopes set how steep the new edges are. 3:1 is three across for one up; steeper saves earth but may need a wall. drag it, or click its value and type one.', start: () => $('#side').value, wait: v0 => $('#side').value !== v0 },
+      { el: '#u2views', text: 'press 3D to see the cut into the hill and the fill below it. the pad settings stay in the panel.', start: () => null, wait: () => state.view === '3d' },
     ] },
     { id: 'water', name: 'trace water', steps: [
       { el: '#anaLayers', text: 'study \u00b7 water reads where rain goes: flow lines down the valleys, catchments that drain to one point, ridges that split them. each is a switch.', do: async () => go('study', 'water', 'plan') },
-      { el: '#u2views', text: 'rain on the 3d ground: drops follow the slope and gather in the low places.', do: async () => { go('study', 'water', '3d'); try { setRain(true); } catch (_) {} } },
+      { el: '#rainBtn', text: 'press rain and watch the drops follow the slope and gather in the low places.', do: async () => { try { setRain(false); } catch (_) {} go('study', 'water', '3d'); }, start: () => null, wait: () => S.rain },
       { el: '#u2tasks', text: 'change the ground and the water answers: add a pad across a stream in shape, then come back to water and look again.', do: async () => { try { setRain(false); } catch (_) {} go('study', 'water', 'plan'); } },
     ] },
     { id: 'history', name: 'a site through time', steps: [
@@ -4480,7 +4509,8 @@ details.u2more[open]>.u2rows{margin-top:8px}
     ] },
     { id: 'model', name: 'build a physical model', steps: [
       { el: '#mm', text: 'make \u00b7 3d print: set how wide the printed model is; the scale follows. export gives an stl to print, or a textured obj or glb.', do: async () => go('make', 'print') },
-      { el: '#thick', text: 'make \u00b7 laser-cut model: the material thickness sets how many layers the ground becomes, the sheet size how they are laid out, hollow layers save material. then export the cut file.', do: async () => go('make', 'laser') },
+      { el: '#thick', text: 'make \u00b7 laser-cut model: the same model size sits at the top; the material thickness sets how many layers the ground becomes, the sheet size how they are laid out, hollow layers save material. then export the cut file.', do: async () => go('make', 'laser') },
+      { el: '#u2side', text: 'press preview to see the layers laid out on their sheets before you cut.', do: async () => go('make', 'laser'), start: () => null, wait: () => { const p = document.querySelector('.u2prev'); return !!(p && p.nextElementSibling && /layers? on/.test(p.nextElementSibling.textContent)); } },
     ] },
   ];
   let learnDone = {}; try { learnDone = JSON.parse(localStorage.getItem('coyote-learn') || '{}'); } catch (_) {}
