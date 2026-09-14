@@ -162,3 +162,6 @@ Numbers that are estimates, not verified: carbon per species, agroforestry canop
 
 Open: shared records (Supabase) so Walker and helpers add to the same notes; phone-width testing of the field tools on a real phone; the voice prompt covers the new tools (coyote-voice, helper restarted).
 * Hover descriptions everywhere (`859a3fb`): topo `LABEL_TIPS` (regex on a control's label or aria-label) is the fallback in `tipFor`, and hover now includes selects; flight's `tipsIn()` sets data-tip on moved rows and menus. Audit scripts `tipaudit.js` (topo, every task/tool/view) and `flighttips.js` in this session's scratchpad: both find none missing. New buttons: give them a data-tip or add a LABEL_TIPS line.
+
+---
+Continued in HANDOFF-2026-09-14-field-tools.md (the task layout only, Astra's items, all sixteen field tools, the fixes and the field book).
