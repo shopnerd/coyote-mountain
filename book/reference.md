@@ -661,6 +661,30 @@ A drawing sheet: plan, model and section with a title block.
 | save png | save the current view as an image |
 | preview | draw the result here before exporting |
 
+### Make · line drawings
+
+Line drawings: nine ways to draw the site only in lines, in separate layers and inks, as a png, plates or a layered svg for a pen plotter.
+
+*the site in lines and layers: rows, rays, water, terraces, sun, keyline, before and after, a section fan; png, plates and a plotter svg*
+
+| control | what it does |
+| --- | --- |
+| style (menu) | straight rows, rays from a point and crisscross lay lines over the ground; water lines follow the drops downhill; stacked contours step the ground into terraces; sun lines shade with line density; keyline pattern runs parallel to the keyline; before and after overlays two grounds; section fan stacks sections turning about one point |
+| lines (menu) | how many lines, contour steps or sections |
+| height × (menu) | how much the heights are stretched, so gentle ground still reads |
+| from the south | the ground seen from the south and above, nearer ground hiding what is behind |
+| in plan | straight down, as a map |
+| terrain (menu) | the ink for this layer; each layer is separate in the svg and as a plate |
+| water (menu) | the stream network as its own layer, heavier where more water gathers |
+| design (menu) | paths, planting, sketches, the lot line, steps, check dam gullies and the keyline, as their own layer |
+| paper (menu) | the page the drawing and the svg are sized to, in millimetres |
+| landscape | the page on its side |
+| portrait | the page upright |
+| save png | the whole drawing in its inks, 3600 px wide |
+| save svg · plotter layers | every layer as its own layer, in millimetres at the paper size, a 0.3 mm pen: for a pen plotter, a laser or cnc engraving, or inkscape |
+| save each layer as a plate | one black-on-white png per layer, aligned, for risograph or screen printing one ink at a time |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 *physical models*
 
 ### Make · 3d print

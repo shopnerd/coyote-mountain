@@ -180,3 +180,17 @@ Test: e2e230 (23 checks) in session fb8fbb82's scratchpad. Regression 203, 205 a
 - Render functions for these panels only defer for a focused input when the refresh comes from a timer. Otherwise the panel never redraws after typing.
 - Test e2e231 has 20 checks: a V valley whose fill matches the integral within 0.2%, and dam spacing on a 5% channel of exactly 3.00 m. Regressions passed and the tip audit found none missing.
 - **Resolution at lot scale (Will's concern, not yet acted on):** Baja heights come from Terrarium tiles, which use INEGI continental relief behind them. Averaging the Encino Solo z15 tile into 8 m blocks loses only 4 cm rms, so there is no real detail below about 10–15 m. The grid is about 150 cells at any site width, so a lot shows smooth interpolation. US sites use 3DEP. The real fix at lot scale is a drone DTM or a points file, both of which the tool already imports.
+
+## Also 14 September: render no-cut default, the on now strip, line drawings
+
+- The render starts with no cut. This covers the default, the home site and a reopened session; project files keep the cut they were saved with.
+- **On now strip** (commit cee66e4, which reverts on its own). It shows chips for looks changed since the site opened; the baseline is captured when the page first loads and again whenever a project is loaded. Chips cover history, rain, walk, recording, render, painted, cut, photo, overlay and colours. Pressing × returns a look to its baseline, and undo restores it for 10 seconds. Leaving site history stops the history animation, and leaving water stops the rain, except during tours. The layers & look · on now panel has show/hide and stop/keep toggles, saved in localStorage as coyote-onnow. Test: e2e232.
+- **Make · line drawings** (id `lines`, S.rec.lineart). The engine is `lineArt(o)`, which returns layers of polylines in page mm.
+  - Oblique hidden-line removal is vector-based. For each surface, a per-row "front" array holds the highest nearer ground on the page per half-cell column. Crossings are bisected, so lines are left out rather than painted over.
+  - Nine styles: straight, point, cross, water, terraces, sun, keyline, change and fan.
+  - Water paths trace straight downhill on the real z in half-cell steps and drop anything shorter than 8 cells. The stream network is D8, Chaikin-smoothed, in 3 width classes.
+  - Sun tone is scaled to the site's own 3–97% range of lit shading, with cast shadow drawn as fully dark.
+  - Keyline offsets are smoothed more as the offset grows, and parts that run backwards are dropped.
+  - Layers are terrain, after, water and design. Outputs are a PNG, one plate per layer, and an Inkscape-layer SVG at the paper size.
+  - The drawing sheet's model picture offers all nine styles through `sheetLines`.
+  - Test: e2e233, including a synthetic ridge that hides exactly the rows in its shadow.
