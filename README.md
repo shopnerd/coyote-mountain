@@ -13,4 +13,4 @@ Single files, no build, no libraries.
 
 ## Licence
 
-PolyForm Noncommercial License 1.0.0 (see LICENSE.md): free for teaching, study, research and personal use; commercial use needs a separate licence from William S. Rollins.
+Free for learning and the commons. PolyForm Noncommercial License 1.0.0 (see LICENSE.md): free for teaching, study, research and personal projects, and for schools, charities, environmental groups, research organisations and public bodies; commercial use needs a separate licence from William S. Rollins. Why: book/manifesto.md.

@@ -5,7 +5,7 @@ Licensed under the PolyForm Noncommercial License 1.0.0.
 
 Required Notice: Copyright William S. Rollins (https://coyotemountainfarm.com)
 
-In plain words, which do not replace the terms below: you may use, copy, change and share
+Free for learning and the commons. In plain words, which do not replace the terms below: you may use, copy, change and share
 this software for any noncommercial purpose, which includes teaching, study, research and
 personal use, at schools and at home. Using it in commercial work, or offering it as a
 service, needs a separate licence from the copyright holder.
