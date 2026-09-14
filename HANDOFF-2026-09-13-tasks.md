@@ -117,3 +117,10 @@ Late 13 September (continued)
 * Voice prompt rewritten for the task layout and stripped of classic (coyote-voice `dcdbad6`, `74a85f1`), helper restarted.
 * Tests: classic tests are obsolete; e2e204 and the flight drag check read `rail2` and need `rail3`.
 * Astra's review, verified: Shape · pad in 3D shows only topsoil and swell; laser-cut model has no scale control (it's under 3d print). Candidates next: pad settings that stay in 3D, a shared model size & scale for print/laser/CNC, typed numbers beside sliders, small group labels inside pad and make.
+
+Astra items 1–5 and after (13 September, late)
+
+* `6e0cadd`: plan tools keep their settings in 3D and section (a "draw it in plan" button; the sculpt radius/strength hidden there); one model scale in 3d print, laser-cut model and cnc and maps; click any slider value to type an exact number (`bind()` stores `el._fmt`, `exactSet` finds the nearest shown number); group labels via `'=name'` entries in a tool's rows (pad) and `group:` on tools (make); try steps in learn (`start`/`wait` on a step, next waits, `window.__tourNow` test hook). Test `e2e210` (29/29).
+* `a2ef2f3`: learn "play all" on topo (7 chapters, 25 steps) and flight (3, 12); flight's site tool gets "pick an area on a map" (100 m to 6 km, rounded to 50 m). Test `e2e211`.
+* Test copies updated in this session's scratchpad (ff66cb8b…): `e2e203.js` skips `=` labels, `e2e205.js` satisfies try steps and runs all chapters, `flightui/test2.js` without the classic section.
+* Build-next list (Astra's ten ecology/engineering ideas plus Claude's five, ranked): https://claude.ai/code/artifact/48aad303-22e6-403b-94ee-26c3d3adb835. Recommended first: Ground Change (two drone surveys → erosion/deposit map) and the Earthwork & Resource Budget. The data-layer decision (likely Supabase) gates Field Observatory and most later tools.
