@@ -4134,6 +4134,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
 #u2proj .actions{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 #u2learn{position:absolute;top:28px;right:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);padding:8px;width:300px;box-shadow:0 8px 24px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:4px}
 #u2learn button{display:flex;justify-content:space-between;gap:10px;font:inherit;font-size:12px;text-align:left;padding:7px 8px;border:1px solid var(--line);background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
+#u2learn button.u2all{border-color:#d9895d;background:#fdf3ea;font-weight:600}:root[data-theme=dark] #u2learn button.u2all{background:#3a2a20}
 #u2learn button em{font-style:normal;color:var(--ink3);font-size:10.5px}#u2learn button:hover{border-color:var(--accent)}
 .u2prev{position:static;inset:auto;display:block;width:100%;height:auto;background:var(--paper);border:1px solid var(--line);border-radius:3px}
 #u2map{position:absolute;inset:0;z-index:9;background:#1d1d1b;display:none;touch-action:none}#u2map.show{display:block}
@@ -4517,6 +4518,8 @@ details.u2more[open]>.u2rows{margin-top:8px}
   const learnDet = make('details'), learnPop = make('div', { id: 'u2learn' }); learnDet.append(make('summary', { cls: 'u2b', text: 'learn' }), learnPop);
   function learnMenu() {
     learnPop.textContent = ''; learnPop.append(make('p', { cls: 'u2note', text: 'short chapters on the sample site. your own project comes back at the end of each.' }));
+    { const all = CHAPTERS.flatMap(ch => ch.steps), pb = make('button', { type: 'button', cls: 'u2all' }, [make('span', { text: 'play all' }), make('em', { text: CHAPTERS.length + ' chapters · ' + all.length + ' steps' })]);   /* every chapter back to back, one tour */
+      pb.onclick = async () => { learnDet.open = false; await tourStart(all); if (tour) tour.onDone = () => { CHAPTERS.forEach(ch => { learnDone[ch.id] = true; }); try { localStorage.setItem('coyote-learn', JSON.stringify(learnDone)); } catch (_) {} }; }; learnPop.append(pb); }
     CHAPTERS.forEach(ch => { const b = make('button', { type: 'button' }, [make('span', { text: ch.name }), make('em', { text: learnDone[ch.id] ? 'done' : ch.steps.length + ' steps' })]);
       b.onclick = async () => { learnDet.open = false; await tourStart(ch.steps); if (tour) tour.onDone = () => { learnDone[ch.id] = true; try { localStorage.setItem('coyote-learn', JSON.stringify(learnDone)); } catch (_) {} }; }; learnPop.append(b); });
   }
