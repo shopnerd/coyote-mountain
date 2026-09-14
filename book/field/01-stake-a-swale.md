@@ -1,9 +1,9 @@
-# Field card · Stake a swale with the phone level
+# Field card 01 · Stake a swale with the phone level
 
 Put a designed swale on the ground, dead level, with a phone and a straight board.
 
-**People:** 2 (one on the board, one staking)
-**Tool:** coyotemountainfarm.com/topo.html · Make · walk the line
+**People:** 2 (one on the board, one staking)  
+**Tool:** coyotemountainfarm.com/topo.html · Make · walk the line  
 
 ## Before you go
 
