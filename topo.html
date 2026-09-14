@@ -2035,19 +2035,165 @@ const TIPS = {
   'p:radius': () => S.brush === 'pen' ? 'width of new pen strokes' : S.brush === 'erase' ? 'how wide the eraser reaches' : 'brush size; it scales with the site width', 'p:strength': () => S.brush === 'pen' ? 'ink opacity of new pen strokes' : 'how hard each pass moves the ground',
   shareBtn: 'copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed', undo: 'step back (ctrl+z), 40 steps', wipe: 'a flat, empty sheet: no ground, no grading, no sketch', saveProj: 'download this project as a small file', openProj: 'open a saved project file', newProj: 'start over: a blank flat sheet with default settings, nothing kept (undo brings it back)', png: 'save the current view as an image', stl: 'the model on its base slab at the fabricate scale, written in the file chosen above', 'p:meshFmt': 'which file the model export writes. stl is the solid to print. obj, glb and wrl carry the ground as a texture: the photo, the painted ground, or the surface colour showing on the model, with the base in plain paper. glb is one file in metres; obj and wrl come zipped with their picture', sheetBtn: 'the drawing sheet: the model as it stands and the active section, both painted in the chosen style, over the plan, the analysis and the notes at true scale, with the title block. two calls to the painter; without a key the two pictures are drawn instead', laserDxf: 'the same laser file as a DXF in millimetres: layers CUT (red), ENGRAVE (blue), MATERIAL (yellow); for laser software that takes DXF better than SVG', laser: 'cardboard layers nested on sheets for the laser cutter', 'v:top': 'straight down, north up; orbit again to tilt', 'v:front': 'from the south at eye level: an elevation with the buildings', 'v:back': 'from the north at eye level', 'v:left': 'from the west at eye level', 'v:right': 'from the east at eye level', 'v:axon': 'a 45° corner at the isometric tilt', 'v:persp': 'switch between parallel projection (measurable) and perspective (as the eye sees it)', extents: 'refit the view (0)'
 };
+
+const LABEL_TIPS = [   /* hover descriptions matched by a control's label, for buttons and menus the task layout builds (their labels can change with what is on the plan) */
+  [/^coyote_mountain/, 'back to the coyote mountain home page'],
+  [/^pick an area on a map$/, 'a satellite map around the site: draw a box to fetch a new site that size'],
+  [/^zoom to a box on the sheet$/, 'drag a box over part of the plan and fetch just that ground, in more detail'],
+  [/^load a points file$/, 'a point cloud from a drone or scanner, shown in 3d'],
+  [/^eraser$/, 'rub out pen lines, plants and spot heights where you drag'],
+  [/^spot height$/, 'tap to label the ground height there; it follows later grading'],
+  [/^draw in plan$/, 'go to the plan and drag a line across the ground to cut a section'],
+  [/^look at it in section$/, 'see the ground cut along the section line'],
+  [/^record video$|^stop · \d/, 'record the view as a video; press again to stop and save it'],
+  [/^animate the section$/, 'play the section line sweeping across the site'],
+  [/^preview$/, 'draw the result here before exporting'],
+  [/^night$/, 'survey points glowing on a dark ground'],
+  // field notes
+  [/^what kind$/, 'the kind of observation: a note, a photo, a soil or erosion check, a reading'],
+  [/^how it was measured$/, 'phone, eye or tape, survey, sensor or lab: it sets how accurate the note is'],
+  [/^add a photo$|^photo ready/, 'take or pick a photo; it is shrunk and kept inside the note'],
+  [/^note it where I stand$/, 'place the note at the phone’s position, with its accuracy'],
+  [/^note it on the plan$|^tap the plan where it is/, 'tap the plan where the observation was made'],
+  [/^import readings · csv$/, 'readings from a rain gauge, moisture probe or level logger, attached to the picked note'],
+  [/^save notes · csv$/, 'every note with its place, value, method and accuracy, as a spreadsheet'],
+  [/^delete this note$/, 'remove the picked note and its readings'],
+  // species surveys
+  [/^survey method$/, 'how this spot or route is surveyed: point count, walked route, camera, sound or pollinator watch'],
+  [/^add a survey spot|^tap the plan where you survey/, 'tap the plan to fix a spot you will survey again and again'],
+  [/^add a walked route|^tap along the route/, 'tap along a route you will walk each time you survey'],
+  [/^finish this route$/, 'close the route and pick it'],
+  [/^start the list from records here$/, 'species already recorded inside this spot, as a list to count'],
+  [/^save this visit$/, 'keep this visit: date, minutes spent and what was counted'],
+  [/^save surveys · csv$/, 'every visit and count, without the species kept private'],
+  [/^delete this spot and its visits$/, 'remove the picked survey spot and everything counted there'],
+  // nature records
+  [/^fetch iNaturalist/, 'observations people have posted on iNaturalist for this ground, the newest thousand'],
+  [/^which observations$/, 'all, only research grade (confirmed by others), or those still needing an ID'],
+  [/^import bird records/, 'eBird data (where Merlin checklists go) or BirdNET results, as csv'],
+  [/^open this area on iNaturalist$/, 'the same ground on the iNaturalist website, in a new tab'],
+  [/^clear imports$/, 'remove the imported bird records from this project'],
+  // agroforestry
+  [/^species$/, 'the tree, shrub or vine to plant, with its typical size and seasons'],
+  [/^plant one|^tap the plan to plant/, 'tap the plan to plant the chosen species; press again to stop'],
+  [/^plant a row|^tap where the row|^now tap where the row ends/, 'tap the two ends of a row; trees are spaced by their mature size'],
+  [/^row spacing$/, 'how close the row is planted: overlapping as a hedgerow, touching, or open'],
+  [/^years from planting$/, 'grow every library tree to this age, on the plan and in 3d'],
+  // grazing
+  [/^herd$/, 'the animals: it sets how much forage a head eats a day'],
+  [/^draw a paddock|^tap corners…/, 'tap the corners of a paddock on the plan'],
+  [/^finish this paddock$/, 'close the paddock and pick it'],
+  [/^mark a water point$|^tap where the water is/, 'tap where a trough, tank or pond is'],
+  [/^forage$/, 'how much dry forage is standing in this paddock now'],
+  [/^move the herd in today$/, 'the herd goes into this paddock today; the last paddock starts resting'],
+  [/^move the herd out today$/, 'the herd leaves today and this paddock starts its rest'],
+  [/^leave it ungrazed$|^graze it again$/, 'take this paddock out of the rotation, or put it back'],
+  [/^delete this paddock$/, 'remove the picked paddock and its history'],
+  [/^paddock \d+ ·|· grazing days ·/, 'pick this paddock to see and change it'],
+  // visitor walks
+  [/^draw a walk|^tap along the walk/, 'tap along the path visitors will walk'],
+  [/^finish this walk$/, 'close the walk and pick it'],
+  [/^add a stop|^tap the plan where the stop/, 'tap the plan where visitors stop; the title above is what they see'],
+  [/^log a visit today$/, 'record a visit on this walk today, with the group size'],
+  [/^wet season alternative$/, 'the walk to use when this one is closed'],
+  [/^delete this walk$/, 'remove the picked walk, its stops and closures'],
+  [/^walk \d+ ·/, 'pick this walk to see and change it'],
+  // earthwork budget
+  [/^how firm are the prices$/, 'sets the likely range: quoted prices are tight, an early idea is wide'],
+  [/^save budget · csv$/, 'every line, the total, the range and the trucking, as a spreadsheet'],
+  [/^example rates again$/, 'put back the example rates, replacing your own'],
+  // water budget
+  [/^keep as A$|^keep as B$/, 'remember this design’s water numbers to compare with another'],
+  [/^clear$/, 'forget what was kept or loaded here'],
+  // landscape fit
+  [/^what to place$/, 'what you are looking for a place for; each has its own size and limits'],
+  [/^draw a protected area|^tap its corners…/, 'tap the corners of ground nothing may go on'],
+  [/^finish the protected area$/, 'close the protected area; it becomes a hard limit'],
+  [/^import protected areas/, 'protected polygons from a geojson or kml file'],
+  [/^clear \d+ protected area/, 'remove the protected areas drawn or imported here'],
+  [/^weigh sun$/, 'how much a sunny, sun-facing spot matters'],
+  [/^weigh low, wetter ground$/, 'how much low, wetter ground matters, or should be avoided'],
+  [/^weigh high ground and views$/, 'how much raised ground with views matters'],
+  [/^weigh near water$/, 'how much being near water or a stream matters'],
+  [/^weigh near a road$/, 'how much being near a mapped road matters'],
+  [/^weigh low fire risk$/, 'how much a low fire risk matters'],
+  [/^show fit$/, 'show the fit wash and the best spots on the plan'],
+  [/^hide$/, 'hide this layer on the plan'],
+  // recovery
+  [/^draw a recovery area|^finish: an area to treat$|^finish: an untreated area/, 'tap the corners of damaged ground to treat, or of a similar patch left alone to compare'],
+  [/^the damage$/, 'what is wrong with this ground'],
+  [/^check every$/, 'how often to measure; overdue checks turn red'],
+  [/^new goal$/, 'what to measure: bare ground, water soaking in, native cover, species, soil lost'],
+  [/^add this goal$/, 'track this goal from where it is now to the target'],
+  [/^use \d+ field notes? inside/, 'vegetation and soil notes taken inside the area become measurements'],
+  [/^treatment$/, 'what was done to the ground'],
+  [/^log this treatment today$/, 'record the treatment with today’s date'],
+  [/^add$/, 'add this measurement'],
+  [/^delete this area$/, 'remove the picked area, its goals and its log'],
+  // fire ready
+  [/^wind from$/, 'the dangerous wind for the place; Santa Ana winds come from the east and northeast'],
+  [/^ground cover$/, 'what mostly covers the ground: it sets how hard fire would burn'],
+  [/^mark a building$|^tap the plan where a building is/, 'tap the plan where a house, barn or shed stands'],
+  [/^clear marked buildings$/, 'remove the buildings marked by tapping'],
+  [/^show on plan$/, 'show this layer on the plan'],
+  // carbon
+  [/^save carbon ledger · csv$/, 'the carbon range by year and the soil samples, marked estimate or measured'],
+  // ground change
+  [/^before survey$|^before · /, 'the drone survey flown before: a storm, a season or the earthwork'],
+  [/^after survey$|^after · /, 'the drone survey flown after'],
+  [/^line up heights$/, 'remove the height drift between two flights, using the ground that did not move'],
+  [/^heights as flown$/, 'compare the surveys exactly as they came'],
+  [/^ignore changes under/, 'differences smaller than this are survey noise, not change'],
+  [/^change wash$/, 'show where soil was lost (ember) and built up (blue)'],
+  // landscape story
+  [/^play the story$|^stop$/, 'play the ticked chapters with their captions; press again to stop'],
+  [/^record the story · video$/, 'play the story and save it as one video with the captions in it'],
+  [/^chapters as they were$/, 'put the chapters and captions back to how they started'],
+  // walk the line
+  [/^which lines$/, 'the kind of line to walk: keyline and swales, paths, drawn lines or the lot line'],
+  [/^line to walk$/, 'the one line to follow now'],
+  [/^follow my position$|^stop following my position$/, 'use the phone’s position to show how far you are from the line'],
+  [/^no gps here|^tap the plan to stand/, 'tap the plan to stand somewhere, to try it without a position'],
+  [/^drop a flag here$/, 'mark where you stand; flags save with the project'],
+  [/^save flags · gpx$/, 'the flags as waypoints for a gps or phone app'],
+  [/^clear flags$/, 'remove the flags'],
+  [/^use the phone as a level$|^stop the level$/, 'lay the phone along a straight board to read its tilt'],
+  [/^zero it|^now turn the phone end for end/, 'read it, turn the phone end for end and read again: the sensor’s own error cancels'],
+  [/^target grade %$/, '0 for a swale on contour; 0.5 to 1% for a drain'],
+  // field build
+  [/^stake spacing$/, 'how far apart the grade stakes are'],
+  [/^stakes · csv$/, 'every stake with lat, lon, utm, existing and design height and cut or fill'],
+  [/^stakes · gpx$/, 'the stakes as waypoints, named with their cut or fill'],
+  [/^design surface · landxml$/, 'the designed ground as a surface for machine control'],
+  [/^existing surface · landxml$/, 'the ground as it is now, as a surface for machine control'],
+  [/^keep-out zones · kml/, 'protected, recovery and ungrazed ground, to set out before digging'],
+  [/^check an as-built survey against the design$/, 'open ground change to compare what was built with the design'],
+  [/^show stakes$/, 'show the stakes on the plan'],
+  [/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)$/, 'press to close or reopen this walk in that month'],
+  [/^draw a box$/, 'drag a box on the map around the ground you want'],
+  [/^move the map$/, 'drag to move the map instead of drawing'],
+  [/^fetch this area$/, 'fetch the ground inside the box as the new site'],
+  [/^cancel$/, 'close the map without changing the site'],
+  [/^find a place…$/, 'type a place name or lat, lng and press enter'],
+  [/^delete$/, 'remove the picked drawing, plant or object'],
+  [/^duplicate$/, 'make a copy of the picked thing beside it'],
+  [/^dash$/, 'switch the picked line between solid and dashed'],
+  [/^ink$|^ember$|^water$/, 'recolour the picked line'],
+];
+function labelTip(el) { const t = (el.tagName === 'SELECT' || el.tagName === 'INPUT' ? el.getAttribute('aria-label') : el.classList.contains('p') ? (el.querySelector('label') || el).textContent : el.textContent) || ''; const k = t.trim().replace(/\s+/g, ' '); for (const [re, tip] of LABEL_TIPS) if (re.test(k)) return tip; return ''; }
 function tipFor(el) { const d = el.dataset; let key;
   if (el.classList.contains('p')) { const inp = el.querySelector('input,select'); key = inp ? 'p:' + inp.id : null; }
   else key = el.id && TIPS[el.id] ? el.id : d.v ? 'v:' + d.v : d.g ? 'g:' + d.g : d.bld ? 'bld:' + d.bld : d.road ? 'road:' + d.road : d.trim ? 'trim:' + d.trim : d.ov ? 'ov:' + d.ov : d.sea ? 'sea:' + d.sea : d.m ? 'm:' + d.m : d.b ? 'b:' + d.b : d.pm ? 'pm:' + d.pm : d.pc ? 'pc:' + d.pc : d.a ? 'a:' + d.a : d.t ? 't:' + d.t : d.s ? 's:' + d.s : d.c ? 'c:' + d.c : d.k ? 'k:' + d.k : d.ae ? 'ae:' + d.ae : d.l ? 'l:' + d.l : d.x ? 'x:' + d.x : d.ps ? 'ps:' + d.ps : d.pl ? 'pl:' + d.pl : d.cf ? 'cf:' + d.cf : d.sf ? 'sf:' + d.sf : d.bm ? 'bm:' + d.bm : d.pe ? 'pe:' + d.pe : d.geo ? 'geo:' + d.geo : d.rm ? 'rm:' + d.rm : d.pt ? 'pt:' + d.pt : d.rd ? 'rd:' + d.rd : d.cut ? 'cut:' + d.cut : d.sky ? 'sky:' + d.sky : d.eye ? 'eye:' + d.eye : d.sm ? 'sm:' + d.sm : d.ai ? 'ai:' + d.ai : d.cl ? 'cl:' + d.cl : null;
-  const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.dataset.tip || el.title || ''; }
-const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null;
+  const v = key && TIPS[key]; return (typeof v === 'function' ? v() : v) || el.dataset.tip || el.title || labelTip(el); }
+const tipEl = document.getElementById('tip'); let tipTimer = null, tipTarget = null; window.__tipFor = el => tipFor(el);   /* test hook */
 function showTip(el) { const t = tipFor(el); if (!t) return; showTipAt(t, el.getBoundingClientRect()); }
 function showTipAt(t, r, side) { tipEl.textContent = t; tipEl.classList.add('show'); const tw = Math.min(250, tipEl.offsetWidth || 200);
   let x = side === 'left' ? Math.max(8, r.left - tw - 8) : r.right + 8, y = r.top; if (x + tw > innerWidth - 8) x = Math.max(8, r.left - tw - 8); if (innerWidth < 760) { x = Math.max(8, Math.min(innerWidth - tw - 8, r.left)); y = r.top - 8 - tipEl.offsetHeight; }
   tipEl.style.left = x + 'px'; tipEl.style.top = Math.max(4, Math.min(innerHeight - tipEl.offsetHeight - 4, y)) + 'px'; }
 function hideTip() { clearTimeout(tipTimer); tipTimer = null; tipTarget = null; tipEl.classList.remove('show'); }
 document.querySelectorAll('button,.p').forEach(el => { if (el.title) { el.dataset.tip = el.title; el.removeAttribute('title'); } });   // the title becomes the floating hint; never a native tooltip
-document.addEventListener('pointerover', e => { const el = e.target.closest('button,.p,[data-tip]'); if (!el || el === tipTarget || e.pointerType === 'touch') return; hideTip(); tipTarget = el; tipTimer = setTimeout(() => showTip(el), 500); });
-document.addEventListener('pointerout', e => { const el = e.target.closest('button,.p,[data-tip]'); if (el && el === tipTarget && !el.contains(e.relatedTarget)) hideTip(); });
+document.addEventListener('pointerover', e => { const el = e.target.closest('button,.p,[data-tip],select,a.logo'); if (!el || el === tipTarget || e.pointerType === 'touch') return; hideTip(); tipTarget = el; tipTimer = setTimeout(() => showTip(el), 500); });
+document.addEventListener('pointerout', e => { const el = e.target.closest('button,.p,[data-tip],select,a.logo'); if (el && el === tipTarget && !el.contains(e.relatedTarget)) hideTip(); });
 document.addEventListener('pointerdown', e => { const el = e.target.closest('button'); if (e.pointerType === 'touch' && el) { hideTip(); tipTarget = el; tipTimer = setTimeout(() => { showTip(el); el.dataset.held = '1'; }, 600); } else hideTip(); }, true);
 document.addEventListener('pointerup', e => { if (e.pointerType === 'touch') { const held = tipTarget && tipTarget.dataset.held; clearTimeout(tipTimer); if (!held) hideTip(); else setTimeout(hideTip, 1800); } }, true);
 document.addEventListener('click', e => { const el = e.target.closest('button'); if (el && el.dataset.held) { delete el.dataset.held; e.stopPropagation(); e.preventDefault(); } }, true);

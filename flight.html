@@ -951,14 +951,20 @@ if (location.hash === '#tour') setTimeout(() => window.__ui2learn ? window.__ui2
   /* mounting */
   const mount = (box, list) => { for (const sel of list || []) { const u = unit(sel); if (u) box.append(u); } };
   let panelRows = null, panelMore = null;
+  const FLIGHT_TIPS = { place: 'a place name, or lat, lng, then fetch the terrain', fetch: 'pull the real ground for the place above', siteW: 'how wide a piece of ground to fetch around the place', aerialRow: 'the satellite photo under the plan, or shaded relief of the ground', drone: 'the aircraft and its camera: they set every number in the plan', hd: 'the direction the flight lines run; auto picks the longest side of the area', speed: 'how fast the drone flies along each line', png: 'save the plan as an image' };
+  const BY_TEXT = { save: 'download this plan as a small file', open: 'open a saved plan file', 'copy link': 'copy a link that opens this place and plan', coyote_mountain_flight: 'back to the coyote mountain home page' };
+  function tipsIn(root) {   /* flight's hover reads data-tip: give the moved rows and the menu their descriptions */
+    for (const id in FLIGHT_TIPS) { const el = document.getElementById(id); if (!el) continue; const host = el.closest('.p') || el; if (!host.dataset.tip) host.dataset.tip = FLIGHT_TIPS[id]; }
+    root.querySelectorAll('button, a.logo, summary').forEach(el => { const k = el.textContent.trim(); if (!el.closest('[data-tip]') && BY_TEXT[k]) el.dataset.tip = BY_TEXT[k]; });
+  }
   function renderTool() {
     const t = tool(); for (const box of [panelRows, panelMore]) if (box) while (box.firstChild) park.append(box.firstChild); panelEl.textContent = '';
     const rows = make('div', { cls: 'u2rows' }), mrows = make('div', { cls: 'u2rows u2second' });
     panelEl.append(make('h3', { text: t.name })); if (t.note) panelEl.append(make('p', { cls: 'u2note', text: t.note }));
     panelEl.append(rows);
-    if (t.acts) { const acts = make('div', { cls: 'u2acts' }); for (const [label, fn] of t.acts) { const b = make('button', { cls: 'btn', type: 'button', text: label }); b.onclick = fn; acts.append(b); } panelEl.append(acts); }
+    if (t.acts) { const acts = make('div', { cls: 'u2acts' }); for (const [label, fn] of t.acts) { const b = make('button', { cls: 'btn', type: 'button', text: label, 'data-tip': /map/.test(label) ? 'a satellite map around the site: draw a box to fetch a new site that size' : label }); b.onclick = fn; acts.append(b); } panelEl.append(acts); }
     if (t.more && t.more.length) panelEl.append(mrows);
-    panelRows = rows; panelMore = mrows; mount(rows, t.rows); mount(mrows, t.more);
+    panelRows = rows; panelMore = mrows; mount(rows, t.rows); mount(mrows, t.more); tipsIn(document);
   }
   /* pick an area on a map: satellite tiles around the site, the current site outlined, drag to move, draw a box to choose the new site; its width is the site width */
   const TILE = (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`, LABELS = (z, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/${z}/${y}/${x}`;
@@ -968,7 +974,7 @@ if (location.hash === '#tour') setTimeout(() => window.__ui2learn ? window.__ui2
   const unmerc = (x, y, z) => { const n = 256 * 2 ** z, lon = x / n * 360 - 180, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) / D2R; return [lat, lon]; };
   const MP = { on: false, z: 14, lat: 0, lon: 0, box: null, drawing: false, drag: null, boxMode: true };
   const mapEl = make('div', { id: 'u2map' }), mapCv = make('canvas'), mapBar = make('div', { id: 'u2mapbar' });
-  const mSearch = make('input', { type: 'search', placeholder: 'find a place…', 'aria-label': 'find a place on the map' }), mBox = make('button', { cls: 'u2b on', type: 'button', text: 'draw a box' }), mMove = make('button', { cls: 'u2b', type: 'button', text: 'move the map' }), mMsg = make('span', { cls: 'msg' }), mGo = make('button', { cls: 'u2b go', type: 'button', text: 'fetch this area' }), mX = make('button', { cls: 'u2b', type: 'button', text: 'cancel' });
+  const mSearch = make('input', { type: 'search', placeholder: 'find a place…', 'aria-label': 'find a place on the map' }), mBox = make('button', { cls: 'u2b on', type: 'button', text: 'draw a box', 'data-tip': 'drag a box on the map around the ground you want' }), mMove = make('button', { cls: 'u2b', type: 'button', text: 'move the map', 'data-tip': 'drag to move the map instead of drawing' }), mMsg = make('span', { cls: 'msg' }), mGo = make('button', { cls: 'u2b go', type: 'button', text: 'fetch this area', 'data-tip': 'fetch the ground inside the box as the new site' }), mX = make('button', { cls: 'u2b', type: 'button', text: 'cancel', 'data-tip': 'close the map without changing the site' });
   mapBar.append(mSearch, mMove, mBox, mMsg, mGo, mX); mapEl.append(mapCv, mapBar); q('main').append(mapEl);
   const setBoxMode = on => { MP.boxMode = on; mBox.classList.toggle('on', on); mMove.classList.toggle('on', !on); mapEl.classList.toggle('boxing', on); };
   mBox.onclick = () => setBoxMode(true); mMove.onclick = () => setBoxMode(false);
