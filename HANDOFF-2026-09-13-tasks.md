@@ -129,3 +129,35 @@ Astra items 1–5 and after (13 September, late)
 * Path surfaces rebuilt (`2497e5e`): `pathSurface()` lays gravel rows / paving courses along the resampled centreline (the old lattice over the corridor polygon left holes on bends, spilled stones, and thinned out on long diagonals because the density cap used the bounding box); under 7 px wide it draws a dotted or tinted strip. Area paving jitter .7→.35. Plant row 3 + 2 in the task layout. Repro script `hatch.js` in this session's scratchpad.
 * Earthwork budget built (`eff7e4c`): Shape · earthwork budget, a `panel:` tool (`budgetPanel` / `budBuild` / `budUpdate` / `budCsv` in the task-layout block). Quantities from `S.earth` (cut, fill, loose haul after swell, topsoil strip) and `S.strokes` (wall face from top/bot, gravel and paving paths and areas, trees, shrub beds, hedges). Rates kept metric in localStorage `coyote-budget`, shown per yd³/ft²/ft or m³/m²/m; 'example rates, not quotes' until edited; firmness ranges quoted −10/+15%, local −20/+35%, early idea −30/+60%; trips = loose haul / truck load, diesel 0.45 L/km round trip, 2.68 kg CO₂/L. Test `e2e213` (18/18). Voice prompt updated, helper restarted. Next on the list: Nature Records (iNaturalist layer).
 * Build-everything run, 13–14 Sept: Nature Records (`9043756`, e2e214), Water Budget (`bcb953e`, e2e215), Fire Ready (`6e710f7`, e2e216), Agroforestry (see log, e2e217). Project file now has `records` (S.rec): nature imports, water A/B, fireBld, agroYear. Undo and project stroke whitelists carry `sp`. Remaining on the list: Walk the Line, Landscape Story, Field Observatory, Grazing, Biodiversity Atlas, Recovery, Carbon ledger, Landscape Fit, Visitor planner, Field Build.
+
+The build-everything run (13–14 September): all sixteen ideas as first versions
+
+Every tool is a `panel:` tool in the task layout (`TASKS` spec), with its state in `S.rec` (the project file's `records`), a `window.__<name>Draw` plan layer added to `drawPlan` (its key function in the plan cache key), and its own test.
+
+| tool | where | commit | test | records |
+| --- | --- | --- | --- | --- |
+| ground change | study | `f2d0765` | e2e212 | (surveys not saved) |
+| earthwork budget | shape | `eff7e4c` | e2e213 | localStorage `coyote-budget` |
+| nature records | site | `9043756` | e2e214 | `nature` |
+| water budget | study | `bcb953e` | e2e215 | `water` A/B, localStorage `coyote-water` |
+| fire ready | study | `6e710f7` | e2e216 | `fireBld` |
+| agroforestry | shape | `cc9b56c` | e2e217 | trees carry `sp`, `agroYear` |
+| walk the line (+ phone level) | make | `0190505`, `52975de` | e2e218, e2e229 | `flags` |
+| landscape story | make | `4695548` | e2e219 | `story` |
+| field notes | site | `635c397` | e2e220 | `obs`, `series` |
+| grazing | shape | `328daa2` | e2e221 | `graze` |
+| species surveys | site | `f42a137` | e2e223 | `bio` |
+| recovery | study | `11a8419` | e2e224 | `recovery` |
+| carbon | study | `c96cc6d` | e2e225 | `carbon` |
+| landscape fit | study | `eb2f1ae` | e2e226 | `fit` |
+| visitor walks | shape | `f171839` | e2e227 | `visit` |
+| field build | make | `9c8bb4f` | e2e228 | — |
+
+Fixes found along the way:
+* Tools with no brush of their own left the last brush digging on a plan click: they now set `setBrush('look')` (a drag pans) (`328daa2`, e2e222).
+* GeoTIFF reader sampled pixel-is-area rasters half a pixel off, on topo and flight (`9c8bb4f`, `54c42ec`). Imported surveys now line up exactly.
+* Undo and project stroke whitelists carry `sp`; plant row 3 + 2; path surfaces rebuilt along the path (`2497e5e`).
+
+Numbers that are estimates, not verified: carbon per species, agroforestry canopy and water ranges, herd intake, fire factors, example budget rates. They are labelled as such in each panel.
+
+Open: shared records (Supabase) so Walker and helpers add to the same notes; phone-width testing of the field tools on a real phone; the voice prompt covers the new tools (coyote-voice, helper restarted).
