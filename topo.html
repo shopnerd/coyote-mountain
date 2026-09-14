@@ -4804,7 +4804,32 @@ details.u2more[open]>.u2rows{margin-top:8px}
     const flags = (S.rec && S.rec.flags) || []; w.append(make('div', { cls: 'u2group', text: `flags · ${flags.length}` }));
     if (flags.length) { const gpx = make('button', { cls: 'btn', type: 'button', text: 'save flags · gpx' }); gpx.onclick = stakeGpx; const clr = make('button', { cls: 'btn', type: 'button', text: 'clear flags' }); clr.onclick = () => { S.rec.flags = []; STAKE.ver++; S.dirty = true; stakeRender(); }; w.append(gpx, clr); }
     w.append(make('p', { cls: 'u2note', text: 'phone gps is good to a few metres across and worse in height, so follow the line with it, then set the exact level with an a-frame or a laser level. flags save with the project.' }));
-    stakeRead();
+    // the phone as a level: lay it along a straight board
+    w.append(make('div', { cls: 'u2group', text: 'the phone as a level' }));
+    const lv = LEVEL, lset = make('div', { cls: 'set' }), tg = make('input', { type: 'text', inputmode: 'decimal', value: String(lv.target), 'aria-label': 'target grade %' });
+    tg.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') tg.blur(); }); tg.addEventListener('change', () => { const v = parseFloat(tg.value); if (isFinite(v)) lv.target = v; levelRead(); });
+    lset.append(make('span', { text: 'target grade, %', 'data-tip': '0 for a swale on contour; 0.5 to 1 for a drain or a spillway' }), tg); w.append(lset);
+    const on = make('button', { cls: 'btn', type: 'button', text: lv.on ? 'stop the level' : 'use the phone as a level' }); on.onclick = () => levelToggle(); w.append(on);
+    w.append(make('div', { cls: 'big', 'data-s': 'level', style: 'font-size:13px' }));
+    if (lv.on) { const z1 = make('button', { cls: 'btn', type: 'button', text: lv.first == null ? 'zero it: read it here' : 'now turn the phone end for end and read again' }); z1.onclick = () => { if (lv.raw == null) { toast('no tilt reading yet'); return; } if (lv.first == null) { lv.first = lv.raw; } else { lv.offset = (lv.first + lv.raw) / 2; lv.first = null; toast(`zeroed: the phone read ${tz(lv.offset.toFixed(2))}° when level`); } stakeRender(); }; w.append(z1); }
+    stakeRead(); levelRead();
+  }
+  const LEVEL = { on: false, raw: null, offset: 0, first: null, target: 0, wasLevel: false, audio: null };
+  function levelRead() {   // tilt along the phone's length, corrected by the two-way zero, against the target grade
+    const el = stakeBoxEl && stakeBoxEl.querySelector('[data-s="level"]'); if (!el) return;
+    if (!LEVEL.on) { el.textContent = ''; return; } if (LEVEL.raw == null) { el.textContent = 'waiting for the tilt sensor… lay the phone flat along the board'; return; }
+    const deg = LEVEL.raw - LEVEL.offset, pct = Math.tan(deg * D2R) * 100, off = pct - LEVEL.target, level = Math.abs(off) < .4;
+    el.textContent = `${level ? 'LEVEL · ' : ''}${tz(Math.abs(deg).toFixed(2))}° · ${tz(Math.abs(pct).toFixed(2))}%${Math.abs(pct) > .05 ? ' · 1 in ' + Math.round(100 / Math.abs(pct)) : ''} · ${level ? 'on the target grade' : `${tz(Math.abs(off).toFixed(2))}% ${off > 0 ? 'too high at the far end' : 'too low at the far end'}`}`;
+    el.style.color = level ? '#3d6b2e' : 'var(--ink)';
+    if (level && !LEVEL.wasLevel) try { const ac = LEVEL.audio = LEVEL.audio || new (window.AudioContext || window.webkitAudioContext)(), o = ac.createOscillator(), g = ac.createGain(); o.frequency.value = 880; g.gain.value = .08; o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime + .12); } catch (_) {}
+    LEVEL.wasLevel = level;
+  }
+  const levelEvent = e => { if (e.beta == null) return; LEVEL.raw = e.beta; levelRead(); };
+  window.__levelEvent = levelEvent; window.__levelState = () => ({ on: LEVEL.on, raw: LEVEL.raw });   /* test hooks */
+  async function levelToggle() {
+    if (LEVEL.on) { removeEventListener('deviceorientation', levelEvent); LEVEL.on = false; LEVEL.raw = null; stakeRender(); return; }
+    try { if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') { const ok = await Promise.race([DeviceOrientationEvent.requestPermission(), new Promise(res => setTimeout(() => res('no answer'), 3000))]); if (ok === 'denied') { toast('tilt sensor not allowed: allow motion and orientation for this site'); return; } } } catch (_) {}   /* iphones ask; a browser that never answers is not waited on */
+    addEventListener('deviceorientation', levelEvent); LEVEL.on = true; stakeRender();
   }
   function stakeRead() {
     if (!stakeBoxEl) return; const el = stakeBoxEl.querySelector('[data-s="read"]'); if (!el) return; const line = STAKE.lines[STAKE.pick], g = stakeGrid();
