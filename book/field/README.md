@@ -22,6 +22,7 @@ Button names in the cards match coyotemountainfarm.com/topo.html.
 | 15 | [Check what was built](15-check-what-was-built.md) | Make · field build, Study · ground change |
 | 16 | [Defensible space walk](16-defensible-space-walk.md) | Study · fire ready |
 | 17 | [Visitor walk check](17-visitor-walk-check.md) | Shape · visitor walks |
+| 18 | [Build one-rock dams](18-build-one-rock-dams.md) | Shape · check dams |
 
 These are first versions, written before most of them were tried on the land. When a card is wrong in the field, the field wins: fix the card.
 

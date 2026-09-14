@@ -161,3 +161,22 @@ Three tools from the MLA class scripts:
 - The #u2layBtn toggle is now larger and light orange (Will).
 
 Test: e2e230 (23 checks) in session fb8fbb82's scratchpad. Regression 203, 205 and 211–229 passed, and the tip audit found none missing. Voice system.md was updated (coyote-voice 0c037a9) and the helper restarted. Permaculture library distilled: https://claude.ai/code/artifact/1a94f38b-db56-4669-8703-e2557f700578.
+
+## Added later still on 14 September: dam and spillway, check dams
+
+- **Shape · dam and spillway** (id `damwall`, S.rec.dam). It uses the water analysis dam: damAt(), S.damH as the full water depth, and damPool. The wall runs across the valley, perpendicular to the line from the pond's centroid to the dam, until the ground reaches the design crest.
+  - Crest = full water + flood depth over the spillway + freeboard, built 10% higher. The crest width follows the USDA table, with 3:1 and 2:1 batters and a 2.4 × 0.6 m cut-off trench.
+  - The spillway rule is √(catchment ha) m. The flood is Q = C·i·A/360, with C from S.runoff, and the flow depth comes from Q = 1.7·b·h^1.5.
+  - Also reported: the storage ratio with its rating, a year's yield, evaporation, seepage, and a wall-line CSV.
+  - The storm intensity, rain, runoff and evaporation inputs show "(example)" until entered.
+  - dwSet fills S.rec.dam in place. An earlier version replaced the object and lost edits.
+- **Shape · check dams** (id `checks`, S.rec.checks {gullies, points}).
+  - A gully is traced along an.down from the top tap to the point nearest the bottom tap.
+  - One-rock dams are a third of the full channel depth high, placed so the top of one is level with the foot of the next. Crossings are interpolated so the spacing doesn't creep.
+  - Rock weight follows Zeedyk (20–40 lb at 1 ft, scaled by depth^2.1), with 4 rows plus a 2-row footer per dam.
+  - Each dam can be marked built and logged after rain, and shows "full" at 90% of its height.
+  - Headcuts get a Zuni bowl or a 3:1 rundown; media lunas are also available. Everything exports as GPX, and walk the line gains a "check dam gullies" source.
+- Field card 18, "build one-rock dams", has a status line. Syllabus week 10 now uses it.
+- Render functions for these panels only defer for a focused input when the refresh comes from a timer. Otherwise the panel never redraws after typing.
+- Test e2e231 has 20 checks: a V valley whose fill matches the integral within 0.2%, and dam spacing on a 5% channel of exactly 3.00 m. Regressions passed and the tip audit found none missing.
+- **Resolution at lot scale (Will's concern, not yet acted on):** Baja heights come from Terrarium tiles, which use INEGI continental relief behind them. Averaging the Encino Solo z15 tile into 8 m blocks loses only 4 cm rms, so there is no real detail below about 10–15 m. The grid is about 150 cells at any site width, so a lot shows smooth interpolation. US sites use 3DEP. The real fix at lot scale is a drone DTM or a points file, both of which the tool already imports.

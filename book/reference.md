@@ -244,6 +244,40 @@ A path or road carved into the ground.
 | raise or sink (slider) | raised for a berm or a built-up road, sunk for a trail or a swale; sunk about 6 in is easy to see on a print |
 | draw it in plan · 3D | this tool works on the plan; its settings stay here in every view |
 
+### Shape · dam and spillway
+
+Dam and spillway: wall height, length and earth, spillway width for the flood, storage ratio, a year of water.
+
+*the wall across the valley at the dam site and the spillway beside it, sized from the pond and the flood: a planning check, not a design*
+
+| control | what it does |
+| --- | --- |
+| at the keypoint | put the dam where the main valley flattens, the keypoint the water analysis found |
+| tap a site | tap the valley floor where the wall should cross; the wall runs across the valley from there |
+| full water depth (menu) | how deep the water stands against the wall when the pond is full; the same as the dam height in study · water |
+| storm intensity (box) | the heaviest rain the spillway must pass, in a burst as long as the catchment takes to drain: ask the local weather service for the 1 in 50 or 1 in 100 year figure |
+| spillway width (menu) | rule of thumb: about the square root of the catchment in hectares, in metres; wider passes the flood shallower and slower |
+| freeboard (menu) | height of wall above the flood running over the spillway: at least 1 m in the dam-failure guide; 0.75 to 1 m for small ponds |
+| spillway side (menu) | which end of the wall the spillway is cut beside, looking downstream; auto picks the gentler side |
+| rain a year (box) | the average yearly rainfall here |
+| runoff a year (box) | the share of a year of rain that runs off to the pond: a few percent on dry, open ground (0 to 7.5% where 250 to 400 mm falls, in the dam guide) |
+| evaporation (box) | open water lost to the air in a year: up to 2.5 m in hot dry country |
+| save the wall line · csv | every quarter cell along the wall: distance, latitude, longitude, ground height and the height of fill, for setting out |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
+### Shape · check dams
+
+Check dams: one-rock dams laid out along a gully, headcut treatments, rock counts, and a log after rain.
+
+*one-rock dams along a gully, Zuni bowls at headcuts and media lunas on sheet flow, laid out for a work day and logged after rain*
+
+| control | what it does |
+| --- | --- |
+| trace a gully: tap its top, then its bottom | the line follows the water down from the top tap; one-rock dams are laid along it |
+| mark a headcut | a step in the gully bed where it is eating back uphill: gets a Zuni bowl or a rundown |
+| mark sheet flow for a media luna | a spot where water runs off in a sheet rather than a channel |
+| see them in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Shape · steps
 
 Steps up a slope: draw the line, get the risers, treads, stride check and cut and fill.

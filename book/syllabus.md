@@ -39,7 +39,7 @@ Learn chapters are in the tool's top bar (learn). Field cards are in `book/field
 | 7 | Where things fit | Study · landscape fit · sun | walk the three best spots | options A, B and C for one intervention, and the case for leaving it as it is |
 | 8 | **Mid-term review** | present the site reading and the intent | | 10-minute review with the studio and a guest |
 | 9 | Grading | learn: grade a pad · Shape · pad, grade, path · earthwork budget | 02 flag the pad corners | a grading plan with cut, fill and a budget range |
-| 10 | Water design | Shape · pad and path for basins · Study · water budget | 07 (or a water test with a hose) | water budget: design A against design B |
+| 10 | Water design | Shape · check dams · dam and spillway · Study · water budget | 18 build one-rock dams (a work day) · 07 after the next rain | a gully laid out and built, logged after rain; or a dam site checked for wall, spillway and storage ratio |
 | 11 | Planting | Shape · agroforestry · Study · carbon | 09 plant a row (mark it, if not plant it) | a planting plan at planting day and at 15 years, with its flowering calendar |
 | 12 | Animals and people | Shape · grazing · visitor walks | 10 walk the paddocks · 17 visitor walk check | a grazing rotation or a visitor walk, with its limits |
 | 13 | Building it | Make · walk the line · field build | 01 stake a swale · 14 stake the grading | a staked line on the ground (photos and gpx) and a stakes file |
