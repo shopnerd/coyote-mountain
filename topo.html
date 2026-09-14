@@ -4132,7 +4132,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
   const on = sel => { const e = $(sel); return !!(e && e.classList.contains('on')); };
   // a tool: pick = the original button(s) its choice presses; view = the view it needs ('plan' or '3d'); analysis = in plan it draws the water analysis; rows / more = original rows mounted under it; acts = extra buttons that press originals
   // hover descriptions for the buttons this layout adds (the rows it moves keep their own)
-  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
+  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "budget": "price the earthwork, walls, surfaces and planting on this plan with your own rates", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
   { const kc = $('#kmlClear'); if (kc) { const row = make('div', { cls: 'seg deep', style: 'padding:0;margin-top:6px' }); kc.parentElement.after(row); row.append(kc); } }   // clear the lot sits alone at the bottom of lot and survey
   const TASKS = [
     { id: 'site', name: 'Site', tools: [
@@ -4149,6 +4149,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'path', name: 'path', pick: '#brushes button[data-b=path]', view: 'plan', rows: ['#pathWRow'], more: ['#pathSurfRow', '#pathHRow'] },
       { id: 'plant', name: 'plant', pick: '#brushes button[data-b=pen]', view: 'plan', rows: ['#plantRow', '#brushParams'], note: 'pick a tree, shrub or hedge to plant, or gravel or paving to fill an area, then draw' },
       { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', view: 'plan', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']] },
+      { id: 'budget', name: 'earthwork budget', panel: box => budgetPanel(box), note: 'the grading and planting on this plan, priced with your rates: a likely range, truck trips and diesel' },
       { id: 'object', name: 'object', pick: '#brushes button[data-b=obj]', view: 'plan', rows: ['#objRow'], more: ['#objUnitRow', '#objRotRow', '#objScaleRow', '#objLiftRow'] },
     ] },
     { id: 'study', name: 'Study', tools: [
@@ -4231,6 +4232,10 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
 .u2panel .seg{flex-wrap:wrap}.u2panel #plantRow>button{flex:1 0 30%}.u2panel .seg>button{flex:1 0 auto;max-width:100%}.u2panel .seg>button[style*="flex:2"]{flex:2 0 auto!important}
 .u2panel h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:500}
 .u2note{color:var(--ink3);font-size:11px;line-height:1.45}
+.u2bud{display:grid;gap:10px}.u2bud .tot{display:grid;gap:2px;padding:8px 0;border-top:2px solid var(--ink);border-bottom:1px solid var(--line)}.u2bud .tot b{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}.u2bud .tot span{font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.u2bud .meas{display:grid;gap:1px;font-size:11px;color:var(--ink2);font-variant-numeric:tabular-nums}.u2bud .line{display:grid;grid-template-columns:1fr auto;gap:1px 8px;padding:5px 0;border-bottom:1px solid var(--line);font-size:11.5px}.u2bud .line .nm{color:var(--ink)}.u2bud .line .cost{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.u2bud .line .q{grid-column:1/-1;display:flex;align-items:center;gap:2px;color:var(--ink3);font-size:11px;font-variant-numeric:tabular-nums;white-space:nowrap}.u2bud .line .qv{flex:1;overflow:hidden;text-overflow:ellipsis}.u2bud input{font:inherit;font-size:11px;width:44px;height:19px;min-height:0;box-sizing:border-box;padding:0 3px;border:1px solid #9a9992;border-radius:2px;background:var(--paper);color:var(--ink);text-align:right}.u2bud input:focus{outline:2px solid var(--accent);outline-offset:0}
+.u2bud .set{display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;font-size:11px;color:var(--ink2)}.u2bud select{font:inherit;font-size:11px;max-width:100%}.u2bud .warn{font-size:10.5px;color:var(--accent);line-height:1.4}
 .u2group{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);border-bottom:1px solid var(--line);padding:6px 0 3px;margin-top:2px}#u2tools .u2group{padding-top:8px}#u2tools .u2group:first-child{padding-top:0}
 output.u2edit{cursor:text;border-bottom:1px dotted var(--ink3)}output.u2edit:hover{color:var(--accent);border-bottom-color:var(--accent)}.u2numIn{width:84px;font:inherit;font-size:11px;text-align:right;padding:1px 4px;border:1px solid var(--accent);border-radius:2px;background:var(--paper);color:var(--ink)}
 .u2rows{display:flex;flex-direction:column;gap:8px}
@@ -4333,6 +4338,79 @@ details.u2more[open]>.u2rows{margin-top:8px}
         box.addEventListener('keydown', ev => { ev.stopPropagation(); if (ev.key === 'Enter') finish(true); else if (ev.key === 'Escape') finish(false); });
         box.addEventListener('blur', () => finish(true)); box.addEventListener('click', ev => ev.stopPropagation()); }); });
   }
+  /* earthwork budget: quantities from the plan x your rates. rates are kept in metric per unit and shown in the chosen units; the example rates are placeholders, never quotes */
+  const BUD_KEY = 'coyote-budget', BUD_DEF = { cur: '$', firm: 'normal', truck: 7.6, haul: 5, rates: { cut: 8, fill: 10, off: 20, imp: 25, top: 6, wall: 450, grav: 25, pave: 110, tree: 150, shrub: 30, hedge: 40 } };
+  let BUD = JSON.parse(JSON.stringify(BUD_DEF)); try { const v = JSON.parse(localStorage.getItem(BUD_KEY) || 'null'); if (v) BUD = { ...BUD, ...v, rates: { ...BUD.rates, ...(v.rates || {}) } }; } catch (_) {}
+  BUD.edited = BUD.edited || false; const budSave = () => { try { localStorage.setItem(BUD_KEY, JSON.stringify(BUD)); } catch (_) {} };
+  const FIRM = { firm: [.9, 1.15, 'quoted prices'], normal: [.8, 1.35, 'local rates, no quotes'], idea: [.7, 1.6, 'an early idea'] };
+  const polyA = pts => { let a = 0; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) a += (pts[j][0] + pts[i][0]) * (pts[j][1] - pts[i][1]); return Math.abs(a / 2); };
+  const segLen = pts => { let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return L * cs(); };
+  function budQty() {   // everything in metres: m³ bank for cut and fill, m³ loose for hauling, m² and m for the rest
+    const e = S.earth || { cut: 0, fill: 0, dist: 0, strip: 0 }, A = cs() * cs(), sw = 1 + (S.swell || 0), net = e.cut - e.fill;
+    let wall = 0, grav = 0, pave = 0, trees = 0, shrub = 0, hedge = 0;
+    for (const st of S.strokes) {
+      if (st.kind === 'wall' && st.top && st.bot) for (let i = 1; i < st.pts.length; i++) wall += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs() * (Math.abs(st.top[i] - st.bot[i]) + Math.abs(st.top[i - 1] - st.bot[i - 1])) / 2;
+      else if (st.kind === 'path') { const a = segLen(st.pts) * (st.pw || 1.5); if (st.sf === 'gravel') grav += a; else if (st.sf === 'paving') pave += a; }
+      else if (st.kind === 'gravel') grav += polyA(st.pts) * A; else if (st.kind === 'paving') pave += polyA(st.pts) * A;
+      else if (st.kind === 'tree') trees++; else if (st.kind === 'shrub') shrub += polyA(st.pts) * A; else if (st.kind === 'hedge') hedge += segLen(st.pts);
+    }
+    return { cut: e.cut, fill: e.fill, off: Math.max(0, net) * sw, imp: Math.max(0, -net) * sw, top: e.strip || 0, wall, grav, pave, tree: trees, shrub, hedge, dist: e.dist };
+  }
+  const BUD_LINES = [   // key, name, kind of quantity, what it covers
+    ['cut', 'excavation', 'vol', 'cut in place, dug and moved on site'], ['fill', 'fill, placed and compacted', 'vol', 'fill in place'], ['off', 'haul off the surplus', 'vol', 'loose, after swell'], ['imp', 'bring in fill', 'vol', 'loose, after swell'],
+    ['top', 'topsoil strip and respread', 'vol', 'kept on site for planting'], ['wall', 'retaining walls', 'area', 'wall face'], ['grav', 'gravel surfaces', 'area', 'paths and areas'], ['pave', 'paving', 'area', 'paths and areas'],
+    ['tree', 'trees', 'each', 'planted'], ['shrub', 'shrub beds', 'area', 'bed area'], ['hedge', 'hedges', 'len', 'length']];
+  const uConv = kind => kind === 'vol' ? (isFt() ? [1.30795, 'yd³'] : [1, 'm³']) : kind === 'area' ? (isFt() ? [10.7639, 'ft²'] : [1, 'm²']) : kind === 'len' ? (isFt() ? [3.28084, 'ft'] : [1, 'm']) : [1, 'each'];
+  const money = v => BUD.cur + (Math.abs(v) >= 1e5 ? sig2(v).toLocaleString() : Math.round(v).toLocaleString());
+  const qtyTxt = (v, kind) => { const [k, u] = uConv(kind); const x = v * k; return (x < 10 ? tz(x.toFixed(1)) : sig2(x).toLocaleString()) + ' ' + u; };
+  let budBox = null;
+  function budgetPanel(box) { budBox = box; budBuild(); }
+  function budBuild() {
+    if (!budBox) return; budBox.textContent = ''; budBox.dataset.unit = S.unit; const wrap = make('div', { cls: 'u2bud' }); budBox.append(wrap);
+    wrap.append(make('div', { cls: 'tot' }, [make('b', { 'data-b': 'base' }), make('span', { 'data-b': 'range' })]), make('div', { cls: 'meas', 'data-b': 'meas' }));
+    const lines = make('div', { 'data-b': 'lines' }); wrap.append(lines);
+    for (const [key, name, kind, what] of BUD_LINES) {
+      const [k, u] = uConv(kind), rate = make('input', { type: 'text', inputmode: 'decimal', 'aria-label': name + ' rate', value: tz((BUD.rates[key] / k).toFixed(2)) });
+      rate.addEventListener('change', () => { const v = parseFloat(rate.value.replace(/[^\d.]/g, '')); if (isFinite(v) && v >= 0) { BUD.rates[key] = v * k; BUD.edited = true; budSave(); } rate.value = tz((BUD.rates[key] / k).toFixed(2)); budUpdate(); });
+      rate.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') rate.blur(); });
+      const row = make('div', { cls: 'line', 'data-k': key, 'data-tip': what }, [make('span', { cls: 'nm', text: name }), make('span', { cls: 'cost' }), make('span', { cls: 'q' }, [make('span', { cls: 'qv' }), document.createTextNode(BUD.cur), rate, document.createTextNode('/' + (u === 'each' ? 'ea' : u))])]);
+      lines.append(row);
+    }
+    wrap.append(make('p', { cls: 'u2note', 'data-b': 'empty', text: 'nothing to price yet: grade a pad or a path, draw walls, surfaces or planting, and the lines appear.' }));
+    const set = make('div', { cls: 'set' });
+    const firm = make('select', { 'aria-label': 'how firm are the prices' }); for (const id in FIRM) { const o = make('option', { value: id, text: FIRM[id][2] }); if (id === BUD.firm) o.selected = true; firm.append(o); }
+    firm.onchange = () => { BUD.firm = firm.value; budSave(); budUpdate(); };
+    const cur = make('input', { type: 'text', value: BUD.cur, 'aria-label': 'currency', style: 'width:44px' }); cur.addEventListener('change', () => { BUD.cur = cur.value.trim().slice(0, 4) || '$'; budSave(); budBuild(); }); cur.addEventListener('keydown', e => e.stopPropagation());
+    const [tk, tu] = uConv('vol'), [dk, du] = isFt() ? [.621371, 'mi'] : [1, 'km'];
+    const truck = make('input', { type: 'text', value: tz((BUD.truck * tk).toFixed(1)), 'aria-label': 'truck load' }); truck.addEventListener('change', () => { const v = parseFloat(truck.value); if (v > 0) { BUD.truck = v / tk; budSave(); } budUpdate(); }); truck.addEventListener('keydown', e => e.stopPropagation());
+    const haul = make('input', { type: 'text', value: tz((BUD.haul * dk).toFixed(1)), 'aria-label': 'haul distance one way' }); haul.addEventListener('change', () => { const v = parseFloat(haul.value); if (v >= 0) { BUD.haul = v / dk; budSave(); } budUpdate(); }); haul.addEventListener('keydown', e => e.stopPropagation());
+    set.append(make('span', { text: 'prices are' }), firm, make('span', { text: 'currency' }), cur, make('span', { text: 'truck load, ' + tu }), truck, make('span', { text: 'haul one way, ' + du }), haul);
+    wrap.append(make('div', { cls: 'u2group', text: 'settings' }), set);
+    wrap.append(make('p', { cls: 'warn', 'data-b': 'warn', text: 'example rates, not quotes: type your local prices into each line.' }));
+    const csv = make('button', { cls: 'btn', type: 'button', text: 'save budget · csv' }); csv.onclick = budCsv; wrap.append(csv);
+    const reset = make('button', { cls: 'btn', type: 'button', text: 'example rates again' }); reset.onclick = () => { BUD.rates = { ...BUD_DEF.rates }; BUD.edited = false; budSave(); budBuild(); }; wrap.append(reset);
+    budUpdate();
+  }
+  function budCalc() {
+    const q = budQty(), rows = BUD_LINES.map(([key, name, kind]) => ({ key, name, kind, q: q[key], cost: q[key] * BUD.rates[key] })).filter(r => r.q > (r.kind === 'each' ? 0 : .5));
+    const base = rows.reduce((a, r) => a + r.cost, 0), [lo, hi] = FIRM[BUD.firm] || FIRM.normal, loads = q.off + q.imp, trips = loads > 0 ? Math.ceil(loads / BUD.truck) : 0, litres = trips * 2 * BUD.haul * .45;
+    return { q, rows, base, lo: base * lo, hi: base * hi, trips, litres, co2: litres * 2.68 };
+  }
+  function budUpdate() {
+    if (!budBox || !budBox.isConnected) return; const c = budCalc(), $b = k => budBox.querySelector(`[data-b="${k}"]`);
+    $b('base').textContent = c.rows.length ? money(c.base) : BUD.cur + '0'; $b('range').textContent = c.rows.length ? `likely ${money(c.lo)} to ${money(c.hi)} · ${FIRM[BUD.firm][2]}` : 'nothing priced yet';
+    const fuel = (isFt() ? sig2(c.litres / 3.785).toLocaleString() + ' gal' : sig2(c.litres).toLocaleString() + ' L');
+    $b('meas').textContent = ''; for (const t of [c.trips ? `${c.trips.toLocaleString()} truck trip${c.trips === 1 ? '' : 's'} · about ${fuel} diesel · ${sig2(c.co2 / 1000 < 10 ? c.co2 / 100 : c.co2 / 1000) / (c.co2 / 1000 < 10 ? 10 : 1)} t CO₂` : 'no trucking: cut and fill balance on site', c.q.top > .5 ? `topsoil kept ${qtyTxt(c.q.top, 'vol')}` : '', c.q.dist > 0 ? `ground disturbed ${fBig(c.q.dist)}` : ''].filter(Boolean)) $b('meas').append(make('div', { text: t }));
+    const shown = new Set(c.rows.map(r => r.key));
+    budBox.querySelectorAll('.line').forEach(row => { const r = c.rows.find(x => x.key === row.dataset.k); row.hidden = !shown.has(row.dataset.k); if (!r) return; row.querySelector('.cost').textContent = money(r.cost); row.querySelector('.qv').textContent = qtyTxt(r.q, r.kind); });
+    $b('empty').hidden = c.rows.length > 0; $b('warn').hidden = BUD.edited;
+  }
+  function budCsv() {
+    const c = budCalc(), esc = v => /[",\n]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v), out = [['line', 'quantity', 'unit', 'rate', 'cost'].join(',')];
+    for (const r of c.rows) { const [k, u] = uConv(r.kind); out.push([r.name, (r.q * k).toFixed(2), u, (BUD.rates[r.key] / k).toFixed(2), r.cost.toFixed(0)].map(esc).join(',')); }
+    out.push(['estimate', '', '', '', c.base.toFixed(0)].join(','), ['likely low', '', '', '', c.lo.toFixed(0)].join(','), ['likely high', '', '', '', c.hi.toFixed(0)].join(','), ['truck trips', c.trips, 'trips', '', ''].join(','), ['diesel', (isFt() ? c.litres / 3.785 : c.litres).toFixed(0), isFt() ? 'gal' : 'L', '', ''].join(','), ['currency', esc(BUD.cur), '', '', ''].join(','), ['rates', BUD.edited ? 'your rates' : 'example rates, not quotes', '', '', ''].join(','));
+    dl(URL.createObjectURL(new Blob([out.join('\n')], { type: 'text/csv' })), `coyote-budget-${((S.world && S.world.name) || 'site').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}.csv`);
+  }
   function renderTasks() {
     tasksEl.textContent = '';
     for (const t of TASKS) { const b = make('button', { type: 'button', role: 'tab', 'aria-selected': String(t.id === state.task), cls: t.id === state.task ? 'on' : '', text: t.name, 'data-tip': U2TIP[t.id] || '' }); b.onclick = () => chooseTask(t.id); tasksEl.append(b); }
@@ -4364,6 +4442,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
     const cut = $('#cut'), fill = $('#fill'); stCut.innerHTML = ''; stFill.innerHTML = '';
     stCut.append('cut ', make('b', { text: cut ? cut.textContent : '' })); stFill.append('fill ', make('b', { text: fill ? fill.textContent : '' }));
     themeLab(); if (layPanel.classList.contains('show')) noneUI();
+    if (budBox && budBox.isConnected) { const typing = budBox.contains(document.activeElement) && document.activeElement.tagName === 'INPUT'; if (budBox.dataset.unit !== S.unit) { if (!typing) budBuild(); } else if (!typing) budUpdate(); }
   }
   // the engine's own view and brush changes (keys 1-4, the voice, the tour) keep the new layout in step
   { const legacySetMode = setMode; setMode = m => { legacySetMode(m); if (!state.busy) state.view = m === 'model' ? '3d' : m === 'section' ? 'section' : 'plan'; viewsEl.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.v === state.view)); remount(); }; }
