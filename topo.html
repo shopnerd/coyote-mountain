@@ -227,6 +227,12 @@ html[data-depth="simple"] #png{grid-column:1/-1}
       <div class="seg deep" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / kmz / geojson</button><button id="kmlClear">clear</button></div>
       <div class="seg deep" style="padding:0;margin-top:6px"><button id="surveyBtn" style="flex:2">drone survey dem</button><button id="surveyClear" style="display:none">clear</button></div>
       <div class="desc deep" id="surveyInfo" style="padding:0;display:none"></div>
+      <div class="seg deep" id="chgFiles" style="padding:0;margin-top:6px"><button id="chgBefore">before survey</button><button id="chgAfter">after survey</button></div>
+      <div class="desc deep" id="chgInfo" style="padding:0"></div>
+      <div class="seg deep" id="chgAlignRow" style="padding:0;margin-top:6px"><button data-ca="1" class="on">line up heights</button><button data-ca="0">heights as flown</button></div>
+      <div class="p deep" id="chgLodRow"><label>ignore changes under<output id="o_chgLod">0.5 ft</output></label><input type="range" id="chgLod" min=".02" max="1" step=".01" value=".15"></div>
+      <div class="seg deep" id="chgShowRow" style="padding:0;margin-top:6px"><button data-cs="1" class="on">change wash</button><button data-cs="0">hide</button><button id="chgClear">clear</button></div>
+      <input type="file" id="chgFile" accept=".tif,.tiff,image/tiff" style="display:none">
       <div class="seg deep" style="padding:0;margin-top:6px"><button id="flightBtn" style="flex:2">plan a flight</button></div>
       <div class="seg deep" style="padding:0;margin-top:6px;display:none" id="seaRow"><button data-sea="1" class="on">water</button><button data-sea="0">raw ground</button></div>
       <div class="seg deep" style="padding:0;margin-top:6px;display:none" id="roadRow"><button data-road="1" class="on">roads</button><button data-road="0">no roads</button></div>
@@ -785,8 +791,9 @@ function drawBuildings2D(c, toXY, k) {   // hatched footprints with an ink outli
   c.restore();
 }
 let planShot = { key: '' };
+const CHG = { before: null, after: null, pick: 'after', align: true, lod: .15, show: true, ver: 0, key: '', diff: null, stats: null, img: null };   /* ground change: two surveys of the same ground, compared cell by cell */
 function drawPlan() {                     // cached picture + live overlay; the picture is redrawn only when something on it changes
-  const key = [S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
+  const key = [CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
@@ -839,6 +846,7 @@ function drawPlanBase() {
     ctx.stroke(); ctx.globalAlpha = 1;
   }
   if (S.showCF && S.earth && S.earth.dist > 0) { const cf = cutfillImage(); if (cf.canvas) { ctx.save(); ctx.globalAlpha = .9; ctx.imageSmoothingEnabled = true; ctx.drawImage(cf.canvas, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); } }   // the same wash the model shows: ember fill, grey cut
+  if (CHG.show && CHG.after) { const d = chgCompute(); if (d && CHG.img) { ctx.save(); ctx.globalAlpha = .95; ctx.imageSmoothingEnabled = true; ctx.drawImage(CHG.img, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); } }   /* ground change: ember where soil was lost, blue where it built up */
   if (S.showBase) drawBaseContours();
   drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt'))); drawWater(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false, .55); drawRoads(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false); drawBuildings2D(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
   // sheet frame, north, scale bar
@@ -3673,6 +3681,42 @@ document.getElementById('flightBtn').onclick = () => {   // hand this place to t
 document.getElementById('surveyFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (!S.world) { toast('fetch the real terrain around the survey first, then load it'); return; }
   busy('reading the survey'); try { const buf = await f.arrayBuffer(), sv = await parseGeoTiff(buf); sv.name = f.name.replace(/\.tiff?$/i, ''); snapshot(); S.survey = sv; applySurvey(false); surveyStore.put(sv.name, buf); } catch (err) { toast(String(err.message || err)); } finally { unbusy(); } };
 document.getElementById('surveyClear').onclick = () => { S.survey = null; surveyStore.del(); document.getElementById('surveyInfo').style.display = 'none'; document.getElementById('surveyClear').style.display = 'none'; if (S.world) { S.world.survey = null; fetchWorld({ lat: S.world.lat, lon: S.world.lon, name: S.world.name }, true); } };
+/* ---------- ground change: a before and an after survey (or the sheet's ground as a rough before), the difference per cell, what was lost and what built up ---------- */
+function chgCompute() {
+  const key = [CHG.ver, S.terrainVer, W, H, S.world ? S.world.lat + ',' + S.world.lon : ''].join('|'); if (CHG.key === key) return CHG.diff;
+  CHG.key = key; CHG.diff = null; CHG.stats = null; CHG.img = null;
+  if (!CHG.after || !S.world) { chgUI(); return null; }
+  const N = W * H, d = new Float32Array(N).fill(NaN), sample = []; let cov = 0;
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = idx(i, j), [la, lo] = nodeLatLon(i, j, S.world.lat, S.world.lon), a = CHG.after.sample(la, lo); if (Number.isNaN(a)) continue;
+    const b = CHG.before ? CHG.before.sample(la, lo) : base[n]; if (Number.isNaN(b)) continue; d[n] = a - b; cov++; if ((n * 7919) % 97 < 12) sample.push(a - b); }
+  let shift = 0; if (CHG.align && sample.length) { sample.sort((p, q) => p - q); shift = sample[sample.length >> 1]; }   // most ground does not move, so the middle difference is the drift between flights
+  const A = cs() * cs(); let lost = 0, gained = 0, peak = 0;
+  for (let n = 0; n < N; n++) { if (Number.isNaN(d[n])) continue; let v = d[n] - shift; if (Math.abs(v) < CHG.lod) v = 0; d[n] = v; if (v < 0) lost -= v * A; else gained += v * A; peak = Math.max(peak, Math.abs(v)); }
+  CHG.diff = d; CHG.stats = { cov: Math.round(100 * cov / N), shift, lost, gained, peak, rough: !CHG.before };
+  if (cov) { const c = document.createElement('canvas'); c.width = W; c.height = H; const cx = c.getContext('2d'), im = cx.createImageData(W, H), scale = Math.max(CHG.lod * 3, peak * .6);
+    for (let n = 0; n < N; n++) { const v = d[n]; if (!v) continue; const a = Math.min(1, Math.abs(v) / scale), col = v < 0 ? [201, 90, 44] : [52, 104, 150]; im.data[n * 4] = col[0]; im.data[n * 4 + 1] = col[1]; im.data[n * 4 + 2] = col[2]; im.data[n * 4 + 3] = Math.round(255 * (.2 + .65 * a)); }
+    cx.putImageData(im, 0, 0); CHG.img = c; }
+  chgUI(); return d;
+}
+function chgUI() {
+  const nm = sv => sv ? sv.name.slice(0, 18) : ''; document.getElementById('chgBefore').textContent = CHG.before ? 'before · ' + nm(CHG.before) : 'before survey'; document.getElementById('chgAfter').textContent = CHG.after ? 'after · ' + nm(CHG.after) : 'after survey';
+  document.getElementById('chgBefore').classList.toggle('on', !!CHG.before); document.getElementById('chgAfter').classList.toggle('on', !!CHG.after);
+  const info = document.getElementById('chgInfo'), st = CHG.stats;
+  if (!CHG.after) info.textContent = 'load two drone surveys of the same ground, flown before and after: a storm, a season, an earthwork. with only an after survey, it is compared with the ground on the sheet, which is rough.';
+  else if (!S.world) info.textContent = 'fetch the real terrain around the surveys first.';
+  else if (!st) info.textContent = 'comparing…';
+  else if (!st.cov) info.textContent = 'the surveys do not overlap this site: fetch the place they cover.';
+  else { const net = st.gained - st.lost; info.textContent = `${st.rough ? 'after survey against the sheet\u2019s ground (rough) · ' : ''}soil lost ${fV(st.lost)} · built up ${fV(st.gained)} · net ${net < 0 ? '\u2212' : '+'}${fV(Math.abs(net))} · compared over ${st.cov}% of the site${CHG.align && Math.abs(st.shift) >= .01 ? ' · heights lined up by ' + fL(st.shift, 2) : ''} · changes under ${fL(CHG.lod, 2)} ignored`; }
+}
+document.getElementById('chgBefore').onclick = () => { CHG.pick = 'before'; document.getElementById('chgFile').click(); };
+document.getElementById('chgAfter').onclick = () => { CHG.pick = 'after'; document.getElementById('chgFile').click(); };
+document.getElementById('chgFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  busy('reading the survey'); try { const sv = await parseGeoTiff(await f.arrayBuffer()); sv.name = f.name.replace(/\.tiff?$/i, ''); CHG[CHG.pick] = sv; CHG.ver++; S.dirty = true; chgCompute(); if (!S.world) toast('fetch the real terrain around the surveys first'); } catch (err) { toast(String(err.message || err)); } unbusy(); };
+document.getElementById('chgAlignRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; CHG.align = b.dataset.ca === '1'; document.querySelectorAll('#chgAlignRow button').forEach(x => x.classList.toggle('on', x === b)); CHG.ver++; S.dirty = true; chgCompute(); };
+document.getElementById('chgShowRow').onclick = e => { const b = e.target.closest('button[data-cs]'); if (!b) return; CHG.show = b.dataset.cs === '1'; document.querySelectorAll('#chgShowRow button[data-cs]').forEach(x => x.classList.toggle('on', x === b)); CHG.ver++; S.dirty = true; };
+document.getElementById('chgClear').onclick = () => { CHG.before = CHG.after = null; CHG.ver++; S.dirty = true; chgCompute(); };
+bind('chgLod', v => fL(v, 2), v => { CHG.lod = v; CHG.ver++; if (CHG.after) chgCompute(); });
+chgUI();
 function seaDetect() {                    // after a fetch: remember the raw ground, find the water, clip the sea floor
   despike(); rawBase = base.slice(); waterDetect(); S.seaClip = S.hasWater; applySea();
 }
@@ -4066,7 +4110,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
   const on = sel => { const e = $(sel); return !!(e && e.classList.contains('on')); };
   // a tool: pick = the original button(s) its choice presses; view = the view it needs ('plan' or '3d'); analysis = in plan it draws the water analysis; rows / more = original rows mounted under it; acts = extra buttons that press originals
   // hover descriptions for the buttons this layout adds (the rows it moves keep their own)
-  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
+  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
   { const kc = $('#kmlClear'); if (kc) { const row = make('div', { cls: 'seg deep', style: 'padding:0;margin-top:6px' }); kc.parentElement.after(row); row.append(kc); } }   // clear the lot sits alone at the bottom of lot and survey
   const TASKS = [
     { id: 'site', name: 'Site', tools: [
@@ -4089,6 +4133,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'section', name: 'section', pick: '#brushes button[data-b=section]', rows: ['#secTabs'], acts: [['draw in plan', () => { state.view = 'plan'; applyView(); press('#brushes button[data-b=section]'); }], ['look at it in section', () => { state.view = 'section'; applyView(); }]], note: 'draw a line across the ground in plan, then look at it in section; the tabs pick which line' },
       { id: 'water', name: 'water', analysis: true, rows: ['#anaLayers', '#rainBtn', '#anaDesc'], more: ['#tapRow', '#rain', '#thr', '#runoff', '#plow', '#swale', '#dam', '#riseRow'] },
       { id: 'sun', name: 'sun', analysis: true, rows: ['#sunRow', '#sunSec'] },
+      { id: 'change', name: 'ground change', view: 'plan', planLabel: 'see it in plan', rows: ['#chgFiles', '#chgInfo', '=settings', '#chgAlignRow', '#chgLodRow', '#chgShowRow'], note: 'two drone surveys of the same ground, before and after: ember where soil was lost, blue where it built up' },
     ] },
     { id: 'make', name: 'Make', tools: [
       { id: 'render', group: 'pictures and sheets', name: 'render', view: '3d', rows: ['#rendRow', '#rendSel'], more: ['#sunSec'] },
@@ -4229,7 +4274,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
     const t = tool(); for (const box of [panelRows, panelMore]) if (box) while (box.firstChild) park.append(box.firstChild); panelEl.textContent = '';
     const rows = make('div', { cls: 'u2rows' }), mrows = make('div', { cls: 'u2rows u2second' }), acts = make('div', { cls: 'u2acts' });
     panelEl.append(make('h3', { text: t.name })); if (t.note) panelEl.append(make('p', { cls: 'u2note', text: t.note }));
-    planGo = null; if (t.view === 'plan') { planGo = make('button', { cls: 'btn', type: 'button', text: 'draw it in plan', 'data-tip': 'this tool draws on the plan; its settings stay here in every view' }); planGo.onclick = () => { state.view = 'plan'; applyView(); }; panelEl.append(planGo); }
+    planGo = null; if (t.view === 'plan') { planGo = make('button', { cls: 'btn', type: 'button', text: t.planLabel || 'draw it in plan', 'data-tip': 'this tool works on the plan; its settings stay here in every view' }); planGo.onclick = () => { state.view = 'plan'; applyView(); }; panelEl.append(planGo); }
     panelEl.append(rows);
     for (const [label, sel] of t.acts || []) { const b = make('button', { cls: 'btn', type: 'button', text: label }); b.onclick = () => { if (typeof sel === 'function') sel(); else press(sel); refresh(); }; acts.append(b); }
     if (t.acts) panelEl.append(acts);
