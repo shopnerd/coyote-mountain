@@ -150,3 +150,14 @@ Page hooks for tests: `window.__ui2` (`state, chooseTask, chooseTool, TASKS, cat
 - A paper needs field results; plan the before and after surveys and infiltration tests now so there is something to report.
 - Refresh the stale artifacts (control map, private gallery, topo copy).
 - The `e2e204` and flight drag checks read `rail2`; the value is now `rail3` (they print a blank but pass).
+
+## Added later on 14 September (from Will's 2017 Grasshopper class)
+
+Three tools from the MLA class scripts:
+
+- **Study · what grows where** (id `suit`). SUIT_NEEDS gives each AGRO_LIB species its water need, most slope, sun side, frost tenderness and drainage. Wetness is a percentile rank of the topographic wetness index. Zones: steep, wettest, hot, cool, frost pocket, open. Each zone's plant list favours plants that do better there than across the site. A tap reads a spot and can plant the best plant there. Saved in S.rec.suit. White sage was added to AGRO_LIB and CARBON_KG.
+- **Shape · steps** (id `steps`). The flights live in S.rec.steps, in lat/lon. The flight has n risers at (k+½)T, a half tread of level ground at each end, and a stride check of 2R+T within 620–700 mm. Cut and fill are integrated every T/8, not on the grid, because a grid cell can be wider than a tread. The section shows the whole flight plus a close-up. Steps are drawn on the plan whichever tool is open, so they print on the sheet.
+- **Drawing sheet · model picture** set to lines (straight, one point, crisscross). `lineComposition()` is a row-by-row hidden-line painter. The controls are #sheetStyle, #lineN, #lineVe and #linePng. With a painter key, the model painting call is skipped when a line style is chosen.
+- The #u2layBtn toggle is now larger and light orange (Will).
+
+Test: e2e230 (23 checks) in session fb8fbb82's scratchpad. Regression 203, 205 and 211–229 passed, and the tip audit found none missing. Voice system.md was updated (coyote-voice 0c037a9) and the helper restarted. Permaculture library distilled: https://claude.ai/code/artifact/1a94f38b-db56-4669-8703-e2557f700578.

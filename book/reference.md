@@ -244,6 +244,17 @@ A path or road carved into the ground.
 | raise or sink (slider) | raised for a berm or a built-up road, sunk for a trail or a swale; sunk about 6 in is easy to see on a print |
 | draw it in plan · 3D | this tool works on the plan; its settings stay here in every view |
 
+### Shape · steps
+
+Steps up a slope: draw the line, get the risers, treads, stride check and cut and fill.
+
+*a flight of steps up a slope: risers and treads from the ground under a drawn line, checked against an easy stride*
+
+| control | what it does |
+| --- | --- |
+| draw a flight: tap its centreline | tap where the steps start and where they end, with points between for a bend; the bottom is read from the ground. press again to stop |
+| draw in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Shape · plant
 
 Trees, shrubs, hedges, gravel and paving drawn on the plan.
@@ -438,6 +449,20 @@ How much water the design holds from a storm and a year, against what the planti
 | keep as B | remember this design’s water numbers to compare with another |
 | clear | forget what was kept or loaded here |
 
+### Study · what grows where
+
+What grows where: each plant in the library read against slope, sun side, wetness and frost pockets, as zones on the plan.
+
+*which plants in the library suit which ground: slope, the sunny or shaded side, where water gathers, where frost settles*
+
+| control | what it does |
+| --- | --- |
+| ground zones | the site split into kinds of ground, each named with the plants that suit it best |
+| one plant | how well one plant suits each part of the site |
+| rain only | plants that need water do best where water gathers |
+| with watering | as if every plant is watered: slope, sun side, frost and drainage still count |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Study · landscape fit
 
 Suitability: hard limits never traded, preferences weighed, the three best spots and their tradeoffs.
@@ -590,6 +615,10 @@ A drawing sheet: plan, model and section with a title block.
 | control | what it does |
 | --- | --- |
 | paper (slider) | paper size for the drawing sheet set |
+| model picture (slider) | the model picture on the sheet: the render, or the ground drawn only in lines laid over it (straight rows, rays from one point, or crossing diagonals) |
+| lines (slider) | how many lines the line drawing lays over the ground |
+| line height (slider) | how much the line drawing stretches the heights, so gentle ground still reads |
+| save the line drawing · png | the line drawing on its own, large, as a png |
 | drawing sheet · pdf + png | the drawing sheet: the model as it stands and the active section, both painted in the chosen style, over the plan, the analysis and the notes at true scale, with the title block. two calls to the painter; without a key the two pictures are drawn instead |
 | save png | save the current view as an image |
 | preview | draw the result here before exporting |

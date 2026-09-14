@@ -374,6 +374,10 @@ html[data-depth="simple"] #png{grid-column:1/-1}
       <div class="p" style="margin-top:6px"><label>paper</label><select id="paper">
         <option value="11x8.5">letter · 11 × 8.5 in</option><option value="17x11">tabloid · 17 × 11 in</option><option value="24x18" selected>arch c · 24 × 18 in</option><option value="36x24">arch d · 36 × 24 in</option><option value="16.54x11.69">a3</option><option value="33.11x23.39">a1</option>
       </select></div>
+      <div class="p"><label>model picture</label><select id="sheetStyle" data-tip="the sheet's model picture: the render, or the ground drawn only in lines laid over it (straight rows, rays from one point, or crossing diagonals)"><option value="render" selected>render</option><option value="straight">lines · straight</option><option value="point">lines · one point</option><option value="cross">lines · crisscross</option></select></div>
+      <div class="p"><label>lines<output id="o_lineN">70</output></label><input type="range" id="lineN" min="20" max="200" step="5" value="70" data-tip="how many lines the line drawing lays over the ground"></div>
+      <div class="p"><label>line height<output id="o_lineVe">3×</output></label><input type="range" id="lineVe" min="1" max="12" step="0.5" value="3" data-tip="how much the line drawing stretches the heights, so gentle ground still reads"></div>
+      <button class="btn" id="linePng" data-tip="the line drawing on its own, large, as a png">save the line drawing · png</button>
       <div class="desc" id="sheetInfo" style="padding:0"></div>
     </div>
 
@@ -818,7 +822,7 @@ const FIRE = { show: true, wind: 45, cover: 'chaparral', ver: 0, key: '', img: n
 const NAT = { inat: [], total: 0, ver: 0, show: true, off: {}, quality: 'any', status: '', hl: null, busy: false };   /* nature records: iNaturalist observations plus imported bird lists */
 const CHG = { before: null, after: null, pick: 'after', align: true, lod: .15, show: true, ver: 0, key: '', diff: null, stats: null, img: null };   /* ground change: two surveys of the same ground, compared cell by cell */
 function drawPlan() {                     // cached picture + live overlay; the picture is redrawn only when something on it changes
-  const key = [window.__stakesKey ? window.__stakesKey() : '', window.__visKey ? window.__visKey() : '', window.__fitKey ? window.__fitKey() : '', window.__recKey ? window.__recKey() : '', window.__bioKey ? window.__bioKey() : '', window.__grazeKey ? window.__grazeKey() : '', window.__obsKey ? window.__obsKey() : '', window.__stakeKey ? window.__stakeKey() : '', AGRO.ver, window.__agroActive ? window.__agroActive() : 0, FIRE.ver, FIRE.show, window.__fireActive ? window.__fireActive() : 0, NAT.ver, NAT.show, NAT.hl, CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
+  const key = [window.__suitKey ? window.__suitKey() : '', window.__stepsKey ? window.__stepsKey() : '', window.__stakesKey ? window.__stakesKey() : '', window.__visKey ? window.__visKey() : '', window.__fitKey ? window.__fitKey() : '', window.__recKey ? window.__recKey() : '', window.__bioKey ? window.__bioKey() : '', window.__grazeKey ? window.__grazeKey() : '', window.__obsKey ? window.__obsKey() : '', window.__stakeKey ? window.__stakeKey() : '', AGRO.ver, window.__agroActive ? window.__agroActive() : 0, FIRE.ver, FIRE.show, window.__fireActive ? window.__fireActive() : 0, NAT.ver, NAT.show, NAT.hl, CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
@@ -878,6 +882,7 @@ function drawPlanBase() {
   if (window.__bioDraw) window.__bioDraw(ctx);
   if (window.__recDraw) window.__recDraw(ctx);
   if (window.__fitDraw) window.__fitDraw(ctx);
+  if (window.__suitDraw) window.__suitDraw(ctx);
   if (window.__visDraw) window.__visDraw(ctx);
   if (window.__stakesDraw) window.__stakesDraw(ctx);
   if (FIRE.show && window.__fireActive && window.__fireActive()) fireDraw(ctx);
@@ -885,6 +890,7 @@ function drawPlanBase() {
   if (CHG.show && CHG.after) { const d = chgCompute(); if (d && CHG.img) { ctx.save(); ctx.globalAlpha = .95; ctx.imageSmoothingEnabled = true; ctx.drawImage(CHG.img, sheet.x, sheet.y, sheet.w, sheet.h); ctx.restore(); } }   /* ground change: ember where soil was lost, blue where it built up */
   if (S.showBase) drawBaseContours();
   drawContours(1, S.labels && !(drag && (drag.kind === 'brush' || drag.kind === 'sculpt'))); drawWater(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false, .55); drawRoads(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)), false); drawBuildings2D(ctx, (i, j) => toSheet(i, j), Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)));
+  if (window.__stepsDraw) window.__stepsDraw(ctx);   /* flights of steps: part of the design, so drawn whichever tool is open */
   // sheet frame, north, scale bar
   ctx.strokeStyle = INK2; ctx.lineWidth = 1; ctx.strokeRect(sheet.x, sheet.y, sheet.w, sheet.h);
   if (!S.noFoot) {
@@ -2014,6 +2020,7 @@ function readout(g) {
 
 /* ---------- floating descriptions on dwell ---------- */
 const TIPS = {
+  'p:sheetStyle': 'the model picture on the sheet: the render, or the ground drawn only in lines laid over it (straight rows, rays from one point, or crossing diagonals)', 'p:lineN': 'how many lines the line drawing lays over the ground', 'p:lineVe': 'how much the line drawing stretches the heights, so gentle ground still reads',
   'm:plan': 'the drawing sheet: contours, hachures, your grading and pen sketch', 'm:model': 'the ground in 3d. orbit, sculpt, colour it, watch rain and sun', 'm:section': 'a cut through the ground along the A–B line: proposed over existing, cut and fill', 'm:analysis': 'where water goes: flow, catchments, flood, keyline, dam, rain, sun',
   histBtn: 'every version of the satellite picture this place has had since 2014, played in order: each one rises up the valleys over the last, and the ground that changed between them pulses ember. below, how green the place was each year, from sentinel-2. needs real terrain', histSave: 'one pass of the history as a video file', histPlay: 'pause the history where it is, or play on from there', 'p:histPos': 'drag to any moment of the history; the play pauses while you hold it',
   'cl:1': 'the loaded point cloud drawn over the model as dust: every point a speck of its own colour, brighter near the eye, thinner far away. from a drone survey or a lidar file, converted with tools/cloud2bin.py', 'cl:0': 'no points', cloudLoad: 'open a points file (.bin from cloud2bin.py). it stays in this browser and reloads with the page; needs real terrain so the points know where they sit',
@@ -2440,6 +2447,8 @@ bind('hach', v => v, v => S.hach = v);
 bind('ve', v => v.toFixed(2).replace(/\.?0+$/, '') + ' x', v => { S.ve = v; layersInfo(); });
 bind('mm', v => '1:' + Math.round(S.siteW * 1000 / v).toLocaleString() + ' · ' + fS(v) + ' wide', v => { S.mm = v; layersInfo(); });
 bind('thick', v => fS(v), v => { S.thick = v; layersInfo(); });
+bind('lineN', v => v, () => { S.dirty = true; });
+bind('lineVe', v => v + '×', () => { S.dirty = true; });
 bind('ledge', v => v === 0 ? 'off (solid)' : 'ledge ' + fS(v), v => S.ledge = v);
 document.getElementById('modelStyle').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.modelStyle = b.dataset.s; document.querySelectorAll('#modelStyle button').forEach(x => x.classList.toggle('on', x === b)); S.dirty = true; };
 try { const u = localStorage.getItem('unit'); if (u === 'm' || u === 'ft') { S.unit = u; document.getElementById('unit').value = u; relabels.forEach(f => f()); } } catch (_) {}
@@ -2862,7 +2871,7 @@ async function paintSheet() {             // the drawing sheet: the model as it 
   if (AI.busy) return; const key = aiKey(); AI.busy = true; document.getElementById('aiBtn').disabled = true;
   try {
     let model, elev;
-    if (key) { busy('painting 1 of 2 · the model'); const c1 = aiControl(); model = holdCut(await loadImg(await aiCall(key, c1.png, c1.prompt, c1.ref, '2K')), c1.mask);
+    if (key) { if (lineStyle() !== 'render') model = renderPicture(); else { busy('painting 1 of 2 · the model'); const c1 = aiControl(); model = holdCut(await loadImg(await aiCall(key, c1.png, c1.prompt, c1.ref, '2K')), c1.mask); }
       busy(S.sec ? `painting 2 of 2 · section ${secLetters(S.secI).join('–')}` : 'painting 2 of 2 · the elevation'); const restore = sectionCamera(); try { const c2 = aiControl(); if (window.__ctl) window.__ctl(c2.png); elev = holdCut(await loadImg(await aiCall(key, c2.png, c2.prompt, c2.ref, '2K')), c2.mask); } finally { restore(); } }
     else { toast('no google ai key · the sheet is drawn, not painted'); model = renderPicture(); const restore = sectionCamera(); try { elev = renderPicture(); } finally { restore(); } }
     busy('drawing the sheet'); await new Promise(r => setTimeout(r, 30)); const sh = drawingSheet(sheetPictures(model, elev, !!key)), name = `coyote-topo-sheet-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}`;
@@ -3921,6 +3930,7 @@ const AGRO_LIB = {
   rosemary: ['rosemary', 'shrub', [1, 2], [2, 3], 10, [11, 12, 1, 2, 3, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], true, 'winter flowers for bees'],
   ceanothus: ['ceanothus', 'shrub', [2, 4], [3, 5], 10, [2, 3, 4, 5], [], true, 'fixes nitrogen; spring flowers'],
   toyon: ['toyon', 'shrub', [3, 5], [5, 8], 15, [6, 7], [11, 12, 1], true, 'winter berries for birds'],
+  sage: ['white sage', 'shrub', [1, 1.5], [2, 3], 5, [4, 5, 6], [], true, 'bees crowd it in spring; rots with summer water'],
 };
 function agroRadiusM(sp, yr, hi) {   // metres of canopy radius after yr years: a sapling of 0.3 m, most of its size by the middle of its years to mature
   const L = AGRO_LIB[sp]; if (!L) return .5; const d = hi ? L[2][1] : (L[2][0] + L[2][1]) / 2, yrs = (L[3][0] + L[3][1]) / 2, r0 = .3; return r0 + (d / 2 - r0) * (1 - Math.exp(-3 * Math.max(0, yr) / yrs));
@@ -3984,6 +3994,40 @@ function fireDraw(c) {
   const ft = isFt(); c.strokeStyle = ACC; c.fillStyle = ACC; c.font = font(10, 600);
   for (const b of fireBuildings()) { for (const [zone, dash, lw] of [[9.1, [], 1.4], [30.5, [5, 4], 1]]) { const r = fireRing(b, zone); c.setLineDash(dash); c.lineWidth = lw; c.beginPath(); r.pts.forEach((q, t) => { const p = toSheet(q[0], q[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.closePath(); c.stroke(); }
     const p = toSheet(b.c[0], b.c[1]); c.setLineDash([]); c.beginPath(); c.arc(p[0], p[1], 2.5, 0, TAU); c.fill(); }
+  c.restore();
+}
+/* ---------- line drawing: the ground drawn only by lines laid over it, seen from the south and above: straight rows, rays from one point, or crossing diagonals (the week 2 topographic compositions); nearer ground hides the lines behind it ---------- */
+const LINE_STYLES = { straight: 'straight', point: 'one point', cross: 'crisscross' };
+const lineStyle = () => { const el = document.getElementById('sheetStyle'); return el && LINE_STYLES[el.value] ? el.value : 'render'; };
+function lineComposition(c, w, h, style, count, ve, bg) {
+  const s = cs(), [lo, hi] = range(z), relief = Math.max(1e-6, hi - lo), SQ = .5, m = Math.max(12, Math.min(w, h) * .04);
+  const base = Math.max(relief * ve / s * .12, (H - 1) * .025);   // the block's skirt below the lowest ground, in grid cells
+  const tall = (H - 1) * SQ + relief * ve / s + base, k = Math.min((w - 2 * m) / (W - 1), (h - 2 * m) / tall);
+  const ox = (w - (W - 1) * k) / 2, oy = (h - tall * k) / 2 + relief * ve / s * k;
+  const P = (gx, gy, zz) => [ox + gx * k, oy + gy * k * SQ - (zz - lo) * ve / s * k];
+  const zAt = (gx, gy) => sample(z, Math.max(0, Math.min(W - 1, gx)), Math.max(0, Math.min(H - 1, gy)));
+  const lines = [], edges = [], st = .5, inBox = (x, y) => x >= -1e-9 && y >= -1e-9 && x <= W - 1 + 1e-9 && y <= H - 1 + 1e-9;
+  const ray = (x0, y0, ux, uy, t0, t1) => { let run = []; for (let t = t0; t <= t1 + 1e-9; t += st) { const x = x0 + ux * t, y = y0 + uy * t; if (inBox(x, y)) run.push([x, y]); else if (run.length) { if (run.length > 1) lines.push(run); run = []; } } if (run.length > 1) lines.push(run); };
+  const n = Math.max(2, Math.round(count)), diag = Math.hypot(W - 1, H - 1);
+  if (style === 'point') { const fx = (W - 1) / 2, fy = (H - 1) / 2; for (let q = 0; q < n; q++) { const a = q / n * TAU; ray(fx + Math.cos(a) * diag * .03, fy + Math.sin(a) * diag * .03, Math.cos(a), Math.sin(a), 0, diag); } }   /* rays start just off the point, so they do not pile into a knot */
+  else if (style === 'cross') { const half = Math.ceil(n / 2); for (const sg of [1, -1]) for (let q = 0; q < half; q++) { const a = sg * (45 + (hash(q, sg, 9) - .5) * 12) * D2R, ux = Math.cos(a), uy = Math.sin(a), off = ((q + .5) / half * 2 - 1) * diag / 2; ray((W - 1) / 2 - uy * off, (H - 1) / 2 + ux * off, ux, uy, -diag, diag); } }
+  else for (let q = 0; q < n; q++) ray(0, (q + .5) * (H - 1) / n, 1, 0, 0, W - 1);
+  { const L = [], R = [], B = []; for (let y = 0; y <= H - 1 + 1e-9; y += st) { L.push([0, y]); R.push([W - 1, y]); } for (let x = 0; x <= W - 1 + 1e-9; x += st) B.push([x, .001]); edges.push(L, R, B); }
+  // each segment waits behind the grid row just in front of it; rows are laid back to front, each covering what it hides
+  const bands = Array.from({ length: H }, () => []), eBands = Array.from({ length: H }, () => []);
+  const put = (pts, into) => { let pa = P(pts[0][0], pts[0][1], zAt(pts[0][0], pts[0][1])); for (let q = 1; q < pts.length; q++) { const a = pts[q - 1], b = pts[q], pb = P(b[0], b[1], zAt(b[0], b[1])), r = Math.max(0, Math.min(H - 1, Math.ceil(Math.max(a[1], b[1]) - 1e-9) - 1)); into[r].push(pa, pb); pa = pb; } };
+  for (const L of lines) put(L, bands); for (const L of edges) put(L, eBands);
+  const lw = Math.max(.45, Math.min(2, w / 1500)), stepI = Math.max(1, Math.ceil(W / 900));
+  c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = INK;
+  for (let r = 0; r < H; r++) {
+    c.fillStyle = bg; c.beginPath(); for (let i = 0; i < W; i += stepI) { const p = P(i, r, z[r * W + i]); i ? c.lineTo(p[0], p[1] + lw) : c.moveTo(p[0], p[1] + lw); }
+    { const p = P(W - 1, r, z[r * W + W - 1]); c.lineTo(p[0], p[1] + lw); c.lineTo(p[0], h); c.lineTo(ox, h); } c.closePath(); c.fill();
+    for (const [seg, wd] of [[bands[r], lw], [eBands[r], lw * 1.8]]) { if (!seg.length) continue; c.lineWidth = wd; c.beginPath(); for (let q = 0; q < seg.length; q += 2) { c.moveTo(seg[q][0], seg[q][1]); c.lineTo(seg[q + 1][0], seg[q + 1][1]); } c.stroke(); }
+  }
+  // the front of the block down to its base
+  c.fillStyle = bg; c.lineWidth = lw * 1.8; c.beginPath();
+  for (let i = 0; i < W; i += stepI) { const p = P(i, H - 1, z[(H - 1) * W + i]); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }
+  { const p = P(W - 1, H - 1, z[H * W - 1]), b1 = P(W - 1, H - 1, lo), b0 = P(0, H - 1, lo); c.lineTo(p[0], p[1]); c.lineTo(b1[0], b1[1] + base * k); c.lineTo(b0[0], b0[1] + base * k); } c.closePath(); c.fill(); c.stroke();
   c.restore();
 }
 /* ---------- nature records: iNaturalist observations over the site, and bird lists from eBird (where Merlin checklists go) or BirdNET, as marks on the plan and a species list ---------- */
@@ -4253,7 +4297,7 @@ function drawingSheet(painted) { zdisp();   // painted: { model, elev } images f
   const views = [
     { box: pBox, title: 'PLAN · ' + scP.label, canvas: rp(kP, pBox.w, pBox.h, () => { S.noFoot = true; drawPlanBase(); S.noFoot = false; }) },   // the title block carries what the screen footer says
     { box: anaBox, title: 'ANALYSIS · ' + sc.label + (S.rain ? ' · rain as it stands' : ''), canvas: rp(k, anaBox.w, anaBox.h, () => { drawAnalysis(); if (S.rain) drawRainOverlay(ctx, (i, j) => { const p = toSheet(i, j); return [p[0], p[1], 0]; }, S.w, S.h, false); ctx.fillStyle = TRACE; ctx.fillRect(0, sheet.y + sheet.h + 2, S.w, S.h); }) },
-    { box: mBox, title: painted.painted ? 'MODEL · painted · ' + AI.style : 'MODEL · render', canvas: viewCanvas(mBox, (o2, w, h) => { const im = painted.model, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, kk = Math.max(w / iw, (h - 30) / ih), sw = w / kk, sh = (h - 30) / kk; o2.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h - 30); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) },
+    { box: mBox, title: lineStyle() !== 'render' ? 'MODEL · line drawing · ' + LINE_STYLES[lineStyle()] : painted.painted ? 'MODEL · painted · ' + AI.style : 'MODEL · render', canvas: viewCanvas(mBox, (o2, w, h) => { if (lineStyle() !== 'render') { lineComposition(o2, w, h - 30, lineStyle(), +document.getElementById('lineN').value, +document.getElementById('lineVe').value, TRACE); return; } const im = painted.model, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, kk = Math.max(w / iw, (h - 30) / ih), sw = w / kk, sh = (h - 30) / kk; o2.drawImage(im, (iw - sw) / 2, (ih - sh) / 2, sw, sh, 0, 0, w, h - 30); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) },
     { box: secBox, title: 'SECTION ' + secLetters(S.secI).join('–') + ' · vertical ' + S.ve + '×', canvas: viewCanvas(secBox, (o2, w, h) => drawSection(o2, w, h, false, true)) },
     { box: elevBox, title: (painted.secPersp ? 'SECTION ' + secLetters(S.secI).join('–') : 'ELEVATION · from the south') + (painted.painted ? ' · painted' : ' · render'), canvas: viewCanvas(elevBox, (o2, w, h) => { const im = painted.elev, iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height, kk = Math.max(w / iw, (h - 30) / ih), sw = w / kk, sh = (h - 30) / kk, fy = painted.elevFocus == null ? .5 : painted.elevFocus, sy = Math.max(0, Math.min(ih - sh, ih * fy - sh * .68)); o2.drawImage(im, (iw - sw) / 2, sy, sw, sh, 0, 0, w, h - 30); o2.fillStyle = TRACE; o2.fillRect(0, h - 30, w, 30); }) },
     { box: notesBox, title: 'NOTES', canvas: null }];
@@ -4319,6 +4363,7 @@ function pdfFromCanvas(canvases, wIn, hIn) {   // one page per canvas, each a jp
   return new Blob(parts, { type: 'application/pdf' });
 }
 document.getElementById('sheetBtn').onclick = paintSheet;
+document.getElementById('linePng').onclick = () => { const st = lineStyle() === 'render' ? 'straight' : lineStyle(), c = document.createElement('canvas'); c.width = 3000; c.height = 2000; const o = c.getContext('2d'); o.fillStyle = '#f6f2e8'; o.fillRect(0, 0, 3000, 2000); lineComposition(o, 3000, 2000, st, +document.getElementById('lineN').value, +document.getElementById('lineVe').value, '#f6f2e8'); dl(c.toDataURL('image/png'), `coyote-lines-${st}-${(S.world ? S.world.name : 'sketch').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 24)}.png`); };
 setTimeout(sheetInfo, 0);
 
 /* ---------- project file + session memory ---------- */
@@ -4479,7 +4524,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
   const on = sel => { const e = $(sel); return !!(e && e.classList.contains('on')); };
   // a tool: pick = the original button(s) its choice presses; view = the view it needs ('plan' or '3d'); analysis = in plan it draws the water analysis; rows / more = original rows mounted under it; acts = extra buttons that press originals
   // hover descriptions for the buttons this layout adds (the rows it moves keep their own)
-  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "obs": "field notes on the map: photos, soil tests, erosion, vegetation, and readings from rain gauges and probes", "bio": "a biodiversity atlas: survey spots and routes, visits with counts, compared fairly by effort and season", "nature": "plants and animals people have recorded here on iNaturalist, plus bird lists from eBird, Merlin or BirdNET", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "story": "one captioned video of the place: today, the ground, the water, the design and the planting growing", "build": "grade stakes, landxml surfaces for machine control, keep-out zones and the as-built check", "stake": "follow a designed line on the ground with your phone and flag it", "agro": "orchards, shelterbelts and hedgerows from a species library, grown with a year slider", "graze": "rotate animals by recovery: paddocks drawn on the terrain, forage, rest and water", "visit": "ecotourism walks routed around sensitive ground, with seasons, limits and costs beside revenue", "budget": "price the earthwork, walls, surfaces and planting on this plan with your own rates", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "wbudget": "how much water the design holds from a storm and a year, against what the planting needs", "fit": "suitability: hard limits never traded, preferences weighed, the three best spots and their tradeoffs", "recover": "plan and track the recovery of eroded, bare or damaged ground against goals and an untreated comparison", "fire": "a wildfire planning layer: slope, sunny sides, wind and cover, with defensible space around buildings", "carbon": "a carbon and biomass ledger: estimates as ranges, soil samples as measurements", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
+  const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "obs": "field notes on the map: photos, soil tests, erosion, vegetation, and readings from rain gauges and probes", "bio": "a biodiversity atlas: survey spots and routes, visits with counts, compared fairly by effort and season", "nature": "plants and animals people have recorded here on iNaturalist, plus bird lists from eBird, Merlin or BirdNET", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "story": "one captioned video of the place: today, the ground, the water, the design and the planting growing", "build": "grade stakes, landxml surfaces for machine control, keep-out zones and the as-built check", "stake": "follow a designed line on the ground with your phone and flag it", "agro": "orchards, shelterbelts and hedgerows from a species library, grown with a year slider", "graze": "rotate animals by recovery: paddocks drawn on the terrain, forage, rest and water", "visit": "ecotourism walks routed around sensitive ground, with seasons, limits and costs beside revenue", "budget": "price the earthwork, walls, surfaces and planting on this plan with your own rates", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "wbudget": "how much water the design holds from a storm and a year, against what the planting needs", "fit": "suitability: hard limits never traded, preferences weighed, the three best spots and their tradeoffs", "suit": "what grows where: each plant in the library read against slope, sun side, wetness and frost pockets, as zones on the plan", "steps": "steps up a slope: draw the line, get the risers, treads, stride check and cut and fill", "recover": "plan and track the recovery of eroded, bare or damaged ground against goals and an untreated comparison", "fire": "a wildfire planning layer: slope, sunny sides, wind and cover, with defensible space around buildings", "carbon": "a carbon and biomass ledger: estimates as ranges, soil samples as measurements", "change": "compare two drone surveys: where soil was lost, where it built up, and how much", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
   { const kc = $('#kmlClear'); if (kc) { const row = make('div', { cls: 'seg deep', style: 'padding:0;margin-top:6px' }); kc.parentElement.after(row); row.append(kc); } }   // clear the lot sits alone at the bottom of lot and survey
   const TASKS = [
     { id: 'site', name: 'Site', tools: [
@@ -4497,6 +4542,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['=footprint', '#padRow', '=level and grade', '#padLevelRow', '#padGradeRow', '=edges', '#padEdgeRow', '#sideRow', '=earthwork', '#strip', '#swell'] },
       { id: 'grade', name: 'grade a→b', pick: '#brushes button[data-b=grade]', view: 'plan', rows: ['#gradeRow'], more: ['#sideRow'] },
       { id: 'path', name: 'path', pick: '#brushes button[data-b=path]', view: 'plan', rows: ['#pathWRow'], more: ['#pathSurfRow', '#pathHRow'] },
+      { id: 'steps', name: 'steps', view: 'plan', planLabel: 'draw in plan', panel: box => stepsPanel(box), note: 'a flight of steps up a slope: risers and treads from the ground under a drawn line, checked against an easy stride' },
       { id: 'plant', name: 'plant', pick: '#brushes button[data-b=pen]', view: 'plan', rows: ['#plantRow', '#brushParams'], note: 'pick a tree, shrub or hedge to plant, or gravel or paving to fill an area, then draw' },
       { id: 'agro', name: 'agroforestry', view: 'plan', planLabel: 'plant in plan', panel: box => agroPanel(box), note: 'trees and shrubs from a library, grown year by year: canopy, crowding, water, and when they flower and fruit' },
       { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', view: 'plan', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']] },
@@ -4510,6 +4556,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'water', name: 'water', analysis: true, rows: ['#anaLayers', '#rainBtn', '#anaDesc'], more: ['#tapRow', '#rain', '#thr', '#runoff', '#plow', '#swale', '#dam', '#riseRow'] },
       { id: 'sun', name: 'sun', analysis: true, rows: ['#sunRow', '#sunSec'] },
       { id: 'wbudget', name: 'water budget', rows: ['#rain', '#runoff'], panel: box => waterPanel(box), note: 'one storm and one year on this ground: what soaks in, what the hollows, ponds, swales and tanks hold, and what leaves' },
+      { id: 'suit', name: 'what grows where', view: 'plan', planLabel: 'see it in plan', panel: box => suitPanel(box), note: 'which plants in the library suit which ground: slope, the sunny or shaded side, where water gathers, where frost settles' },
       { id: 'fit', name: 'landscape fit', view: 'plan', planLabel: 'see it in plan', panel: box => fitPanel(box), note: 'where an orchard, road, basin, classroom or building fits with the least conflict, limits kept firm' },
       { id: 'recover', name: 'recovery', view: 'plan', planLabel: 'see it in plan', panel: box => recoverPanel(box), note: 'damaged ground brought back: goals, treatments, measurements over time and an untreated patch to compare' },
       { id: 'fire', name: 'fire ready', view: 'plan', planLabel: 'see it in plan', panel: box => firePanel(box), note: 'where fire would run hardest, and the defensible space each building needs' },
@@ -4521,7 +4568,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'paint', name: 'paint', view: '3d', renderOn: true, rows: ['#paintRow', '#aiStyleRow', '#aiWordsRow', '#aiRow'], more: ['#aiEngRow', '#aiRefRow', '#aiRefList', '#aiLinesRow'] },
       { id: 'story', name: 'landscape story', panel: box => storyPanel(box), note: 'the place told in chapters: today, the ground, the water, the design, the planting growing, with your captions, as one video' },
       { id: 'video', name: 'video', rows: ['#recView'], acts: [['animate the section', '#secAnim']], note: 'record video captures the view until you press it again' },
-      { id: 'sheet', name: 'drawing sheet', rows: ['#paper', '#sheetBtn', '#sheetInfo', '#png'], preview: c => previewSheet(c), note: 'the preview draws the sheet without painting; the export paints it when a painter key is set' },
+      { id: 'sheet', name: 'drawing sheet', rows: ['#paper', '#sheetStyle', '#lineN', '#lineVe', '#linePng', '#sheetBtn', '#sheetInfo', '#png'], preview: c => previewSheet(c), note: 'the preview draws the sheet without painting; the export paints it when a painter key is set' },
       { id: 'print', group: 'physical models', name: '3d print', rows: ['#mm', '#meshFmt', '#stl', '#footInfo'], preview: c => previewPrint(c) },
       { id: 'laser', name: 'laser-cut model', rows: ['#mm', '#thick', '#sheet', '#ledge', '#layersInfo', '#laser', '#laserDxf'], preview: c => previewLaser(c) },
       { id: 'stake', group: 'in the field', name: 'walk the line', view: 'plan', planLabel: 'see it in plan', panel: box => stakePanel(box), note: 'walk a keyline, swale, path or lot line with your phone, and drop flags on the ground' },
@@ -4619,7 +4666,9 @@ details.u2more[open]>.u2rows{margin-top:8px}
 #u2views button{font:inherit;font-size:12px;padding:5px 14px;border:0;border-left:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
 #u2views button:first-child{border-left:0}#u2views button.on{background:var(--ink);color:var(--paper)}
 #u2views button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-#u2layBtn{position:absolute;top:10px;left:12px;z-index:6;background:var(--panel)}
+#u2layBtn{position:absolute;top:10px;left:12px;z-index:6;background:#fdf1e6;border-color:#e3ab86;font-size:12.5px;padding:5px 14px}
+#u2layBtn:hover,#u2layBtn:focus-visible{background:#fbe6d4}
+:root[data-theme=dark] #u2layBtn{background:#3a2a20;border-color:#b0623a}
 #u2layers{position:absolute;top:44px;left:12px;z-index:7;width:min(320px,calc(100% - 24px));max-height:calc(100% - 60px);overflow:auto;background:var(--panel);border:1px solid var(--ink2);padding:10px;display:none;flex-direction:column;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
 #u2layers.show{display:flex}
 #u2status{grid-row:4;grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);min-width:0}
@@ -5366,7 +5415,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
   cv.addEventListener('pointerdown', e => { if (!window.__recActive() || !S.world || !RCV.drawing) return; e.stopImmediatePropagation(); e.preventDefault(); const r = cv.getBoundingClientRect(), g = [(e.clientX - r.left - sheet.x) / sheet.k, (e.clientY - r.top - sheet.y) / sheet.k]; if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) return; RCV.drawing.push(nodeLatLon(g[0], g[1], S.world.lat, S.world.lon)); RCV.ver++; S.dirty = true; recRender(); }, true);
   /* study · carbon: what the planting may be storing over the years, always as a low to high range, beside soil carbon actually measured */
   // kg of carbon in one mature plant, above and below ground: rough ranges for a dry site, meant to be replaced by local figures
-  const CARBON_KG = { olive: [150, 400], fig: [100, 300], pomegranate: [20, 60], carob: [300, 900], mesquite: [150, 500], paloverde: [80, 250], desertwillow: [40, 150], lemon: [40, 120], avocado: [150, 500], almond: [60, 200], jujube: [40, 150], moringa: [30, 100], oak: [800, 3000], elder: [40, 120], guava: [10, 40], pricklypear: [5, 20], grape: [5, 20], rosemary: [2, 8], ceanothus: [10, 40], toyon: [20, 80] };
+  const CARBON_KG = { sage: [2, 8], olive: [150, 400], fig: [100, 300], pomegranate: [20, 60], carob: [300, 900], mesquite: [150, 500], paloverde: [80, 250], desertwillow: [40, 150], lemon: [40, 120], avocado: [150, 500], almond: [60, 200], jujube: [40, 150], moringa: [30, 100], oak: [800, 3000], elder: [40, 120], guava: [10, 40], pricklypear: [5, 20], grape: [5, 20], rosemary: [2, 8], ceanothus: [10, 40], toyon: [20, 80] };
   const C_GENERIC_TREE = [50, 300], C_SHRUB_M2 = [.5, 2], C_HEDGE_M = [2, 8];
   let carbBoxEl = null;
   const carbSet = () => { S.rec = S.rec || {}; S.rec.carbon = S.rec.carbon || { depth: 30, bd: 1.3 }; return S.rec.carbon; };
@@ -5492,6 +5541,184 @@ details.u2more[open]>.u2rows{margin-top:8px}
     w.append(make('p', { cls: 'u2note', text: 'from the ground model alone: no soils, no land cover, no ownership lines. hatched ground is ruled out; the deeper the ochre, the better the fit. check the spots on foot.' }));
   }
   cv.addEventListener('pointerdown', e => { if (!window.__fitActive() || !S.world || !FIT.drawing) return; e.stopImmediatePropagation(); e.preventDefault(); const r = cv.getBoundingClientRect(), g = [(e.clientX - r.left - sheet.x) / sheet.k, (e.clientY - r.top - sheet.y) / sheet.k]; if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) return; FIT.drawing.push(nodeLatLon(g[0], g[1], S.world.lat, S.world.lon)); FIT.ver++; S.dirty = true; fitRender(); }, true);
+  /* study · what grows where: the ground read cell by cell against what each plant in the library needs (slope, the side the sun hits, where water gathers, where cold air settles), as zones named with the plants that suit them, one plant's fit as a wash, and a readout where you tap. from the week 11 class note: use the water value the same way as the slope */
+  // id: [water 0 dry once established · 1 some summer water · 2 regular, the most slope it takes °, sun side 1 hot · 0 either · -1 cool, frost tender, wants drainage]
+  const SUIT_NEEDS = { olive: [0, 30, 1, false, true], fig: [1, 20, 1, false, false], pomegranate: [0, 20, 1, false, false], carob: [0, 25, 1, true, true], mesquite: [0, 30, 1, false, false], paloverde: [0, 35, 1, false, true], desertwillow: [0, 25, 1, false, false], lemon: [2, 15, 1, true, true], avocado: [2, 20, 0, true, true], almond: [1, 20, 1, true, true], jujube: [0, 25, 1, false, false], moringa: [1, 15, 1, true, true], oak: [0, 35, -1, false, false], elder: [1, 30, -1, false, false], guava: [1, 20, 0, false, false], pricklypear: [0, 45, 1, false, true], grape: [1, 25, 1, false, true], rosemary: [0, 40, 1, false, true], ceanothus: [0, 40, -1, false, true], toyon: [0, 40, -1, false, false], sage: [0, 40, 1, false, true] };
+  // [id, name, short name for the plan, colour]
+  const SUIT_ZONES = [['steep', 'too steep to plant by hand', 'steep', [110, 110, 104]], ['wet', 'the wettest ground: hollows and drainage lines', 'wet hollows', [70, 130, 160]], ['hot', 'hot, sun-facing slopes', 'hot slopes', [214, 158, 60]], ['cool', 'cool, shaded slopes', 'cool slopes', [96, 138, 100]], ['frost', 'low ground where cold air settles', 'frost pocket', [146, 136, 196]], ['open', 'open, even ground', 'open ground', [190, 184, 120]]];
+  const SUIT = { ver: 0, key: '', f: null, img: null, pt: null, labels: [], agg: null, cls: null };
+  let suitBoxEl = null;
+  window.__suitActive = () => state.task === 'study' && tool().id === 'suit';
+  const suitSet = () => { S.rec = S.rec || {}; S.rec.suit = S.rec.suit || { mode: 'zones', sp: 'oak', water: false }; return S.rec.suit; };
+  const suitSp = () => Object.keys(SUIT_NEEDS).filter(k => AGRO_LIB[k]);
+  function suitFeatures() {
+    const an = analyzeSoon(); if (!an || !an.acc || an.acc.length !== W * H) return null;
+    const key = [S.terrainVer, W, H, S.world ? S.world.lat : 32, an.key, an.stale ? 1 : 0].join('|'); if (SUIT.f && SUIT.f.key === key) return SUIT.f;
+    const N = W * H, s = cs(), deg = new Float32Array(N), hot = new Float32Array(N), wet = new Float32Array(N), rel = new Float32Array(N), tw = new Float32Array(N), lat = S.world ? S.world.lat : 32, az = (lat >= 0 ? 225 : 315) * D2R, sun = [Math.sin(az), -Math.cos(az)];
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const n = j * W + i, g = grad(i, j), sl = Math.hypot(g[0], g[1]); deg[n] = Math.atan(sl) / D2R; hot[n] = sl > 1e-6 ? -(g[0] * sun[0] + g[1] * sun[1]) / sl : 0; tw[n] = Math.log(Math.max(1, an.acc[n]) * s / Math.max(.005, sl)); }
+    const sorted = Float32Array.from(tw).sort(); for (let n = 0; n < N; n++) { let a = 0, b = N; const v = tw[n]; while (a < b) { const mid = (a + b) >> 1; if (sorted[mid] <= v) a = mid + 1; else b = mid; } wet[n] = a / N; }   // wetness as a rank: 0.9 is wetter than nine cells in ten
+    const R = Math.max(2, Math.round(60 / s)), stp = Math.max(1, R >> 1);   // height against the ground around, over about 60 m: cold air drains into the low spots
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { let sum = 0, cnt = 0; for (let dj = -R; dj <= R; dj += stp) for (let di = -R; di <= R; di += stp) { const ii = i + di, jj = j + dj; if (ii < 0 || jj < 0 || ii >= W || jj >= H) continue; sum += z[jj * W + ii]; cnt++; } rel[j * W + i] = z[j * W + i] - sum / cnt; }
+    const zone = new Uint8Array(N); for (let n = 0; n < N; n++) { const d = deg[n]; zone[n] = d > 35 ? 0 : wet[n] > .9 ? 1 : d > 6 && hot[n] > .35 ? 2 : d > 6 && hot[n] < -.35 ? 3 : rel[n] < -1.5 && d <= 8 ? 4 : 5; }
+    SUIT.f = { key, deg, hot, wet, rel, zone, stale: !!an.stale }; SUIT.key = ''; return SUIT.f;
+  }
+  function suitScore(sp, n, F, watered, why) {   // 0 to 1, the product of how well each need is met; with why, the need that falls shortest
+    const [need, maxS, side, tender, drain] = SUIT_NEEDS[sp], d = F.deg[n], h = F.hot[n], w = F.wet[n], e = Math.min(1, d / 15);
+    const fs = d <= maxS * .6 ? 1 : d <= maxS ? 1 - .6 * (d - maxS * .6) / (maxS * .4) : 0;
+    const fa = side > 0 ? 1 - e * .35 * Math.max(0, -h) : side < 0 ? .85 + e * (.15 * Math.max(0, -h) - .4 * Math.max(0, h)) : 1;
+    const fw = watered || need === 0 ? 1 : need === 1 ? .65 + .35 * w : .3 + .7 * w;
+    const cold = Math.max(0, Math.min(1, (-F.rel[n] - 1) / 2)) * (d < 10 ? 1 : .5), ff = tender ? 1 - .45 * cold : 1;
+    const fd = drain && w > .85 ? 1 - .75 * (w - .85) / .15 : 1;
+    const v = fs * fa * fw * ff * fd; if (!why) return v;
+    const f = [[fs, 'too steep'], [fa, side > 0 ? 'a shaded side' : 'a hot side'], [fw, 'too dry without watering'], [ff, 'cold air settles here'], [fd, 'too wet for its roots']].sort((a, b) => a[0] - b[0]);
+    return [v, f[0][0] < .9 ? f[0][1] : ''];
+  }
+  function suitCompute() {
+    const F = suitFeatures(); if (!F) return null; const P = suitSet(), key = [F.key, P.mode, P.sp, P.water ? 1 : 0].join('|'); if (SUIT.key === key) return F; SUIT.key = key;
+    const N = W * H, sps = suitSp(), Z = SUIT_ZONES.length, zc = new Float64Array(Z), zsum = sps.map(() => new Float64Array(Z)), good = new Float64Array(sps.length);
+    for (let n = 0; n < N; n++) { const zn = F.zone[n]; zc[zn]++; for (let q = 0; q < sps.length; q++) { const v = suitScore(sps[q], n, F, P.water); zsum[q][zn] += v; if (v >= .7) good[q]++; } }
+    const site = sps.map((_, q) => zsum[q].reduce((a, v) => a + v, 0) / N); SUIT.agg = { zones: SUIT_ZONES.map((_, zi) => ({ zi, share: zc[zi] / N, top: zc[zi] ? sps.map((sp, q) => [sp, zsum[q][zi] / zc[zi], site[q]]).sort((a, b) => (b[1] + .6 * (b[1] - b[2])) - (a[1] + .6 * (a[1] - a[2]))) : [] })), good: sps.map((sp, q) => [sp, good[q] / N]).sort((a, b) => b[1] - a[1]) };
+    const cvs = document.createElement('canvas'); cvs.width = W; cvs.height = H; const cx = cvs.getContext('2d'), im = cx.createImageData(W, H);
+    if (P.mode === 'plant' && SUIT_NEEDS[P.sp]) { const cls = [0, 0, 0, 0]; for (let n = 0; n < N; n++) { const v = suitScore(P.sp, n, F, P.water); let c4; if (v >= .8) { cls[0]++; c4 = [62, 118, 66, 170]; } else if (v >= .55) { cls[1]++; c4 = [140, 170, 96, 120]; } else if (v >= .3) { cls[2]++; c4 = [226, 196, 120, 80]; } else { cls[3]++; c4 = ((n % W) + ((n / W) | 0)) % 3 === 0 ? [96, 96, 90, 120] : [120, 120, 114, 50]; } im.data.set(c4, n * 4); } SUIT.cls = cls.map(v => v / N); }
+    else for (let n = 0; n < N; n++) { const c3 = SUIT_ZONES[F.zone[n]][3]; im.data.set([c3[0], c3[1], c3[2], F.zone[n] === 0 ? 70 : 105], n * 4); }
+    cx.putImageData(im, 0, 0); SUIT.img = cvs;
+    SUIT.labels = []; const r = Math.max(2, Math.round(Math.min(W, H) * .06)), sat = new Float64Array((W + 1) * (H + 1));   // a label where each zone is most solid
+    for (let zi = 0; zi < Z; zi++) { if (zc[zi] < N * .02) continue; sat.fill(0);
+      for (let j = 0; j < H; j++) { let row = 0; for (let i = 0; i < W; i++) { row += F.zone[j * W + i] === zi ? 1 : 0; sat[(j + 1) * (W + 1) + i + 1] = sat[j * (W + 1) + i + 1] + row; } }
+      let best = -1, bi = 0, bj = 0; for (let j = r; j < H - r; j++) for (let i = r; i < W - r; i++) { if (SUIT.labels.some(L => Math.hypot(L.i - i, L.j - j) < r * 2.5)) continue; const a = sat[(j + r + 1) * (W + 1) + i + r + 1] - sat[(j - r) * (W + 1) + i + r + 1] - sat[(j + r + 1) * (W + 1) + i - r] + sat[(j - r) * (W + 1) + i - r]; if (a > best) { best = a; bi = i; bj = j; } }
+      if (best < (2 * r + 1) * (2 * r + 1) * .4) continue;
+      const top = SUIT.agg.zones[zi].top.filter(t => t[1] >= .5).slice(0, 2).map(t => AGRO_LIB[t[0]][0]); SUIT.labels.push({ i: bi, j: bj, zi, text: SUIT_ZONES[zi][2] + (zi && top.length ? ' · ' + top.join(', ') : '') }); }
+    return F;
+  }
+  window.__suitKey = () => window.__suitActive() ? [SUIT.ver, SUIT.key, SUIT.pt ? SUIT.pt.join(',') : '', typeof ana !== 'undefined' && ana ? ana.key + ':' + ana.stale : ''].join('|') : '';
+  window.__suitDraw = c => { if (!window.__suitActive() || !S.world) return; const F = suitCompute(); if (!F || !SUIT.img) return; c.save(); c.imageSmoothingEnabled = false; c.drawImage(SUIT.img, sheet.x - sheet.k / 2, sheet.y - sheet.k / 2, W * sheet.k, H * sheet.k);
+    if (suitSet().mode === 'zones') { c.font = font(11, 700); c.textAlign = 'center'; c.textBaseline = 'middle'; for (const L of SUIT.labels) { const p = toSheet(L.i, L.j); haloText(c, L.text, p[0], p[1], INK); } }
+    if (SUIT.pt) { const p = toSheet(SUIT.pt[0], SUIT.pt[1]); c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); c.arc(p[0], p[1], 7, 0, TAU); c.moveTo(p[0] - 12, p[1]); c.lineTo(p[0] + 12, p[1]); c.moveTo(p[0], p[1] - 12); c.lineTo(p[0], p[1] + 12); c.stroke(); }
+    c.restore(); };
+  window.__suitHere = (gx, gy) => { const F = suitCompute(); if (!F) return null; const n = Math.max(0, Math.min(H - 1, Math.round(gy))) * W + Math.max(0, Math.min(W - 1, Math.round(gx))), P = suitSet(); return suitSp().map(sp => { const [v, why] = suitScore(sp, n, F, P.water, true); return { sp, v, why }; }).sort((a, b) => b.v - a.v); };   /* test hooks */
+  window.__suitAgg = () => { suitCompute(); return SUIT.agg; };
+  window.__suitF = () => suitFeatures();
+  function suitPanel(box) { suitBoxEl = box; S.dirty = true; suitRender(); }
+  function suitRender() {
+    if (!suitBoxEl || !suitBoxEl.isConnected) return; const busyEl = document.activeElement; if (suitBoxEl.contains(busyEl) && /SELECT|INPUT/.test(busyEl.tagName)) { setTimeout(suitRender, 600); return; }
+    const P = suitSet(), F = suitCompute(); suitBoxEl.textContent = ''; const w = make('div', { cls: 'u2wb' }); suitBoxEl.append(w);
+    if (!F) { w.append(make('p', { cls: 'u2note', text: S.world ? 'reading where the water goes first…' : 'fetch a site first' })); if (S.world) setTimeout(suitRender, 700); return; }
+    if (F.stale) setTimeout(() => { S.dirty = true; suitRender(); }, 700);
+    const seg = (pairs, cur, fn, tips) => { const sg = make('div', { cls: 'seg' }); pairs.forEach(([v, t], q) => { const b = make('button', { type: 'button', cls: cur === v ? 'on' : '', text: t, 'data-tip': tips[q] }); b.onclick = () => { fn(v); SUIT.ver++; S.dirty = true; suitRender(); }; sg.append(b); }); return sg; };
+    w.append(seg([['zones', 'ground zones'], ['plant', 'one plant']], P.mode, v => { P.mode = v; }, ['the site split into kinds of ground, each named with the plants that suit it best', 'how well one plant suits each part of the site']));
+    w.append(seg([[false, 'rain only'], [true, 'with watering']], !!P.water, v => { P.water = v; }, ['plants that need water do best where water gathers', 'as if every plant is watered: slope, sun side, frost and drainage still count']));
+    const A = SUIT.agg, pct = v => Math.round(v * 100) + '%', nm = sp => AGRO_LIB[sp][0];
+    if (P.mode === 'zones') {
+      w.append(make('div', { cls: 'u2group', text: 'ground zones' }));
+      for (const zz of A.zones) { if (zz.share < .005) continue; const Zd = SUIT_ZONES[zz.zi], row = make('p', { cls: 'u2note', style: 'color:var(--ink)' }); row.append(make('span', { style: `display:inline-block;width:9px;height:9px;margin-right:5px;vertical-align:-1px;background:rgb(${Zd[3].join(',')})` }), `${Zd[1]} · ${pct(zz.share)}`); w.append(row);
+        const top = zz.top.filter(t => t[1] >= .5).slice(0, 4);
+        w.append(make('p', { cls: 'u2note', text: zz.zi === 0 ? 'leave it to what grows there, or hold it with native cover' + (top.length ? '; the toughest: ' + top.map(t => nm(t[0])).join(', ') : '') : top.length ? top.map(t => `${nm(t[0])} ${pct(t[1])}`).join(' · ') : 'nothing in the library suits it well' })); }
+    } else {
+      const sel = make('select', { 'aria-label': 'plant to check', 'data-tip': 'a plant from the agroforestry library, to see where it would do well' }); for (const sp of suitSp().sort((a, b) => nm(a) < nm(b) ? -1 : 1)) sel.append(make('option', { value: sp, text: nm(sp) })); sel.value = SUIT_NEEDS[P.sp] ? P.sp : 'oak'; sel.onchange = () => { P.sp = sel.value; SUIT.ver++; S.dirty = true; sel.blur(); suitRender(); }; w.append(sel);
+      const c4 = SUIT.cls || [0, 0, 0, 0]; w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: `suits it well ${pct(c4[0])} · fair ${pct(c4[1])} · poor ${pct(c4[2])} · not here ${pct(c4[3])} of the site` }));
+      const L = AGRO_LIB[P.sp], Nd = SUIT_NEEDS[P.sp]; w.append(make('p', { cls: 'u2note', text: `${['dry once established', 'some summer water', 'regular water'][Nd[0]]} · takes up to ${Nd[1]}° · ${Nd[2] > 0 ? 'likes the hot side' : Nd[2] < 0 ? 'likes the cool side' : 'either side'}${Nd[3] ? ' · frost tender' : ''}${Nd[4] ? ' · needs drainage' : ''} · ${L[8]}` }));
+      const zr = A.zones.filter(zz => zz.share >= .005).map(zz => [zz.zi, (zz.top.find(t => t[0] === P.sp) || [0, 0])[1]]).sort((a, b) => b[1] - a[1]); if (zr.length) w.append(make('p', { cls: 'u2note', text: 'best on ' + zr.slice(0, 2).map(([zi, v]) => `${SUIT_ZONES[zi][2]} (${pct(v)})`).join(', ') }));
+    }
+    w.append(make('div', { cls: 'u2group', text: 'suits most of this site' }));
+    w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: A.good.slice(0, 6).map(([sp, v]) => `${nm(sp)} ${pct(v)}`).join(' · ') }));
+    w.append(make('div', { cls: 'u2group', text: 'here' }));
+    if (!SUIT.pt) w.append(make('p', { cls: 'u2note', text: 'tap the plan to read one spot' }));
+    else { const n = Math.max(0, Math.min(H - 1, Math.round(SUIT.pt[1]))) * W + Math.max(0, Math.min(W - 1, Math.round(SUIT.pt[0]))), list = window.__suitHere(SUIT.pt[0], SUIT.pt[1]), h = F.hot[n];
+      const side = F.deg[n] < 4 ? 'nearly flat' : h > .35 ? 'faces the afternoon sun' : h < -.35 ? 'faces away from the sun' : 'faces across the sun';
+      w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: `${Math.round(F.deg[n])}° · ${side} · wetter than ${pct(F.wet[n])} of the site${F.rel[n] < -1.5 ? ' · a low spot where cold air settles' : F.rel[n] > 1.5 ? ' · raised' : ''} · ${SUIT_ZONES[F.zone[n]][2]}` }));
+      w.append(make('p', { cls: 'u2note', text: 'best: ' + list.slice(0, 4).map(o => `${nm(o.sp)} ${pct(o.v)}`).join(' · ') }));
+      const poor = list.filter(o => o.v < .55).slice(-3).reverse(); if (poor.length) w.append(make('p', { cls: 'u2note', text: 'poor: ' + poor.map(o => `${nm(o.sp)} (${o.why || 'several small things'})`).join(' · ') }));
+      const b = make('button', { cls: 'btn', type: 'button', text: `plant a ${nm(list[0].sp)} here`, 'data-tip': 'adds the best plant at this spot as a library tree, grown with the agroforestry year slider; undo takes it back' });
+      b.onclick = () => { const was = AGRO.arm; AGRO.arm = list[0].sp; snapshot(); agroPlant(SUIT.pt.slice()); AGRO.arm = was; S.strokeVer++; AGRO.ver++; S.dirty = true; updateStats(); toast(`${nm(list[0].sp)} planted`); }; w.append(b); }
+    w.append(make('p', { cls: 'u2note', text: 'from the ground model alone: no soil, no frost records, no rainfall map. the plant needs are rough ranges for a dry, mediterranean-climate site. ask a local nursery, then plant a few and watch.' }));
+  }
+  { let down = null;   // a tap (not a pan) on the plan reads that spot
+    cv.addEventListener('pointerdown', e => { down = window.__suitActive() && state.view === 'plan' ? [e.clientX, e.clientY] : null; });
+    cv.addEventListener('pointerup', e => { if (!down || !window.__suitActive() || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) { down = null; return; } down = null; const r = cv.getBoundingClientRect(), g = [(e.clientX - r.left - sheet.x) / sheet.k, (e.clientY - r.top - sheet.y) / sheet.k]; if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) return; SUIT.pt = g; SUIT.ver++; S.dirty = true; suitRender(); }); }
+  /* shape · steps: a flight of steps up a slope from a centreline drawn on the plan. from the week 8 class script: the rise and the run shared out equally over the risers; checked against an easy outdoor stride (twice the riser plus the tread) */
+  const STEP = { drawing: null, pick: 0, ver: 0 };
+  let stepBoxEl = null;
+  window.__stepsActive = () => state.task === 'shape' && tool().id === 'steps';
+  const stepList = () => { S.rec = S.rec || {}; if (!Array.isArray(S.rec.steps)) S.rec.steps = []; return S.rec.steps; };
+  function stepCalc(f) {   // n risers at (k + ½) treads from the bottom, n − 1 full treads between them and a half tread of level ground at each end, so the flight sits half in cut and half in fill on an even slope
+    const g0 = f.pts.map(q => latLonToGrid(q[0], q[1])).map(p => [Math.max(0, Math.min(W - 1, p[0])), Math.max(0, Math.min(H - 1, p[1]))]); if (g0.length < 2) return null;
+    const pts = resample(g0, .25, false), last = g0[g0.length - 1]; if (Math.hypot(pts[pts.length - 1][0] - last[0], pts[pts.length - 1][1] - last[1]) > 1e-6) pts.push(last.slice()); if (pts.length < 2) return null;
+    const zs = pts.map(p => sample(z, p[0], p[1])); if (zs[0] > zs[zs.length - 1]) { pts.reverse(); zs.reverse(); }
+    const dist = [0]; for (let q = 1; q < pts.length; q++) dist.push(dist[q - 1] + Math.hypot(pts[q][0] - pts[q - 1][0], pts[q][1] - pts[q - 1][1]) * cs());
+    const run = dist[dist.length - 1], rise = zs[zs.length - 1] - zs[0]; if (run < .3) return null;
+    const auto = Math.max(1, Math.ceil(rise / .18 - 1e-9), Math.round(rise / (f.riser || .15))), n = f.n ? Math.max(1, Math.round(f.n)) : auto, R = rise / n, T = run / n, stride = 2 * R + T;
+    let cut = 0, fill = 0, maxCut = 0, maxFill = 0; const fd = [0], fz = [zs[0]], ftop = [zs[0]], stepH = d => zs[0] + Math.max(0, Math.min(n, Math.floor(d / T + .5))) * R;   // the ground and the steps compared every eighth of a tread, finer than the grid
+    for (let q = 1; q < pts.length; q++) { const d0 = dist[q - 1], d1 = dist[q], m = Math.max(1, Math.ceil((d1 - d0) / (T / 8))); for (let t = 1; t <= m; t++) { const da = d0 + (d1 - d0) * (t - 1) / m, db = d0 + (d1 - d0) * t / m, zb = zs[q - 1] + (zs[q] - zs[q - 1]) * t / m, dm = (da + db) / 2, zm = zs[q - 1] + (zs[q] - zs[q - 1]) * (t - .5) / m, dz = zm - stepH(dm); if (dz > 0) cut += dz * (db - da) * f.w; else fill -= dz * (db - da) * f.w; maxCut = Math.max(maxCut, dz); maxFill = Math.max(maxFill, -dz); fd.push(db); fz.push(zb); ftop.push(stepH(db)); } }
+    const warn = [];
+    if (rise < .12) warn.push('barely any rise here: a path, not steps');
+    else { if (R > .18 + 1e-6) warn.push(`risers over ${fS(180)} are hard outdoors: add risers`); if (R < .1) warn.push(`risers under ${fS(100)} trip people: fewer, taller steps`);
+      if (T < .28) warn.push(`treads under ${fS(280)}: too steep for this length. lengthen the flight, turn it, or add a landing`); else if (stride > .72) warn.push('treads too long for an even stride: ramped steps, or steps in groups between landings'); else if (stride < .6) warn.push('a short, choppy stride: deeper treads or lower risers');
+      if (n > 12) warn.push(`${n} risers in one flight: add a landing so no run is more than 12`); }
+    return { pts, zs, dist, fd, fz, ftop, run, rise, n, auto, R, T, stride, cut, fill, maxCut, maxFill, warn };
+  }
+  function stepFrame(r, d) {   // the point on the centreline d metres from the bottom, and the unit direction there
+    const D = r.dist; let q = 1; while (q < D.length - 1 && D[q] < d) q++; const a = r.pts[q - 1], b = r.pts[q], t = D[q] > D[q - 1] ? Math.max(0, Math.min(1, (d - D[q - 1]) / (D[q] - D[q - 1]))) : 0, L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    return [[a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t], [(b[0] - a[0]) / L, (b[1] - a[1]) / L]];
+  }
+  window.__stepsKey = () => [STEP.ver, window.__stepsActive() ? STEP.pick : -1, STEP.drawing ? STEP.drawing.length : -1, S.rec && Array.isArray(S.rec.steps) ? S.rec.steps.map(f => f.pts.length + ':' + f.w + ':' + f.n + ':' + f.riser).join(',') : ''].join('|');
+  window.__stepsDraw = c => { const L = S.rec && Array.isArray(S.rec.steps) ? S.rec.steps : []; if (!S.world || (!L.length && !STEP.drawing)) return; const act = window.__stepsActive(); c.save(); c.lineCap = 'butt';
+    L.forEach((f, idx) => { const r = stepCalc(f); if (!r) return; const hw = f.w / 2 / cs(), col = act && idx === STEP.pick ? ACC : INK, P2 = (p, u, o) => toSheet(p[0] - u[1] * o, p[1] + u[0] * o);
+      const U = q => { const a = r.pts[Math.max(0, q - 1)], b = r.pts[Math.min(r.pts.length - 1, q + 1)], l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
+      c.strokeStyle = col; c.fillStyle = col; c.lineWidth = 1.3;
+      for (const side of [-1, 1]) { c.beginPath(); r.pts.forEach((p, q) => { const s2 = P2(p, U(q), side * hw); q ? c.lineTo(s2[0], s2[1]) : c.moveTo(s2[0], s2[1]); }); c.stroke(); }
+      const every = Math.max(1, Math.ceil(3 / Math.max(1e-6, r.T / cs() * sheet.k))); c.lineWidth = .9; c.beginPath();
+      for (const d of [0, r.run].concat(Array.from({ length: r.n }, (_, k) => (k + .5) * r.T).filter((_, k) => k % every === 0))) { const [p, u] = stepFrame(r, d), a = P2(p, u, -hw), b = P2(p, u, hw); c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); } c.stroke();
+      c.lineWidth = 1; c.beginPath(); r.pts.forEach((p, q) => { const s2 = toSheet(p[0], p[1]); q ? c.lineTo(s2[0], s2[1]) : c.moveTo(s2[0], s2[1]); }); c.stroke();   // the walking line, an arrow at the top, UP at the bottom
+      { const [p, u] = stepFrame(r, r.run), e = toSheet(p[0], p[1]), a = Math.atan2(u[1], u[0]); c.beginPath(); c.moveTo(e[0], e[1]); c.lineTo(e[0] - 9 * Math.cos(a - .4), e[1] - 9 * Math.sin(a - .4)); c.lineTo(e[0] - 9 * Math.cos(a + .4), e[1] - 9 * Math.sin(a + .4)); c.closePath(); c.fill(); }
+      c.font = font(10.5, 700); c.textAlign = 'center'; c.textBaseline = 'middle';
+      { const [p, u] = stepFrame(r, r.run / 2), s2 = toSheet(p[0], p[1]), off = hw * sheet.k + 13; haloText(c, `${r.n} R @ ${fS(r.R * 1000)}${r.warn.length ? ' !' : ''}`, s2[0] - u[1] * off, s2[1] + u[0] * off, r.warn.length ? '#b0452a' : col); }
+      { const [p, u] = stepFrame(r, 0), s2 = toSheet(p[0], p[1]); haloText(c, 'UP', s2[0] - u[0] * 14, s2[1] - u[1] * 14, col); } });
+    if (act && STEP.drawing && STEP.drawing.length) { c.strokeStyle = ACC; c.fillStyle = ACC; c.setLineDash([4, 3]); c.lineWidth = 1.5; c.beginPath(); STEP.drawing.forEach((q, t) => { const g = latLonToGrid(q[0], q[1]), p = toSheet(g[0], g[1]); t ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); c.stroke(); c.setLineDash([]); for (const q of STEP.drawing) { const g = latLonToGrid(q[0], q[1]), p = toSheet(g[0], g[1]); c.beginPath(); c.arc(p[0], p[1], 3, 0, TAU); c.fill(); } }
+    c.restore(); };
+  window.__stepsCalc = k => { const L = stepList(); return L[k] ? stepCalc(L[k]) : null; };   /* test hook */
+  function stepsSection(cvp, r) {   // the flight in section at true scale: the whole flight above, the first steps close up below; the ground, the steps, cut in grey and fill in ember
+    const o = cvp.getContext('2d'), Wc = cvp.width, Hc = cvp.height; o.fillStyle = PAPER; o.fillRect(0, 0, Wc, Hc);
+    const win = Math.min(r.run, r.T * 4.5), rows = [[{ x: 10, y: 18, w: Wc - 20, h: Hc * .36 - 22 }, 0, r.run, 'whole flight'], [{ x: 10, y: Hc * .36 + 16, w: Wc - 20, h: Hc * .64 - 24 }, 0, win, 'the first steps, close up']];
+    o.font = '600 17px ' + getComputedStyle(document.body).fontFamily; o.textBaseline = 'top'; o.textAlign = 'left';
+    for (const [bx, d0, d1, title] of rows) {
+      const idx = []; for (let q = 0; q < r.fd.length; q++) if (r.fd[q] >= d0 - 1e-9 && r.fd[q] <= d1 + 1e-9) idx.push(q); if (idx.length < 2) continue;
+      let zl = Infinity, zh = -Infinity; for (const q of idx) { zl = Math.min(zl, r.fz[q], r.ftop[q]); zh = Math.max(zh, r.fz[q], r.ftop[q]); }
+      const k = Math.min(bx.w / (d1 - d0), bx.h / Math.max(.05, zh - zl)), ox = bx.x + (bx.w - (d1 - d0) * k) / 2, x = d => ox + (d - d0) * k, y = v => bx.y + bx.h / 2 + ((zh + zl) / 2 - v) * k;
+      o.fillStyle = INK3; o.fillText(title, bx.x, bx.y - 17);
+      o.save(); o.beginPath(); o.rect(bx.x - 2, bx.y - 2, bx.w + 4, bx.h + 4); o.clip();
+      for (let t = 1; t < idx.length; t++) { const q = idx[t], p = idx[t - 1], dz = (r.fz[q] + r.fz[p]) / 2 - (r.ftop[q] + r.ftop[p]) / 2; if (Math.abs(dz) < 1e-4) continue; o.fillStyle = dz > 0 ? 'rgba(110,110,104,.45)' : 'rgba(201,107,58,.5)'; o.beginPath(); o.moveTo(x(r.fd[p]), y(r.fz[p])); o.lineTo(x(r.fd[q]), y(r.fz[q])); o.lineTo(x(r.fd[q]), y(r.ftop[q])); o.lineTo(x(r.fd[p]), y(r.ftop[p])); o.closePath(); o.fill(); }
+      o.strokeStyle = INK3; o.lineWidth = 1.5; o.beginPath(); idx.forEach((q, t) => t ? o.lineTo(x(r.fd[q]), y(r.fz[q])) : o.moveTo(x(r.fd[q]), y(r.fz[q]))); o.stroke();
+      o.strokeStyle = INK; o.lineWidth = 2.2; o.beginPath(); o.moveTo(x(0), y(r.zs[0]));
+      for (let kk = 0; kk <= r.n; kk++) { const h = r.zs[0] + kk * r.R, a = kk === 0 ? 0 : (kk - .5) * r.T, b = kk === r.n ? r.run : (kk + .5) * r.T; if (a > d1) break; o.lineTo(x(a), y(h)); o.lineTo(x(Math.min(b, d1)), y(h)); } o.stroke(); o.restore(); }
+  }
+  function stepsPanel(box) { stepBoxEl = box; S.dirty = true; stepsRender(); }
+  function stepsRender() {
+    if (!stepBoxEl || !stepBoxEl.isConnected) return; stepBoxEl.textContent = ''; const w = make('div', { cls: 'u2wb' }); stepBoxEl.append(w); const L = stepList(); if (STEP.pick >= L.length) STEP.pick = Math.max(0, L.length - 1);
+    const draw = make('button', { cls: 'btn', type: 'button', text: STEP.drawing ? (STEP.drawing.length ? `tap along the centreline… ${STEP.drawing.length} so far` : 'tap the bottom of the flight') : 'draw a flight: tap its centreline', 'data-tip': 'tap where the steps start and where they end, with points between for a bend; the bottom is read from the ground. press again to stop' });
+    draw.onclick = () => { STEP.drawing = STEP.drawing ? null : []; if (STEP.drawing && state.view !== 'plan') { state.view = 'plan'; applyView(); } STEP.ver++; S.dirty = true; stepsRender(); }; w.append(draw);
+    if (STEP.drawing && STEP.drawing.length >= 2) { const fin = make('button', { cls: 'btn', type: 'button', text: 'finish the flight', 'data-tip': 'keep this centreline as a flight of steps' }); fin.onclick = () => { L.push({ pts: STEP.drawing, w: 1.2, riser: .15, n: 0 }); STEP.pick = L.length - 1; STEP.drawing = null; STEP.ver++; S.dirty = true; stepsRender(); }; w.append(fin); }
+    if (!L.length) { w.append(make('p', { cls: 'u2note', text: 'no flights yet. draw one up a slope: the risers and treads are worked out from the ground under it.' })); return; }
+    const f = L[STEP.pick], r = stepCalc(f);
+    if (L.length > 1) { const sel = make('select', { 'aria-label': 'which flight', 'data-tip': 'the flight these numbers are for; it shows in ember on the plan' }); L.forEach((g, k) => { const rr = stepCalc(g); sel.append(make('option', { value: String(k), text: `flight ${k + 1}${rr ? ' · ' + rr.n + ' risers' : ''}` })); }); sel.value = String(STEP.pick); sel.onchange = () => { STEP.pick = +sel.value; STEP.ver++; S.dirty = true; stepsRender(); }; w.append(sel); }
+    if (!r) w.append(make('p', { cls: 'u2note', text: 'this flight is too short to measure' }));
+    else {
+      const big = make('p', { cls: 'big' }); big.append(make('b', { text: `${r.n} risers` }), ` × ${fS(r.R * 1000)}`, make('br'), make('b', { text: `${Math.max(0, r.n - 1)} treads` }), ` × ${fS(r.T * 1000)} deep`); w.append(big);
+      w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: `climbs ${fL(r.rise, 2)} over ${fL(r.run, 1)} · ${Math.round(r.rise / r.run * 100)}% · half a tread of level ground at each end` }));
+      w.append(make('p', { cls: 'u2note', text: `twice the riser plus the tread: ${fS(r.stride * 1000)}. an easy outdoor stride is ${fS(620)} to ${fS(700)}.` }));
+      const set = make('div', { cls: 'set' }), upd = () => { STEP.ver++; S.dirty = true; stepsRender(); };
+      const risers = make('select', { 'aria-label': 'risers', 'data-tip': 'how many risers: auto keeps each near the height you aim for and never over 180 mm (7 in)' }); risers.append(make('option', { value: '0', text: `auto · ${r.auto}` })); for (let k = Math.max(1, r.auto - 6); k <= r.auto + 6; k++) risers.append(make('option', { value: String(k), text: `${k} · ${fS(r.rise / k * 1000)}` })); risers.value = String(f.n || 0); risers.onchange = () => { f.n = +risers.value; upd(); };
+      const target = make('select', { 'aria-label': 'riser aim', 'data-tip': 'the riser height auto aims for: lower is gentler, 150 mm (6 in) is usual outdoors' }); for (const v of [.125, .15, .165]) target.append(make('option', { value: String(v), text: fS(v * 1000) })); target.value = String(f.riser || .15); target.onchange = () => { f.riser = +target.value; upd(); };
+      const width = make('select', { 'aria-label': 'width', 'data-tip': 'the width of the flight: 1.2 m (4 ft) lets two people pass' }); for (const v of [.9, 1.2, 1.5, 1.8, 2.4, 3]) width.append(make('option', { value: String(v), text: fL(v, 1) })); width.value = String(f.w); width.onchange = () => { f.w = +width.value; upd(); };
+      set.append(make('span', { text: 'risers' }), risers, make('span', { text: 'riser aim' }), target, make('span', { text: 'width' }), width); w.append(set);
+      if (r.warn.length) for (const t of r.warn) w.append(make('p', { cls: 'u2note', style: 'color:#b0452a', text: t })); else w.append(make('p', { cls: 'u2note', style: 'color:var(--ink)', text: 'risers, treads and stride sit inside the easy outdoor ranges' }));
+      if (r.n >= 4) w.append(make('p', { cls: 'u2note', text: 'US house codes want a handrail from 4 risers; check the local code.' }));
+      const cvp = make('canvas', { width: '400', height: '300', style: 'position:static;inset:auto;width:100%;height:auto;display:block;margin:4px 0;border:1px solid var(--line)', 'aria-label': 'the flight in section' }); w.append(cvp); stepsSection(cvp, r);
+      w.append(make('p', { cls: 'u2note', text: `in section at true scale, grey cut and ember fill: cuts ${fV(r.cut)} · fills ${fV(r.fill)} · deepest cut ${fL(Math.max(0, r.maxCut), 2)} · deepest fill ${fL(Math.max(0, r.maxFill), 2)}` }));
+      const del = make('button', { cls: 'btn', type: 'button', text: `delete flight ${STEP.pick + 1}`, 'data-tip': 'remove this flight of steps from the plan' }); del.onclick = () => { L.splice(STEP.pick, 1); STEP.pick = Math.max(0, STEP.pick - 1); STEP.ver++; S.dirty = true; stepsRender(); }; w.append(del);
+    }
+    w.append(make('p', { cls: 'u2note', text: 'worked out from the ground as it stands on the plan. the plan and the section show the steps; the 3d model does not carve them, as they are finer than its grid. set out the first and last riser on site and check the rise with a level.' }));
+  }
+  cv.addEventListener('pointerdown', e => { if (!window.__stepsActive() || !S.world || !STEP.drawing) return; e.stopImmediatePropagation(); e.preventDefault(); const r = cv.getBoundingClientRect(), g = [(e.clientX - r.left - sheet.x) / sheet.k, (e.clientY - r.top - sheet.y) / sheet.k]; if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) return; STEP.drawing.push(nodeLatLon(g[0], g[1], S.world.lat, S.world.lon)); STEP.ver++; S.dirty = true; stepsRender(); }, true);
   /* shape · visitor walks: routes and stops on the terrain, how hard and how accessible each is, where it crosses ground that needs quiet, seasonal closures and a wet-season alternative, group limits, a visit log, and stewardship costs beside revenue */
   const VIS = { drawing: null, stop: false, hl: null, ver: 0 };
   let visBoxEl = null;
