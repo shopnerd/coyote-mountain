@@ -833,6 +833,8 @@ if (!/[?&]classic(=|&|$)/.test(location.search)) (() => {
   const q = s => document.querySelector(s), app = q('#app');
   const make = (t, a = {}, kids = []) => { const e = document.createElement(t); for (const k in a) { if (k === 'text') e.textContent = a[k]; else if (k === 'cls') e.className = a[k]; else e.setAttribute(k, a[k]); } kids.forEach(k => e.append(k)); return e; };
   // a tool: rows = original rows mounted under it; more = secondary rows after a dashed rule; note = one line of help
+  // hover descriptions for the buttons this layout adds (the rows it moves keep their own)
+  const U2TIP = {"area": "the ground to fly: the site, the survey area and your own drone survey", "aircraft": "the drone and camera; they drive every number in the plan", "flight": "how it flies: height, overlap, line direction and speed", "plan": "the flight plan and its mission files", "site": "find a place and fetch its ground", "draw": "click the corners of the area to survey on the map", "survey": "load your own elevation model over the public ground", "drone": "pick the aircraft and camera, or enter your own", "height": "height and the two overlaps set line spacing, photo spacing and ground sample", "lines": "line direction, speed and cross lines", "numbers": "photos, time, batteries and ground sample for this plan", "export": "mission files for the aircraft and maps for the office"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "learn": "short chapters on the sample site; your plan comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "classic layout": "the old layout, with every block down the left", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours", "topo": "the topo tool, on this place"};
   const TASKS = [
     { id: 'area', name: 'Area', tools: [
       { id: 'site', name: 'site', rows: ['#place', '#fetch', '#siteW', '#worldStatus'], more: ['#aerialRow'], note: 'type a place or lat, lng and fetch the terrain; site width sets how much ground comes in' },
@@ -888,9 +890,9 @@ if (!/[?&]classic(=|&|$)/.test(location.search)) (() => {
 #u2hits.show{display:block}#u2hits button{display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;font:inherit;font-size:12px;padding:6px 10px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink);cursor:pointer}
 #u2hits button em{font-style:normal;color:var(--ink3);font-size:10.5px}#u2hits button.sel,#u2hits button:hover{background:#fdf3ea}
 :root[data-theme=dark] #u2hits button.sel,:root[data-theme=dark] #u2hits button:hover,:root[data-theme=dark] #u2tasks button.on,:root[data-theme=dark] #u2tools button.on{background:#3a2a20}
-#u2rail{grid-row:3;grid-column:1;display:grid;grid-template-columns:78px minmax(0,1fr);background:var(--panel);border-right:1px solid var(--line);min-height:0}
-#u2tasks{border-right:1px solid var(--line);display:flex;flex-direction:column;gap:60px;margin-top:11px}
-#u2tasks button{font:inherit;font-size:12px;padding:16px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;text-align:center;text-transform:uppercase;letter-spacing:-.1em;line-height:1;writing-mode:vertical-rl;text-orientation:upright}
+#u2rail{grid-row:3;grid-column:1;display:grid;grid-template-columns:32px minmax(0,1fr);background:var(--panel);border-right:1px solid var(--line);min-height:0}
+#u2tasks{border-right:1px solid var(--line);display:grid;grid-auto-rows:1fr;margin-top:11px;overflow-y:auto}
+#u2tasks button{font:inherit;font-size:20px;padding:4px 0;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--ink2);cursor:pointer;text-align:center;text-transform:uppercase;letter-spacing:-.1em;line-height:1;writing-mode:vertical-rl;text-orientation:upright}
 #u2tasks button.on{background:#fdf3ea;color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
 #u2tasks button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 #u2side{overflow-y:auto;padding:10px 10px 30px;display:flex;flex-direction:column;gap:10px}
@@ -949,9 +951,10 @@ if (!/[?&]classic(=|&|$)/.test(location.search)) (() => {
   }
   function renderTasks() {
     tasksEl.textContent = '';
-    for (const t of TASKS) { const b = make('button', { type: 'button', role: 'tab', 'aria-selected': String(t.id === task().id), cls: t.id === task().id ? 'on' : '', text: t.name }); b.onclick = () => chooseTask(t.id); tasksEl.append(b); }
+    for (const t of TASKS) { const b = make('button', { type: 'button', role: 'tab', 'aria-selected': String(t.id === task().id), cls: t.id === task().id ? 'on' : '', text: t.name, 'data-tip': U2TIP[t.id] || '' }); b.onclick = () => chooseTask(t.id); tasksEl.append(b); }
     toolsEl.textContent = '';
-    for (const t of task().tools) { const b = make('button', { type: 'button', cls: t.id === tool().id ? 'on' : '', text: t.name }); b.onclick = () => chooseTool(t.id); toolsEl.append(b); }
+    for (const t of task().tools) { const b = make('button', { type: 'button', cls: t.id === tool().id ? 'on' : '', text: t.name, 'data-tip': U2TIP[task().id + '/' + t.id] || U2TIP[t.id] || '' }); b.onclick = () => chooseTool(t.id); toolsEl.append(b); }
+    document.querySelectorAll('#u2head .u2b, #u2head summary, #u2views button, #u2layBtn').forEach(e => { const t = U2BARTIP[e.textContent.trim()]; if (t) e.dataset.tip = t; });
   }
   function chooseTask(id) { state.task = id; save(); chooseTool(state.tool[id]); }
   function chooseTool(id) { state.tool[task().id] = id; save(); renderTasks(); renderTool(); }
@@ -1033,9 +1036,11 @@ if (document.documentElement.classList.contains('ui2')) (() => {
   const rail = document.getElementById('u2rail'), tasks = document.getElementById('u2tasks'); if (!rail || !tasks) return;
   const st = document.createElement('style'); st.textContent = '#u2tasks{position:relative}#u2tasks button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#u2taskGrip{position:absolute;top:0;right:-5px;width:10px;height:100%;cursor:col-resize;z-index:5;touch-action:none}#u2taskGrip::after{content:"";position:absolute;left:4px;top:50%;width:3px;height:36px;margin-top:-18px;border-radius:2px;background:#b3b2aa}#u2taskGrip:hover,#u2taskGrip.on{background:rgba(201,107,58,.10)}#u2taskGrip:hover::after,#u2taskGrip.on::after{background:var(--accent)}'; document.head.append(st);
   const grip = document.createElement('div'); grip.id = 'u2taskGrip'; tasks.append(grip);
+  const even = () => { tasks.style.gridAutoRows = 'max-content'; const h = Math.max(0, ...[...tasks.querySelectorAll('button')].map(b => b.getBoundingClientRect().height / zoom())); tasks.style.gridAutoRows = 'minmax(' + Math.ceil(h) + 'px,1fr)'; };   // every task tab as tall as the tallest, sharing the column evenly
   const zoom = () => parseFloat(rail.style.zoom) || 1;
-  const set = (w, keep) => { w = Math.max(44, Math.min(240, Math.round(w))); rail.style.gridTemplateColumns = w + 'px minmax(0,1fr)'; if (keep) try { localStorage.setItem('u2tasksW', w); } catch (_) {} };
-  try { const v = +localStorage.getItem('u2tasksW'); if (v) set(v, false); } catch (_) {}
+  even(); if (document.fonts) document.fonts.ready.then(even);
+  const set = (w, keep) => { w = Math.max(32, Math.min(240, Math.round(w))); rail.style.gridTemplateColumns = w + 'px minmax(0,1fr)'; if (keep) try { localStorage.setItem('u2tasksW2', w); } catch (_) {} };
+  try { const v = +localStorage.getItem('u2tasksW2'); if (v) set(v, false); } catch (_) {}
   let d = null;
   grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); d = { x: e.clientX, w: tasks.getBoundingClientRect().width / zoom() }; grip.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
   grip.addEventListener('pointermove', e => { if (d) set(d.w + (e.clientX - d.x) / zoom(), true); });
