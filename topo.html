@@ -2008,7 +2008,7 @@ document.addEventListener('click', e => { const el = e.target.closest('button');
 document.addEventListener('scroll', hideTip, true);
 
 /* ---------- rail width: drag the edge; the menu scales with it ---------- */
-function setRail(px) { px = Math.max(200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); { const u2 = document.documentElement.classList.contains('ui2'); document.querySelector(u2 ? '#u2rail' : 'aside').style.zoom = (px / (u2 ? 300 : 256)).toFixed(3); } try { localStorage.setItem(document.documentElement.classList.contains('ui2') ? 'rail2' : 'rail', px); } catch (_) {} resize(); }
+function setRail(px) { px = Math.max(document.documentElement.classList.contains('ui2') ? 150 : 200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); { const u2 = document.documentElement.classList.contains('ui2'); document.querySelector(u2 ? '#u2rail' : 'aside').style.zoom = (px / (u2 ? 220 : 256)).toFixed(3); } try { localStorage.setItem(document.documentElement.classList.contains('ui2') ? 'rail3' : 'rail', px); } catch (_) {} resize(); }
 try { const v = +localStorage.getItem('rail'); if (v >= 200 && innerWidth > 760) setRail(v); } catch (_) {}
 { const grip = document.getElementById('railGrip'); let rd = null;
   grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); rd = e.clientX; grip.classList.add('on'); e.preventDefault(); });
@@ -4065,10 +4065,11 @@ if (!/[?&]classic(=|&|$)/.test(location.search)) (() => {
   // a tool: pick = the original button(s) its choice presses; view = the view it needs ('plan' or '3d'); analysis = in plan it draws the water analysis; rows / more = original rows mounted under it; acts = extra buttons that press originals
   // hover descriptions for the buttons this layout adds (the rows it moves keep their own)
   const U2TIP = {"site": "where you are: the place and how much ground, your lot and drone survey, the site through time, the sandbox", "shape": "change the ground and draw on it: sculpt, pads, grading, paths, plants, sketches and objects", "study": "read the ground: sections, where the water goes, sun and shadow", "make": "turn the site into pictures, video, drawing sheets, 3d prints, laser-cut models and files", "place": "find a place and fetch its ground; site width sets how much comes in", "survey": "load your lot boundary, a drone survey or a points file", "history": "every satellite, landsat and old map picture of the place, oldest first, rising up the ground", "sand": "the live sandbox: a table you shape by hand, read and projected back", "select": "pick a drawing, plant or object on the plan to move, restyle, duplicate or delete it", "sculpt": "raise, lower, smooth or flatten the ground with a brush, in plan or 3d", "pad": "a level pad cut into the hill; cut and fill show in the bottom bar", "grade": "an even slope from a to b with side slopes", "path": "a path or road carved into the ground", "plant": "trees, shrubs, hedges, gravel and paving drawn on the plan", "sketch": "pen lines, dashes, an eraser and spot heights on the sheet", "object": "place an stl or obj model on the ground", "section": "draw a line across the ground in plan, then see it cut in section", "water": "where water flows, gathers and could be held; rain shows it falling", "sun": "sun and shadow through the day and the year", "render": "the model with real sun, sky and a section cut", "paint": "a painted picture of the 3d view by an ai painter", "video": "record the view as a video, or animate the section", "sheet": "a drawing sheet: plan, model and section with a title block", "print": "the site as a solid model for a 3d printer", "laser": "contour layers nested on sheets for a laser cutter", "files": "cnc lines, google earth kml and a geotiff for maps"}, U2BARTIP = {"project": "save, open, copy a link or start a new project", "undo": "step back (ctrl+z)", "redo": "step forward again (ctrl+shift+z)", "learn": "short chapters on the sample site; your project comes back after each", "gallery": "pictures, sheets and clips made with the tool", "flight": "the flight planner, on this place", "dark": "dark or light around the drawing; the paper stays paper", "light": "dark or light around the drawing; the paper stays paper", "classic layout": "the old layout, with every block down the left", "Plan": "the drawing sheet from above (1)", "3D": "the model; right drag orbits, the wheel zooms (2)", "Section": "the ground cut along the section line (3)", "layers & look": "map layers and how things are drawn: photo, roads, buildings, contours, labels, colours"};
+  { const kc = $('#kmlClear'); if (kc) { const row = make('div', { cls: 'seg deep', style: 'padding:0;margin-top:6px' }); kc.parentElement.after(row); row.append(kc); } }   // clear the lot sits alone at the bottom of lot and survey
   const TASKS = [
     { id: 'site', name: 'Site', tools: [
       { id: 'place', name: 'place', rows: ['#place', '#fetch', '#siteW', '#worldStatus'], more: ['#rot', '#gridRow'], acts: [['pick an area on a map', () => areaMap()], ['zoom to a box on the sheet', () => sheetBox()]], note: 'site width sets how much ground is fetched; detail sets the grid; contours are set in layers & look' },
-      { id: 'survey', name: 'lot and survey', rows: ['#kmlBtn', '#trimRow', '#surveyBtn', '#surveyInfo'], acts: [['load a points file', '#cloudLoad']], more: ['#flightBtn'] },
+      { id: 'survey', name: 'lot and survey', rows: ['#kmlBtn', '#trimRow', '#surveyBtn', '#surveyInfo'], acts: [['load a points file', '#cloudLoad']], more: ['#flightBtn', '#kmlClear'] },
       { id: 'history', name: 'site history', rows: ['#histRow', '#histPosRow', '#histInfo'], more: ['#histGlowRow', '#histGlowOpRow'] },
       { id: 'sand', name: 'sandbox', rows: ['#sandBtn', '#sandSec'] },
     ] },
@@ -4153,16 +4154,17 @@ if (!/[?&]classic(=|&|$)/.test(location.search)) (() => {
 #u2tasks button.on{background:#fdf3ea;color:var(--accent);font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
 #u2tasks button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 #u2side{overflow-y:auto;padding:10px 10px 30px;display:flex;flex-direction:column;gap:10px}
-#u2tools{display:grid;grid-template-columns:minmax(110px,max-content);gap:4px}
+#u2tools{display:grid;grid-template-columns:1fr;gap:4px}
 #u2tools button{font:inherit;font-size:12px;padding:6px 9px;border:1px solid #9a9992;background:transparent;color:var(--ink);border-radius:3px;cursor:pointer}
 #u2tools button.on{background:#fdf3ea;border-color:#d9895d;box-shadow:0 0 6px rgba(201,107,58,.28)}
 .u2panel{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.u2panel .seg{flex-wrap:wrap}.u2panel .seg>button{flex:1 0 auto;max-width:100%}.u2panel .seg>button[style*="flex:2"]{flex:2 0 auto!important}
 .u2panel h3{font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--accent);font-weight:500}
 .u2note{color:var(--ink3);font-size:11px;line-height:1.45}
 .u2rows{display:flex;flex-direction:column;gap:8px}
 .u2rows>.seg,.u2rows>.p,.u2rows>.desc,.u2rows>.params,.u2rows>div{padding-left:0!important;padding-right:0!important;margin-top:0!important;margin-bottom:0!important}
 .u2rows>.btn,.u2acts .btn{min-height:32px;width:100%}
-.u2acts{display:flex;flex-wrap:wrap;gap:6px}.u2acts .btn{width:auto;flex:1 1 45%}
+.u2acts{display:flex;flex-wrap:wrap;gap:6px}.u2acts .btn{width:auto;flex:1 0 auto;max-width:100%}
 .u2rows.u2second{border-top:1px dashed var(--line);padding-top:8px}
 .u2none{color:var(--ink3);font-size:11px;padding:2px 0}
 details.u2more>summary{cursor:pointer;color:var(--accent);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;list-style:none;padding:2px 0}
@@ -4495,7 +4497,7 @@ details.u2more[open]>.u2rows{margin-top:8px}
   window.__ui2learn = () => { learnMenu(); learnDet.open = true; };
   side.addEventListener('scroll', () => tourPlace());
   /* start: every control shown (no global simple/deep; "more" folds instead), the remembered task and tool, the size of the new frame */
-  setTimeout(() => { document.documentElement.dataset.depth = 'deep'; { let v = 0; try { v = +localStorage.getItem('rail2'); } catch (_) {} setRail(v >= 200 && innerWidth > 760 ? v : 300); } state.view = S.mode === 'model' ? '3d' : S.mode === 'section' ? 'section' : 'plan'; renderTasks(); renderTool(); applyView(); resize(); }, 0);
+  setTimeout(() => { document.documentElement.dataset.depth = 'deep'; { let v = 0; try { v = +localStorage.getItem('rail3') || Math.round(+localStorage.getItem('rail2') * 220 / 300); } catch (_) {} setRail(v >= 150 && innerWidth > 760 ? v : 220); } state.view = S.mode === 'model' ? '3d' : S.mode === 'section' ? 'section' : 'plan'; renderTasks(); renderTool(); applyView(); resize(); }, 0);
   window.__ui2 = { state, chooseTask, chooseTool, TASKS, catalogue, applyView }; window.__ui2probe = (gx, gy) => toSheet(gx, gy);   // for the tests
 })();
 })();
