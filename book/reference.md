@@ -533,14 +533,16 @@ Wind: the ground's effect on the wind, shelter, streamlines and a wind rose from
 
 ### Study · what you can see
 
-What you can see: the ground in view from spots, lines or roads, or where a building would show from.
+What you can see: viewsheds from spots, lines or roads, where a building would show from, isovists and the horizon, visual structure (VGA), sky view, a route out of sight.
 
-*the ground seen from your spots, a line or the roads, or everywhere a building or tower would show from*
+*the ground seen from your spots, a line or the roads, or where a building would show from; the view from each spot, the visual structure of the site, sky view, and a route out of sight*
 
 | control | what it does |
 | --- | --- |
 | seen from here | the ground someone standing at your spots, walking your line or driving the roads can see |
 | where it shows | everywhere a building, tower or tank at your spot can be seen from, by a person standing |
+| visual structure | the visual structure of the whole site: which places see the most, sit visually central, command hidden ground or feel enclosed |
+| sky view | how much sky each place sees over the ground around it: where cold air, frost and shade gather |
 | add a viewpoint | tap where someone stands and looks |
 | draw a line to walk or drive | a trail, a drive or a boundary: the ground seen from anywhere along it |
 | eye height (menu) | how high the eyes are above the ground: standing, on a horse or a truck, upstairs, a lookout |

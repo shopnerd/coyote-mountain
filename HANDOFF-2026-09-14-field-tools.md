@@ -241,3 +241,13 @@ Verified: synthetic LAS survey (`e2e236`, 21 checks): SMRF 100% ground recall, 0
 Limits said in the panel: that 2019 cloud is photogrammetry from a textured mesh, so dense canopy hides the ground (filled, not measured) and touching crowns along the arroyo join into single "trees" of 30–75 m; a cluster without a dominant plane counts as a tree (cars, rock piles too). Its placement came from cloud2bin's origin; the OBJ itself needs the origin typed (32.0146986, −116.7779736, +309.732 m).
 
 Hooks: `__pcOpen(file)`, `__pcRun()`, `__pcState()`, `__pcDem(cell)`, `__pcFind()`, `__utmInv(E, N, zone, south)`.
+
+## J. SpaceVisual in what you can see (15 September)
+
+The viewshed already existed (Docofossor, section G), so SpaceVisual (Yanting Shen, POLY LAB, MIT; 2d/3d isovists, VGA, SVF, visual paths, received visibility) went into the same tool (`id view`, `rec.view`) as two new modes and two additions; its "received visibility" is what "where it shows" already does.
+
+- **Seen from here** gains, per viewpoint (`svIso`): isovist area, boundary (seen/hidden edges plus the site edge), compactness 4πA/P², farthest and mean view, drift distance and bearing; a 360° horizon panorama (every 2°, earth curve), and **a route out of sight** (`svHideRoute`): `rtSolve` got a `mul` argument, a per-cell cost multiplier (6 + 6 × share of sources seeing the cell); kept routes go into `rec.routes` with `hidden: true`.
+- **Visual structure** (`svVga`): nodes on a subgrid (900/1,600/2,500), an edge when standing eyes see each other over bilinear ground with the curvature bulge; bitset rows; connectivity, integration = reach / total depth (bitset BFS), entropy of the depth histogram (bits), control Σ 1/deg, clustering. ~1,700 nodes in 3.3 s, run behind `runBusy` and not drawn until cached. Wash with a legend; read a place marks its visible nodes.
+- **Sky view** (`svSky`): 16 directions, highest horizon within 50 m–1 km sampled at grid-line crossings, SVF = mean cos²γ (cosine-weighted, as SpaceVisual weights its rays; Dozier and Frew 1990). Blue where low.
+
+Verified (`e2e238`, 17 checks): flat ground exact (integration 1, entropy 0, control 1, clustering 1); on hills the bitset BFS/control/clustering match a plain adjacency-list computation to 6e-8 and sightlines agree 100% with 4× finer sampling; two rooms joined by a door put maximum integration at the door and the lowest clustering there (0.58 vs 0.86/0.88); SVF in a 30° valley 0.8660 = closed form; isovist on flat ground = the rectangle's compactness 0.754; behind a 5 m wall the north horizon 9.58° = atan(3.4/20.1); the route out of sight 20% in view vs 100% straight. Regression e2e203, 222, 226, 227, 234 pass; tipaudit 0; reference regenerated; voice updated.
