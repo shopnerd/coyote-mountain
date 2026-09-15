@@ -113,6 +113,17 @@ Load your lot boundary, a drone survey or a points file.
 | plan a flight | open the flight planner on this place: same width and units, and the lot boundary becomes the survey area |
 | clear | remove the boundary |
 
+### Site · point cloud
+
+Point cloud: open LAS, PLY, XYZ, CSV or OBJ; crop, thin, remove strays, find the bare ground, trees and buildings.
+
+*a drone or lidar point cloud: clean it, find the bare ground under trees and roofs, put that ground into the site, and count the trees and buildings*
+
+| control | what it does |
+| --- | --- |
+| open a point cloud | a drone or lidar survey: LAS, PLY, XYZ or CSV, the vertices of an OBJ mesh, or a points file from cloud2bin. read here in the browser; nothing is uploaded |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Site · site history
 
 Every satellite, landsat and old map picture of the place, oldest first, rising up the ground.

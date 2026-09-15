@@ -224,3 +224,20 @@ Verified: FAO-56 Example 18 (ETo 3.88 vs 3.9, every intermediate matches); ten r
 Estimates: WUCOLS class factors, density and microclimate steps, irrigation efficiencies; ERA5 is a ~10 km average (local valley winds and coastal fog not resolved); the wind picture is bare ground and not CFD. Open-Meteo requires attribution (shown) and is free for non-commercial use, which matches the tool's licence.
 
 Hooks: `__wnField()`, `__wnShelter(gx, gy)`, `__wnLines()`, `__wnRose(hourly)`, `__fao56(d)`, `__irCalc()`, `__irEpw(text, name)`.
+
+## I. Site · point cloud, from Cockroach (15 September)
+
+Topo already loaded a CPC1 points file (from `tools/cloud2bin.py`) and drew it in 3d. The new tool (`id cloud`, settings in `rec.cloud`; the points themselves are not saved in the project) does the processing between a raw drone cloud and ground:
+
+1. **Open** in the browser, nothing uploaded: LAS 1.0–1.4 formats 0–10 (CRS from GeoKeys 3072/2048 or WKT), PLY ascii or binary little endian (vertex element first), XYZ/CSV/TXT/PTS, OBJ vertices, CPC1. Text is streamed line by line; past 4 M points it keeps every other point and halves the intake. LAZ is refused (save as LAS or use cloud2bin). Placement: UTM (from the file, or guessed from the numbers with the site's zone; `utmInv` round-trips `utm()` to 0.04 mm), degrees, or local metres with origin, height offset and y-up. Heights more than 15 m off the public ground are lifted onto it (ellipsoidal heights in Baja are about 35 m off).
+2. **Clean** (Cockroach/Open3D): crop to site or lot, voxel averaging, statistical outlier removal (16 neighbours, 2σ or 1σ) on a flat 2d column grid.
+3. **Ground**: SMRF (Pingel et al. 2013) — min surface, square openings growing to the biggest object (van Herk/Gil-Werman filters, checked against brute force), slope threshold, ground surface inpainted, point ground if within tolerance + 1.25 × slope. Or the LAS file's class 2.
+4. **Bare ground**: mean of ground points per cell (auto cell from density), holes filled up to 15 m inside the cloud's coverage, written as a float32 lat/lon GeoTIFF (`pcTiff`, NaN nodata) and fed through `parseGeoTiff` → `S.survey` → `applySurvey` → `surveyStore.put`, so undo, the reload restore, the 20 m edge feather and the flight planner all behave as for a drone survey. Save as GeoTIFF.
+5. **Trees and buildings**: points above min height, DBSCAN (eps, minPts 4) on the column grid, clusters ≥ 12 points; a building when a RANSAC plane (0.15 m) holds ≥ 60% with a near-horizontal normal and ≥ 10 m²; tree height p98, roof height median; add trees to the plan as tree strokes with the measured crown.
+6. **Views and keep**: plan dots by photo, class or height with tree/roof marks (heights on the 25 tallest); points within 1 m of each section line drawn in section (`__pcSection` hook in `drawSectionOne`); use in the 3d model (CPC1 → `loadCloud` + `cloudStore`); save PLY with a class per point.
+
+Verified: synthetic LAS survey (`e2e236`, 21 checks): SMRF 100% ground recall, 0% of 4,900 tree/roof points as ground, strays gone, ground raster RMSE 1.6 cm (worst 17 cm, under the roof 17 cm), terrain inside the feather within 13 cm, five trees within 12 cm height and 30% crown, the roof at 4.06 m (4 m), PLY/XYZ/CSV identical to LAS to 1 mm. Real Encino Solo 2019 cloud (1,021,033 points): read 0.2 s, processed 5.4 s (outliers 3.2 s, ground 1.5 s), 705k ground, raster 0.75 m cells, 77 "trees" found in 4 s; the raw 320 MB OBJ streams 1,117,404 vertices in 3.2 s. `e2e237` replaces the classic-only points tests (e2e174/187/192 are obsolete): 900k points into 3d, 264 ms a frame, back after reload.
+
+Limits said in the panel: that 2019 cloud is photogrammetry from a textured mesh, so dense canopy hides the ground (filled, not measured) and touching crowns along the arroyo join into single "trees" of 30–75 m; a cluster without a dominant plane counts as a tree (cars, rock piles too). Its placement came from cloud2bin's origin; the OBJ itself needs the origin typed (32.0146986, −116.7779736, +309.732 m).
+
+Hooks: `__pcOpen(file)`, `__pcRun()`, `__pcState()`, `__pcDem(cell)`, `__pcFind()`, `__utmInv(E, N, zone, south)`.
