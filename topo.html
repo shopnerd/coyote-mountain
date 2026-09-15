@@ -1933,6 +1933,7 @@ cv.addEventListener('pointermove', e => {
   if (S.mode === 'plan') { const g = toGrid(p[0], p[1]); S.ptr = g; readout(g); if (!(drag && drag.kind === 'pen')) S.dirty = true; }
   if (S.mode === 'analysis') readout(toGrid(p[0], p[1]));
   if (S.mode === 'model' && S.sculpt && !drag) { const g = pick(p[0], p[1]); if ((g && !S.pick) || (!g && S.pick) || (g && S.pick && (g[0] !== S.pick[0] || g[1] !== S.pick[1]))) { S.pick = g; S.dirty = true; } if (g) readout(g); }
+  else if (S.mode === 'model' && !drag && !S.walk) { const now = performance.now(); if (now - readT > 60) { readT = now; const g = pick(p[0], p[1]); if (g) readout(g); else { const u2 = document.getElementById('u2read'); if (u2) u2.textContent = ''; } } }   /* looking at the model: the status bar still reads the ground under the pointer, a few times a second */
   if (!drag) return;
   if (drag.kind === 'orbit') { orbit(p[0] - drag.p[0], p[1] - drag.p[1]); drag.p = p; }
   else if (drag.kind === 'pan') { S.cam.pan.x += p[0] - drag.p[0]; S.cam.pan.y += p[1] - drag.p[1]; drag.p = p; S.dirty = true; }
@@ -2018,17 +2019,22 @@ function endPointer(e) {
   drag = null; S.dirty = true;
 }
 cv.addEventListener('pointerup', endPointer); cv.addEventListener('pointercancel', endPointer);
-cv.addEventListener('pointerleave', () => { S.ptr = null; S.dirty = true; document.getElementById('read').textContent = KEYS_LINE; });
+cv.addEventListener('pointerleave', () => { S.ptr = null; S.dirty = true; document.getElementById('read').textContent = KEYS_LINE; const u2 = document.getElementById('u2read'); if (u2) u2.textContent = ''; });
 let lowQT = null;
 cv.addEventListener('wheel', e => { const q = pt(e); if (S.mode === 'model') { e.preventDefault(); S.lowQ = true; clearTimeout(lowQT); lowQT = setTimeout(() => { S.lowQ = false; S.dirty = true; }, 160); zoomAt(S.cam.pan, q[0], q[1], e.deltaY < 0 ? 1.1 : .9, S.w, S.h); } else if (S.mode === 'plan' || S.mode === 'analysis') { e.preventDefault(); planZoomAt(q[0], q[1], e.deltaY < 0 ? 1.15 : 1 / 1.15); } }, { passive: false });
 cv.addEventListener('contextmenu', e => e.preventDefault()); pip.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); }); pip.addEventListener('mousedown', e => { if (e.button === 1) e.preventDefault(); });
 cv.addEventListener('dblclick', () => { if (S.mode !== 'model' || S.walk) return; S.cam.pan.x = S.cam.pan.y = 0; S.cam.zoom = 1; S.dirty = true; toast('view reset'); });
+let readT = 0;
 function readout(g) {
   const el = document.getElementById('read');
-  if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) { el.textContent = 'outside the site'; return; }
+  const u2 = document.getElementById('u2read');   /* the task layout's status bar shows the same readout, with latitude and longitude */
+  if (g[0] < 0 || g[1] < 0 || g[0] > W - 1 || g[1] > H - 1) { el.textContent = 'outside the site'; if (u2) u2.textContent = 'outside the site'; return; }
   const zp = sample(z, g[0], g[1]), ze = sample(base, g[0], g[1]), gr = grad(g[0], g[1]), sl = Math.hypot(gr[0], gr[1]) * 100;
   el.innerHTML = `x ${fL(g[0] * cs(), 1)} · y ${fL(g[1] * cs(), 1)} &nbsp; spot <b>${zp >= 0 && !S.world ? '+' : ''}${fL(zp, 2)}</b> &nbsp; existing ${fL(ze, 2)} &nbsp; slope ${sl.toFixed(0)}%`;
+  if (u2) { let where; if (S.world) { const [la, lo] = nodeLatLon(g[0], g[1], S.world.lat, S.world.lon); where = `${Math.abs(la).toFixed(5)}° ${la >= 0 ? 'N' : 'S'}, ${Math.abs(lo).toFixed(5)}° ${lo >= 0 ? 'E' : 'W'}`; } else where = `x ${fL(g[0] * cs(), 1)}, y ${fL(g[1] * cs(), 1)}`;
+    const graded = Math.abs(zp - ze) > .02;
+    u2.innerHTML = `${where} &nbsp;·&nbsp; elevation <b>${fL(zp, 1)}</b>${graded ? ` &nbsp;·&nbsp; existing ${fL(ze, 1)}` : ''} &nbsp;·&nbsp; slope <b>${sl.toFixed(0)}%</b>`; }
 }
 
 /* ---------- floating descriptions on dwell ---------- */
@@ -4840,6 +4846,8 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
 #u2layers.show{display:flex}
 #u2status{grid-row:4;grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:0 12px;background:var(--panel);border-top:1px solid var(--line);font-size:11.5px;color:var(--ink2);min-width:0}
 #u2status b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+#u2read{font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;color:var(--ink2)}
+@media (pointer:coarse){#u2read{display:none}}
 #u2status .p{flex-direction:row;align-items:center;gap:6px}#u2status .p label{font-size:10px}#u2status select{font:inherit;font-size:11px}
 .u2flash{outline:2px solid var(--accent)!important;outline-offset:2px;transition:outline-color .3s}
 /* the bars clear the notch and the home bar when the page is saved to the home screen */
@@ -4953,7 +4961,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
 
   /* the status bar: what the tool does is in the line above the canvas; here the place, cut and fill, units */
   const stPlace = make('span'), stCut = make('span'), stFill = make('span'), stUnits = make('div');
-  status.append(stPlace, make('span', { cls: 'sp', style: 'flex:1' }), stCut, stFill, stUnits);
+  status.append(stPlace, make('span', { id: 'u2read', 'data-tip': 'under the pointer: latitude and longitude, the ground height (and the existing height where it has been graded), and the slope' }), make('span', { cls: 'sp', style: 'flex:1' }), stCut, stFill, stUnits);
   stUnits.append(unit('#unit'));
 
   /* mounting */
