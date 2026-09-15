@@ -513,6 +513,18 @@ Sun and shadow through the day and the year.
 | --- | --- |
 | sun study | shadows at an hour, or sun hours per day, for the site's latitude |
 
+### Study · sunlight
+
+Sunlight: yearly and seasonal sun on every slope from a weather file, the horizon near and far, and a panel at a spot.
+
+*the sun every slope gets in a real year, with the hills around casting their shade: by season, hours of direct sun, and a panel at any spot*
+
+| control | what it does |
+| --- | --- |
+| fetch · Open-Meteo | three years of hourly direct and diffuse sunlight at this place from the Open-Meteo archive; sends the site's location to open-meteo.com |
+| read an EPW file | a typical-year weather file (EnergyPlus EPW), the file Ladybug reads |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Study · wind
 
 Wind: the ground's effect on the wind, shelter, streamlines and a wind rose from three years of hourly data.
@@ -527,6 +539,9 @@ Wind: the ground's effect on the wind, shelter, streamlines and a wind rose from
 | faster and slower | ember where the ground speeds the wind up (windward slopes, crests), blue where it slows (lee slopes, hollows) |
 | sheltered and exposed | blue where higher ground upwind shelters the spot, ember where nothing does |
 | read a spot | tap anywhere: the wind there, its direction and how sheltered it is |
+| windbreak density (menu) | how much wind the crowns and hedges let through: dense stops most, open lets most through |
+| hedge height (menu) | the height of the hedges drawn on the plan: shelter reaches about 10 to 20 times it downwind |
+| flow detail (menu) | how fine the flow is worked out: finer takes longer |
 | fetch the winds · Open-Meteo | three years of hourly wind at this place from the Open-Meteo archive (ERA5 reanalysis, about 10 km cells); sends the site's location to open-meteo.com |
 | use NE in fire ready | set fire ready's wind to this direction (to the nearest of its eight) |
 | see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
