@@ -246,6 +246,19 @@ An even slope from a to b with side slopes.
 | side slopes (slider) | how the sides of the graded strip meet the ground: 3:1 is three across for one down. fill slopes down, cut slopes up, until they daylight |
 | draw it in plan · 3D | this tool works on the plan; its settings stay here in every view |
 
+### Shape · spot grading
+
+Spot grading: spot heights, breaklines and a boundary make a design surface with slope classes and flow arrows.
+
+*a design surface from spot heights, breaklines and a boundary, with slopes coloured and flow arrows, then applied to the ground*
+
+| control | what it does |
+| --- | --- |
+| draw the boundary | the edge of the graded area: tap its corners; outside it the ground stays as it is, and at it the design meets the ground |
+| add a spot height | tap a spot: it starts at the ground's height, then set the height you want. drag a spot to move it |
+| draw a breakline | a line the surface must follow exactly: a path edge, a swale bottom, a wall top, a ridge. tap its points; each starts at the ground's height |
+| draw in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Shape · path
 
 A path or road carved into the ground.
@@ -318,6 +331,17 @@ Check dams: one-rock dams laid out along a gully, headcut treatments, rock count
 | mark a headcut | a step in the gully bed where it is eating back uphill: gets a Zuni bowl or a rundown |
 | mark sheet flow for a media luna | a spot where water runs off in a sheet rather than a channel |
 | see them in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
+### Shape · solar array
+
+Solar array: rows packed into an area, winter-shade spacing on the slope, yield by month, payback.
+
+*rows of panels in an area, spaced so none shades the next in winter, with the energy by month and a rough payback*
+
+| control | what it does |
+| --- | --- |
+| draw the array area | the ground the panels may go on: tap its corners on the plan |
+| draw in plan · 3D | this tool works on the plan; its settings stay here in every view |
 
 ### Shape · steps
 
@@ -601,6 +625,17 @@ How much water the design holds from a storm and a year, against what the planti
 | keep as A | remember this design’s water numbers to compare with another |
 | keep as B | remember this design’s water numbers to compare with another |
 | clear | forget what was kept or loaded here |
+
+### Study · field maps
+
+Field maps: soil and plant measurements mapped by inverse distance or kriging, tested by leaving points out.
+
+*measurements from field notes or a csv spread into a map, by inverse distance or kriging, with where the data is too thin*
+
+| control | what it does |
+| --- | --- |
+| import measurements · csv | a csv with latitude, longitude and a value per row: soil tests, moisture probes, plant counts from a phone or GPS |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
 
 ### Study · what grows where
 
