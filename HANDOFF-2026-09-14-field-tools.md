@@ -263,3 +263,17 @@ Verified (`e2e239`, 13 checks): noon altitude at equinox/solstices within 0.6° 
 Verified (`e2e240`, 14 checks): empty site 1.000; square building front 0.12, fastest beside 1.38/1.34 (0.01 against the wall inside the corner eddy), wake 0.15, symmetric within 3%, lattice flux 0.991/1.004/0.996, flow parts at the front; gap between two buildings 1.42; hedge lee −2H 0.87, 3H 0.46, 6H 0.55, 10H 0.66, 18H 0.84, 35H 1.00; a lone tree shelters only behind its crown; the toggle removes it. Stated limit: open wind far to the side reads ~1.2 because a plan flow cannot go over roofs; the panel says to read speed-ups for where, more than how much.
 
 Regression e2e203, 216, 217, 222, 235, 236 pass; tipaudit 0; reference regenerated; voice `8d3aa3e`.
+
+## L. Phones and tablets in the task layout (15 September)
+
+The one phone breakpoint (`@media (max-width:760px)` near the top of `topo.html`) styled the classic shell (`#app`, `aside`, `header`), and `.ui2 #app` outranked it, so since the task layout became the default a phone upright got the desktop two-column grid: a 220 px rail and a 170 px map, the top bar clipped, layers & look over Plan / 3D / Section. iPad was fine apart from the theme button clipped upright.
+
+Built, at the end of the task layout's style block in both `topo.html` and `flight.html` (flight's older one-line phone rule replaced), plus a small script before `</body>`:
+
+- **Phones (≤ 760 px wide):** one column. The rail becomes a sheet under the map (`var(--sheet, 36dvh)`), the four task tabs run across its top (horizontal, equal width), and a handle `#u2sheetGrip` above them drags the sheet taller or shorter; tapping the handle twice folds it to the tabs (52 px) and back. Remembered in localStorage `u2sheet`; dropped when the page is wider than a phone. Plan / 3D / Section sits at the bottom of the map so it never meets layers & look or the 3D picture. The top bar keeps project, undo, redo, learn and the theme; the logo shows `topo` / `flight` alone (the long half is `span.long`). The rail grip and the task-column grip are hidden. Toasts wrap and sit above the view toggle.
+- **Tablets upright (≤ 900 px):** the place name goes, find a tool narrows, so every top-bar button fits.
+- **Fingers (`pointer: coarse`):** tool buttons, task tabs, view buttons and top-bar buttons get taller. The model view's mouse hints (right drag orbit, wheel zoom) are not drawn on touch devices (`TOUCH`).
+- **Home screen:** the top and bottom bars pad by `env(safe-area-inset-*)` in the task layout (the old standalone rule targeted the classic header).
+- `setRail` no longer clamps to 45 % of a phone's width (it used to remember 176 px in `rail3` after one phone visit, which shrank the desktop rail).
+
+Verified headless (Playwright, file://, network blocked) at 390×844, 844×390, 820×1180, 1180×820, 1440×900 on both pages: no overlaps, no top-bar overflow, no page errors; drag, fold, reload and rotation checked on topo. Not yet tested on a real phone: the tilt sensor and GPS tools in Make still need that (open item from section A).

@@ -786,7 +786,7 @@ document.querySelectorAll('[title]').forEach(el => { const t = el.getAttribute('
 document.addEventListener('pointerover', e => { const el = e.target.closest('[data-tip]'); clearTimeout(tipTimer); if (!el) { tipEl.classList.remove('show'); return; } tipTimer = setTimeout(() => { tipEl.textContent = el.dataset.tip; tipEl.classList.add('show'); const r = el.getBoundingClientRect(), tw = Math.min(250, tipEl.offsetWidth || 200); let x = r.left + r.width / 2 - tw / 2; x = Math.max(6, Math.min(innerWidth - tw - 6, x)); const below = r.bottom + 8 + tipEl.offsetHeight < innerHeight; tipEl.style.left = x + 'px'; tipEl.style.top = (below ? r.bottom + 6 : r.top - tipEl.offsetHeight - 6) + 'px'; }, 350); });
 document.addEventListener('pointerout', e => { if (e.target.closest('[data-tip]')) { clearTimeout(tipTimer); tipEl.classList.remove('show'); } });
 const RAILW = 220;   // the task layout's rail lays out this wide; dragging scales it
-function setRail(px) { px = Math.max(document.documentElement.classList.contains('ui2') ? 150 : 200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); const u2 = document.documentElement.classList.contains('ui2'); document.querySelector(u2 ? '#u2rail' : 'aside').style.zoom = (px / (u2 ? RAILW : 256)).toFixed(3); try { localStorage.setItem(u2 ? 'rail3' : 'rail', px); } catch (_) {} resize(); }
+function setRail(px) { px = Math.max(document.documentElement.classList.contains('ui2') ? 150 : 200, Math.min(innerWidth > 760 ? Math.round(innerWidth * .45) : 1e9, Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); const u2 = document.documentElement.classList.contains('ui2'); document.querySelector(u2 ? '#u2rail' : 'aside').style.zoom = (px / (u2 ? RAILW : 256)).toFixed(3); try { localStorage.setItem(u2 ? 'rail3' : 'rail', px); } catch (_) {} resize(); }
 { const g = $('railGrip'); let rd = null; g.addEventListener('pointerdown', e => { rd = { x: e.clientX, w: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--rail')) }; g.classList.add('on'); g.setPointerCapture(e.pointerId); }); g.addEventListener('pointermove', e => { if (rd) setRail(rd.w + e.clientX - rd.x); }); const up = () => { rd = null; g.classList.remove('on'); }; g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up); try { const r = +localStorage.getItem('rail'); if (r && innerWidth > 760) setRail(r); } catch (_) {} }
 addEventListener('resize', resize); resize(); syncUI(); updateHint(); requestAnimationFrame(frame);
 if (!openFromLink() && !restoreSession()) { $('place').value = HOME.lat + ', ' + HOME.lon; refresh(); fetchWorld(HOME, true); }
@@ -920,7 +920,37 @@ if (location.hash === '#tour') setTimeout(() => window.__ui2learn ? window.__ui2
 #u2status b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 #u2status .p{flex-direction:row;align-items:center;gap:6px}#u2status .p label{font-size:10px}#u2status select{font:inherit;font-size:11px;min-height:20px;padding:0 4px;width:auto}
 .u2flash{outline:2px solid var(--accent)!important;outline-offset:2px}
-@media (max-width:760px){.ui2 #app{grid-template-columns:minmax(0,1fr);grid-template-rows:40px 26px 1fr 36dvh 28px}.ui2 main{grid-row:3;grid-column:1}#u2rail{grid-row:4;grid-column:1;border-right:0;border-top:1px solid var(--line);zoom:1!important}#u2status{grid-row:5}#u2head .place,#u2find,#u2head a.u2b{display:none}}
+/* the bars clear the notch and the home bar when the page is saved to the home screen */
+.ui2 #app{grid-template-rows:calc(40px + env(safe-area-inset-top,0px)) 26px minmax(0,1fr) calc(28px + env(safe-area-inset-bottom,0px))}
+#u2head{padding-top:env(safe-area-inset-top,0px)}#u2status{padding-bottom:env(safe-area-inset-bottom,0px)}
+.ui2 #railGrip{top:calc(66px + env(safe-area-inset-top,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+/* tablets upright: the top bar keeps every button by dropping the place name and narrowing find a tool */
+@media (max-width:900px){#u2head{gap:6px}#u2head .place{display:none}#u2find input{width:120px}}
+/* phones: one column, the rail as a sheet under the map with the task tabs across its top and a handle to drag it taller or fold it away; the top bar keeps project, undo, redo, learn and the theme */
+#u2sheetGrip{display:none}
+@media (max-width:760px){
+.ui2 #app{grid-template-columns:minmax(0,1fr);grid-template-rows:calc(40px + env(safe-area-inset-top,0px)) 26px minmax(0,1fr) var(--sheet,36dvh) calc(28px + env(safe-area-inset-bottom,0px))}
+.ui2 main{grid-row:3;grid-column:1;min-width:0}
+#u2rail{grid-row:4;grid-column:1;border-right:0;border-top:1px solid var(--line);zoom:1!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:14px auto minmax(0,1fr)}
+#u2status{grid-row:5;gap:10px;padding-left:8px;padding-right:8px;overflow:hidden;white-space:nowrap}#u2status>*{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}#u2status select{max-width:118px}
+#railGrip,#u2taskGrip{display:none!important}
+#u2sheetGrip{display:block;position:relative;height:14px;cursor:row-resize;touch-action:none}
+#u2sheetGrip::after{content:"";position:absolute;left:50%;top:5px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:#b3b2aa}
+#u2sheetGrip.on::after{background:var(--accent)}
+#u2tasks{display:flex;margin-top:0;border-right:0;border-bottom:1px solid var(--line);overflow:hidden}
+#u2tasks button{flex:1 1 0;writing-mode:horizontal-tb;text-orientation:mixed;font-size:12.5px;letter-spacing:.08em;padding:8px 0;border-bottom:0;border-left:1px solid var(--line);min-height:0}
+#u2tasks button:first-child{border-left:0}
+#u2tasks button.on{box-shadow:inset 0 -3px 0 var(--accent)}
+#u2side{padding:8px 10px 24px}
+#u2head{gap:6px;padding-left:8px;padding-right:8px}#u2head .logo .long,#u2head .place,#u2find,#u2head a.u2b{display:none}
+#u2proj,#u2learn{max-width:calc(100vw - 16px)}
+#u2views{top:auto;bottom:10px}
+#u2layers{width:calc(100% - 24px);max-height:calc(100% - 56px)}
+#u2onnow{max-width:calc(100% - 24px)}
+.toast{bottom:58px;max-width:calc(100% - 24px);white-space:normal;text-align:center;line-height:1.35}
+}
+/* fingers: a little more room on every tap target */
+@media (pointer:coarse){#u2tools button{padding:9px}.u2b{padding:5px 10px}#u2views button{padding:8px 14px}#u2tasks button{padding:10px 0}}
 ` }));
   const head = make('div', { id: 'u2head' }), rail = make('div', { id: 'u2rail' }), tasksEl = make('div', { id: 'u2tasks', role: 'tablist', 'aria-label': 'tasks' }), side = make('div', { id: 'u2side' }), toolsEl = make('div', { id: 'u2tools' }), panelEl = make('div', { cls: 'u2panel' }), status = make('div', { id: 'u2status' });
   app.insertBefore(head, q('#app > header'));
@@ -934,7 +964,7 @@ if (location.hash === '#tour') setTimeout(() => window.__ui2learn ? window.__ui2
   projPop.append(q('#saveProj'), q('#openProj'), q('#shareBtn'));
   const findWrap = make('div', { id: 'u2find' }), findIn = make('input', { type: 'search', placeholder: 'find a tool…  /', 'aria-label': 'find a tool' }), hits = make('div', { id: 'u2hits', role: 'listbox' }); findWrap.append(findIn, hits);
   const themeBtn = make('button', { cls: 'u2b', type: 'button' }); const themeLab = () => { themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; themeBtn.onclick = () => { q('#themeBtn').click(); themeLab(); };
-  head.append(make('a', { cls: 'logo', href: 'index.html' }, [document.createTextNode('coyote_mountain'), make('b', { text: '_flight' })]), placeEl, projDet, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'topo.html', text: 'topo' }), make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), themeBtn);
+  head.append(make('a', { cls: 'logo', href: 'index.html' }, [make('span', { cls: 'long', text: 'coyote_mountain' }), make('b', {}, [make('span', { cls: 'long', text: '_' }), document.createTextNode('flight')])]), placeEl, projDet, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'topo.html', text: 'topo' }), make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), themeBtn);
   document.addEventListener('click', e => { if (!projDet.contains(e.target)) projDet.open = false; if (!learnDet.contains(e.target)) learnDet.open = false; if (!findWrap.contains(e.target)) hits.classList.remove('show'); });
 
   /* the status bar: the place and the numbers that decide the flight */
@@ -1123,6 +1153,24 @@ if (document.documentElement.classList.contains('ui2')) (() => {
   grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); d = { x: e.clientX, w: tasks.getBoundingClientRect().width / zoom() }; grip.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
   grip.addEventListener('pointermove', e => { if (d) set(d.w + (e.clientX - d.x) / zoom(), true); });
   const end = () => { d = null; grip.classList.remove('on'); }; grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
+})();
+</script>
+<script>/* phones: the rail is a sheet under the map. drag its handle to trade map for tools; tap the handle twice to fold it to the task tabs and back (remembered) */
+if (document.documentElement.classList.contains('ui2')) (() => {
+  const rail = document.getElementById('u2rail'); if (!rail) return;
+  const grip = document.createElement('div'); grip.id = 'u2sheetGrip'; grip.setAttribute('aria-hidden', 'true'); rail.prepend(grip);
+  const phone = matchMedia('(max-width:760px)'), root = document.documentElement.style, FOLD = 52;   /* folded: the handle and the task tabs only */
+  const set = (px, keep) => { px = Math.max(FOLD, Math.min(Math.round(innerHeight * .7), Math.round(px))); root.setProperty('--sheet', px + 'px'); if (keep) try { localStorage.setItem('u2sheet', px); } catch (_) {} dispatchEvent(new Event('resize')); return px; };
+  const cur = () => rail.getBoundingClientRect().height;
+  let last = 0; try { last = +localStorage.getItem('u2sheet') || 0; } catch (_) {}
+  const apply = () => { if (!phone.matches) { root.removeProperty('--sheet'); return; } if (last) set(last, false); };
+  apply(); (phone.addEventListener ? phone.addEventListener('change', apply) : phone.addListener(apply));
+  let d = null, tapAt = 0, open = 0;
+  const fold = () => { if (cur() > FOLD + 2) { open = cur(); set(FOLD, true); } else set(open || Math.round(innerHeight * .36), true); };
+  grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); d = { y: e.clientY, h: cur(), moved: false }; grip.classList.add('on'); e.preventDefault(); });
+  grip.addEventListener('pointermove', e => { if (!d) return; const dy = d.y - e.clientY; if (Math.abs(dy) > 4) d.moved = true; if (d.moved) set(d.h + dy, false); });
+  const end = e => { if (!d) return; grip.classList.remove('on'); if (d.moved) { try { localStorage.setItem('u2sheet', Math.round(cur())); } catch (_) {} } else { const now = performance.now(); if (now - tapAt < 400) { fold(); tapAt = 0; } else tapAt = now; } d = null; };
+  grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
 })();
 </script>
 </body>

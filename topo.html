@@ -1156,7 +1156,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const { proj } = camera(w, h), R = S.radius / cs(); c.strokeStyle = ACC; c.lineWidth = 1.3; c.setLineDash([4, 3]); c.beginPath();
     for (let t = 0; t <= 72; t++) { const a = t / 72 * TAU, gx = Math.max(0, Math.min(W - 1, S.pick[0] + Math.cos(a) * R)), gy = Math.max(0, Math.min(H - 1, S.pick[1] + Math.sin(a) * R)), q = proj(gx, gy, sample(zv, gx, gy) + .06); t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); }
     c.stroke(); c.setLineDash([]); const q0 = proj(S.pick[0], S.pick[1], sample(zv, S.pick[0], S.pick[1]) + .06); c.fillStyle = ACC; c.beginPath(); c.arc(q0[0], q0[1], 2.5, 0, TAU); c.fill(); }
-  if (mini) return; c.fillText(w < 1150 ? `model · ${S.ve}x vertical · right drag orbit · wheel zoom · double-click reset` : `model · ${S.ve}x vertical · right drag orbit · middle or shift drag pan · ctrl+right drag zoom · wheel zoom · double-click reset · r rain`, 14, h - 10);
+  if (mini || TOUCH) return; c.fillText(w < 1150 ? `model · ${S.ve}x vertical · right drag orbit · wheel zoom · double-click reset` : `model · ${S.ve}x vertical · right drag orbit · middle or shift drag pan · ctrl+right drag zoom · wheel zoom · double-click reset · r rain`, 14, h - 10);
 }
 
 /* ---------- camera + picking (screen point -> grid node on the surface) ---------- */
@@ -1247,7 +1247,7 @@ function drawStepped0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     const { proj } = camera(w, h), R = S.radius / cs(); c.strokeStyle = ACC; c.lineWidth = 1.3; c.setLineDash([4, 3]); c.beginPath();
     for (let t = 0; t <= 72; t++) { const a = t / 72 * TAU, gx = Math.max(0, Math.min(W - 1, S.pick[0] + Math.cos(a) * R)), gy = Math.max(0, Math.min(H - 1, S.pick[1] + Math.sin(a) * R)), q = proj(gx, gy, sample(zv, gx, gy) + .06); t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); }
     c.stroke(); c.setLineDash([]); const q0 = proj(S.pick[0], S.pick[1], sample(zv, S.pick[0], S.pick[1]) + .06); c.fillStyle = ACC; c.beginPath(); c.arc(q0[0], q0[1], 2.5, 0, TAU); c.fill(); }
-  if (mini) return; c.fillText(w < 1150 ? `stepped stack · ${layers.length} layers of ${fS(S.thick)} · right drag orbit` : `stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
+  if (mini || TOUCH) return; c.fillText(w < 1150 ? `stepped stack · ${layers.length} layers of ${fS(S.thick)} · right drag orbit` : `stepped stack · ${layers.length} layers of ${fS(S.thick)} · ${S.ve}x vertical · right drag orbit · middle drag pan · wheel zoom · double-click reset`, 14, h - 10);
 }
 
 /* ---------- analysis: flow, catchments, ridges, keypoints, keyline ---------- */
@@ -2252,7 +2252,7 @@ document.addEventListener('click', e => { const el = e.target.closest('button');
 document.addEventListener('scroll', hideTip, true);
 
 /* ---------- rail width: drag the edge; the menu scales with it ---------- */
-function setRail(px) { px = Math.max(document.documentElement.classList.contains('ui2') ? 150 : 200, Math.min(Math.round(innerWidth * .45), Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); { const u2 = document.documentElement.classList.contains('ui2'); document.querySelector(u2 ? '#u2rail' : 'aside').style.zoom = (px / (u2 ? 220 : 256)).toFixed(3); } try { localStorage.setItem(document.documentElement.classList.contains('ui2') ? 'rail3' : 'rail', px); } catch (_) {} resize(); }
+function setRail(px) { px = Math.max(document.documentElement.classList.contains('ui2') ? 150 : 200, Math.min(innerWidth > 760 ? Math.round(innerWidth * .45) : 1e9, Math.round(px))); document.documentElement.style.setProperty('--rail', px + 'px'); { const u2 = document.documentElement.classList.contains('ui2'); document.querySelector(u2 ? '#u2rail' : 'aside').style.zoom = (px / (u2 ? 220 : 256)).toFixed(3); } try { localStorage.setItem(document.documentElement.classList.contains('ui2') ? 'rail3' : 'rail', px); } catch (_) {} resize(); }
 try { const v = +localStorage.getItem('rail'); if (v >= 200 && innerWidth > 760) setRail(v); } catch (_) {}
 { const grip = document.getElementById('railGrip'); let rd = null;
   grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); rd = e.clientX; grip.classList.add('on'); e.preventDefault(); });
@@ -4842,6 +4842,37 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
 #u2status b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
 #u2status .p{flex-direction:row;align-items:center;gap:6px}#u2status .p label{font-size:10px}#u2status select{font:inherit;font-size:11px}
 .u2flash{outline:2px solid var(--accent)!important;outline-offset:2px;transition:outline-color .3s}
+/* the bars clear the notch and the home bar when the page is saved to the home screen */
+.ui2 #app{grid-template-rows:calc(40px + env(safe-area-inset-top,0px)) 26px minmax(0,1fr) calc(28px + env(safe-area-inset-bottom,0px))}
+#u2head{padding-top:env(safe-area-inset-top,0px)}#u2status{padding-bottom:env(safe-area-inset-bottom,0px)}
+.ui2 #railGrip{top:calc(66px + env(safe-area-inset-top,0px));bottom:calc(28px + env(safe-area-inset-bottom,0px))}
+/* tablets upright: the top bar keeps every button by dropping the place name and narrowing find a tool */
+@media (max-width:900px){#u2head{gap:6px}#u2head .place{display:none}#u2find input{width:120px}}
+/* phones: one column, the rail as a sheet under the map with the task tabs across its top and a handle to drag it taller or fold it away; the top bar keeps project, undo, redo, learn and the theme */
+#u2sheetGrip{display:none}
+@media (max-width:760px){
+.ui2 #app{grid-template-columns:minmax(0,1fr);grid-template-rows:calc(40px + env(safe-area-inset-top,0px)) 26px minmax(0,1fr) var(--sheet,36dvh) calc(28px + env(safe-area-inset-bottom,0px))}
+.ui2 main{grid-row:3;grid-column:1;min-width:0}
+#u2rail{grid-row:4;grid-column:1;border-right:0;border-top:1px solid var(--line);zoom:1!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:14px auto minmax(0,1fr)}
+#u2status{grid-row:5;gap:10px;padding-left:8px;padding-right:8px;overflow:hidden;white-space:nowrap}#u2status>*{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}#u2status select{max-width:118px}
+#railGrip,#u2taskGrip{display:none!important}
+#u2sheetGrip{display:block;position:relative;height:14px;cursor:row-resize;touch-action:none}
+#u2sheetGrip::after{content:"";position:absolute;left:50%;top:5px;width:40px;height:4px;margin-left:-20px;border-radius:2px;background:#b3b2aa}
+#u2sheetGrip.on::after{background:var(--accent)}
+#u2tasks{display:flex;margin-top:0;border-right:0;border-bottom:1px solid var(--line);overflow:hidden}
+#u2tasks button{flex:1 1 0;writing-mode:horizontal-tb;text-orientation:mixed;font-size:12.5px;letter-spacing:.08em;padding:8px 0;border-bottom:0;border-left:1px solid var(--line);min-height:0}
+#u2tasks button:first-child{border-left:0}
+#u2tasks button.on{box-shadow:inset 0 -3px 0 var(--accent)}
+#u2side{padding:8px 10px 24px}
+#u2head{gap:6px;padding-left:8px;padding-right:8px}#u2head .logo .long,#u2head .place,#u2find,#u2head a.u2b{display:none}
+#u2proj,#u2learn{max-width:calc(100vw - 16px)}
+#u2views{top:auto;bottom:10px}
+#u2layers{width:calc(100% - 24px);max-height:calc(100% - 56px)}
+#u2onnow{max-width:calc(100% - 24px)}
+.toast{bottom:58px;max-width:calc(100% - 24px);white-space:normal;text-align:center;line-height:1.35}
+}
+/* fingers: a little more room on every tap target */
+@media (pointer:coarse){#u2tools button{padding:9px}.u2b{padding:5px 10px}#u2views button{padding:8px 14px}#u2tasks button{padding:10px 0}}
 ` });
   document.head.append(style);
   const head = make('div', { id: 'u2head' }), rail = make('div', { id: 'u2rail' }), tasksEl = make('div', { id: 'u2tasks', role: 'tablist', 'aria-label': 'tasks' }), side = make('div', { id: 'u2side' }), toolsEl = make('div', { id: 'u2tools' }), panelEl = make('div', { cls: 'u2panel' }), status = make('div', { id: 'u2status' });
@@ -4858,7 +4889,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   const redoBtn = make('button', { cls: 'u2b', type: 'button', text: 'redo' }); redoBtn.onclick = () => redo();
   const findWrap = make('div', { id: 'u2find' }), findIn = make('input', { type: 'search', placeholder: 'find a tool…  /', 'aria-label': 'find a tool' }), hits = make('div', { id: 'u2hits', role: 'listbox' }); findWrap.append(findIn, hits);
   const themeBtn = make('button', { cls: 'u2b', type: 'button' }); const themeLab = () => { themeBtn.textContent = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; }; themeBtn.onclick = () => { press('#themeBtn'); themeLab(); };
-  head.append(make('a', { cls: 'logo', href: 'index.html' }, [document.createTextNode('coyote_mountain'), make('b', { text: '_topo' })]), placeEl, projDet, undoBtn, redoBtn, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), make('a', { cls: 'u2b', href: 'flight.html', text: 'flight' }), themeBtn);
+  head.append(make('a', { cls: 'logo', href: 'index.html' }, [make('span', { cls: 'long', text: 'coyote_mountain' }), make('b', {}, [make('span', { cls: 'long', text: '_' }), document.createTextNode('topo')])]), placeEl, projDet, undoBtn, redoBtn, make('span', { cls: 'sp' }), findWrap, make('a', { cls: 'u2b', href: 'gallery/', text: 'gallery' }), make('a', { cls: 'u2b', href: 'flight.html', text: 'flight' }), themeBtn);
   document.addEventListener('click', e => { if (!projDet.contains(e.target)) projDet.open = false; if (typeof learnDet !== 'undefined' && !learnDet.contains(e.target)) learnDet.open = false; if (!findWrap.contains(e.target)) hits.classList.remove('show'); });
 
   /* the canvas: views and layers */
@@ -7865,6 +7896,24 @@ if (document.documentElement.classList.contains('ui2')) (() => {
   grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); d = { x: e.clientX, w: tasks.getBoundingClientRect().width / zoom() }; grip.classList.add('on'); e.preventDefault(); e.stopPropagation(); });
   grip.addEventListener('pointermove', e => { if (d) set(d.w + (e.clientX - d.x) / zoom(), true); });
   const end = () => { d = null; grip.classList.remove('on'); }; grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
+})();
+</script>
+<script>/* phones: the rail is a sheet under the map. drag its handle to trade map for tools; tap the handle twice to fold it to the task tabs and back (remembered) */
+if (document.documentElement.classList.contains('ui2')) (() => {
+  const rail = document.getElementById('u2rail'); if (!rail) return;
+  const grip = document.createElement('div'); grip.id = 'u2sheetGrip'; grip.setAttribute('aria-hidden', 'true'); rail.prepend(grip);
+  const phone = matchMedia('(max-width:760px)'), root = document.documentElement.style, FOLD = 52;   /* folded: the handle and the task tabs only */
+  const set = (px, keep) => { px = Math.max(FOLD, Math.min(Math.round(innerHeight * .7), Math.round(px))); root.setProperty('--sheet', px + 'px'); if (keep) try { localStorage.setItem('u2sheet', px); } catch (_) {} dispatchEvent(new Event('resize')); return px; };
+  const cur = () => rail.getBoundingClientRect().height;
+  let last = 0; try { last = +localStorage.getItem('u2sheet') || 0; } catch (_) {}
+  const apply = () => { if (!phone.matches) { root.removeProperty('--sheet'); return; } if (last) set(last, false); };
+  apply(); (phone.addEventListener ? phone.addEventListener('change', apply) : phone.addListener(apply));
+  let d = null, tapAt = 0, open = 0;
+  const fold = () => { if (cur() > FOLD + 2) { open = cur(); set(FOLD, true); } else set(open || Math.round(innerHeight * .36), true); };
+  grip.addEventListener('pointerdown', e => { grip.setPointerCapture(e.pointerId); d = { y: e.clientY, h: cur(), moved: false }; grip.classList.add('on'); e.preventDefault(); });
+  grip.addEventListener('pointermove', e => { if (!d) return; const dy = d.y - e.clientY; if (Math.abs(dy) > 4) d.moved = true; if (d.moved) set(d.h + dy, false); });
+  const end = e => { if (!d) return; grip.classList.remove('on'); if (d.moved) { try { localStorage.setItem('u2sheet', Math.round(cur())); } catch (_) {} } else { const now = performance.now(); if (now - tapAt < 400) { fold(); tapAt = 0; } else tapAt = now; } d = null; };
+  grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
 })();
 </script>
 </body>
