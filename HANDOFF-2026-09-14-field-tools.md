@@ -211,3 +211,16 @@ Test `e2e234.js` in session scratchpad `7d4521fc-d03a-4274-b332-fc532b15a7b4` (3
 Hooks: `__xgCalc(k)`, `__vwCompute()`, `__vwSeen(gx, gy)`, `__rtSolve(A, B, kind, cross)`, `__rtStats(k)`, `__dbCalc(k)`, `__dbContour(gx, gy, len)`, `__dbNew(pts)`.
 
 Estimates, not verified: Manning's n and bed speeds are textbook values; storm intensity is an example until entered; views ignore trees and buildings; routes are first lines to walk, not alignments. On the Baja relief tiles (about 10–15 m real detail) small channels read wider and shallower than they are.
+
+## H. Wind and irrigation, from Manta-Ray and FlahaETo (14 September, night)
+
+| tool | task | stored | method |
+| --- | --- | --- | --- |
+| wind | study | `rec.wind` (settings, rose summary) | Manta-Ray's wind is only uniform wind plus curl noise, blind to the ground, so its streamlines and moving streaks are kept but driven by Liston and Elder's SnowModel terrain wind (W = 1 + ½Ωs + ½Ωc, turn −½Ωs sin 2(aspect − wind); scaled across the site with floors of a 30° slope and a 1-in-20 crest). Shelter: Winstral Sx over ±15°, sampled where each sightline crosses grid lines. Open-Meteo hourly wind (3 years) → 16-sector rose, prevailing by month, strongest 5% of hours; use the usual or strongest wind; send the direction to fire ready. Streaks draw in `drawPlan`'s live overlay (`__wnLive`) and keep `S.dirty` set while the tool is open; off under reduced motion. |
+| irrigation | study | `rec.irrig` (zones, monthly climate per year) | FlahaETo's chain. Climate from Open-Meteo daily (10 years) or an EPW file; FAO-56 Penman-Monteith per day (`fao56()`); monthly means and per-year sums; KL = species (WUCOLS class) × density × microclimate; effective rain by USDA SCS; ÷ efficiency. Zones drawn by taps, agroforestry trees by canopy and library litres (VL ≤10, L ≤40, M ≤100 L/week, else H), planted beds. Driest year, longest dry run in store vs water budget's tanks + dam pond. |
+
+Verified: FAO-56 Example 18 (ETo 3.88 vs 3.9, every intermediate matches); ten real years at Encino Solo give 1,277 mm/yr against Open-Meteo's own ~1,320 (summer identical, winter ~8% lower, daily vs hourly method); zone volumes against the hand sum; EPW parsing; wind on flat ground unchanged; windward/lee/crest on a hill; shoulder turns opposite; shelter 26.2° behind a 5 m wall at 10 m (geometry 26.2°); rose binning. Test `e2e235.js` (session `7d4521fc` scratchpad, needs `fao56.js` beside it; Open-Meteo is mocked with `page.route`). Regression e2e203, 215, 216, 217, 222, 226, 234 pass; tipaudit 0; reference regenerated; voice `720dd92`.
+
+Estimates: WUCOLS class factors, density and microclimate steps, irrigation efficiencies; ERA5 is a ~10 km average (local valley winds and coastal fog not resolved); the wind picture is bare ground and not CFD. Open-Meteo requires attribution (shown) and is free for non-commercial use, which matches the tool's licence.
+
+Hooks: `__wnField()`, `__wnShelter(gx, gy)`, `__wnLines()`, `__wnRose(hourly)`, `__fao56(d)`, `__irCalc()`, `__irEpw(text, name)`.

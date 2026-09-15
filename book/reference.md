@@ -2,7 +2,7 @@
 
 Every task, tool and control in coyotemountainfarm.com/topo.html, with what each one does. Generated from the tool itself by `book/tools/make-reference.js`, so it matches the page. Run it again after the tool changes.
 
-Generated 2026-09-14.
+Generated 2026-09-15.
 
 ## Around the drawing
 
@@ -502,6 +502,24 @@ Sun and shadow through the day and the year.
 | --- | --- |
 | sun study | shadows at an hour, or sun hours per day, for the site's latitude |
 
+### Study · wind
+
+Wind: the ground's effect on the wind, shelter, streamlines and a wind rose from three years of hourly data.
+
+*how the ground speeds up, slows and turns the wind, where it is sheltered, and the winds that blow here*
+
+| control | what it does |
+| --- | --- |
+| wind from (menu) | the direction the wind blows from |
+| speed at 10 m (menu) | the wind over open ground, 10 m up, the height weather stations measure |
+| gusts (menu) | how much the streamlines wander: Manta-Ray's curl noise, for the look of turbulence only |
+| faster and slower | ember where the ground speeds the wind up (windward slopes, crests), blue where it slows (lee slopes, hollows) |
+| sheltered and exposed | blue where higher ground upwind shelters the spot, ember where nothing does |
+| read a spot | tap anywhere: the wind there, its direction and how sheltered it is |
+| fetch the winds · Open-Meteo | three years of hourly wind at this place from the Open-Meteo archive (ERA5 reanalysis, about 10 km cells); sends the site's location to open-meteo.com |
+| use NE in fire ready | set fire ready's wind to this direction (to the nearest of its eight) |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
 ### Study · what you can see
 
 What you can see: the ground in view from spots, lines or roads, or where a building would show from.
@@ -516,6 +534,22 @@ What you can see: the ground in view from spots, lines or roads, or where a buil
 | draw a line to walk or drive | a trail, a drive or a boundary: the ground seen from anywhere along it |
 | eye height (menu) | how high the eyes are above the ground: standing, on a horse or a truck, upstairs, a lookout |
 | what is seen (menu) | the ground itself, or the top of something that tall standing anywhere: where a cabin roof would show |
+| see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
+
+### Study · irrigation
+
+Irrigation: monthly and yearly water for zones, trees and beds, from ETo by FAO-56 less effective rain.
+
+*the water the planting needs each month and in a year, from the climate by the FAO-56 method, less the rain that counts*
+
+| control | what it does |
+| --- | --- |
+| fetch · Open-Meteo | ten years of daily weather at this place from the Open-Meteo archive; sends the site's location to open-meteo.com |
+| read an EPW file | a typical-year weather file (EnergyPlus EPW), as FlahaETo uses: from climate.onebuilding.org or a local station |
+| agroforestry trees | count the trees planted in agroforestry, by their canopy at the year set there |
+| planted beds | count the shrub beds drawn with the plant tool |
+| beds water use (menu) | how thirsty the bed plants are |
+| draw a watering zone | a lawn, orchard block, vegetable garden or bed watered together: tap its corners on the plan |
 | see it in plan · 3D | this tool works on the plan; its settings stay here in every view |
 
 ### Study · water budget
