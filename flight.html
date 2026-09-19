@@ -107,6 +107,10 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
 :root[data-theme=dark] .cmd button,:root[data-theme=dark] .seg button,:root[data-theme=dark] .btn{border-color:#55554f}
 :root[data-theme=dark] .cmd button:hover,:root[data-theme=dark] .cmd .views button.on,:root[data-theme=dark] .seg button.on{background:#3a2a20;border-color:#b0623a}
 :root[data-theme=dark] input[type=range]::-webkit-slider-thumb{background:#3a2a20;border-color:#b0623a}
+/* dark: the chosen tool, task and map mode in bright orange with dark text (the cream they use in light mode left light text unreadable); lists and hovers a softer orange tint */
+:root[data-theme=dark] #u2rail #u2tools button.on,:root[data-theme=dark] #u2map #u2mapbar .u2b.on{background:#e0763f;border-color:#f39a68;color:#1b1714;box-shadow:0 0 8px rgba(224,118,63,.45)}
+:root[data-theme=dark] #u2rail #u2tasks button.on{background:#e0763f;color:#1b1714;box-shadow:inset 3px 0 0 #ffb27f}
+:root[data-theme=dark] #u2hits button.sel,:root[data-theme=dark] #u2hits button:hover,:root[data-theme=dark] #u2learn button.u2all,:root[data-theme=dark] .u2nat .splist button.on,:root[data-theme=dark] [style*="background:#fdf3ea"]{background:#4a2a1b!important;color:#ffe3d1!important;border-color:#f08a50}
 :root[data-theme=dark] input[type=range]::-moz-range-thumb{background:#3a2a20;border-color:#b0623a}
 :root[data-theme=dark] input[type=range]:active::-webkit-slider-thumb{background:#5a3a28}
 :root[data-theme=dark] input[type=text],:root[data-theme=dark] select{background:#2b2b29;color:var(--ink);border-color:#55554f}
