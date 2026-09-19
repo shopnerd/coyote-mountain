@@ -2271,12 +2271,20 @@
     if (keep) try { localStorage.setItem(KEY, l); } catch (_) {}
     if (l === 'es' && !obs) { obs = new MutationObserver(ms => { for (const m of ms) { if (m.type === 'childList') m.addedNodes.forEach(walk); else if (m.type === 'characterData') walk(m.target); else if (!m.target.closest('[translate=no]')) doAttrs(m.target); } });
       obs.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ATTRS }); }
-    walk(document.body);
+    walk(document.body); fitTabs();
   };
+  /* the four task tabs down the left stack their letters; the spanish words are longer, so in spanish all four share one smaller size
+     with the letters a little closer, so the longest (estudiar) fits with room to spare. refit whenever the column changes size */
+  const fitTabs = () => { const tabs = [...document.querySelectorAll('#u2tasks button')]; tabs.forEach(t => { t.style.fontSize = ''; });
+    if (lang !== 'es' || !tabs.length || getComputedStyle(tabs[0]).writingMode.startsWith('horizontal')) return;
+    let k = 1; for (const t of tabs) { const r = document.createRange(); r.selectNodeContents(t); const h = r.getBoundingClientRect().height, room = t.clientHeight * .78; if (h > room) k = Math.min(k, room / h); }
+    if (k < 1) { const fs = Math.max(12, parseFloat(getComputedStyle(tabs[0]).fontSize) * k).toFixed(1) + 'px'; tabs.forEach(t => { t.style.fontSize = fs; }); } };
+  { const tk = document.getElementById('u2tasks'); if (tk && window.ResizeObserver) new ResizeObserver(() => requestAnimationFrame(fitTabs)).observe(tk); }
   btn.onclick = () => set(lang === 'es' ? 'en' : 'es', true);
   /* the tour's "your turn" tag is drawn by css, out of reach of the text swap. phones: the button is just ES or EN, and in spanish
      undo and redo become arrows so the longer words still fit the top bar */
   const css = document.createElement('style'); css.textContent = `html[lang=es] #tourCard.try .t::before{content:'tu turno  '}
+@media (min-width:761px){html[lang=es] #u2tasks button{letter-spacing:-.2em}}
 #langBtn .lgS{display:none}
 @media (max-width:760px){#langBtn .lgL{display:none}#langBtn .lgS{display:inline}
 html[lang=es] #u2head{gap:4px}
