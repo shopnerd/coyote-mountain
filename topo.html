@@ -223,7 +223,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
       <div class="p"><label>place or lat, lng</label><input type="text" id="place" placeholder="place name or lat, lng" autocomplete="off"></div>
       <div class="seg" style="padding:0;margin-bottom:6px"><button id="fetch" style="flex:2">fetch terrain</button><button id="home" title="Encino Solo">home</button></div>
       <div class="p"><label>site width · area to fetch<output id="o_siteW">60 m</output></label><input type="range" id="siteW" min="20" max="20000" step="10" value="60"></div>
-      <div class="p deep" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="5" value="0"></div>
+      <div class="p deep" title="turn the fetched area so a long feature lies along the sheet"><label>site rotation<output id="o_rot">0°</output></label><input type="range" id="rot" min="0" max="355" step="1" value="0"></div>
       <div class="seg deep" style="padding:0;margin-top:6px"><button id="kmlBtn" style="flex:2">kml / kmz / geojson</button><button id="kmlClear">clear</button></div>
       <div class="seg deep" style="padding:0;margin-top:6px"><button id="surveyBtn" style="flex:2">drone survey dem</button><button id="surveyClear" style="display:none">clear</button></div>
       <div class="desc deep" id="surveyInfo" style="padding:0;display:none"></div>
@@ -7973,15 +7973,32 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   const tileImg = url => { let im = tileCache.get(url); if (!im) { im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { if (MP.on) drawMap(); }; im.src = url; tileCache.set(url, im); if (tileCache.size > 600) tileCache.delete(tileCache.keys().next().value); } return im; };
   const merc = (lat, lon, z) => { const n = 256 * 2 ** z; return [(lon + 180) / 360 * n, (1 - Math.log(Math.tan(lat * D2R) + 1 / Math.cos(lat * D2R)) / Math.PI) / 2 * n]; };
   const unmerc = (x, y, z) => { const n = 256 * 2 ** z, lon = x / n * 360 - 180, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) / D2R; return [lat, lon]; };
-  const MP = { on: false, z: 14, lat: 0, lon: 0, box: null, drawing: false, drag: null, boxMode: true };
+  const MP = { on: false, z: 14, lat: 0, lon: 0, box: null, drawing: false, drag: null, boxMode: true, ptMode: false, pts: [] };
   const mapEl = make('div', { id: 'u2map' }), mapCv = make('canvas'), mapBar = make('div', { id: 'u2mapbar' });
-  const mSearch = make('input', { type: 'search', placeholder: 'find a place…', 'aria-label': 'find a place on the map' }), mBox = make('button', { cls: 'u2b on', type: 'button', text: 'draw a box' }), mMove = make('button', { cls: 'u2b', type: 'button', text: 'move the map' }), mMsg = make('span', { cls: 'msg' }), mGo = make('button', { cls: 'u2b go', type: 'button', text: 'fetch this area' }), mX = make('button', { cls: 'u2b', type: 'button', text: 'cancel' });
-  mapBar.append(mSearch, mMove, mBox, mMsg, mGo, mX); mapEl.append(mapCv, mapBar); main.append(mapEl);
-  const setBoxMode = on => { MP.boxMode = on; mBox.classList.toggle('on', on); mMove.classList.toggle('on', !on); mapEl.classList.toggle('boxing', on); };
-  mBox.onclick = () => setBoxMode(true); mMove.onclick = () => setBoxMode(false);
+  const mSearch = make('input', { type: 'search', placeholder: 'find a place…', 'aria-label': 'find a place on the map' }), mBox = make('button', { cls: 'u2b on', type: 'button', text: 'draw a box' }), mMove = make('button', { cls: 'u2b', type: 'button', text: 'move the map' }), mMsg = make('span', { cls: 'msg' }), mGo = make('button', { cls: 'u2b go', type: 'button', text: 'fetch this area' }), mX = make('button', { cls: 'u2b', type: 'button', text: 'cancel' }), mPts = make('button', { cls: 'u2b', type: 'button', text: 'click corners', 'data-tip': 'click the corners of the area you want: the site turns to fit them, so a lot or a field that does not face north is fetched square to itself' });
+  mapBar.append(mSearch, mMove, mBox, mPts, mMsg, mGo, mX); mapEl.append(mapCv, mapBar); main.append(mapEl);
+  const setBoxMode = on => { MP.ptMode = on === 'pts'; MP.boxMode = on === true; mBox.classList.toggle('on', MP.boxMode); mPts.classList.toggle('on', MP.ptMode); mMove.classList.toggle('on', !on); mapEl.classList.toggle('boxing', !!on); mapMsg(); drawMap(); };
+  mBox.onclick = () => setBoxMode(true); mMove.onclick = () => setBoxMode(false); mPts.onclick = () => setBoxMode('pts');
+  /* click corners: the smallest site-shaped rectangle, turned to a whole degree, that holds every corner clicked; its top faces as near
+     north as it can. gives { lat, lon, w (m), rot (degrees clockwise from north: the site rotation), corners (top left, top right, ...) } */
+  function ptFit() {
+    if (MP.pts.length < 2) return null;
+    const [la0, lo0] = MP.pts[0], kx = 111320 * Math.cos(la0 * D2R), P = MP.pts.map(([la, lo]) => [(lo - lo0) * kx, (la - la0) * 111320]);
+    const fitAt = rot => { const t = rot * D2R, e = [Math.cos(t), -Math.sin(t)], n = [Math.sin(t), Math.cos(t)]; let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+      for (const q of P) { const u = q[0] * e[0] + q[1] * e[1], v = q[0] * n[0] + q[1] * n[1]; u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v); }
+      const w = Math.max(u1 - u0, (v1 - v0) * ASPECT) * 1.02, uc = (u0 + u1) / 2, vc = (v0 + v1) / 2; return { rot, w, e, n, c: [uc * e[0] + vc * n[0], uc * e[1] + vc * n[1]] }; };
+    const cands = new Set([0]);
+    for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) { const a = Math.atan2(P[j][1] - P[i][1], P[j][0] - P[i][0]) / D2R;   /* each pair of corners as an edge along the width or the depth */
+      for (const k of [0, 90, 180, 270]) { let up = ((-a + k) % 360 + 360) % 360; if (up > 180) up -= 360; if (Math.abs(up) <= 90) cands.add(Math.round(up)); } }
+    let best = null; for (const r of cands) { const f = fitAt(r); if (!best || f.w < best.w - 1e-6) best = f; }
+    const d = best.w / ASPECT, toLL = (x, y) => [la0 + y / 111320, lo0 + x / kx];
+    const corners = [[-1, 1], [1, 1], [1, -1], [-1, -1]].map(([a, b]) => toLL(best.c[0] + a * best.w / 2 * best.e[0] + b * d / 2 * best.n[0], best.c[1] + a * best.w / 2 * best.e[1] + b * d / 2 * best.n[1]));
+    const [lat, lon] = toLL(best.c[0], best.c[1]); return { lat, lon, w: best.w, rot: (best.rot + 360) % 360, corners };
+  }
+  addEventListener('keydown', e => { if (MP.on && MP.ptMode && e.key === 'Backspace' && document.activeElement !== mSearch && MP.pts.length) { e.preventDefault(); MP.pts.pop(); mapMsg(); drawMap(); } });
   function areaMap() {
     MP.on = true; mapEl.classList.add('show'); layPanel.classList.remove('show');
-    const w0 = S.world || { lat: HOME.lat, lon: HOME.lon }; MP.lat = w0.lat; MP.lon = w0.lon; MP.box = null;
+    const w0 = S.world || { lat: HOME.lat, lon: HOME.lon }; MP.lat = w0.lat; MP.lon = w0.lon; MP.box = null; MP.pts = [];
     const r = mapEl.getBoundingClientRect(), mpp = S.siteW * 3.2 / Math.max(300, r.width);   // the site a third of the map wide: context first
     MP.z = Math.max(3, Math.min(18, Math.log2(156543.03 * Math.cos(MP.lat * D2R) / mpp)));
     setBoxMode(true); mapMsg(); drawMap();
@@ -7990,6 +8007,9 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   mX.onclick = closeMap;
   const mPerPx = () => 156543.03 * Math.cos(MP.lat * D2R) / 2 ** MP.z;
   function mapMsg() {
+    if (MP.ptMode) { const f = ptFit(); mMsg.textContent = '';
+      if (!f) { mMsg.append(MP.pts.length ? 'now the next corner; drag moves the map, backspace takes a corner back' : 'click the corners of the area you want; the site turns to fit them. drag moves the map.'); mGo.disabled = true; return; }
+      const ok = f.w >= 20 && f.w <= 20000; mMsg.append('new site ', make('b', { text: fL(f.w, 0) }), ` wide × ${fL(f.w / ASPECT, 0)} deep, turned ${f.rot}° · ${MP.pts.length} corners`, ok ? '' : ' · a site must be between ' + fL(20, 0) + ' and ' + fL(20000, 0) + ' wide'); mGo.disabled = !ok; return; }
     if (!MP.box) { mMsg.innerHTML = ''; mMsg.append('draw a box around the area you want; the outline is the site now. the wheel zooms out for context.'); mGo.disabled = true; return; }
     const wm = MP.box.w * mPerPx(), ok = wm >= 20 && wm <= 20000; mMsg.textContent = ''; mMsg.append('new site ', make('b', { text: fL(wm, 0) }), ` wide × ${fL(wm / ASPECT, 0)} deep`, ok ? '' : ' · a site must be between ' + fL(20, 0) + ' and ' + fL(20000, 0) + ' wide'); mGo.disabled = !ok;
   }
@@ -8002,15 +8022,23 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     const toPx = (lat, lon) => { const [x, y] = merc(lat, lon, MP.z); const [mx, my] = merc(MP.lat, MP.lon, MP.z); return [r.width / 2 + x - mx, r.height / 2 + y - my]; };
     if (S.world) { c.beginPath(); [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].forEach(([i, j], k) => { const q = toPx(...nodeLatLon(i, j, S.world.lat, S.world.lon)); k ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1]); }); c.closePath(); c.setLineDash([6, 5]); c.lineWidth = 1.6; c.strokeStyle = '#f0f0ec'; c.stroke(); c.setLineDash([]);
       const q = toPx(...nodeLatLon(0, 0, S.world.lat, S.world.lon)); c.fillStyle = '#f0f0ec'; c.font = '11px ' + getComputedStyle(document.body).fontFamily; c.fillText('site now', q[0] + 4, q[1] - 6); }
-    if (MP.box) { const b = MP.box; c.fillStyle = 'rgba(201,107,58,.16)'; c.fillRect(b.x, b.y, b.w, b.h); c.lineWidth = 2; c.strokeStyle = '#e0763f'; c.strokeRect(b.x, b.y, b.w, b.h); }
+    if (MP.box && !MP.ptMode) { const b = MP.box; c.fillStyle = 'rgba(201,107,58,.16)'; c.fillRect(b.x, b.y, b.w, b.h); c.lineWidth = 2; c.strokeStyle = '#e0763f'; c.strokeRect(b.x, b.y, b.w, b.h); }
+    if (MP.ptMode) { const f = ptFit(), ff = getComputedStyle(document.body).fontFamily;
+      if (f) { const q = f.corners.map(ll => toPx(...ll)); c.beginPath(); q.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fillStyle = 'rgba(201,107,58,.16)'; c.fill(); c.lineWidth = 2; c.strokeStyle = '#e0763f'; c.stroke();
+        c.lineWidth = 4; c.beginPath(); c.moveTo(q[0][0], q[0][1]); c.lineTo(q[1][0], q[1][1]); c.stroke();   /* the top of the sheet, heavier */
+        c.save(); c.translate((q[0][0] + q[1][0]) / 2, (q[0][1] + q[1][1]) / 2); c.rotate(f.rot * D2R); c.fillStyle = '#f0f0ec'; c.font = '11px ' + ff; c.textAlign = 'center'; c.fillText(document.documentElement.lang === 'es' ? 'parte de arriba de la lámina' : 'top of the sheet', 0, -7); c.restore(); }
+      MP.pts.forEach((ll, k) => { const [x, y] = toPx(...ll); c.beginPath(); c.arc(x, y, 5, 0, 2 * Math.PI); c.fillStyle = '#e0763f'; c.fill(); c.lineWidth = 1.5; c.strokeStyle = '#f0f0ec'; c.stroke(); c.fillStyle = '#f0f0ec'; c.font = '600 11px ' + ff; c.textAlign = 'left'; c.fillText(String(k + 1), x + 8, y - 6); }); }
   }
   const mapPt = e => { const r = mapCv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-  mapCv.addEventListener('pointerdown', e => { mapCv.setPointerCapture(e.pointerId); const p = mapPt(e); if (MP.boxMode && e.button === 0 && !e.altKey) { MP.drawing = p; MP.box = { x: p[0], y: p[1], w: 0, h: 0 }; } else MP.drag = { p, lat: MP.lat, lon: MP.lon, box: MP.box && { ...MP.box } }; });
+  mapCv.addEventListener('pointerdown', e => { mapCv.setPointerCapture(e.pointerId); const p = mapPt(e); MP.down = p; if (MP.boxMode && e.button === 0 && !e.altKey) { MP.drawing = p; MP.box = { x: p[0], y: p[1], w: 0, h: 0 }; } else MP.drag = { p, lat: MP.lat, lon: MP.lon, box: MP.box && { ...MP.box } }; });
   mapCv.addEventListener('pointermove', e => { const p = mapPt(e);
     if (MP.drawing) { const dx = p[0] - MP.drawing[0], dy = p[1] - MP.drawing[1], w = Math.max(Math.abs(dx), Math.abs(dy) * ASPECT), h = w / ASPECT; MP.box = { x: dx < 0 ? MP.drawing[0] - w : MP.drawing[0], y: dy < 0 ? MP.drawing[1] - h : MP.drawing[1], w, h }; mapMsg(); drawMap(); }
     else if (MP.drag) { const [mx, my] = merc(MP.drag.lat, MP.drag.lon, MP.z), [lat, lon] = unmerc(mx - (p[0] - MP.drag.p[0]), my - (p[1] - MP.drag.p[1]), MP.z); MP.lat = lat; MP.lon = lon; if (MP.drag.box) MP.box = { ...MP.drag.box, x: MP.drag.box.x + p[0] - MP.drag.p[0], y: MP.drag.box.y + p[1] - MP.drag.p[1] }; drawMap(); } });
   const mapUp = () => { if (MP.drawing && MP.box && MP.box.w < 8) MP.box = null; MP.drawing = false; MP.drag = null; mapMsg(); drawMap(); };
-  mapCv.addEventListener('pointerup', mapUp); mapCv.addEventListener('pointercancel', mapUp);
+  mapCv.addEventListener('pointerup', e => { const p = mapPt(e);   /* click corners: a click without a drag adds a corner */
+    if (MP.ptMode && e.button === 0 && MP.down && Math.hypot(p[0] - MP.down[0], p[1] - MP.down[1]) < 5) { const r = mapCv.getBoundingClientRect(), [mx, my] = merc(MP.lat, MP.lon, MP.z); MP.pts.push(unmerc(mx + p[0] - r.width / 2, my + p[1] - r.height / 2, MP.z)); }
+    MP.down = null; mapUp(); });
+  mapCv.addEventListener('pointercancel', mapUp);
   mapCv.addEventListener('wheel', e => { e.preventDefault(); const r = mapCv.getBoundingClientRect(), p = mapPt(e), dz = -Math.sign(e.deltaY) * .25, nz = Math.max(2, Math.min(19, MP.z + dz));
     const [mx, my] = merc(MP.lat, MP.lon, MP.z), [plat, plon] = unmerc(mx + p[0] - r.width / 2, my + p[1] - r.height / 2, MP.z), k = 2 ** (nz - MP.z);   // zoom about the cursor; the box keeps its ground
     if (MP.box) MP.box = { x: p[0] + (MP.box.x - p[0]) * k, y: p[1] + (MP.box.y - p[1]) * k, w: MP.box.w * k, h: MP.box.h * k };
@@ -8019,11 +8047,12 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     const m = q.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/); let lat, lon;
     if (m) { lat = +m[1]; lon = +m[2]; } else { try { const j = await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q=' + encodeURIComponent(q))).json(); if (!j.length) { mMsg.textContent = 'no place by that name'; return; } lat = +j[0].lat; lon = +j[0].lon; } catch (_) { mMsg.textContent = 'the place search did not answer'; return; } }
     MP.lat = lat; MP.lon = lon; MP.box = null; MP.z = Math.max(MP.z, 13); mapMsg(); drawMap(); });
-  mGo.onclick = () => { if (!MP.box) return; const r = mapCv.getBoundingClientRect(), [mx, my] = merc(MP.lat, MP.lon, MP.z), [lat, lon] = unmerc(mx + MP.box.x + MP.box.w / 2 - r.width / 2, my + MP.box.y + MP.box.h / 2 - r.height / 2, MP.z), wm = MP.box.w * mPerPx();
+  mGo.onclick = () => { if (MP.ptMode) { const f = ptFit(); if (!f) return; closeMap(); fetchArea(f.lat, f.lon, f.w, f.rot); return; }
+    if (!MP.box) return; const r = mapCv.getBoundingClientRect(), [mx, my] = merc(MP.lat, MP.lon, MP.z), [lat, lon] = unmerc(mx + MP.box.x + MP.box.w / 2 - r.width / 2, my + MP.box.y + MP.box.h / 2 - r.height / 2, MP.z), wm = MP.box.w * mPerPx();
     closeMap(); fetchArea(lat, lon, wm); };
   addEventListener('resize', () => { if (MP.on) drawMap(); });
-  function fetchArea(lat, lon, widthM) {   // a new site: the width first (quietly), then the terrain for its centre
-    const rot = document.getElementById('rot'); if (rot && +rot.value !== 0) { rot.value = 0; rot.dispatchEvent(new Event('input')); }
+  function fetchArea(lat, lon, widthM, turn = 0) {   // a new site: the width and rotation first (quietly), then the terrain for its centre
+    const rot = document.getElementById('rot'); if (rot && +rot.value !== turn) { rot.value = turn; rot.dispatchEvent(new Event('input')); } S.frameRot = S.rot;
     setSiteW(widthM, true); const name = `${lat.toFixed(4)}, ${lon.toFixed(4)}`; document.getElementById('place').value = name;
     state.task = 'site'; chooseTool('place'); fetchWorld({ lat, lon, name });
   }
