@@ -448,7 +448,10 @@ function drawChrome(bp) {
   ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + px, y0); ctx.moveTo(x0, y0 - 4); ctx.lineTo(x0, y0 + 4); ctx.moveTo(x0 + px, y0 - 4); ctx.lineTo(x0 + px, y0 + 4); ctx.stroke();
   ctx.fillStyle = INK; ctx.font = font(10); ctx.textAlign = 'left'; ctx.textBaseline = 'bottom'; ctx.fillText(fL(want), x0 + px + 6, y0 + 5);
   const foot = `${S.world.name}${S.terrain ? ' · ' + (SRC_NOTE[S.src] || '') : ' · flat ground'}${bp.iv ? ' · contours every ' + fL(bp.iv, 1) : ''}${S.aerial && S.terrain ? (aerialCache.canvas ? ' · imagery Esri, Maxar, Earthstar Geographics' : ' · ' + (aerialCache.status || '')) : ''}${PV.zoom > 1 ? ' · zoom ' + PV.zoom.toFixed(1) + 'x' : ''}`;
-  ctx.fillStyle = INK2; ctx.textAlign = 'right'; ctx.fillText(foot, S.w - 12, y0 + 5);
+  /* on a narrow screen the caption is cut short with … so it stops before the scale bar and its label instead of running over them */
+  const room = S.w - 12 - (x0 + px + 6 + ctx.measureText(fL(want)).width + 14); let cap = foot;
+  if (ctx.measureText(cap).width > room) { while (cap.length > 1 && ctx.measureText(cap + '…').width > room) cap = cap.slice(0, -1); cap = cap.trimEnd() + '…'; }
+  ctx.fillStyle = INK2; ctx.textAlign = 'right'; ctx.fillText(cap, S.w - 12, y0 + 5);
   const nx = S.w - 26, ny = 30; ctx.strokeStyle = INK; ctx.fillStyle = INK; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(nx, ny + 14); ctx.lineTo(nx, ny - 12); ctx.stroke(); ctx.beginPath(); ctx.moveTo(nx, ny - 14); ctx.lineTo(nx - 4, ny - 5); ctx.lineTo(nx + 4, ny - 5); ctx.closePath(); ctx.fill(); ctx.font = font(10, 600); ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText('N', nx, ny + 16);
 }
 function drawProfile() {                  // ground and flight altitude along the whole route, in order; the band between them is the height over ground
@@ -1173,5 +1176,6 @@ if (document.documentElement.classList.contains('ui2')) (() => {
   grip.addEventListener('pointerup', end); grip.addEventListener('pointercancel', end);
 })();
 </script>
+<script src="lang.js"></script>
 </body>
 </html>
