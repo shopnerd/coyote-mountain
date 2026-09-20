@@ -40,6 +40,25 @@ Run with `node <test>.js "<playwright-core>" http://localhost:8771 <outdir>`. Th
 
 Dictionary build: translations live in `tr/out*.json` + `extra.json`, the engine in `lang.head.js`. `node build.js` writes `coyote-studio/lang.js`. For a small change, **just edit lang.js directly**. The scratchpad is temporary.
 
+## Report a bug (`bug.js`, both pages) — one setup step left
+
+A **report a bug** button sits in the top bar (in the **project** menu on phones). It opens a note box: what happened, your name, and a foldable "what goes with it" showing exactly what is sent — page, language, theme, the task / tool / view open, the site and its width, rotation and units, how many drawings, browser, screen, and any errors the page hit. Nothing else about the person.
+
+**Where reports land.** Straight into a Google Form's sheet, once the form exists. Until then the box still works: **copy it** puts the whole report on the clipboard (paste into WhatsApp) and **email it** opens a mail app addressed to `zolaray25@gmail.com`.
+
+**To finish it (about five minutes, Will's hands):**
+1. forms.google.com → blank form → three **paragraph** questions in this order: *what happened* · *name* · *details*
+2. **Send** → the link icon → copy the form address (ends `/viewform`)
+3. Open that address, view source, and read the three `entry.NNNNNNN` ids in order
+4. In `bug.js`, fill `FORM`: the `/formResponse` address in `url`, the three ids in `text`, `name`, `info`
+5. In the form, **Responses → link to a sheet**
+
+Step 3 is the fiddly one — hand me the form's link in a session with power and I'll read the ids and wire it up.
+
+**Handling reports once they arrive:** the sheet is the queue. Read the `details` column first (it usually names the tool and any error), reproduce at that site and tool, fix, and reply to the reporter by name. Add an `e2e_*.js` test for anything that was actually broken, the way the other fixes here were tested. Worth doing when the sheet exists: a filter view for reports with an `errors:` line — those are real faults rather than confusion.
+
+Tested by `e2e_bug.js`: the box opens on both pages, carries the state, catches an error the page hit, copies, posts to a form when one is set, reads in Spanish, and on a phone lives in the project menu without touching the top bar.
+
 ## NEXT: Will's idea — Google-Earth-style shapes (not started)
 
 Draw lines and areas with **endpoints (vertices) you can grab and move later**, like Google Earth's path and polygon tools:
