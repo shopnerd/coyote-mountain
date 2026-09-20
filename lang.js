@@ -438,8 +438,10 @@
     "cool, shaded slopes · #%": "laderas frescas y sombreadas · #%",
     "coordinates in WGS # / UTM zone ##, heights as the ground model gives them. load a test surface with your dealer before a machine digs to it.": "coordenadas en WGS # / UTM zona ##, alturas tal como las da el modelo del terreno. carga una superficie de prueba con tu distribuidor antes de que una máquina excave hasta ella.",
     "coordinates in WGS # / UTM zone #N, heights as the ground model gives them. load a test surface with your dealer before a machine digs to it.": "coordenadas en WGS # / UTM zona #N, alturas tal como las da el modelo del terreno. carga una superficie de prueba con tu distribuidor antes de que una máquina excave hasta ella.",
+    "copied · paste it in a message": "copiado · pégalo en un mensaje",
     "copy a link that opens this place and plan": "copia un enlace que abre este lugar y este plan",
     "copy a link that opens this place with the current width, rotation, contour interval, units and layers. no file needed": "copia un enlace que abre este lugar con el ancho, la rotación, la equidistancia, las unidades y las capas actuales. no hace falta archivo",
+    "copy it": "copiar",
     "copy link": "copiar enlace",
     "could not fetch the sunlight:": "no se pudo traer la luz solar:",
     "could not fetch the weather:": "no se pudo traer el clima:",
@@ -606,6 +608,7 @@
     "ecotourism walks routed around sensitive ground, with seasons, limits and costs beside revenue": "recorridos ecoturísticos trazados alrededor del terreno sensible, con temporadas, límites y costos junto a los ingresos",
     "edges": "bordes",
     "elevation": "elevación",
+    "email it": "enviar por correo",
     "ember": "brasa",
     "ember hatching is fill, grey is cut, stronger with depth; the same wash the model shows": "el achurado brasa es relleno, el gris es corte, más fuerte con la profundidad; la misma aguada que muestra el modelo",
     "ember is seen, deeper where more of your # viewpoint# see it; grey is hidden.${st.all > st.n ?": "brasa se ve, más intenso donde más de tus # punto# de vista lo ven; gris está oculto.${st.all > st.n ?",
@@ -989,6 +992,7 @@
     "irrigated or green": "regado o verde",
     "irrigation": "riego",
     "irrigation: monthly and yearly water for zones, trees and beds, from ETo by FAO# less effective rain": "riego: agua mensual y anual para zonas, árboles y arriates, a partir de ETo por FAO# menos la lluvia efectiva",
+    "it would not send · copy it instead": "no se pudo enviar · mejor cópialo",
     "its height": "su altura",
     "jan": "ene",
     "join within": "unir dentro de",
@@ -1515,6 +1519,7 @@
     "press # for the model. right drag orbits, the wheel zooms in close enough to read a single contour, and the view buttons on the status line give the standard views; this is axon. in deep, the model block holds smooth or stepped, a draped ground or the cardboard-stack look of the laser cut, and the photo, orbit or sculpt and rain switches.": "presiona # para el modelo. arrastrar con el botón derecho orbita, la rueda acerca lo suficiente para leer una sola curva de nivel, y los botones de vista en la barra de estado dan las vistas estándar; esta es axono. en a fondo, el bloque de modelo tiene suave o escalonado, un terreno drapeado o el aspecto de cartón apilado del corte láser, y los interruptores de foto, orbitar o esculpir y lluvia.",
     "press #D to see the cut into the hill and the fill below it. the pad settings stay in the panel.": "presiona #D para ver el corte en el cerro y el relleno debajo. los ajustes de la plataforma se quedan en el panel.",
     "press #D to see the cut into the hill and the fill below it. the pad settings stay in the panel. ✓ done, press next": "presiona #D para ver el corte en el cerro y el relleno debajo. los ajustes de la plataforma se quedan en el panel. ✓ listo, pulsa siguiente",
+    "press copy on your keyboard": "presiona copiar en tu teclado",
     "press preview to see the layers laid out on their sheets before you cut.": "presiona vista previa para ver las capas acomodadas en sus láminas antes de cortar.",
     "press preview to see the layers laid out on their sheets before you cut. ✓ done, press next": "presiona vista previa para ver las capas acomodadas en sus láminas antes de cortar. ✓ listo, pulsa siguiente",
     "press preview to see the result before exporting": "presiona vista previa para ver el resultado antes de exportar",
@@ -1624,6 +1629,7 @@
     "render on · draw a section line in plan to get the cut": "render activo · dibuja una línea de sección en planta para obtener la sección",
     "repeat photos": "fotos repetidas",
     "repeat surveys on fixed spots and routes: what was counted, for how long, in which season": "censos repetidos en puntos y rutas fijos: qué se contó, por cuánto tiempo, en qué temporada",
+    "report a bug": "reportar un error",
     "reptiles & amphibians": "reptiles y anfibios",
     "research": "investigación",
     "research grade only": "solo grado de investigación",
@@ -1686,6 +1692,7 @@
     "save video": "guardar video",
     "save, open, copy a link or start a new project": "guarda, abre, copia un enlace o empieza un proyecto nuevo",
     "saved": "guardado",
+    "say what happened in your own words. what the page was doing goes along with it, so it can be fixed without asking you again.": "cuenta con tus palabras qué pasó. lo que la página estaba haciendo va junto, para poder arreglarlo sin volver a preguntarte.",
     "scale": "escala",
     "scale the selected object; # is the file as exported": "escala el objeto seleccionado; # es el archivo tal como se exportó",
     "sculpt": "esculpir",
@@ -1716,7 +1723,9 @@
     "seen": "visible",
     "seen from here": "visible desde aquí",
     "select": "seleccionar",
+    "send it": "enviar",
     "send this view to an image model to paint over it. with the aerial photo on, the photo goes along as a reference and the ground cover read off it goes into the prompt: the ground, the cut, the sun and the sky stay where they are; the surfaces, plants and light get painted. needs your Google AI key": "envía esta vista a un modelo de imágenes para pintar encima. con la foto aérea activada, la foto va como referencia y la cobertura del suelo que se lee de ella entra en la instrucción: el terreno, el corte, el sol y el cielo se quedan donde están; se pintan las superficies, las plantas y la luz. necesita tu clave de Google AI",
+    "sending…": "enviando…",
     "sensitive species": "especies sensibles",
     "sensor h mm": "alto sensor mm",
     "sensor w mm": "ancho sensor mm",
@@ -1794,6 +1803,7 @@
     "solid ring: # kept lean, clean and green; dashed: # of reduced fuel, both pushed further out downhill where fire climbs toward the building. graded ground, gravel and paving burn less; planting more.": "anillo sólido: # mantenidos ralos, limpios y verdes; punteado: # de combustible reducido, ambos extendidos más lejos cuesta abajo, donde el fuego sube hacia la construcción. el terreno nivelado, la grava y el pavimento arden menos; la vegetación, más.",
     "some": "algo",
     "some summer water": "algo de agua en verano",
+    "something wrong? say what happened; what the page was doing goes with it": "¿algo anda mal? cuenta qué pasó; lo que la página estaba haciendo se envía junto",
     "sound": "sonido",
     "sound recorder": "grabadora de sonido",
     "south": "sur",
@@ -1978,6 +1988,7 @@
     "terrain following holds # m over the ground within # m, with # waypoints": "seguir el terreno mantiene # m sobre el terreno con margen de # m, con # puntos de ruta",
     "terrain loaded": "terreno cargado",
     "test the soil in about six holes along the wall and in the pond: over #% clay, over #% silt and clay, shrinks less than #%, less than #% organic matter (field card: soil texture)": "prueba el suelo en unos seis hoyos a lo largo del muro y en el estanque: más de #% de arcilla, más de #% de limo y arcilla, se contrae menos de #%, menos de #% de materia orgánica (ficha de campo: textura del suelo)",
+    "thank you · it is on its way": "gracias · va en camino",
     "that file has no rows": "ese archivo no tiene filas",
     "that file has too few rows": "ese archivo tiene muy pocas filas",
     "that image would not open": "esa imagen no se pudo abrir",
@@ -2332,8 +2343,10 @@
     "west": "oeste",
     "wet": "húmedo",
     "wetness": "humedad",
+    "what goes with it": "qué se envía",
     "what grows where": "qué crece dónde",
     "what grows where: each plant in the library read against slope, sun side, wetness and frost pockets, as zones on the plan": "qué crece dónde: cada planta de la biblioteca leída contra la pendiente, el lado soleado, la humedad y las bolsas de helada, como zonas en el plano",
+    "what happened": "qué pasó",
     "what is seen": "lo que se mira",
     "what is watered": "lo que se riega",
     "what is wrong with this ground": "qué le pasa a este terreno",
@@ -2349,6 +2362,7 @@
     "what visitors see at this stop": "lo que ven los visitantes en esta parada",
     "what was done": "lo que se hizo",
     "what was done to the ground": "qué se le hizo al terreno",
+    "what were you doing, and what went wrong?": "¿qué estabas haciendo y qué salió mal?",
     "what you are looking for a place for; each has its own size and limits": "para qué buscas un lugar; cada uno tiene su propio tamaño y límites",
     "what you can see": "lo que se ve",
     "what you can see: viewsheds from spots, lines or roads, where a building would show from, isovists and the horizon, visual structure (VGA), sky view, a route out of sight": "lo que se ve: cuencas visuales desde puntos, líneas o caminos, desde dónde se vería un edificio, isovistas y el horizonte, estructura visual (VGA), vista del cielo, una ruta fuera de la vista",
@@ -2406,6 +2420,8 @@
     "years from planting": "años desde la plantación",
     "yellow: flowering · green: harvest · #": "amarillo: floración · verde: cosecha · #",
     "you are outside this site": "estás fuera de este sitio",
+    "your name": "tu nombre",
+    "your name (so we can ask)": "tu nombre (por si hay que preguntar)",
     "your own elevation model replaces the public ground where it has coverage": "tu propio modelo de elevación reemplaza el terreno público donde tiene cobertura",
     "your price for one unit of this line; it is kept in this browser": "tu precio por una unidad de esta partida; se guarda en este navegador",
     "zero it: read it here": "ponlo en cero: léelo aquí",
@@ -2472,9 +2488,10 @@
   };
   const walk = root => {
     if (root.nodeType === 3) { if (root.parentElement && !root.parentElement.closest('script,style,textarea,[translate=no]')) doText(root); return; }
-    if (root.nodeType !== 1 || root.closest('[translate=no]') || SKIP.test(root.tagName)) return;
+    if (root.nodeType !== 1 || root.closest('[translate=no]')) return;
+    if (SKIP.test(root.tagName)) { if (root.tagName === 'TEXTAREA') doAttrs(root); return; }   /* what someone typed is theirs; its placeholder is ours */
     doAttrs(root);
-    const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, { acceptNode: n => n.nodeType === 1 && off(n) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, { acceptNode: n => { if (n.nodeType === 1 && off(n)) { if (n.tagName === 'TEXTAREA') doAttrs(n); return NodeFilter.FILTER_REJECT; } return NodeFilter.FILTER_ACCEPT; } });
     for (let n; (n = w.nextNode());) n.nodeType === 3 ? doText(n) : doAttrs(n);
   };
 
