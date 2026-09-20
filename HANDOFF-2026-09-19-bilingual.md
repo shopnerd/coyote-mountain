@@ -61,7 +61,7 @@ Tested by `e2e_bug.js`: the box opens on both pages, carries the state, catches 
 
 ## Link preview (`og.png`)
 
-Sharing a link used to fall back to the app icon, so WhatsApp showed the little two-line icon. `og.png` (1200×630, 167 KB, under WhatsApp's 600 KB limit) is Will's line drawing of the ground with the icon's orange sun over the ridge, and topo / flight / index each carry `og:title`, `og:description`, `og:url` and that image. The sun sits near the middle on purpose: WhatsApp often crops to the middle square. Rebuild it with `make_og.py` in the scratchpad if the drawing ever changes — the sun is an exact palette entry so the 8-bit png keeps the orange.
+Sharing a link used to fall back to the app icon, so WhatsApp showed the little two-line icon. `og.png` (1200×630, 167 KB, under WhatsApp's 600 KB limit) is Will's line drawing of the ground with the icon's orange sun over the ridge, and topo / flight / index each carry `og:title`, `og:description`, `og:url` and that image. The sun sets behind the ridge on the right, where Will marked it: it is painted only above the skyline, so the ridge cuts across it. Note that a middle-square crop (which WhatsApp sometimes does for small previews) would miss it. Rebuild it with `make_og.py` in the scratchpad if the drawing ever changes — the sun is an exact palette entry so the 8-bit png keeps the orange.
 
 Caches: WhatsApp and Facebook keep a link's preview for a while. If an old preview sticks, add `?x=1` to the link, or refresh it at developers.facebook.com/tools/debug.
 
