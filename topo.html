@@ -4737,6 +4737,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
     { id: 'shape', name: 'Shape', tools: [
       { id: 'select', name: 'select', view: 'plan', panel: box => selectPanel(box), note: 'click a drawing, a plant or an object on the plan to pick it; drag to move it' },
       { id: 'sculpt', name: 'sculpt', pick: '#sculptBrushes button[data-b=raise]', keepBrush: ['raise', 'lower', 'smooth', 'flatten'], rows: ['#sculptBrushes', '#brushParams'], sculpt3d: true, note: 'drag on the ground, in plan or 3d' },
+      { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', view: 'plan', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']] },
       { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['=footprint', '#padRow', '=level and grade', '#padLevelRow', '#padGradeRow', '=edges', '#padEdgeRow', '#sideRow', '=earthwork', '#strip', '#swell'] },
       { id: 'grade', name: 'grade a→b', pick: '#brushes button[data-b=grade]', view: 'plan', rows: ['#gradeRow'], more: ['#sideRow'] },
       { id: 'spots', name: 'spot grading', view: 'plan', planLabel: 'draw in plan', panel: box => sgPanel(box), note: 'a design surface from spot heights, breaklines and a boundary, with slopes coloured and flow arrows, then applied to the ground' },
@@ -4749,7 +4750,6 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'steps', name: 'steps', view: 'plan', planLabel: 'draw in plan', panel: box => stepsPanel(box), note: 'a flight of steps up a slope: risers and treads from the ground under a drawn line, checked against an easy stride' },
       { id: 'plant', name: 'plant', pick: '#brushes button[data-b=pen]', view: 'plan', rows: ['#plantRow', '#brushParams'], note: 'pick a tree, shrub or hedge to plant, or gravel or paving to fill an area, then draw' },
       { id: 'agro', name: 'agroforestry', view: 'plan', planLabel: 'plant in plan', panel: box => agroPanel(box), note: 'trees and shrubs from a library, grown year by year: canopy, crowding, water, and when they flower and fruit' },
-      { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', view: 'plan', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']] },
       { id: 'graze', name: 'grazing', view: 'plan', planLabel: 'see it in plan', panel: box => grazePanel(box), note: 'paddocks, the herd, grazing days and rest, and the next moves as plants recover' },
       { id: 'visit', name: 'visitor walks', view: 'plan', planLabel: 'see them in plan', panel: box => visitPanel(box), note: 'walks and stops for visitors: how hard, where they need care, seasons, limits, and what they cost and bring in' },
       { id: 'budget', name: 'earthwork budget', panel: box => budgetPanel(box), note: 'the grading and planting on this plan, priced with your rates: a likely range, truck trips and diesel' },
