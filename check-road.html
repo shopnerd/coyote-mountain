@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coyote Mountain · the drawing over the photo</title>
+<style>
+  :root{--ink:#f0f0ec;--bg:#141412;--line:#3a3a35;--acc:#c96b3a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}
+  header{padding:12px 16px;border-bottom:1px solid var(--line)}
+  h1{font-size:15px;margin:0 0 4px;letter-spacing:.02em}
+  p{margin:4px 0;color:#b9b9b2;max-width:80ch}
+  .keys{display:flex;flex-wrap:wrap;gap:14px;margin-top:8px}
+  .k{display:flex;align-items:center;gap:6px}
+  .sw{width:22px;height:4px;border-radius:2px}
+  main{padding:16px;display:flex;flex-direction:column;gap:12px;align-items:flex-start}
+  canvas{max-width:100%;height:auto;border:1px solid var(--line)}
+  .note{color:#8f8f88}
+</style></head><body>
+<header>
+  <h1>the drawing over the photo</h1>
+  <p>Every line here comes from the saved drawing's own latitude and longitude, laid over live Esri World Imagery. If a line sits off the thing it was drawn on, the drawing is off. If it sits true and the contours still wander across roads and terraces, that is the 30 m elevation data, not the drawing.</p>
+  <div class="keys">
+    <span class="k"><span class="sw" style="background:#ff2d2d"></span>roads and paths</span>
+    <span class="k"><span class="sw" style="background:#35d2ff"></span>drawn shapes</span>
+    <span class="k"><span class="sw" style="background:#ff9c3a"></span>ditches and swales</span>
+    <span class="k"><span class="sw" style="background:#fff"></span>placed objects</span>
+  </div>
+</header>
+<main>
+  <canvas id="c" width="1000" height="1000"></canvas>
+  <p class="note" id="msg">reading the drawing…</p>
+</main>
+<script>
+/* topo.html saves the drawing in this same origin, so it can be read straight out of the browser */
+const SESSION = 'topo-session';
+const msg = t => { document.getElementById('msg').textContent = t; };
+
+function readDrawing() {
+  let raw = null;
+  try { raw = localStorage.getItem(SESSION); } catch (_) {}
+  if (!raw) return null;
+  let p; try { p = JSON.parse(raw); } catch (_) { return null; }
+  const pr = p.project || p;                        // some versions wrap the project
+  if (!pr || !pr.world || !pr.grid) return null;
+  const [W, H] = pr.grid, siteW = (pr.sliders && pr.sliders.siteW) || pr.siteW, cs = siteW / (W - 1);
+  if (!(cs > 0)) return null;
+  const D2R = Math.PI / 180, t = (pr.rot || 0) * D2R, la0 = pr.world.lat, lo0 = pr.world.lon;
+  const LL = ([i, j]) => {                          // grid node -> lat, lon: the same maths topo.html uses
+    const sx = (i - (W - 1) / 2) * cs, sy = ((H - 1) / 2 - j) * cs;
+    const dx = sx * Math.cos(t) + sy * Math.sin(t), dy = -sx * Math.sin(t) + sy * Math.cos(t);
+    return [la0 + dy / 111320, lo0 + dx / (111320 * Math.cos(la0 * D2R))];
+  };
+  const lines = [];
+  for (const st of pr.strokes || []) {
+    if (st.kind === 'path') lines.push({ pts: st.pts.map(LL), col: '#ff2d2d', w: 4 });
+    else if (st.kind === 'obj' && st.foot && st.c) {
+      const r = (st.rot || 0) * D2R, sc = st.sc || 1;
+      const foot = st.foot.map(([x, y]) => LL([st.c[0] + (x * sc * Math.cos(r) - y * sc * Math.sin(r)) / cs,
+                                               st.c[1] - (x * sc * Math.sin(r) + y * sc * Math.cos(r)) / cs]));
+      if (foot.length > 2) lines.push({ pts: foot.concat([foot[0]]), col: '#ffffff', w: 3 });
+    } else if (!st.kind && st.pts && st.pts.length > 2) lines.push({ pts: st.pts.map(LL), col: '#35d2ff', w: 3 });
+  }
+  for (const dt of (pr.rec && pr.rec.ditches) || []) lines.push({ pts: dt.pts.map(q => [q[0], q[1]]), col: '#ff9c3a', w: 4 });
+  return { lines };
+}
+
+function draw(d) {
+  const all = d.lines.flatMap(l => l.pts);
+  if (!all.length) { msg('the drawing has no roads, shapes, ditches or objects to check yet'); return; }
+  const PAD = 0.0006;
+  const s = Math.min(...all.map(p => p[0])) - PAD, n = Math.max(...all.map(p => p[0])) + PAD;
+  const w = Math.min(...all.map(p => p[1])) - PAD, e = Math.max(...all.map(p => p[1])) + PAD;
+  const cy = (n + s) / 2, cx = (e + w) / 2, kx = Math.cos(cy * Math.PI / 180);
+  const span = Math.max(n - s, (e - w) * kx);       // a square window, so the photo is never stretched
+  const s0 = cy - span / 2, n0 = cy + span / 2, w0 = cx - span / 2 / kx, e0 = cx + span / 2 / kx;
+  const SZ = 1000, c = document.getElementById('c'), x = c.getContext('2d');
+  const px = p => [(p[1] - w0) / (e0 - w0) * SZ, (n0 - p[0]) / (n0 - s0) * SZ];
+  const url = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export'
+    + `?bbox=${w0},${s0},${e0},${n0}&bboxSR=4326&imageSR=3857&size=${SZ},${SZ}&format=png&f=image`;
+  const im = new Image(); im.crossOrigin = 'anonymous';
+  im.onload = () => {
+    x.drawImage(im, 0, 0, SZ, SZ);
+    for (const l of d.lines) {
+      x.strokeStyle = l.col; x.lineWidth = l.w; x.lineJoin = 'round'; x.beginPath();
+      l.pts.forEach((p, i) => { const q = px(p); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); });
+      x.stroke();
+    }
+    msg(`${d.lines.length} lines · ${(span * 111320 / SZ / 0.3048).toFixed(2)} ft per pixel · imagery Esri, Maxar, Earthstar Geographics`);
+  };
+  im.onerror = () => msg('the imagery would not load: check the connection, or that arcgisonline.com is reachable');
+  im.src = url;
+}
+
+const d = readDrawing();
+if (!d) msg('no saved drawing found in this browser · open topo.html on this site first, then come back');
+else draw(d);
+</script>
+</body></html>
