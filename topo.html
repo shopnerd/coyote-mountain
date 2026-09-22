@@ -8092,18 +8092,21 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   const selCv = make('canvas', { id: 'u2sel' }); main.append(selCv);
   const SEL = { i: -1, drag: null };
   const selTool = () => state.task === 'shape' && tool().id === 'select' && S.mode === 'plan';
+  const isObjFoot = st => st.kind === 'obj' && st.c && st.foot && st.foot.length > 2;
+  const strokePts = st => isObjFoot(st) ? objFoot(st) : st.pts;   // an object is picked by its footprint, like a closed shape
+  const strokeArea = st => { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const q of strokePts(st)) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); } return (x1 - x0) * (y1 - y0); };
   function strokeDist(st, px, py) {
-    if (st.c && st.kind === 'obj') { const q = toSheet(st.c[0], st.c[1]); return Math.max(0, Math.hypot(px - q[0], py - q[1]) - (st.r || 1) * sheet.k); }
-    let d = Infinity; const P = st.pts.map(q => toSheet(q[0], q[1]));
+    if (st.c && st.kind === 'obj' && !isObjFoot(st)) { const q = toSheet(st.c[0], st.c[1]); return Math.max(0, Math.hypot(px - q[0], py - q[1]) - (st.r || 1) * sheet.k); }
+    let d = Infinity; const P = strokePts(st).map(q => toSheet(q[0], q[1]));
     if (P.length === 1) return Math.hypot(px - P[0][0], py - P[0][1]);
     for (let k = 1; k < P.length; k++) { const [ax, ay] = P[k - 1], [bx, by] = P[k], dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy || 1, t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / L)); d = Math.min(d, Math.hypot(px - ax - t * dx, py - ay - t * dy)); }
-    if (st.closed || st.shape) { const inside = (() => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { if ((P[i][1] > py) !== (P[j][1] > py) && px < (P[j][0] - P[i][0]) * (py - P[i][1]) / (P[j][1] - P[i][1] || 1e-9) + P[i][0]) c = !c; } return c; })(); if (inside) d = 0; }
+    if (st.closed || st.shape || isObjFoot(st)) { const inside = (() => { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { if ((P[i][1] > py) !== (P[j][1] > py) && px < (P[j][0] - P[i][0]) * (py - P[i][1]) / (P[j][1] - P[i][1] || 1e-9) + P[i][0]) c = !c; } return c; })(); if (inside) d = 0; }
     return d;
   }
   const kindName = st => st.kind === 'obj' ? (st.name || 'object') : st.kind ? st.kind : st.shape ? 'shape' : 'line';
   const cvPt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
-  cv.addEventListener('pointerdown', e => { if (!selTool() || e.button !== 0) return; e.stopImmediatePropagation(); e.preventDefault(); const [px, py] = cvPt(e); let best = -1, bd = 10;
-    S.strokes.forEach((st, i) => { const d = strokeDist(st, px, py); if (d < bd) { bd = d; best = i; } });
+  cv.addEventListener('pointerdown', e => { if (!selTool() || e.button !== 0) return; e.stopImmediatePropagation(); e.preventDefault(); const [px, py] = cvPt(e); let best = -1, bd = 10, ba = Infinity;
+    S.strokes.forEach((st, i) => { const d = strokeDist(st, px, py); if (d > bd) return; const a = isObjFoot(st) ? -1 : strokeArea(st); if (d < bd || a < ba) { bd = d; ba = a; best = i; } });   // inside several shapes: a placed object wins, then the smallest shape, so a barn inside a site outline can be picked
     SEL.i = best; if (best >= 0) { snapshot(); SEL.drag = { p: toGrid(px, py) }; cv.setPointerCapture(e.pointerId); } renderSelPanel(); drawSel(); }, true);
   cv.addEventListener('pointermove', e => { if (!selTool() || !SEL.drag) return; e.stopImmediatePropagation(); const [px, py] = cvPt(e), g = toGrid(px, py), dx = g[0] - SEL.drag.p[0], dy = g[1] - SEL.drag.p[1]; SEL.drag.p = g; const st = S.strokes[SEL.i]; if (!st) return;
     st.pts = st.pts.map(q => [q[0] + dx, q[1] + dy, ...q.slice(2)]); if (st.c) st.c = [st.c[0] + dx, st.c[1] + dy]; if (st.foot) st._k = ''; S.strokeVer++; S.dirty = true; drawSel(); }, true);
@@ -8124,7 +8127,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   function drawSel() {
     const r = main.getBoundingClientRect(), dp = Math.min(2, devicePixelRatio || 1); if (selCv.width !== Math.round(r.width * dp)) { selCv.width = Math.round(r.width * dp); selCv.height = Math.round(r.height * dp); }
     const c = selCv.getContext('2d'); c.setTransform(dp, 0, 0, dp, 0, 0); c.clearRect(0, 0, r.width, r.height); const st = S.strokes[SEL.i]; if (!st || !selTool()) return;
-    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; const pts = st.c && st.kind === 'obj' ? [[st.c[0] - (st.r || 1), st.c[1] - (st.r || 1)], [st.c[0] + (st.r || 1), st.c[1] + (st.r || 1)]] : st.pts;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; const pts = st.c && st.kind === 'obj' && !isObjFoot(st) ? [[st.c[0] - (st.r || 1), st.c[1] - (st.r || 1)], [st.c[0] + (st.r || 1), st.c[1] + (st.r || 1)]] : strokePts(st);
     for (const q of pts) { const [x, y] = toSheet(q[0], q[1]); x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
     c.setLineDash([5, 4]); c.strokeStyle = '#C96B3A'; c.lineWidth = 1.5; c.strokeRect(x0 - 8, y0 - 8, x1 - x0 + 16, y1 - y0 + 16); c.setLineDash([]);
   }
