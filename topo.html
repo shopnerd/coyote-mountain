@@ -1702,7 +1702,7 @@ function secYaw() {                      // the camera yaw where a and b sit at 
   const [A, B] = S.sec, yaw0 = S.cam.yaw; let best = null;
   for (let k = 0; k < 360; k++) { S.cam.yaw = k * D2R; const { proj } = camera(S.w, S.h), pA = proj(A[0], A[1], 0), pB = proj(B[0], B[1], 0); const score = Math.abs(pA[2] - pB[2]) + (pA[0] < pB[0] ? 0 : 1e6); if (!best || score < best.score) best = { yaw: S.cam.yaw, score }; }
   S.cam.yaw = yaw0; return best ? best.yaw : yaw0; }
-window.__dbg = fn => fn({ S, AI, camera, secYaw, nodeLatLon, setSiteW, aiPrompt, snapshotProject, cs, applyPad, objFromMesh, updateStats, W, H, renderPicture, bakePainted, aerialUI, paintedCache: () => paintedCache, aiControl, aiCall, kmlOut, geoTiff, animStart, animDraw, ANIM, aerialCache: () => aerialCache, AER: () => AER, HIST, CLOUD, loadCloud, z: () => z, drawModel });   // a hook for the end-to-end tests
+window.__dbg = fn => fn({ S, AI, camera, secYaw, nodeLatLon, setSiteW, aiPrompt, snapshotProject, cs, applyPad, applyPath, snapshot, toSheet, toGrid, sample, latLonToGrid, objFromMesh, updateStats, W, H, renderPicture, bakePainted, aerialUI, paintedCache: () => paintedCache, aiControl, aiCall, kmlOut, geoTiff, animStart, animDraw, ANIM, aerialCache: () => aerialCache, AER: () => AER, HIST, CLOUD, loadCloud, z: () => z, drawModel });   // a hook for the end-to-end tests
 document.getElementById('sec3d').onclick = () => paintSection();
 document.getElementById('secAnim').onclick = () => animStart();
 document.getElementById('animClose').onclick = () => animStop();
