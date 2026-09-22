@@ -2521,7 +2521,7 @@ function objFromMesh(tris, name, unit) {  // centred on its footprint, lowest po
   const f = OBJ_UNIT[unit] || 1, n = tris.length / 3; let sx = 0, sy = 0, mz = Infinity; for (let k = 0; k < tris.length; k += 3) { sx += tris[k]; sy += tris[k + 1]; mz = Math.min(mz, tris[k + 2]); } sx /= n; sy /= n;
   const t = new Array(tris.length); for (let k = 0; k < tris.length; k += 3) { t[k] = Math.round((tris[k] - sx) * f * 1000) / 1000; t[k + 1] = Math.round((tris[k + 1] - sy) * f * 1000) / 1000; t[k + 2] = Math.round((tris[k + 2] - mz) * f * 1000) / 1000; }
   const xy = [], stride = Math.max(3, Math.floor(t.length / 3 / 4000) * 3); for (let k = 0; k < t.length; k += stride) xy.push([t[k], t[k + 1]]); let hz = 0; for (let k = 2; k < t.length; k += 3) hz = Math.max(hz, t[k]);
-  return { kind: 'obj', name, unit, rot: 0, sc: 1, lift: 0, tris: t, foot: hull2(xy), h: hz, color: 'ink', w: 1, a: 1, pts: [] };
+  return { kind: 'obj', name, unit, rot: 0, sc: 1, lift: 0, tris: t, foot: hull2(xy), h: hz, color: 'ink', w: 1, a: 1, pts: [], o: [sx * f, sy * f] };   // o: where the file's own origin went, in metres
 }
 function objSel() { return S.objSel != null && S.strokes[S.objSel] && S.strokes[S.objSel].kind === 'obj' ? S.strokes[S.objSel] : null; }
 function objPlace(st) {                   // local metres -> grid coordinates and absolute elevation, cached per placement
@@ -2547,10 +2547,15 @@ function drawObjPlan(c, st, toXY, k) { if (!st.c) return; const P = objFoot(st).
 function objUI() { const st = objSel(); for (const id of ['objRotRow', 'objScaleRow', 'objLiftRow', 'objUnitRow']) document.getElementById(id).style.opacity = st ? 1 : .45; if (!st) return;
   const set = (id, v, txt) => { document.getElementById(id).value = v; document.getElementById('o_' + id).textContent = txt; }; set('objRot', st.rot, st.rot + '°'); set('objScale', st.sc, st.sc + '×'); set('objLift', st.lift, fL(st.lift, 1)); document.getElementById('objUnit').value = st.unit; }
 async function loadObjectFile(f) {
-  const name = f.name.replace(/\.[^.]+$/, '').slice(0, 24), unit = document.getElementById('objUnit').value; let tris = /\.obj$/i.test(f.name) ? parseObj(await f.text()) : parseStl(await f.arrayBuffer()); if (!tris.length) throw new Error('no triangles found in ' + f.name);
-  const n0 = tris.length / 9; tris = decimate(tris, OBJ_CAP); const st = objFromMesh(tris, name, unit); st.c = [(W - 1) / 2, (H - 1) / 2]; st.pts = [[st.c[0], st.c[1], .5]];
+  const txt = /\.obj$/i.test(f.name) ? await f.text() : null, hdr = k => { const l = txt && txt.split('\n').map(q => q.trim()).find(q => q.startsWith('# ' + k + ' ')); return l ? l.slice(k.length + 3).trim() : null; };   // an obj can say where it goes: # geo lat lon, # unit ft, # name ...
+  const name = (hdr('name') || f.name.replace(/\.[^.]+$/, '')).slice(0, 24), unit = OBJ_UNIT[hdr('unit')] ? hdr('unit') : document.getElementById('objUnit').value; let tris = txt ? parseObj(txt) : parseStl(await f.arrayBuffer()); if (!tris.length) throw new Error('no triangles found in ' + f.name);
+  const n0 = tris.length / 9; tris = decimate(tris, OBJ_CAP); const st = objFromMesh(tris, name, unit); st.c = [(W - 1) / 2, (H - 1) / 2];
+  const geo = (hdr('geo') || '').split(/[\s,]+/).map(Number); let placed = false;
+  if (S.world && geo.length >= 2 && geo.every(isFinite)) { const g = latLonToGrid(geo[0], geo[1]), sz = cs(); st.rot = ((S.rot || 0) % 360 + 360) % 360; const r = st.rot * D2R, x = -st.o[0], y = -st.o[1];   // the file is drawn east/north; its origin lands on the lat, lon
+    st.c = [g[0] - (x * Math.cos(r) - y * Math.sin(r)) / sz, g[1] + (x * Math.sin(r) + y * Math.cos(r)) / sz]; placed = true; }
+  st.pts = [[st.c[0], st.c[1], .5]];
   snapshot(); S.strokes.push(st); S.objSel = S.strokes.length - 1; S.strokeVer++; setMode('plan'); setBrush('obj'); objUI(); S.dirty = true;
-  toast(`${name} · ${Math.round(tris.length / 9).toLocaleString()} faces${n0 > OBJ_CAP ? ' (simplified from ' + Math.round(n0).toLocaleString() + ')' : ''} · ${fL(st.h, 1)} tall · drag it into place`);
+  toast(`${name} · ${Math.round(tris.length / 9).toLocaleString()} faces${n0 > OBJ_CAP ? ' (simplified from ' + Math.round(n0).toLocaleString() + ')' : ''} · ${fL(st.h, 1)} tall · ${placed ? 'placed at its own coordinates' : 'drag it into place'}`);
 }
 document.getElementById('objBtn').onclick = () => document.getElementById('objFile').click();
 document.getElementById('objFile').onchange = e => { const f = e.target.files[0]; if (!f) return; loadObjectFile(f).catch(err => toast(String(err.message || err))); e.target.value = ''; };
