@@ -227,6 +227,8 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="p deep" id="aiWordsRow" style="display:none"><label>in the picture</label><input type="text" id="aiWords" placeholder="oaks, dry grass, late summer…"></div>
     <div class="p deep" id="aiEngRow" style="display:none"><label>painter</label><select id="aiEngine"><option value="google">google · gemini flash image</option><option value="openai-mini">openai · gpt-image-1-mini · about 1c</option><option value="openai-2">openai · gpt-image-2 · about 5c</option><option value="openai-25">openai · gpt-image-2.5 · about 25c</option></select></div>
     <div class="seg" id="aiRow" style="display:none;margin-bottom:6px"><button id="aiBtn" style="flex:2">paint it</button><button id="aiKey">key</button></div>
+    <div class="seg deep" id="aiCheckRow" style="display:none;margin-bottom:6px"><button id="aiCheckBtn" style="flex:2" title="compare the painting with the model it was painted from, and turn what drifted into corrections for another pass">check the painting</button></div>
+    <div class="p deep" id="aiCheckOut" style="display:none"></div>
     <div class="sec" id="secLbl" style="display:none">sections</div>
     <div class="seg wrap" id="secTabs" style="display:none;margin-bottom:6px"></div>
     <div class="seg" id="secRow" style="display:none;margin-bottom:6px"><button id="sec3d">paint this section</button><button id="secAnim">animate</button></div>
@@ -2767,7 +2769,24 @@ function aiScene() {                      // what the model cannot see in the pi
   if (trees) bits.push(`${trees} tree${trees > 1 ? 's' : ''} where the dark round canopies stand`); if (shrubs) bits.push('shrub masses and hedges'); if (paths.length) bits.push(paths.some(q => q.sf === 'paving') ? 'a paved path' : paths.some(q => q.sf === 'gravel') ? 'a gravel path' : 'an earth path'); if (blds) bits.push(`${blds} plain buildings`); if (walls) bits.push('low retaining walls at the pad edges');
   const veg = aerialVeg(); if (veg) bits.push(veg.replace(/\.$/, '')); const objs = S.strokes.filter(st => st.kind === 'obj' && st.c); if (objs.length) bits.push(objs.map(o => `a designed structure called ${o.name}, about ${fL(o.h * o.sc, 0)} tall, drawn as a plain pale solid: keep its exact shape, size and place`).join('; ')); const extra = document.getElementById('aiWords').value.trim(); if (extra) bits.push(extra); return bits.join('. ') + '.';
 }
-function aiPrompt() {
+function aiPrompt() { return aiPromptBase() + aiBuiltNote() + aiFixNote(); }
+function aiBuiltNote() {                  // the built things with their real sizes: what the painter keeps exactly
+  const bits = [];
+  for (const st of S.strokes) {
+    if (st.kind === 'obj' && st.foot && st.foot.length > 2) {
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of st.foot) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
+      const sc = st.sc || 1; bits.push(`${st.name || 'a structure'}: ${fL((x1 - x0) * sc, 0)} by ${fL((y1 - y0) * sc, 0)} on the ground, ${fL((st.h || 0) * sc, 0)} tall`);
+    } else if (!st.kind && (st.shape || st.closed) && st.pts.length > 12) {
+      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of st.pts) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
+      const w = (x1 - x0) * cs(), h = (y1 - y0) * cs(), rnd = Math.abs(w - h) / Math.max(w, h) < .08;
+      bits.push(`${rnd ? 'a circular enclosure' : 'an oval enclosure'} ${fL(Math.max(w, h), 0)} by ${fL(Math.min(w, h), 0)}`);
+    }
+  }
+  if (!bits.length) return '';
+  return ` The built things in the first image are modelled to size and are the subject of the picture: ${bits.join('; ')}. Keep every one at exactly the size, shape, footprint, angle and position the first image shows. Do not add, remove, merge or move any of them, do not turn a long oval into a circle or a circle into an oval, do not swap a fence for a wall, and do not invent extra buildings, pens, tanks or vehicles anywhere on the site.`;
+}
+function aiFixNote() { const f = (AI.fixes || []).filter(Boolean); return f.length ? ` The last attempt got these wrong and they must be right this time: ${f.join('; ')}.` : ''; }
+function aiPromptBase() {
   const hasAerial = !!(aerialCache && aerialCache.canvas && AI.style !== 'white'), ord = ['second', 'third', 'fourth', 'fifth']; let oi = 0, ref = hasAerial ? ` The ${ord[oi++]} image is an aerial photograph of the same site. Use it only for the colour and texture of the ground cover. Do not copy its layout: no fields, roads, buildings or water from it unless the first image already shows them.` : '';
   for (const ph of AI.photos) { const o = ord[oi++]; ref += ph.mode === 'look' ? ` The ${o} image is a style reference: match its medium, palette, brushwork, light and mood as closely as you can. Do not copy anything of its content, composition or landforms.` : ph.mode === 'building' ? ` The ${o} image shows the building that is to be built here. Wherever the first image shows a building or a designed structure, paint it as this building: its walls and their material, its roof, its openings, its proportions and its character. Take only the building from that image, not its landscape or its setting, and put no building anywhere the first image shows none.` : ` The ${o} image is a photograph of this place, or of a place like it: take the materials, the plants and their character, the ground colours, the weather and the quality of light from it. Do not copy its composition or its landforms, and bring nothing over from it that is not already in the first image: no fields, crops, roads, fences, buildings or water from the photo.`; }
   const cut = S.rendCut !== 'none' && S.sec ? ` The flat ${S.rendCut} shape along the bottom of the first image is the cut face of a section through the earth, like the poché of an architectural section. It is not an object in the scene. Keep it solid, flat and ${S.rendCut} with exactly the same edges and the same top profile; paint nothing on it and nothing in front of it. Below the cut face the first image is blank paper: leave that blank paper exactly as it is.` : '';
@@ -2808,11 +2827,95 @@ async function aiCall(key, png, prompt, ref, size = '1K') {   // one painted pic
 async function aiPaint() {
   if (AI.busy) return; const key = aiKey(); if (!key) return;
   AI.lastCam = { cam: JSON.parse(JSON.stringify(S.cam)), walk: S.walk ? { ...S.walk } : null, W2: 1536, H2: 864 };   // the camera the painting was made from, for laying it back on the ground
-  const { png, prompt, ref, mask } = aiControl(); AI.busy = true; busy('painting'); document.getElementById('aiBtn').disabled = true;
+  const { png, prompt, ref, mask } = aiControl(); AI.lastCtl = png; AI.lastSpec = aiSpec(); AI.busy = true; busy('painting'); document.getElementById('aiBtn').disabled = true;
   try {
     const url = await aiCall(key, png, prompt, ref); showPainted(mask ? holdCut(await loadImg(url), mask).toDataURL('image/png') : url, `painted · ${AI.style} · ${aiModelName()}`, prompt, `coyote-topo-painted-${AI.style}.png`, aiPaint);
   } catch (e) { toast(String(e.message || e)); } finally { AI.busy = false; unbusy(); document.getElementById('aiBtn').disabled = false; }
 }
+function aiSpec() {                       // the plan in plain words, for the checker to hold the painting against
+  const bits = [];
+  if (S.world) bits.push(`the site is ${fL(S.siteW, 0)} across${S.world.name ? ', ' + S.world.name : ''}`);
+  const b = aiBuiltNote(); if (b) bits.push(b.replace(/^ The built things in the first image are modelled to size and are the subject of the picture: /, 'built: ').replace(/\. Keep every one.*$/, ''));
+  const paths = S.strokes.filter(st => st.kind === 'path'); if (paths.length) bits.push(`${paths.length} road${paths.length > 1 ? 's' : ''} or track${paths.length > 1 ? 's' : ''}, about ${fL(paths[0].pw || 1.5, 0)} wide`);
+  const ditches = (S.rec && S.rec.ditches) || []; if (ditches.length) bits.push(`${ditches.length} ditch or swale with a berm on the downhill side`);
+  const trees = S.strokes.filter(st => st.kind === 'tree').length; if (trees) bits.push(`${trees} planted tree${trees > 1 ? 's' : ''}`);
+  return bits.join('. ') + '.';
+}
+const CHECK_SCHEMA = { type: 'object', required: ['verdict', 'summary', 'issues'], properties: {
+  verdict: { type: 'string', enum: ['match', 'minor', 'drift'] }, summary: { type: 'string' },
+  issues: { type: 'array', items: { type: 'object', required: ['item', 'problem', 'fix'], properties: { item: { type: 'string' }, problem: { type: 'string' }, fix: { type: 'string' } } } } } };
+const CHECK_TASK = spec => `You are checking an AI painting of a site model against the model it was painted from.
+
+Image 1 is the model view: the source of truth for the terrain shape and for every built thing.
+Image 2 is the painting made from it.
+
+What the model holds:
+${spec}
+
+Compare geometry and layout only, never style, colour, light or weather. Check: is every building, enclosure, fence, vehicle and road in the painting where the model puts it, at the same footprint, proportion and angle; is anything added that the model does not have; is anything missing; has a long oval become a circle or a circle an oval; does the land under them keep the same ridges, benches, slopes and skyline as the model.
+
+For each difference give the item, what is wrong, and a fix written as a short instruction to the image model, in the second person, naming the true size or shape (for example "keep the barn a single long building 76 by 102 ft with ten open runs down both sides, not a short shed").
+verdict is "match" when nothing differs, "minor" when only proportions are slightly off, "drift" when anything is added, removed, moved or changed in kind. Answer with JSON only.`;
+async function aiCheckCall(ctlPng, paintedB64, spec) {
+  const ls = k => { try { return localStorage.getItem(k) || ''; } catch (_) { return ''; } };
+  const gk = ls('gemini-key'), ok = ls('openai-key');
+  if (gk) {
+    for (const model of ['gemini-3.1-flash', 'gemini-2.5-flash']) {
+      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gk },
+        body: JSON.stringify({ contents: [{ parts: [{ text: 'Image 1 — the model (source of truth):' }, { inline_data: { mime_type: 'image/png', data: ctlPng } }, { text: 'Image 2 — the painting to check:' }, { inline_data: { mime_type: 'image/png', data: paintedB64 } }, { text: CHECK_TASK(spec) }] }],
+          generationConfig: { responseMimeType: 'application/json', responseSchema: CHECK_SCHEMA } }) });
+      const j = await r.json().catch(() => null);
+      const txt = j && j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts && j.candidates[0].content.parts.map(q => q.text || '').join('');
+      if (txt) { try { return JSON.parse(txt); } catch (_) {} }
+      if (j && j.error && !/not found|not supported/i.test(j.error.message || '')) throw new Error(j.error.message);
+    }
+    throw new Error('the checker got no answer from google');
+  }
+  if (ok) {
+    for (const model of ['gpt-5', 'gpt-4.1', 'gpt-4o']) {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + ok },
+        body: JSON.stringify({ model, response_format: { type: 'json_object' }, messages: [{ role: 'user', content: [
+          { type: 'text', text: 'Image 1 — the model (source of truth):' }, { type: 'image_url', image_url: { url: 'data:image/png;base64,' + ctlPng } },
+          { type: 'text', text: 'Image 2 — the painting to check:' }, { type: 'image_url', image_url: { url: 'data:image/png;base64,' + paintedB64 } },
+          { type: 'text', text: CHECK_TASK(spec) }] }] }) });
+      const j = await r.json().catch(() => null);
+      const txt = j && j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content;
+      if (txt) { try { return JSON.parse(txt); } catch (_) {} }
+      if (j && j.error && !/model|does not exist|unsupported/i.test(j.error.message || '')) throw new Error(j.error.message);
+    }
+    throw new Error('the checker got no answer from openai');
+  }
+  throw new Error('the checker needs the same key the painter uses: press key first');
+}
+function aiCheckUI(res) {                 // the verdict, then each difference with its fix, ready to send back into another pass
+  const box = document.getElementById('aiCheckOut'); box.textContent = ''; box.style.display = '';
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  if (!res) return; const issues = Array.isArray(res.issues) ? res.issues : [];
+  const word = { match: 'it holds', minor: 'close · small things off', drift: 'it drifted' }[res.verdict] || res.verdict || '';
+  box.append(el('p', 'u2note', `${word}${res.summary ? ' · ' + res.summary : ''}`));
+  const picked = new Set(issues.map((_, i) => i));
+  for (const [i, it] of issues.entries()) {
+    const row = el('label', 'u2note'); row.style.cssText = 'display:flex;gap:8px;align-items:flex-start;cursor:pointer';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = true;
+    cb.onchange = () => { cb.checked ? picked.add(i) : picked.delete(i); };
+    row.append(cb, el('span', '', `${it.item}: ${it.problem}`)); box.append(row);
+  }
+  if (issues.length) {
+    const again = el('button', 'btn', 'paint again with these fixes'); again.type = 'button';
+    again.onclick = () => { AI.fixes = issues.filter((_, i) => picked.has(i)).map(it => it.fix).filter(Boolean);
+      if (!AI.fixes.length) { toast('nothing ticked'); return; }
+      toast(`${AI.fixes.length} correction${AI.fixes.length > 1 ? 's' : ''} added to the prompt`); document.getElementById('aiBtn').click(); };
+    box.append(again);
+  } else box.append(el('p', 'u2note', 'nothing to correct'));
+}
+async function aiCheck() {
+  if (AI.busy) return; if (!AI.last || !AI.lastCtl) { toast('paint the model first'); return; }
+  AI.busy = true; busy('checking the painting'); document.getElementById('aiCheckBtn').disabled = true;
+  try { const painted = AI.last.split(',')[1]; const res = await aiCheckCall(AI.lastCtl, painted, AI.lastSpec || aiSpec()); aiCheckUI(res); }
+  catch (e) { toast(String(e.message || e)); }
+  finally { AI.busy = false; unbusy(); document.getElementById('aiCheckBtn').disabled = false; }
+}
+document.getElementById('aiCheckBtn').onclick = aiCheck;
 function holdCut(im, mask) {              // the painted picture with our own cut face and paper laid back over it, so the painter only ever touches the ground
   if (!mask) return im; const c = document.createElement('canvas'); c.width = mask.width; c.height = mask.height; const o = c.getContext('2d'); o.drawImage(im, 0, 0, c.width, c.height); o.drawImage(mask, 0, 0); return c; }
 const loadImg = src => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('the painted picture would not load')); im.src = src; });
@@ -2830,7 +2933,7 @@ function renderPicture() {                // the view as the renderer draws it, 
 const sheetPictures = (model, elev, painted) => ({ model, elev, painted, secPersp: !!S.sec, elevFocus: S.sec ? 442 / 864 : .5 });
 function showPainted(src, title, note, name, again) {   // the painted panel: picture, title, the prompt as the note, and what again and save png do
   const panel = document.getElementById('aiPanel'); let im = document.getElementById('aiImg'); if (!im) { im = document.createElement('img'); im.id = 'aiImg'; im.alt = 'the painted view'; document.getElementById('aiImgWrap').appendChild(im); }
-  AI.last = src; AI.lastName = name; AI.again = again; im.src = src; { const li = new Image(); li.onload = () => { AI.lastImg = li; aerialUI(); }; li.src = src; } document.getElementById('aiTitle').textContent = title; document.getElementById('aiNote').textContent = note; panel.hidden = false;
+  AI.last = src; AI.lastName = name; AI.again = again; AI.fixes = []; im.src = src; { const li = new Image(); li.onload = () => { AI.lastImg = li; aerialUI(); }; li.src = src; } document.getElementById('aiTitle').textContent = title; document.getElementById('aiNote').textContent = note; panel.hidden = false;
 }
 async function paintSection() {           // the active section as the drawing sheet paints it: square to the line at eye level, no perspective, the cut face held; without a key the renderer's own picture
   if (!S.sec) { toast('draw a section line in plan first'); return; } if (AI.busy) return; const key = aiKey(); const ab = secLetters(S.secI).join('–'); AI.busy = true; busy(key ? `painting section ${ab}` : `drawing section ${ab}`);
@@ -4803,7 +4906,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
     ] },
     { id: 'make', name: 'Make', tools: [
       { id: 'render', group: 'pictures and sheets', name: 'render', view: '3d', rows: ['#rendRow', '#rendSel'], more: ['#sunSec'] },
-      { id: 'paint', name: 'paint', view: '3d', renderOn: true, rows: ['#paintRow', '#aiStyleRow', '#aiWordsRow', '#aiRow'], more: ['#aiEngRow', '#aiRefRow', '#aiRefList', '#aiLinesRow'] },
+      { id: 'paint', name: 'paint', view: '3d', renderOn: true, rows: ['#paintRow', '#aiStyleRow', '#aiWordsRow', '#aiRow', '#aiCheckRow', '#aiCheckOut'], more: ['#aiEngRow', '#aiRefRow', '#aiRefList', '#aiLinesRow'] },
       { id: 'story', name: 'landscape story', panel: box => storyPanel(box), note: 'the place told in chapters: today, the ground, the water, the design, the planting growing, with your captions, as one video' },
       { id: 'video', name: 'video', rows: ['#recView'], acts: [['animate the section', '#secAnim']], note: 'record video captures the view until you press it again' },
       { id: 'sheet', name: 'drawing sheet', rows: ['#paper', '#sheetStyle', '#lineN', '#lineVe', '#linePng', '#sheetBtn', '#sheetInfo', '#png'], preview: c => previewSheet(c), note: 'the preview draws the sheet without painting; the export paints it when a painter key is set' },
