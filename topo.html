@@ -4740,7 +4740,8 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'sand', name: 'sandbox', rows: ['#sandBtn', '#sandSec'] },
     ] },
     { id: 'shape', name: 'Shape', tools: [
-      { id: 'select', name: 'select', view: 'plan', panel: box => selectPanel(box), note: 'click a drawing, a plant or an object on the plan to pick it; drag to move it' },
+      { id: 'select', name: 'select', view: 'plan', panel: box => selectPanel(box), note: 'click a drawing, a plant or an object on the plan to pick it; drag to move it, turn or scale it in the panel' },
+      { id: 'measure', name: 'measure', view: 'plan', panel: box => measurePanel(box), note: 'click point to point for distances; click the first point again to close a shape and read its area' },
       { id: 'sculpt', name: 'sculpt', pick: '#sculptBrushes button[data-b=raise]', keepBrush: ['raise', 'lower', 'smooth', 'flatten'], rows: ['#sculptBrushes', '#brushParams'], sculpt3d: true, note: 'drag on the ground, in plan or 3d' },
       { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', view: 'plan', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']] },
       { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['=footprint', '#padRow', '=level and grade', '#padLevelRow', '#padGradeRow', '=edges', '#padEdgeRow', '#sideRow', '=earthwork', '#strip', '#swell'] },
@@ -8112,7 +8113,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   const cvPt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
   cv.addEventListener('pointerdown', e => { if (!selTool() || e.button !== 0) return; e.stopImmediatePropagation(); e.preventDefault(); const [px, py] = cvPt(e); let best = -1, bd = 10, ba = Infinity;
     S.strokes.forEach((st, i) => { const d = strokeDist(st, px, py); if (d > bd) return; const a = isObjFoot(st) ? -1 : strokeArea(st); if (d < bd || a < ba) { bd = d; ba = a; best = i; } });   // inside several shapes: a placed object wins, then the smallest shape, so a barn inside a site outline can be picked
-    SEL.i = best; if (best >= 0) { snapshot(); SEL.drag = { p: toGrid(px, py) }; cv.setPointerCapture(e.pointerId); } renderSelPanel(); drawSel(); }, true);
+    if (SEL.i !== best) { SEL.turn = 0; SEL.scale = 1; } SEL.i = best; if (best >= 0) { snapshot(); SEL.drag = { p: toGrid(px, py) }; cv.setPointerCapture(e.pointerId); } renderSelPanel(); drawSel(); }, true);
   cv.addEventListener('pointermove', e => { if (!selTool() || !SEL.drag) return; e.stopImmediatePropagation(); const [px, py] = cvPt(e), g = toGrid(px, py), dx = g[0] - SEL.drag.p[0], dy = g[1] - SEL.drag.p[1]; SEL.drag.p = g; const st = S.strokes[SEL.i]; if (!st) return;
     st.pts = st.pts.map(q => [q[0] + dx, q[1] + dy, ...q.slice(2)]); if (st.c) st.c = [st.c[0] + dx, st.c[1] + dy]; if (st.foot) st._k = ''; S.strokeVer++; S.dirty = true; drawSel(); }, true);
   cv.addEventListener('pointerup', e => { if (!selTool()) return; if (SEL.drag) { e.stopImmediatePropagation(); SEL.drag = null; } }, true);
@@ -8124,11 +8125,45 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     selBox.append(make('p', { cls: 'u2note', text: `picked: ${kindName(st)}` }));
     if (!st.kind) { const colours = make('div', { cls: 'seg' }); for (const [label, col] of [['ink', 'ink'], ['red', 'ember'], ['blue', 'water']]) { const b = make('button', { type: 'button', cls: st.color === col ? 'on' : '', text: label }); b.onclick = () => { snapshot(); st.color = col; S.strokeVer++; S.dirty = true; renderSelPanel(); }; colours.append(b); }
       const dash = make('button', { type: 'button', cls: st.dash ? 'on' : '', text: 'dash' }); dash.onclick = () => { snapshot(); st.dash = !st.dash; S.strokeVer++; S.dirty = true; renderSelPanel(); }; colours.append(dash); selBox.append(colours); }
+    const turn = make('div', { cls: 'seg' }); turn.title = 'turn the picked thing about its centre; [ and ] turn it too, shift for bigger steps';
+    for (const a of [-15, -1, 1, 15]) { const b = make('button', { type: 'button', text: (a < 0 ? '⟲ ' : '⟳ ') + Math.abs(a) + '°' }); b.onclick = () => rotateSel(a); turn.append(b); }
+    const by = make('input', { type: 'number', step: 'any' }); by.placeholder = 'turn by °'; by.style.cssText = 'width:5.5em;min-width:0'; by.onkeydown = e => { if (e.key === 'Enter' && isFinite(+by.value) && +by.value) { rotateSel(+by.value); } }; turn.append(by);
+    selBox.append(make('p', { cls: 'u2note', text: `turn · ${SEL.turn ? (Math.round(SEL.turn * 10) / 10) + '° since picked' : 'clockwise ⟳, counter ⟲'}` }), turn);
+    const size = make('div', { cls: 'seg' }); size.title = 'grow or shrink the picked thing about its centre';
+    for (const k of [.9, .99, 1.01, 1.1]) { const b = make('button', { type: 'button', text: (k < 1 ? '− ' : '+ ') + Math.round(Math.abs(k - 1) * 100) + '%' }); b.onclick = () => scaleSel(k); size.append(b); }
+    const pc = make('input', { type: 'number', step: 'any', min: '1' }); pc.placeholder = 'scale %'; pc.style.cssText = 'width:5.5em;min-width:0'; pc.onkeydown = e => { if (e.key === 'Enter' && +pc.value > 0) scaleSel(+pc.value / 100); }; size.append(pc);
+    selBox.append(make('p', { cls: 'u2note', text: `scale · ${SEL.scale && Math.abs(SEL.scale - 1) > 1e-6 ? Math.round(SEL.scale * 1000) / 10 + '% of the size when picked' : 'about its centre'}` }), size);
+    const meas = measureText(st); if (meas) selBox.append(make('p', { cls: 'u2note', text: meas }));
     const acts = make('div', { cls: 'u2acts' }), del = make('button', { cls: 'btn', type: 'button', text: 'delete' }), dup = make('button', { cls: 'btn', type: 'button', text: 'duplicate' });
     del.onclick = () => { snapshot(); S.strokes.splice(SEL.i, 1); if (S.objSel === SEL.i) S.objSel = null; SEL.i = -1; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel(); };
     dup.onclick = () => { snapshot(); const c = JSON.parse(JSON.stringify(st)); c.pts = c.pts.map(q => [q[0] + 3, q[1] + 3, ...q.slice(2)]); if (c.c) c.c = [c.c[0] + 3, c.c[1] + 3]; S.strokes.push(c); SEL.i = S.strokes.length - 1; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel(); };
     acts.append(dup, del); selBox.append(acts);
   }
+  function rotateSel(deg) {                // clockwise on the sheet, about the middle of the picked thing; an object turns about its own centre
+    const st = S.strokes[SEL.i]; if (!st) return; snapshot();
+    if (st.kind === 'obj' && st.c) { st.rot = ((st.rot || 0) - deg) % 360; if (st.rot < 0) st.rot += 360; }   // obj rot runs counter-clockwise on the sheet
+    else { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const q of st.pts) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, a = deg * D2R, ca = Math.cos(a), sa = Math.sin(a), turnPt = q => [cx + (q[0] - cx) * ca - (q[1] - cy) * sa, cy + (q[0] - cx) * sa + (q[1] - cy) * ca];
+      st.pts = st.pts.map(q => [...turnPt(q), ...q.slice(2)]); if (st.c) st.c = turnPt(st.c); }
+    SEL.turn = (SEL.turn || 0) + deg; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel();
+  }
+  function scaleSel(k) {                   // grow or shrink about the middle; an object keeps its own scale, a tree its crown
+    const st = S.strokes[SEL.i]; if (!st || !(k > 0)) return; snapshot();
+    if (st.kind === 'obj' && st.c) st.sc = Math.round((st.sc || 1) * k * 1e4) / 1e4;
+    else { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const q of st.pts) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, sc = q => [cx + (q[0] - cx) * k, cy + (q[1] - cy) * k];
+      st.pts = st.pts.map(q => [...sc(q), ...q.slice(2)]); if (st.c) st.c = sc(st.c); if (st.r) st.r *= k; }
+    SEL.scale = (SEL.scale || 1) * k; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel();
+  }
+  const fAreaFull = m2 => isFt() ? `${Math.round(m2 * FT * FT).toLocaleString()} ft² (${(m2 / 4046.86).toFixed(2)} ac)` : `${Math.round(m2).toLocaleString()} m² (${(m2 / 1e4).toFixed(2)} ha)`;
+  function measureText(st) {               // lengths and area of a picked line or shape, the way google earth's ruler reads them
+    if (!st.pts || st.pts.length < 2 || (st.kind && st.kind !== 'shrub')) return '';
+    const P = st.pts, closed = !!(st.shape || st.closed) && P.length > 2, seg = []; for (let k = 1; k < P.length; k++) seg.push(Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]) * cs());
+    const shut = closed && Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) > 1e-6; if (shut) seg.push(Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) * cs());
+    const tot = seg.reduce((a, b) => a + b, 0), sides = seg.length <= 8 ? ' · sides ' + seg.map(v => fL(v, 1)).join(', ') : '';
+    return closed ? `area ${fAreaFull(polyArea(P) * cs() * cs())} · around ${fL(tot, 1)}${sides}` : `length ${fL(tot, 1)}${sides}`;
+  }
+  addEventListener('keydown', e => { if (!selTool() || SEL.i < 0 || (e.key !== '[' && e.key !== ']') || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return; e.preventDefault(); rotateSel((e.key === ']' ? 1 : -1) * (e.shiftKey ? 15 : 1)); });
   function drawSel() {
     const r = main.getBoundingClientRect(), dp = Math.min(2, devicePixelRatio || 1); if (selCv.width !== Math.round(r.width * dp)) { selCv.width = Math.round(r.width * dp); selCv.height = Math.round(r.height * dp); }
     const c = selCv.getContext('2d'); c.setTransform(dp, 0, 0, dp, 0, 0); c.clearRect(0, 0, r.width, r.height); const st = S.strokes[SEL.i]; if (!st || !selTool()) return;
@@ -8138,6 +8173,52 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   }
   addEventListener('keydown', e => { if (selTool() && SEL.i >= 0 && (e.key === 'Delete' || e.key === 'Backspace') && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) { e.preventDefault(); snapshot(); S.strokes.splice(SEL.i, 1); SEL.i = -1; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel(); } });
   setInterval(() => { if (SEL.i >= 0 || selCv.width) drawSel(); }, 250);
+
+  /* measure: click point to point like google earth's ruler; click the first point again to close it and read the area */
+  const msCv = make('canvas', { id: 'u2meas' }); msCv.style.cssText = 'position:absolute;inset:0;pointer-events:none;width:100%;height:100%;z-index:4'; main.append(msCv);
+  const MS = { pts: [], closed: false, done: false, hover: null };
+  const measTool = () => state.task === 'shape' && tool().id === 'measure' && S.mode === 'plan';
+  const msSegs = () => { const P = MS.pts, out = []; for (let k = 1; k < P.length; k++) out.push(Math.hypot(P[k][0] - P[k - 1][0], P[k][1] - P[k - 1][1]) * cs()); if (MS.closed) out.push(Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) * cs()); return out; };
+  let msBox = null;
+  function measurePanel(box) { msBox = box; renderMeasPanel(); }
+  function renderMeasPanel() {
+    if (!msBox) return; msBox.textContent = ''; const segs = msSegs(), tot = segs.reduce((a, b) => a + b, 0);
+    if (!MS.pts.length) { msBox.append(make('p', { cls: 'u2note', text: 'click on the plan to start. each click adds a point; double-click or enter ends a line; click the first point again to close a shape and get its area. backspace takes a point back, esc clears.' })); return; }
+    msBox.append(make('p', { cls: 'u2note', text: MS.closed ? `area ${fAreaFull(polyArea(MS.pts) * cs() * cs())}` : `length ${fL(tot, 1)}${MS.done ? '' : ' so far'}` }));
+    if (MS.closed) msBox.append(make('p', { cls: 'u2note', text: `around ${fL(tot, 1)}` }));
+    if (segs.length > 1) msBox.append(make('p', { cls: 'u2note', text: 'sides ' + segs.map(v => fL(v, 1)).join(', ') }));
+    if (MS.pts.length > 1) { const a = MS.pts[0], b = MS.pts[MS.closed ? 0 : MS.pts.length - 1]; if (!MS.closed) { const dz = sample(zv, b[0], b[1]) - sample(zv, a[0], a[1]); msBox.append(make('p', { cls: 'u2note', text: `the end is ${fL(Math.abs(dz), 1)} ${dz >= 0 ? 'higher' : 'lower'} than the start` })); } }
+    const acts = make('div', { cls: 'u2acts' }), keep = make('button', { cls: 'btn', type: 'button', text: 'keep as a drawn line' }), clr = make('button', { cls: 'btn', type: 'button', text: 'clear' });
+    if (MS.closed) keep.textContent = 'keep as a drawn shape';
+    keep.onclick = () => { if (MS.pts.length < 2) return; snapshot(); const pts = MS.pts.map(q => [q[0], q[1], .5]); if (MS.closed) pts.push(pts[0].slice()); S.strokes.push({ color: 'ink', shape: MS.closed, w: 1, a: 1, dash: true, pts }); S.strokeVer++; S.dirty = true; msClear(); toast('kept · pick it with select to move, turn or scale it'); };
+    clr.onclick = msClear; if (MS.done) acts.append(keep); acts.append(clr); msBox.append(acts);
+  }
+  function msClear() { MS.pts = []; MS.closed = false; MS.done = false; renderMeasPanel(); drawMeas(); }
+  function drawMeas() {
+    const r = main.getBoundingClientRect(), dp = Math.min(2, devicePixelRatio || 1); if (msCv.width !== Math.round(r.width * dp)) { msCv.width = Math.round(r.width * dp); msCv.height = Math.round(r.height * dp); }
+    const c = msCv.getContext('2d'); c.setTransform(dp, 0, 0, dp, 0, 0); c.clearRect(0, 0, r.width, r.height); if (!measTool() || !MS.pts.length) return;
+    const o = cv.getBoundingClientRect(), ox = o.left - r.left, oy = o.top - r.top, P = MS.pts.map(q => { const s = toSheet(q[0], q[1]); return [s[0] + ox, s[1] + oy]; });
+    const live = !MS.done && MS.hover ? (() => { const s = toSheet(MS.hover[0], MS.hover[1]); return [s[0] + ox, s[1] + oy]; })() : null, L = live ? P.concat([live]) : P;
+    c.save(); if (MS.closed) { c.beginPath(); P.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.closePath(); c.fillStyle = 'rgba(201,107,58,.14)'; c.fill(); }
+    c.strokeStyle = '#C96B3A'; c.lineWidth = 2; c.beginPath(); L.forEach((q, i) => i ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); if (MS.closed) c.closePath(); c.stroke();
+    c.fillStyle = '#C96B3A'; for (const q of P) { c.beginPath(); c.arc(q[0], q[1], 3.5, 0, 7); c.fill(); }
+    c.font = font(11, 600); c.textAlign = 'center'; c.textBaseline = 'middle'; const G = MS.pts.concat(live ? [MS.hover] : []), n = MS.closed ? G.length : G.length - 1;
+    for (let k = 0; k < n; k++) { const a = G[k], b = G[(k + 1) % G.length], sa = L[k], sb = L[(k + 1) % L.length]; haloText(c, fL(Math.hypot(b[0] - a[0], b[1] - a[1]) * cs(), 1), (sa[0] + sb[0]) / 2, (sa[1] + sb[1]) / 2 - 10, INK); }
+    if (live && MS.pts.length > 1) { let tot = 0; for (let k = 1; k < G.length; k++) tot += Math.hypot(G[k][0] - G[k - 1][0], G[k][1] - G[k - 1][1]) * cs(); haloText(c, 'total ' + fL(tot, 1), live[0] + 12, live[1] + 16, '#C96B3A'); }
+    if (MS.closed) { const cx = P.reduce((a, q) => a + q[0], 0) / P.length, cy = P.reduce((a, q) => a + q[1], 0) / P.length; c.font = font(12, 700); haloText(c, fAreaFull(polyArea(MS.pts) * cs() * cs()), cx, cy, INK); }
+    c.restore();
+  }
+  cv.addEventListener('pointerdown', e => { if (!measTool() || e.button !== 0) return; e.stopImmediatePropagation(); e.preventDefault(); const p = cvPt(e);
+    if (MS.done) { MS.pts = []; MS.closed = false; MS.done = false; }
+    if (MS.pts.length > 2) { const f = toSheet(MS.pts[0][0], MS.pts[0][1]); if (Math.hypot(p[0] - f[0], p[1] - f[1]) < 10) { MS.closed = true; MS.done = true; renderMeasPanel(); drawMeas(); return; } }
+    MS.pts.push(toGrid(p[0], p[1])); renderMeasPanel(); drawMeas(); }, true);
+  cv.addEventListener('pointermove', e => { if (!measTool()) return; const p = cvPt(e); MS.hover = toGrid(p[0], p[1]); if (MS.pts.length && !MS.done) drawMeas(); }, true);
+  cv.addEventListener('dblclick', e => { if (!measTool() || MS.pts.length < 2) return; e.stopImmediatePropagation(); e.preventDefault();
+    while (MS.pts.length > 2) { const a = toSheet(...MS.pts[MS.pts.length - 1]), b = toSheet(...MS.pts[MS.pts.length - 2]); if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 6) MS.pts.pop(); else break; }   // the double-click's own clicks
+    MS.done = true; renderMeasPanel(); drawMeas(); }, true);
+  addEventListener('keydown', e => { if (!measTool() || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.key === 'Escape') msClear(); else if (e.key === 'Enter' && MS.pts.length > 1) { MS.done = true; renderMeasPanel(); drawMeas(); } else if (e.key === 'Backspace' && MS.pts.length && !MS.done) { e.preventDefault(); MS.pts.pop(); renderMeasPanel(); drawMeas(); } });
+  setInterval(() => { if (MS.pts.length || msCv.width) drawMeas(); }, 250);
 
   /* previews for make: the drawing sheet drawn small, the printed model with its size, the laser sheets as they will be cut */
   const fitInto = (c, src, bg) => { const x = c.getContext('2d'), k = Math.min(c.width / src.width, c.height / src.height), w = src.width * k, h = src.height * k; x.fillStyle = bg || '#f0f0ec'; x.fillRect(0, 0, c.width, c.height); x.drawImage(src, (c.width - w) / 2, (c.height - h) / 2, w, h); };
