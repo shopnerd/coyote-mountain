@@ -848,7 +848,7 @@ function drawPlan() {                     // cached picture + live overlay; the 
   if (drag && drag.kind === 'path') drawPathPreview();
   if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.plant === 'tree' ? 'tree' : S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.globalAlpha = st.a; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * st.w; ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
   // brush cursor
-  if (S.ptr && S.mode === 'plan' && S.brush !== 'section' && S.brush !== 'pen' && S.brush !== 'erase' && S.brush !== 'spot' && S.brush !== 'pad' && S.brush !== 'path') {
+  if (S.ptr && S.mode === 'plan' && !S.hideRing && S.brush !== 'section' && S.brush !== 'pen' && S.brush !== 'erase' && S.brush !== 'spot' && S.brush !== 'pad' && S.brush !== 'path') {
     const p = toSheet(S.ptr[0], S.ptr[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.arc(p[0], p[1], S.radius / cs() * k, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
   }
@@ -8212,6 +8212,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     if (MS.done) { MS.pts = []; MS.closed = false; MS.done = false; }
     if (MS.pts.length > 2) { const f = toSheet(MS.pts[0][0], MS.pts[0][1]); if (Math.hypot(p[0] - f[0], p[1] - f[1]) < 10) { MS.closed = true; MS.done = true; renderMeasPanel(); drawMeas(); return; } }
     MS.pts.push(toGrid(p[0], p[1])); renderMeasPanel(); drawMeas(); }, true);
+  cv.addEventListener('pointermove', () => { S.hideRing = selTool() || measTool(); }, true);   // the sculpt brush ring is no aim for picking or measuring: hide it under these tools
   cv.addEventListener('pointermove', e => { if (!measTool()) return; const p = cvPt(e); MS.hover = toGrid(p[0], p[1]); if (MS.pts.length && !MS.done) drawMeas(); }, true);
   cv.addEventListener('dblclick', e => { if (!measTool() || MS.pts.length < 2) return; e.stopImmediatePropagation(); e.preventDefault();
     while (MS.pts.length > 2) { const a = toSheet(...MS.pts[MS.pts.length - 1]), b = toSheet(...MS.pts[MS.pts.length - 2]); if (Math.hypot(a[0] - b[0], a[1] - b[1]) < 6) MS.pts.pop(); else break; }   // the double-click's own clicks
