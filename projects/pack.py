@@ -205,6 +205,58 @@ def barn_plan():
     fig.text(0.68,0.12,'Esquema preliminar a partir de la especificación de Walker; no es plano de construcción.',fontsize=8,color=MUTED)
     fig.text(0.68,0.105,'Preliminary diagram from Walker\'s spec; not a construction drawing.',fontsize=8,color=MUTED,style='italic')
     tblock(fig,nxt(),'Planos arquitectónicos','Architectural drawings'); PAGES.append(fig)
+
+def posts_page():
+    fig=newpage(); heading(fig,'Estructura · postes de tubo de acero','Structure · steel pipe posts')
+    R=matplotlib.patches.Rectangle
+    # --- section through post and pier
+    ax=fig.add_axes([0.02,0.09,0.30,0.78]); ax.set_aspect('equal'); ax.axis('off'); ax.set_xlim(-6,7); ax.set_ylim(-9.5,14.5)
+    ax.add_patch(R((-6,-9.5),13,9.5,fc='#efe6d2',ec='none'))
+    ax.plot([-6,7],[0,0],color=INK,lw=1.2)
+    ax.add_patch(R((-1.5,-8.3),3,8.3,fc='#cfcac0',ec=INK,lw=1.2,hatch='..'))
+    ax.add_patch(matplotlib.patches.Polygon([(-1.5,0),(1.5,0),(1.9,-.01),(-1.9,-.01)],fc='#cfcac0',ec=INK))
+    ax.add_patch(R((-.53,-7.9),1.06,19.9,fc='#6f7d86',ec=INK,lw=1))
+    ax.add_patch(R((-.8,-8.0),1.6,.12,fc=INK))
+    for x in (-.6,.6): ax.plot([x,x],[-8,-7.2],color=INK,lw=1.5)
+    ax.add_patch(R((-6,-.0),4.4,4.5,fc='#b9ad97',ec=INK,lw=.8)); ax.text(-3.8,2.2,'piedra\nstone\n4.5 ft',ha='center',va='center',fontsize=7)
+    for yy in np.arange(4.8,12,.45): ax.plot([-6,-1.6],[yy,yy],color='#8a6a42',lw=2.2,solid_capstyle='round')
+    ax.text(-3.8,8.4,'varas · sticks',ha='center',fontsize=7,color='white',bbox=dict(fc='#8a6a42',ec='none',pad=1))
+    ax.add_patch(R((-.8,12),1.6,.14,fc=INK)); ax.plot([-3,4],[12.15,13.9],color='#5d95c2',lw=3)
+    dims=[(12,0,'12 ft sobre terreno\nabove grade'),(0,-8,'≈ 8 ft empotrado\nembedded')]
+    for top,bot,t in dims:
+        ax.annotate('',xy=(3.2,top),xytext=(3.2,bot),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(3.5,(top+bot)/2,t,fontsize=7.5,va='center')
+    ax.annotate('',xy=(-1.5,-9),xytext=(1.5,-9),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(0,-9.4,'pila Ø 3 ft · pier',ha='center',va='top',fontsize=7.5)
+    ax.text(1.2,-7.6,'placa ancla soldada\nwelded anchor plate',fontsize=6.5); ax.text(.7,13.2,'placa tapa\ncap plate',fontsize=6.5)
+    ax.text(0,14.3,'Tubo de 20 ft sin cortar · 20 ft tube, uncut',ha='center',fontsize=8.5,weight='bold')
+    # --- post plan
+    ax2=fig.add_axes([0.34,0.52,0.30,0.34]); ax2.set_aspect('equal'); ax2.axis('off'); ax2.set_xlim(-45,45); ax2.set_ylim(-30,30)
+    ax2.add_patch(R((-38,-21),76,42,fc='none',ec='#999',lw=.8,ls='--'))
+    for x in np.arange(-36,37,12):
+        for y in (-21,21): ax2.add_patch(matplotlib.patches.Circle((x,y),1.4,fc='#6f7d86',ec=INK,lw=.6))
+    for x in np.arange(-36,37,12): ax2.plot([x,x],[-21,21],color='#5d95c2',lw=.9)
+    ax2.text(0,-27,'14 postes a cada 12 ft · armaduras de 42 ft sin postes intermedios',ha='center',fontsize=7.5)
+    ax2.text(0,-30.5,'14 posts at 12 ft · 42 ft clear-span trusses, no centre posts',ha='center',fontsize=7.5,style='italic',color=MUTED)
+    ax2.text(0,26,'Planta de postes · Post plan',ha='center',fontsize=9,weight='bold')
+    rows=[('Tubo · Tube','12 in, cédula 40 o más · Sch 40 or heavier','20–30 % de su capacidad · of its capacity'),
+          ('Viento de diseño · Design wind','150–180 km/h (verificar CFE MDOC Viento 2020)','check against CFE wind code'),
+          ('Succión del techo · Roof uplift','≈ 6–9 kip (2.7–4.2 t) por poste','per post · governs the footing'),
+          ('Pila · Pier','Ø 3 ft (0.9 m) × 8 ft (2.4 m), concreto','governs by uplift, not bending'),
+          ('Postes · Posts','14 tubos de 20 ft','14 tubes of 20 ft')]
+    y=0.47
+    for a,b_,c in rows:
+        fig.text(0.34,y,a,fontsize=8.8,weight='bold',color=INK); fig.text(0.34,y-.018,b_,fontsize=8.3,color=INK); fig.text(0.34,y-.034,c,fontsize=8,color=MUTED,style='italic'); y-=.056
+    y=0.86
+    notes=[('Por qué empotrar: un tubo de 20 ft da 12 ft al alero y 8 ft dentro de una pila de concreto. No hay que cortar, y la base empotrada resiste el momento sin una placa base crítica.','Why embed: a 20 ft tube gives 12 ft to the eave and 8 ft inside a concrete pier. No cutting, and the embedded base takes the bending without a critical base plate.'),
+           ('Placa ancla: placa de 16 × 16 × ¾ in soldada al pie del tubo con 4 barras o pernos de cortante, dentro de la pila; placa tapa de ½ in arriba con cartelas para la armadura.','Anchor plate: 16 × 16 × ¾ in plate welded to the tube foot with 4 bars or shear studs, inside the pier; ½ in cap plate on top with gussets for the truss.'),
+           ('Opción B: placa base de 20 × 20 × 1¼ in con 4 anclas de 1 in sobre zapata de 6 × 6 × 3 ft; el tubo se corta a 12 ft y el sobrante de 8 ft sirve para corrales y puertas.','Option B: 20 × 20 × 1¼ in base plate, 4 × 1 in anchor rods on a 6 × 6 × 3 ft footing; the tube is cut to 12 ft and the 8 ft offcut serves the runs and gates.'),
+           ('Soldadura: si son tubos de pozo petrolero (probable), el acero puede tener más carbono: precalentar, electrodo E7018 bajo hidrógeno y probar una soldadura de muestra.','Welding: if these are oil-field casing (likely), the steel may be higher carbon: preheat, low-hydrogen E7018 rod, and test a sample weld.'),
+           ('Muros: la piedra lleva su propio cimiento corrido entre postes; las varas se amarran a largueros de ángulo soldados entre postes a 4.5 y 12 ft.','Walls: the stone gets its own strip footing between posts; the sticks tie to angle girts welded between posts at 4.5 and 12 ft.'),
+           ('Antes de construir: medir diámetro y espesor, estudio de suelo, y cálculo firmado por un ingeniero estructural (DRO / corresponsable en seguridad estructural).','Before building: measure diameter and wall, a soil test, and calculations signed by a structural engineer (DRO / structural co-responsible).')]
+    for es,en in notes: y=para(fig,0.67,y,es,en,w=60,fs=7.9)
+    fig.text(0.67,0.1,'Cálculo preliminar de viabilidad, no es diseño estructural.',fontsize=8.5,weight='bold',color=CLAY)
+    fig.text(0.67,0.085,'Preliminary feasibility check, not a structural design.',fontsize=8.5,color=CLAY,style='italic')
+    tblock(fig,nxt(),'Estructura','Structure'); PAGES.append(fig)
+
 cover(70)
 planview(78)
 existing()
@@ -222,6 +274,7 @@ views([(69,'Hacia los corrales, temporada verde','Toward the paddocks, green sea
 text_refs()
 placeholder('Inspiraciones','Inspirations','Imágenes que muestran el ambiente que buscamos: establos de piedra y madera, centros ecuestres del valle, cercas, sombras y paisaje.','Images that show the feeling we are after: stone-and-timber stables, equestrian centres in the valley, fencing, shade and landscape.',[('Establos','Stables'),('Corrales y cercas','Paddocks and fencing'),('Pistas y arena','Arenas and footing'),('Paisaje y agua','Landscape and water'),('Señalética','Signage'),('Detalles','Details')])
 barn_plan()
+posts_page()
 placeholder('Plano de la nave metálica','Metal building plan','Planta, alzados y estructura de la nave metálica del proveedor: claros, marcos, anclajes, lámina y color azul cielo.','Plan, elevations and structure of the supplier\'s metal building: spans, frames, anchors, sheeting and the sky-blue colour.',[('Planta','Plan'),('Alzados','Elevations'),('Estructura y cimentación','Structure and foundations')])
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto: acuerdos, preguntas abiertas y próximos pasos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project: agreements, open questions and next steps.',[('Acuerdos','Agreements'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
