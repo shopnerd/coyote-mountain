@@ -257,6 +257,7 @@ def posts_page():
     fig.text(0.67,0.085,'Preliminary feasibility check, not a structural design.',fontsize=8.5,color=CLAY,style='italic')
     tblock(fig,nxt(),'Estructura','Structure'); PAGES.append(fig)
 
+exec(open('posts_page.py',encoding='utf-8').read())
 cover(70)
 planview(78)
 existing()
@@ -277,7 +278,7 @@ barn_plan()
 posts_page()
 placeholder('Plano de la nave metálica','Metal building plan','Planta, alzados y estructura de la nave metálica del proveedor: claros, marcos, anclajes, lámina y color azul cielo.','Plan, elevations and structure of the supplier\'s metal building: spans, frames, anchors, sheeting and the sky-blue colour.',[('Planta','Plan'),('Alzados','Elevations'),('Estructura y cimentación','Structure and foundations')])
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
-placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto: acuerdos, preguntas abiertas y próximos pasos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project: agreements, open questions and next steps.',[('Acuerdos','Agreements'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
+placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
 out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-23.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
