@@ -257,11 +257,13 @@ def posts_page():
     fig.text(0.67,0.085,'Preliminary feasibility check, not a structural design.',fontsize=8.5,color=CLAY,style='italic')
     tblock(fig,nxt(),'Estructura','Structure'); PAGES.append(fig)
 
+exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
 cover(70)
 planview(78)
 existing()
 grading()
+operator_sheet()
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('sheet2.py','Cortes de terracería','Grading sections')
 views([(79,'Vista 3/4 desde el suroeste, hora dorada','Three-quarter from the south-west, golden hour · stable drawn correctly'),
