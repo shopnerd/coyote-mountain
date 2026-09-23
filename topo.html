@@ -2869,7 +2869,7 @@ async function aiCheckCall(ctlPng, paintedB64, spec) {
   const ls = k => { try { return localStorage.getItem(k) || ''; } catch (_) { return ''; } };
   const gk = ls('gemini-key'), ok = ls('openai-key');
   if (gk) {
-    for (const model of ['gemini-3.1-flash', 'gemini-2.5-flash']) {
+    for (const model of ['gemini-flash-latest', 'gemini-3.6-flash', 'gemini-pro-latest', 'gemini-2.5-flash']) {   // aliases first: google retires exact names
       const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': gk },
         body: JSON.stringify({ contents: [{ parts: [{ text: 'Image 1 — the model (source of truth):' }, { inline_data: { mime_type: 'image/png', data: ctlPng } }, { text: 'Image 2 — the painting to check:' }, { inline_data: { mime_type: 'image/png', data: paintedB64 } }, { text: CHECK_TASK(spec) }] }],
           generationConfig: { responseMimeType: 'application/json', responseSchema: CHECK_SCHEMA } }) });
