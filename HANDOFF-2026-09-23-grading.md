@@ -31,13 +31,24 @@ Everything below is in it. Read the 9/22 handoff for the traps; they all still a
      turn round; stone trough (20 ft ring) west of the barn at 1,082.4 ft with a roof-water pipe.
    - Site totals about **cut 4,700 / fill 4,500 yd³**, still ±30–50% on 30 m terrain.
 
+## Later the same day
+
+- **The trail round the track is gone** (Will: the track itself is a road). The ground was rebuilt
+  from natural by replaying every pad, ditch and road without it. Two 12 ft spurs replace it: track
+  to the north-west gate (61 ft) and track to the south-west gate (207 ft, down the paddocks' west
+  side). The road between the track and the paddocks stays.
+- New gate on the north fence near the NW corner (Will's red circle). Stray mark deleted.
+- **Site and cross fences rebuilt on the graded ground:** a post at least every 20 ft, three wires,
+  real openings at the gates (site 164 posts and 5 openings, cross 26 posts and 1). The site
+  fence's footprint is now the true fence line, so the plan diagonal across the notch is gone.
+- Trap, hit again: stroke indices shift when anything is deleted. Find fence lines by shape
+  (the 10-point loop starting at 26.6, 23.6; the 2-point dashed line at i 69.3), never by index.
+
 ## Open
 
-- **Re-drape the site fence and cross fence 3D objects.** They were bent to the 9/22 ground and
-  now float or sink. The `__drape2` recipe is in the 9/22 session transcript.
-- Stroke at grid (91.9, 60–62), a lone small red mark by the round pen. Not yet asked what it is.
 - The arena and round-pen 3D fences each carry their own gate bay; the new gate bars may not match
   where those bays are.
+- The water plan page predates the roads and pads.
 - Walker's barn decision (stone walls, 102 ft, or open bays, 98 ft) is still open.
 
 ## Tool changes pushed today
