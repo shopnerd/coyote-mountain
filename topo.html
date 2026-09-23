@@ -2770,20 +2770,29 @@ function aiScene() {                      // what the model cannot see in the pi
   const veg = aerialVeg(); if (veg) bits.push(veg.replace(/\.$/, '')); const objs = S.strokes.filter(st => st.kind === 'obj' && st.c); if (objs.length) bits.push(objs.map(o => `a designed structure called ${o.name}, about ${fL(o.h * o.sc, 0)} tall, drawn as a plain pale solid: keep its exact shape, size and place`).join('; ')); const extra = document.getElementById('aiWords').value.trim(); if (extra) bits.push(extra); return bits.join('. ') + '.';
 }
 function aiPrompt() { return aiPromptBase() + aiBuiltNote() + aiFixNote(); }
+function oriented(pts) {                  // the smallest rectangle that holds a footprint, whatever way it is turned: the real length and width
+  let best = null;
+  for (let a = 0; a < 90; a += 2) {
+    const r = a * D2R, c = Math.cos(r), sn = Math.sin(r);
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+    for (const [x, y] of pts) { const u = x * c - y * sn, v = x * sn + y * c; x0 = Math.min(x0, u); x1 = Math.max(x1, u); y0 = Math.min(y0, v); y1 = Math.max(y1, v); }
+    const w = x1 - x0, h = y1 - y0; if (!best || w * h < best.area) best = { area: w * h, long: Math.max(w, h), short: Math.min(w, h) };
+  }
+  return best || { long: 0, short: 0 };
+}
 function aiBuiltNote() {                  // the built things with their real sizes: what the painter keeps exactly
   const bits = [];
   for (const st of S.strokes) {
     if (st.kind === 'obj' && st.foot && st.foot.length > 2) {
-      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of st.foot) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
-      const sc = st.sc || 1; bits.push(`${st.name || 'a structure'}: ${fL((x1 - x0) * sc, 0)} by ${fL((y1 - y0) * sc, 0)} on the ground, ${fL((st.h || 0) * sc, 0)} tall`);
-    } else if (!st.kind && (st.shape || st.closed) && st.pts.length > 12) {
-      let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of st.pts) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
-      const w = (x1 - x0) * cs(), h = (y1 - y0) * cs(), rnd = Math.abs(w - h) / Math.max(w, h) < .08;
-      bits.push(`${rnd ? 'a circular enclosure' : 'an oval enclosure'} ${fL(Math.max(w, h), 0)} by ${fL(Math.min(w, h), 0)}`);
+      const sc = st.sc || 1, o = oriented(st.foot);
+      bits.push(`${st.name || 'a structure'}: ${fL(o.long * sc, 0)} long by ${fL(o.short * sc, 0)} wide on the ground, ${fL((st.h || 0) * sc, 0)} tall`);
+    } else if (!st.kind && st.color !== 'ember' && (st.shape || st.closed) && st.pts.length > 12) {
+      const o = oriented(st.pts.map(q => [q[0] * cs(), q[1] * cs()])), rnd = o.short / o.long > .92;
+      bits.push(`${rnd ? 'a circular pen' : 'an oval arena'} ${fL(o.long, 0)} by ${fL(o.short, 0)}`);
     }
   }
   if (!bits.length) return '';
-  return ` The built things in the first image are modelled to size and are the subject of the picture: ${bits.join('; ')}. Keep every one at exactly the size, shape, footprint, angle and position the first image shows. Do not add, remove, merge or move any of them, do not turn a long oval into a circle or a circle into an oval, do not swap a fence for a wall, and do not invent extra buildings, pens, tanks or vehicles anywhere on the site.`;
+  return ` The built things in the first image are modelled to size and are the subject of the picture: ${bits.join('; ')}. Keep every one at exactly the size, shape, footprint, angle and position the first image shows. Do not add, remove, merge or move any of them, do not turn a long oval into a circle or a circle into an oval, do not swap a fence for a wall, and do not invent extra buildings, pens, tanks or vehicles anywhere on the site. Red or orange freehand lines on the ground are my own marks, not things to build: paint the ground through them.`;
 }
 function aiFixNote() { const f = (AI.fixes || []).filter(Boolean); return f.length ? ` The last attempt got these wrong and they must be right this time: ${f.join('; ')}.` : ''; }
 function aiPromptBase() {
