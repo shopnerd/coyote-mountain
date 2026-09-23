@@ -44,6 +44,17 @@ Everything below is in it. Read the 9/22 handoff for the traps; they all still a
 - Trap, hit again: stroke indices shift when anything is deleted. Find fence lines by shape
   (the 10-point loop starting at 26.6, 23.6; the 2-point dashed line at i 69.3), never by index.
 
+## Last change of the day
+
+- **Track widened west onto the existing road** (Will: that road already runs gate to gate, and the
+  track uses it as its west side). Track 1,224 ft; the two spurs became one "west road, gate to gate"
+  (NW gate to SW gate, down the paddocks' west side). Ground rebuilt from natural again.
+- Existing **watering station** marked where Will circled it (24 ft round, inside the track's SW).
+- Round-pen gate moved to the pen's north side, where Will drew it.
+- The round trough became a **12 × 4 ft stone trough, 3 ft tall** (3D object `stone trough 12x4`),
+  running from the old spot toward the main road, on a small level apron at 1,082.2 ft; roof pipe
+  re-pointed to it.
+
 ## Open
 
 - The arena and round-pen 3D fences each carry their own gate bay; the new gate bars may not match
