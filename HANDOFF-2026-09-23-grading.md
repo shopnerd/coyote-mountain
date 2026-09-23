@@ -66,3 +66,16 @@ Everything below is in it. Read the 9/22 handoff for the traps; they all still a
 
 `__dbg` hook now also has `base`, `resetGrading`, `drawPlanNow` (redraw in a hidden tab, where no
 animation frames run), `analyzeCore` and `inPoly`. Soft pad edges in `applyPad`.
+
+## Evening: renderings and plan sheets
+
+- Pond dug at the track's SE end beside the paddocks (water pools there by design, ~11,000 gal);
+  watering station shrunk to 10 ft and filled (3D); trough rotated 90°; 5 parked cars (3D) in
+  the east strip; stepped-model layer thickness set to 1.
+- ~30 paintings saved in Downloads (`coyote-topo-painted-*`), all kept, good and bad. Gallery:
+  https://claude.ai/artifact/2M6bC7MXYVzZYgq9uUX3XR. gpt-image-2 holds layout far better than
+  Gemini here; the model's grey base edge gets painted as a lake or backdrop, so frame it out.
+- Bilingual plan set (ES first, EN italic): https://claude.ai/artifact/3aVtBDrvF5LAYf6XwhSamw.
+  Sheets D-1 drainage and D-2 sections come from `projects/drain.py`, `sheet1.py`, `sheet2.py`,
+  which read an exported project JSON (`Downloads/centro-equino-final-2026-09-23.json`, with the
+  app's flow grid in `__flow`). Standing rule: every report or sheet for this project is bilingual.
