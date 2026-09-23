@@ -45,4 +45,4 @@ for s,es,en in notes:
 fig.text(0.70,0.2,'Bordes suaves en todos los taludes, pendiente 3:1.',fontsize=8.4,color=INK)
 fig.text(0.70,0.183,'Soft edges on every bank, 3:1 side slopes.',fontsize=8.4,color='#6a655a',style='italic')
 fig.text(0.02,0.03,'31.9999 N, 116.7641 W · Hoja / Sheet D-2 · 23 sep 2026 · Terreno de 30 m, ±30–50 % · 30 m terrain, volumes ±30–50% · Diseño preliminar · Preliminary design',fontsize=8,color='#6a655a')
-fig.savefig('D2-sections.png',dpi=170); print('ok')
+if not globals().get('PACK'): fig.savefig('D2-sections.png',dpi=170); print('ok')

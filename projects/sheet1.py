@@ -28,4 +28,4 @@ fig.text(px,0.118,'Movimiento de tierra · Earthwork',fontsize=8.5,color=INK,wei
 fig.text(px,0.086,'Terreno de datos públicos de 30 m: volúmenes ±30–50 %. Confirmar con levantamiento de dron.',fontsize=7.6,color='#6a655a')
 fig.text(px,0.072,'30 m public terrain: volumes ±30–50%. Confirm with a drone survey before building.',fontsize=7.6,color='#6a655a',style='italic')
 fig.text(0.02,0.03,'31.9999 N, 116.7641 W · Hoja / Sheet D-1 · 23 sep 2026 · Diseño preliminar, no para construcción · Preliminary design, not for construction',fontsize=8,color='#6a655a')
-fig.savefig('D1-drainage.png',dpi=170); print('ok')
+if not globals().get('PACK'): fig.savefig('D1-drainage.png',dpi=170); print('ok')
