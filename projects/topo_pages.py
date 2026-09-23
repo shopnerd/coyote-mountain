@@ -84,8 +84,8 @@ def operator_sheet():
     fig.add_artist(matplotlib.patches.FancyBboxPatch((0.735, 0.60), 0.245, 0.26, boxstyle='round,pad=0.006', transform=fig.transFigure, fc='#fff4e8', ec=CLAY, lw=1.4))
     fig.text(0.745, 0.845, 'PRIMERO: TRAZAR · STAKE FIRST', fontsize=11, weight='bold', color=CLAY)
     y = 0.822
-    y = para(fig, 0.745, y, 'Las elevaciones salen de mapas públicos de terreno de 30 m y NO son exactas (pueden variar varios pies). Antes de mover tierra: estacar, tender hilo y banderear cada esquina de plataforma, eje de camino, zanja y el estanque; poner un banco de nivel fijo; medir el terreno real en cada estaca con nivel láser y ajustar corte y relleno.',
-             'Elevations come from 30 m public terrain maps and are NOT exact (they can be off by several feet). Before any earthwork: stake, string and flag every pad corner, road centreline, swale and the pond; set a fixed benchmark; measure the real ground at every stake with a laser level and adjust cut and fill.', w=52, fs=7.9)
+    y = para(fig, 0.745, y, 'Las elevaciones salen de mapas públicos de terreno de 30 m y NO son exactas (pueden variar varios pies). Antes de mover tierra: estacar, tender hilo y banderear cada esquina de plataforma, eje de camino, zanja y el bajo natural; poner un banco de nivel fijo; medir el terreno real en cada estaca con nivel láser y ajustar corte y relleno.',
+             'Elevations come from 30 m public terrain maps and are NOT exact (they can be off by several feet). Before any earthwork: stake, string and flag every pad corner, road centreline, swale and the water sink; set a fixed benchmark; measure the real ground at every stake with a laser level and adjust cut and fill.', w=52, fs=7.9)
     y = 0.57
     fig.text(0.745, y, 'Cómo leer · How to read', fontsize=10, weight='bold', color=INK); y -= .025
     rows = [('#9a3a1a', 'C 2.3', 'corte de 2.3 ft · cut 2.3 ft'), ('#1f5f9a', 'F 1.1', 'relleno de 1.1 ft · fill 1.1 ft'),

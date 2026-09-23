@@ -4,7 +4,7 @@ import geo18 as geo
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-p=json.load(open(r'C:\Users\zolar\Downloads\centro-equino-final-2026-09-23.json'))
+p=json.load(open(r'C:\Users\zolar\Downloads\centro-equino-final-2026-09-23b.json'))
 W,H=p['grid']; FT=0.3048; cs=float(p['sliders']['siteW'])/(W-1); cf=cs/FT
 z=np.array(p['z']).reshape(H,W)/FT; b=np.array(p['base']).reshape(H,W)/FT
 fl=p['__flow']; acc=np.array(fl['acc']).reshape(H,W); down=np.array(fl['down'])
@@ -64,16 +64,18 @@ def drainage(ax):
 def works(ax,labels=True):
     for f in p['records']['ditches']:
         P=np.array([GR(q[0],q[1]) for q in f['pts']]); nm=f.get('name','')
-        if 'pond' in nm or 'basin' in nm:
+        if nm.startswith('infield basin'):
             X,Y=np.meshgrid(np.arange(W),np.arange(H)); near=np.zeros((H,W),bool)
             for q in P: near|=np.hypot(X-q[0],Y-q[1])<4.5
-            wet=near&((b-z)>(1.2 if 'pond' in nm else .6))
+            wet=near&((b-z)>.6)
             ax.contourf(X,Y,wet.astype(float),levels=[.5,1.5],colors=[WATER],alpha=.8,zorder=8)
         else:
             ax.plot(P[:,0],P[:,1],color='#0b4f8a',lw=2.4,dashes=(5,2),zorder=8)
     for s in S:
         if (s.get('name') or '').startswith('culvert'):
             P=np.array([q[:2] for q in s['pts']]); ax.plot(P[:,0],P[:,1],color='#0b4f8a',lw=4.5,solid_capstyle='butt',zorder=9)
+    for s in byname('natural water sink'):
+        P=np.array([q[:2] for q in s['pts']]); ax.fill(P[:,0],P[:,1],color=WATER,alpha=.45,zorder=8); ax.plot(P[:,0],P[:,1],color=WATER,lw=1,dashes=(3,2),zorder=8)
     ws=byname('existing watering station')[0]; P=np.array([q[:2] for q in ws['pts']]); ax.fill(P[:,0],P[:,1],color=WATER,zorder=9)
 d=(z-b); cutyd=-(d[d<0].sum())*cf*cf*FT**0 * (0.3048**0)  # ft * cell ft^2
 cell_ft2=cf*cf; cut=-(d[d<0].sum())*cell_ft2/27; fill=(d[d>0].sum())*cell_ft2/27
@@ -92,7 +94,7 @@ CALL=[((79,79),1),((68,71.5),2),((65.4,76.2),3),((46,57.2),4),((27,61.8),5),((11
 NOTES=[
  ('Road-bend crossing','Cruce en la curva del camino','About 10 acres of hillside cross here. Rock-lined ford or 24 in culvert with a rock apron.','Unas 4 ha de ladera cruzan aquí. Vado empedrado o alcantarilla de 60 cm con delantal de piedra.'),
  ('Grassed waterway','Canal empastado','Wide, shallow, planted channel along the natural low line; joined by the paddock-end branch.','Canal ancho, poco profundo y sembrado sobre la línea baja natural; recibe el ramal del extremo de los corrales.'),
- ('Pond at the track end','Estanque al final de la pista','Water is meant to pool here, beside the paddocks. About 3 ft deep, holds about 11,000 gal; spills west over a rock lip.','Aquí se busca que el agua se estanque, junto a los corrales. Unos 90 cm de hondo, guarda unos 42,000 L; rebosa al oeste por un labio de piedra.'),
+ ('Natural water sink at the track end','Bajo natural al final de la pista','A soft, shallow low spot with no banks where water is meant to collect and soak in, beside the paddocks; about 1.5 ft deep at the centre, roughly 4,000 gal; overflow continues west along the waterway.','Un bajo suave y poco profundo, sin bordos, donde el agua se junta y se infiltra, junto a los corrales; unos 45 cm de hondo al centro, aproximadamente 15,000 L; el excedente sigue al oeste por el canal.'),
  ('Infield basin','Cuenca del interior','Shallow planted basin where the infield flattens; slows and soaks the first flush.','Cuenca baja y sembrada donde el interior se aplana; frena y absorbe la primera lluvia.'),
  ('Outlet at the west fence','Salida en la cerca oeste','Rock level spreader; water leaves as a thin sheet toward the gully and the vineyard (same owner).','Esparcidor de piedra a nivel; el agua sale en lámina delgada hacia la cañada y el viñedo (mismo dueño).'),
  ('Crossings under roads and track','Cruces bajo caminos y pista','Seven rock-armoured dips or culverts where the waterway meets a road or the track.','Siete vados empedrados o alcantarillas donde el canal cruza un camino o la pista.'),

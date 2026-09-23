@@ -1,7 +1,7 @@
 exec(open('drain.py',encoding='utf-8').read())
 import textwrap
 # three sections through the heaviest grading
-SECS=[('A','Corrales y estanque','Paddocks and pond',(46,64),(46,88)),
+SECS=[('A','Corrales y bajo natural','Paddocks and water sink',(46,64),(46,88)),
       ('B','Establo y bebedero','Barn and trough',(92,52),(126,62)),
       ('C','Pista oval y corral redondo','Arena and round pen',(88,30),(86,62))]
 def samp(Z,x,y):
@@ -32,7 +32,7 @@ for k,(s,es,en,a,bb) in enumerate(SECS):
     for side,x0 in ((s,0),(s+'′',L)): ax.text(x0,hi-1,side,fontsize=10,weight='bold',color='#b5602e',ha='left' if x0==0 else 'right')
     if k==0: ax.legend(loc='lower right',fontsize=8,frameon=False)
     ax.set_xlabel('pies desde '+s+' · ft from '+s,fontsize=8)
-notes=[('A','Los corrales quedan en una plataforma a nivel (1,082.5 ft) y el estanque se excava junto a ellos para retener el agua al final de la pista.','The paddocks sit on one level pad (1,082.5 ft); the pond is dug beside them to hold water at the end of the track.'),
+notes=[('A','Los corrales quedan en una plataforma a nivel (1,082.5 ft) y junto a ellos un bajo natural recibe el agua al final de la pista.','The paddocks sit on one level pad (1,082.5 ft); beside them a natural low spot collects water at the end of the track.'),
        ('B','El establo queda en plataforma con 1 % de caída; su techo alimenta el bebedero largo de piedra.','The barn sits on a pad falling 1%; its roof feeds the long stone trough.'),
        ('C','La pista oval y el corral redondo quedan casi a nivel con cortes y rellenos menores a 2.5 ft.','The arena and round pen sit nearly level, with cut and fill under 2.5 ft.')]
 y=0.54

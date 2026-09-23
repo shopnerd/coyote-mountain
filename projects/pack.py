@@ -53,7 +53,7 @@ def planview(n):
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
            ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),
            ('Cuatro corrales','Four paddocks','67.5 × 75 ft cada uno, con sombra de 12 × 16 ft','67.5 × 75 ft each, with a 12 × 16 ft shade stall'),
-           ('Agua','Water','estanque al final de la pista, bebedero largo de piedra 12 × 4 ft, bebedero redondo existente','pond at the track end, 12 × 4 ft stone trough, existing round watering station'),
+           ('Agua','Water','bajo natural al final de la pista, bebedero largo de piedra 12 × 4 ft, bebedero redondo existente','natural water sink at the track end, 12 × 4 ft stone trough, existing round watering station'),
            ('Estacionamiento','Parking','franja angosta al extremo este, 13 cajones a 60°','narrow strip at the far east corner, 13 stalls at 60°')]
     y=0.86
     for es,en,tes,ten in items:
@@ -164,7 +164,7 @@ def text_refs():
     y=0.85
     blocks=[('La idea','The idea','Un centro ecuestre sencillo y bien cuidado en el valle: un establo de piedra y varas bajo un techo azul, corrales abiertos, una pista oval, un corral redondo y una pista de trote que aprovecha el camino existente. Todo acomodado a la pendiente natural, con el agua de lluvia guiada y guardada en lugar de dejarla correr.','A simple, well-kept equestrian centre in the valley: a stone-and-stick stable under a blue roof, open paddocks, an oval arena, a round pen and a riding track that uses the existing road. Everything sits into the natural slope, and rainwater is guided and kept instead of left to run off.'),
             ('Materiales','Materials','Piedra del lugar hasta 4.5 ft; arriba, varas apiladas en horizontal como nido de pájaro; lámina metálica azul cielo; cercas de tubo pintado de blanco; caminos de tierra compactada; arena rastrillada en pista y corral.','Local fieldstone to 4.5 ft; above it, sticks stacked horizontally like a bird\'s nest; sky-blue metal roofing; white-painted pipe fencing; compacted dirt roads; raked sand in the arena and round pen.'),
-            ('Agua','Water','El techo del establo alimenta el bebedero largo; el agua del cerro se lleva por un canal empastado a un estanque junto a los corrales; el excedente sale al oeste.','The stable roof feeds the long trough; hillside water runs down a grassed waterway to a pond beside the paddocks; overflow leaves to the west.')]
+            ('Agua','Water','El techo del establo alimenta el bebedero largo; el agua del cerro se lleva por un canal empastado a un bajo natural junto a los corrales; el excedente sale al oeste.','The stable roof feeds the long trough; hillside water runs down a grassed waterway to a natural low spot beside the paddocks; overflow leaves to the west.')]
     for tes,ten,bes,ben in blocks:
         fig.text(0.02,y,f'{tes} · {ten}',fontsize=13,weight='bold',color=INK); y-=.028
         y=para(fig,0.02,y,bes,ben,w=78,fs=10)

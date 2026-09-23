@@ -79,3 +79,16 @@ animation frames run), `analyzeCore` and `inPoly`. Soft pad edges in `applyPad`.
   Sheets D-1 drainage and D-2 sections come from `projects/drain.py`, `sheet1.py`, `sheet2.py`,
   which read an exported project JSON (`Downloads/centro-equino-final-2026-09-23.json`, with the
   app's flow grid in `__flow`). Standing rule: every report or sheet for this project is bilingual.
+
+## Late: pads flat, pond became a natural sink
+
+- Ground replayed in the right order: **roads, then pads, then ditches, then trough apron**, so every
+  pad is flat to its edge (checked: 0.00 ft off its design plane over every cell). Keep that order
+  on any future replay; `window.__padPolys` in the page holds each pad's polygon, level and fall.
+- The dug rectangular pond was removed (Will). In its place a **natural water sink**: a soft
+  cosine bowl, 1.5 ft deep at centre, no berm, kept off roads and pads, ~4,000 gal rough; outline
+  stroke `natural water sink`. Earthwork now ~4,960 cut / 4,720 fill yd³.
+- Latest export: `Downloads/centro-equino-final-2026-09-23b.json` (the sheet scripts read it).
+- Print pack: `projects/pack.py` -> `Downloads/Centro-Equino-pack-11x17-2026-09-23.pdf`, 16 pages,
+  Walker's order; structure page proposes welded base plates bolted to piers on a perimeter grade
+  beam that carries the stone wall (see `posts_calc2.py`).
