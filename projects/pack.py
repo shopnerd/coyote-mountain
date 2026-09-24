@@ -260,7 +260,7 @@ def posts_page():
 exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
 cover(70)
-planview(89)
+planview(r"C:SERSZOLARDOWNLOADSYOTE-TOPO-PAINTED-PHOTO (89) FIXED V3.PNG")
 existing()
 grading()
 operator_sheet()
