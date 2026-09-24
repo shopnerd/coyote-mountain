@@ -33,27 +33,66 @@ def box(x0, x1, y0, y1, z0, z1):
 def U(ms): return boolean.union(ms, engine='manifold')
 def Dff(a, bs): return boolean.difference([a] + list(bs), engine='manifold')
 
-# ---------- 1 body: gable prism along x ----------
-sec = trimesh.path.polygons.Polygon([(-D / 2, 0), (D / 2, 0), (D / 2, EAVE), (0, RIDGE), (-D / 2, EAVE)])
-prism = creation.extrude_polygon(sec, L)            # section in XY, extruded along Z
-v = prism.vertices.copy(); prism.vertices = np.column_stack([v[:, 2] - L / 2, v[:, 0], v[:, 1]])   # -> x along length
-prism.fix_normals()
+# ---------- 1 body: open-top walls on a floor, stalls inside ----------
+WALL = 2.0; T = NOZ_FT                 # outer walls 2 ft; inside partitions one nozzle-width
+AISLE = 14.0; ROW = 12.0; PART_H = 8.0; ROOM_H = 10.0
+FLOOR_B = 0.6 / MM_PER_FT
+hx, hy = L / 2, D / 2
+solid = [box(-hx, hx, -hy, hy, 0, FLOOR_B)]                                  # floor
+solid += [box(-hx, hx, hy - WALL, hy, 0, EAVE), box(-hx, hx, -hy, -hy + WALL, 0, EAVE),    # long walls
+          box(-hx, -hx + WALL, -hy, hy, 0, EAVE), box(hx - WALL, hx, -hy, hy, 0, EAVE)]   # end walls
+ix0 = -hx + WALL                                                                          # -36
+for k in range(1, 6):                                                                      # stall dividers, both rows
+    x = ix0 + STALL * k
+    solid.append(box(x - T / 2, x + T / 2, AISLE / 2, hy - WALL, 0, PART_H))
+    solid.append(box(x - T / 2, x + T / 2, -hy + WALL, -AISLE / 2, 0, ROOM_H if k <= 2 else PART_H))
+solid.append(box(ix0, -ix0, AISLE / 2 - T, AISLE / 2, 0, PART_H))                        # north stall fronts
+solid.append(box(ix0, ix0 + 2 * STALL, -AISLE / 2, -AISLE / 2 + T, 0, ROOM_H))           # wash + tack fronts, taller
+solid.append(box(ix0 + 2 * STALL, -ix0, -AISLE / 2, -AISLE / 2 + T, 0, PART_H))          # south stall fronts
+body = U(solid)
 cuts = []
-g = 0.3 / MM_PER_FT               # 0.3 mm groove depth
-cuts.append(box(-L / 2 - 1, L / 2 + 1, -D / 2 - 1, -D / 2 + g, STONE - .35, STONE + .35))     # stone line, south
-cuts.append(box(-L / 2 - 1, L / 2 + 1, D / 2 - g, D / 2 + 1, STONE - .35, STONE + .35))       # north
-cuts.append(box(-L / 2 - 1, -L / 2 + g, -D / 2 - 1, D / 2 + 1, STONE - .35, STONE + .35))     # west
-cuts.append(box(L / 2 - g, L / 2 + 1, -D / 2 - 1, D / 2 + 1, STONE - .35, STONE + .35))       # east
-rd = 0.45 / MM_PER_FT             # door recess depth
-for sx in (-1, 1):                # aisle doors 10 x 11 in both gable ends
-    x = sx * L / 2
-    cuts.append(box(x - rd if sx > 0 else x - 1, x + 1 if sx > 0 else x + rd, -5, 5, 0, 11))
-xs = [-L / 2 + 2 + STALL * (k + .5) for k in range(6)]
-for x in xs:                      # north stall doors 4 x 8
-    cuts.append(box(x - 2, x + 2, D / 2 - rd, D / 2 + 1, 0, 8))
-for x in xs:                      # south: wash, tack, 4 stalls, all with 4 x 8 doors
-    cuts.append(box(x - 2, x + 2, -D / 2 - 1, -D / 2 + rd, 0, 8))
-body = Dff(prism, cuts)
+g = 0.3 / MM_PER_FT
+cuts += [box(-hx - 1, hx + 1, -hy - 1, -hy + g, STONE - .35, STONE + .35), box(-hx - 1, hx + 1, hy - g, hy + 1, STONE - .35, STONE + .35),
+         box(-hx - 1, -hx + g, -hy - 1, hy + 1, STONE - .35, STONE + .35), box(hx - g, hx + 1, -hy - 1, hy + 1, STONE - .35, STONE + .35)]
+for sx in (-1, 1):                                                                         # aisle doors 10 x 11, through
+    cuts.append(box(sx * hx - WALL - 1, sx * hx + WALL + 1, -5, 5, FLOOR_B, 11))
+xs = [ix0 + STALL * (k + .5) for k in range(6)]
+for x in xs:
+    cuts.append(box(x - 2, x + 2, hy - WALL - 1, hy + 1, FLOOR_B, 8))                     # north stall doors to the runs
+    cuts.append(box(x - 2, x + 2, AISLE / 2 - T - 1, AISLE / 2 + 1, FLOOR_B, 8))          # north stall doors to the aisle
+    cuts.append(box(x - 2, x + 2, -AISLE / 2 - 1, -AISLE / 2 + T + 1, FLOOR_B, 8))        # south doors to the aisle
+for x in xs[2:]:
+    cuts.append(box(x - 2, x + 2, -hy - 1, -hy + WALL + 1, FLOOR_B, 8))                   # south stall doors to the runs
+body = Dff(body, cuts)
+
+# ---------- 5/6 trusses: flat on the bed; gable ends solid, middle two open-web ----------
+TR_T = NOZ_FT                                       # truss thickness (printed height)
+CH = 0.8 / MM_PER_FT                                 # chord and web width
+def truss(solid_gable):
+    pts = [(-hy, 0), (hy, 0), (0, RIDGE - EAVE)]
+    if solid_gable:
+        m = creation.extrude_polygon(trimesh.path.polygons.Polygon(pts), TR_T)
+    else:
+        parts = [box(-hy, hy, 0, CH, 0, TR_T)]
+        for sgn in (-1, 1):
+            ang_ = math.atan2(RIDGE - EAVE, hy); ln = math.hypot(hy, RIDGE - EAVE)
+            c = creation.box(extents=[ln, CH, TR_T]); c.apply_translation([ln / 2, -CH / 2, TR_T / 2])
+            c.apply_transform(trimesh.transformations.rotation_matrix(sgn * 0 + (math.pi - ang_ if sgn < 0 else ang_), [0, 0, 1]))
+            c.apply_translation([sgn * -hy if False else (-hy if sgn > 0 else hy), 0, 0]); parts.append(c)
+        for f in (-2 / 3, -1 / 3, 0, 1 / 3, 2 / 3):          # verticals
+            x = f * hy; top = (RIDGE - EAVE) * (1 - abs(x) / hy)
+            parts.append(box(x - CH / 2, x + CH / 2, 0, max(top, CH), 0, TR_T))
+        for f0, f1 in ((-2 / 3, -1 / 3), (-1 / 3, 0), (1 / 3, 0), (2 / 3, 1 / 3)):   # diagonals
+            xa, xb = f0 * hy, f1 * hy; ya, yb = 0, (RIDGE - EAVE) * (1 - abs(xb) / hy)
+            ln = math.hypot(xb - xa, yb - ya); c = creation.box(extents=[ln, CH, TR_T]); c.apply_translation([ln / 2, 0, TR_T / 2])
+            c.apply_transform(trimesh.transformations.rotation_matrix(math.atan2(yb - ya, xb - xa), [0, 0, 1])); c.apply_translation([xa, ya, 0]); parts.append(c)
+        m = U(parts)
+        m = boolean.intersection([m, creation.extrude_polygon(trimesh.path.polygons.Polygon(pts), TR_T)], engine='manifold')
+    # locating tabs that drop just inside the long walls, so the lid can't slide sideways
+    tab = 0.9 / MM_PER_FT
+    tabs = [box(sx * (hy - WALL) - (tab if sx > 0 else 0), sx * (hy - WALL) + (0 if sx > 0 else tab), -tab, 0, 0, TR_T) for sx in (-1, 1)]
+    return U([m] + tabs)
+gable, mid = truss(True), truss(False)
 
 # ---------- 2 roof panel (print flat, x2) ----------
 run = D / 2 + OVER; rise = (RIDGE - EAVE) * run / (D / 2)
@@ -90,29 +129,51 @@ def save(m, name):
     print(f'{name:28s} {ext[0]:6.1f} x {ext[1]:5.1f} x {ext[2]:5.1f} mm  watertight={m.is_watertight}  tris={len(m.faces)}')
     return m
 
-pb = save(body, '1-body.stl')
+pb = save(body, '1-body-open.stl')
+save(gable, '5-truss-gable-end-print-2.stl')
+save(mid, '6-truss-middle-print-2.stl')
 save(panel, '2-roof-panel-print-2.stl')
 save(north, '3-runs-north-6.stl')
 save(south, '4-runs-south-4.stl')
 
-# ---------- assembled preview (for the pack and a sanity check) ----------
+# ---------- exploded preview: lid lifted off ----------
+LIFT = 24.0
 roofA = panel.copy(); ang = math.atan2(rise, run)
-roofA.apply_translation([-(L + 2 * OVER) / 2, -slope_len, 0]); roofA.apply_transform(trimesh.transformations.rotation_matrix(ang, [1, 0, 0])); roofA.apply_translation([0, 0, RIDGE])
+roofA.apply_translation([-(L + 2 * OVER) / 2, -slope_len, 0]); roofA.apply_transform(trimesh.transformations.rotation_matrix(ang, [1, 0, 0])); roofA.apply_translation([0, 0, RIDGE + LIFT])
 roofB = roofA.copy(); roofB.apply_transform(trimesh.transformations.rotation_matrix(math.pi, [0, 0, 1]))
+trs = []
+for x, tm in ((-hx + WALL + TR_T, gable), (-12, mid), (12, mid), (hx - WALL, gable)):
+    t = tm.copy(); v = t.vertices.copy(); t.vertices = np.column_stack([v[:, 2], v[:, 0], v[:, 1]])   # thickness->x, span->y, height->z
+    t.apply_translation([x, 0, EAVE + LIFT]); trs.append(t)
 nr = north.copy(); nr.apply_translation([-L / 2 + 2, D / 2, 0])
 sr = south.copy(); sr.apply_transform(trimesh.transformations.rotation_matrix(math.pi, [0, 0, 1])); sr.apply_translation([L / 2 - 2, -D / 2, 0])
-scene = trimesh.util.concatenate([body, roofA, roofB, nr, sr]); scene.apply_scale(MM_PER_FT)
-scene.export(os.path.join(OUT, 'assembled-preview.stl'))
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-fig = plt.figure(figsize=(9, 6), dpi=130); ax = fig.add_subplot(111, projection='3d')
+fig = plt.figure(figsize=(10, 7), dpi=130); ax = fig.add_subplot(111, projection='3d')
 tris, fcs = [], []
-for m, c in ((body, '#b9ad97'), (roofA, '#6fa8d8'), (roofB, '#5d95c2'), (nr, '#c9b48f'), (sr, '#c9b48f')):
+for m, c in [(body, '#b9ad97'), (roofA, '#6fa8d8'), (roofB, '#5d95c2'), (nr, '#c9b48f'), (sr, '#c9b48f')] + [(t, '#6f7d86') for t in trs]:
     mm = m.copy(); mm.apply_scale(MM_PER_FT)
-    shade = 0.55 + 0.45 * np.clip(mm.face_normals @ np.array([-.4, -.5, .77]), 0, 1)
+    shade = 0.5 + 0.5 * np.clip(mm.face_normals @ np.array([-.4, -.5, .77]), 0, 1)
     base = np.array(matplotlib.colors.to_rgb(c))
     tris.append(mm.triangles); fcs.append(np.clip(base[None, :] * shade[:, None], 0, 1))
 pc = Poly3DCollection(np.concatenate(tris), facecolors=np.concatenate(fcs), edgecolor='none'); ax.add_collection3d(pc)
-ax.set_xlim(-35, 35); ax.set_ylim(-35, 35); ax.set_zlim(0, 25); ax.set_box_aspect((70, 70, 25)); ax.view_init(28, -55); ax.axis('off')
-ax.set_title('Stable at 1:480 · 4 part types, 5 prints (roof panel x2)', fontsize=10)
+ax.set_xlim(-32, 32); ax.set_ylim(-32, 32); ax.set_zlim(0, 34); ax.set_box_aspect((64, 64, 34)); ax.view_init(38, -60); ax.axis('off')
+ax.set_title('Stable at 1:480 · roof lid lifted: 2 panels + 4 trusses · stalls inside', fontsize=10)
 fig.savefig(os.path.join(OUT, 'assembled-preview.png'), bbox_inches='tight')
+
+# ---------- plan of the stall layout (body only, from above) ----------
+fig, ax = plt.subplots(figsize=(9, 6), dpi=130)
+mm = body.copy()
+sl = mm.section(plane_origin=[0, 0, 4.0], plane_normal=[0, 0, 1])
+p2, _ = sl.to_planar(to_2D=np.eye(4))
+for poly in p2.polygons_full:
+    xs_, ys_ = poly.exterior.xy; ax.fill(xs_, ys_, color='#8c8374')
+    for h in poly.interiors: xs_, ys_ = h.xy; ax.fill(xs_, ys_, color='white')
+NL = chr(10)
+south_lbl = ['lavado' + NL + 'wash', 'montura' + NL + 'tack'] + ['caballeriza' + NL + 'stall'] * 4
+for k, x in enumerate(xs):
+    ax.text(x, (AISLE / 2 + hy - WALL) / 2, 'caballeriza' + NL + 'stall', ha='center', va='center', fontsize=7)
+    ax.text(x, -(AISLE / 2 + hy - WALL) / 2, south_lbl[k], ha='center', va='center', fontsize=7)
+ax.text(0, 0, 'pasillo · aisle 14 ft', ha='center', va='center', fontsize=9, color='#555')
+ax.set_aspect('equal'); ax.axis('off'); ax.set_title('Body cut at 4 ft: 10 stalls 12 × 12 ft, wash, tack, 14 ft aisle · N at top', fontsize=10)
+fig.savefig(os.path.join(OUT, 'body-plan.png'), bbox_inches='tight')
