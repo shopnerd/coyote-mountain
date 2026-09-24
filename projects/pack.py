@@ -259,6 +259,7 @@ def posts_page():
 
 exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
+exec(open('structure_pages.py',encoding='utf-8').read())
 cover(70)
 planview(os.path.join(DL, 'coyote-topo-painted-photo (89) fixed v3.png'))
 existing()
@@ -290,13 +291,13 @@ views2([(68,'Temporada verde, hora dorada','Green season, golden hour',
 text_refs()
 placeholder('Inspiraciones','Inspirations','Imágenes que muestran el ambiente que buscamos: establos de piedra y madera, centros ecuestres del valle, cercas, sombras y paisaje.','Images that show the feeling we are after: stone-and-timber stables, equestrian centres in the valley, fencing, shade and landscape.',[('Establos','Stables'),('Corrales y cercas','Paddocks and fencing'),('Pistas y arena','Arenas and footing'),('Paisaje y agua','Landscape and water'),('Señalética','Signage'),('Detalles','Details')])
 barn_plan()
-posts_page()
-roof_page()
-placeholder('Plano de la nave metálica','Metal building plan','Planta, alzados y estructura de la nave metálica del proveedor: claros, marcos, anclajes, lámina y color azul cielo.','Plan, elevations and structure of the supplier\'s metal building: spans, frames, anchors, sheeting and the sky-blue colour.',[('Planta','Plan'),('Alzados','Elevations'),('Estructura y cimentación','Structure and foundations')])
+portal_page()
+base_page()
+metal_page()
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
 
-out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-23-v2.pdf')
+out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-24-v3.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)

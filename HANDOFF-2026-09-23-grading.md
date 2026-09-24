@@ -92,3 +92,19 @@ animation frames run), `analyzeCore` and `inPoly`. Soft pad edges in `applyPad`.
 - Print pack: `projects/pack.py` -> `Downloads/Centro-Equino-pack-11x17-2026-09-23.pdf`, 16 pages,
   Walker's order; structure page proposes welded base plates bolted to piers on a perimeter grade
   beam that carries the stone wall (see `posts_calc2.py`).
+
+## 9/24: stable structure follows Walker's design
+
+- Roof = 4 pipe PORTAL FRAMES at 24 ft (Will's pick over trusses): 12 in pipe columns 12 ft, rafters
+  21.6 ft with one splice, haunched welded knees, bolted ridge plates. `projects/laser/portal_frame.py`
+  (2D stiffness, ASD): worst 75% of Sch 40 capacity (D+Lr), ridge ~3/4 in; base moment ~50 kip-ft,
+  shear ~9 kip, uplift ~8 kip -> 36 in x 9 ft piers + a tie beam across the aisle per frame.
+- Walker's character kept: grand stone entrance facades both gable ends (rebar cores + bond beam,
+  seismic), stone 4.5 ft on long sides inset between columns with a gap, wavy tomato stakes
+  horizontal on 2 in pipe verticals every 4 ft, timber eave beams. Staged build: frames + roof first;
+  piers must hold the roof WITHOUT the stone.
+- Anchors: 4 x 1-1/4 in F1554 Gr 55 headed rods, 30 in embed, 22x22x1-1/4 plate, NO J-bolts.
+- Pack v3 (`Downloads/Centro-Equino-pack-11x17-2026-09-24-v3.pdf`, Drive copy keeps the old name):
+  pages 14 structure, 15 base plate detail, 16 metal building spec filled in. Open: timber sizes
+  from Will/Andrés; engineer sign-off.
+- Laser site model + stable 1:480 print parts: `projects/laser/` (site_layers.py, stable_parts.py).
