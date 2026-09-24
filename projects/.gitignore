@@ -1,0 +1,6 @@
+mosaic*.npy
+origin*.npy
+prev-*.png
+st*.png
+contact*.png
+__pycache__/

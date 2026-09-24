@@ -1,5 +1,5 @@
 import json, math, numpy as np, sys
-sys.path.insert(0,'../roads')
+sys.path.insert(0,'.'); sys.path.insert(0,'../roads')
 import geo18 as geo
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
