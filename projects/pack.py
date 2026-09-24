@@ -259,8 +259,8 @@ def posts_page():
 
 exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
-cover(87)
-planview(82)
+cover(70)
+planview(89)
 existing()
 grading()
 operator_sheet()
