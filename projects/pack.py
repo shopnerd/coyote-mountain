@@ -296,7 +296,7 @@ placeholder('Plano de la nave metálica','Metal building plan','Planta, alzados 
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
 
-out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-23.pdf')
+out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-23-v2.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)
