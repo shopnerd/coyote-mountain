@@ -259,28 +259,43 @@ def posts_page():
 
 exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
-cover(70)
-planview(78)
+cover(87)
+planview(82)
 existing()
 grading()
 operator_sheet()
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('sheet2.py','Cortes de terracería','Grading sections')
-views([(79,'Vista 3/4 desde el suroeste, hora dorada','Three-quarter from the south-west, golden hour · stable drawn correctly'),
-       (64,'Vista 3/4 desde el suroeste','Three-quarter from the south-west'),
-       (65,'Desde el noreste','From the north-east'),
-       (66,'Desde el sureste, sobre el establo','From the south-east, over the stable')],'Otras vistas','Other views')
-views([(69,'Hacia los corrales, temporada verde','Toward the paddocks, green season'),
-       (73,'Jinetes saliendo, hora dorada','Riders heading out, golden hour'),
-       (59,'Clase en la pista oval (establo simplificado)','Lesson in the arena (stable simplified)'),
-       (61,'Tarde dorada, llevando un caballo (establo simplificado)','Golden evening, leading a horse (stable simplified)')],'Otras vistas','Other views')
+views2([(85,'Desde el sureste, sobre el establo','From the south-east, over the stable',
+         'El establo de piedra y varas con sus corrales a los lados; un caballo bebe en el bebedero largo, abierto por ambos lados. Al fondo la pista oval y el corral redondo.',
+         'The stone-and-stick stable with its runs on both sides; a horse drinks at the long trough, open on both sides. The oval arena and round pen beyond.'),
+        (84,'Desde el noreste','From the north-east',
+         'Toda la propiedad desde la esquina del viñedo: el establo al frente, la pista de trote y los cuatro corrales al fondo, rodeados de viñedo y cerro.',
+         'The whole property from the vineyard corner: the stable in front, the riding track and the four paddocks beyond, framed by vineyard and hill.')],
+       'Otras vistas','Other views')
+views2([(83,'Vista 3/4 desde el suroeste','Three-quarter from the south-west',
+         'La pista de trote como potrero cercado donde los caballos pueden andar sueltos; los corrales junto al camino y el bajo natural donde se junta el agua.',
+         'The riding track as one fenced turnout where horses can roam loose; the paddocks by the road and the natural low spot where water collects.'),
+        ((72,'left'),'El establo de cerca','The stable up close',
+         'Muros de piedra hasta 4.5 ft y varas apiladas arriba como nido de pájaro, bajo el techo azul cielo.',
+         'Fieldstone walls to 4.5 ft with sticks stacked above like a bird\'s nest, under the sky-blue roof.')],
+       'Otras vistas','Other views')
+views2([(68,'Temporada verde, hora dorada','Green season, golden hour',
+         'Una clase en la pista oval, un caballo trabajando en el corral redondo y caballos en los corrales, con la luz baja de la tarde.',
+         'A lesson in the arena, a horse working in the round pen and horses in the paddocks, in low evening light.'),
+        (r"C:\Users\zolar\Downloads\coyote-topo-painted-white (5).png",'Maqueta del sitio','Site model',
+         'La misma propuesta como maqueta de capas: se leen la pendiente, las plataformas a nivel y cómo se acomoda todo en el terreno.',
+         'The same proposal as a layered site model: the slope, the level pads and how everything sits into the land.')],
+       'Otras vistas','Other views')
 text_refs()
 placeholder('Inspiraciones','Inspirations','Imágenes que muestran el ambiente que buscamos: establos de piedra y madera, centros ecuestres del valle, cercas, sombras y paisaje.','Images that show the feeling we are after: stone-and-timber stables, equestrian centres in the valley, fencing, shade and landscape.',[('Establos','Stables'),('Corrales y cercas','Paddocks and fencing'),('Pistas y arena','Arenas and footing'),('Paisaje y agua','Landscape and water'),('Señalética','Signage'),('Detalles','Details')])
 barn_plan()
 posts_page()
+roof_page()
 placeholder('Plano de la nave metálica','Metal building plan','Planta, alzados y estructura de la nave metálica del proveedor: claros, marcos, anclajes, lámina y color azul cielo.','Plan, elevations and structure of the supplier\'s metal building: spans, frames, anchors, sheeting and the sky-blue colour.',[('Planta','Plan'),('Alzados','Elevations'),('Estructura y cimentación','Structure and foundations')])
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
+
 out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-23.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
