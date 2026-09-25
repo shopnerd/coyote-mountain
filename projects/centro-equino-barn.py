@@ -1,31 +1,35 @@
-"""Walker's Centro Equino barn as an OBJ for the topo tool, built from the spec in her
-artifact (claude.ai/artifact/7dHdStVCWd2rjz3UW1ezXq, 22 Sep 2026). Feet, z up, x east,
-y north, already turned to her bearing; the origin is the barn centre. The # geo line
-tells topo.html where on the earth the origin goes.
+"""Walker's Centro Equino stable as an OBJ for the topo tool, 24 Sep 2026 design:
+72 x 40 ft on 12 in pipe portal frames (4 frames at 24 ft), stacked rock to 4.5 ft all round,
+tomato-stake walls above, a big entry at both gable ends, metal roof with 2 ft overhangs on the
+long sides, 8 in pipe purlins and eave beams. Walker's layout: 6 stalls north with 12 x 40 ft runs,
+wash / tack / feed / alfalfa-storage south, 14 ft aisle. Feet, z up, x along the long axis, y north,
+turned to her bearing; the origin is the barn centre. The # geo line tells topo.html where it goes.
 
     python centro-equino-barn.py   ->  centro-equino-barn.obj
+(The 76 x 42 ten-stall version is kept as centro-equino-barn-76x42.obj.)
 """
 import math, os
 
-# ---- her spec (BARN / GEO in the artifact) ----
-STALL, AISLE, ROW_D, RUN_D = 12, 14, 12, 30
-WALL, DIVIDER, DADO, PARTITION = 2, 1.5, 4.5, 0.75
-EAVE, RISE = 12, 5
-AISLE_DOOR, STALL_DOOR, ROOM_DOOR = (10, 11), (4, 8), (4, 8)
+L, D = 72.0, 40.0                        # column centre lines
+HL, HD = L / 2, D / 2
+AISLE, STALL, RUN_D = 14.0, 12.0, 40.0
+ROW_D = (D - AISLE) / 2                  # 13 ft
+EAVE, RIDGE, OH = 12.0, 17.0, 2.0
+ROCK_H, ROCK_T, STICK_T = 4.5, 1.5, 0.4
+FRAMES = [-36.0, -12.0, 12.0, 36.0]
+COL_D, PURL_D = 12.75 / 12, 8.625 / 12
+ENTRY_W = AISLE                          # the big gable entries, open up to the rafters
+DOOR = (4.0, 8.0)
 RAIL_H = 5.5
-ROWS = [  # north row first; sgn -1 = north in her frame (z south), +1 here = north
-    {'side': +1, 'rooms': ['stall'] * 6},
-    {'side': -1, 'rooms': ['wash', 'tack'] + ['stall'] * 4},
-]
+NORTH = ['stall'] * 6
+SOUTH = [('wash', 12), ('tack', 12), ('feed', 12), ('alfalfa', 36)]
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
 
-INNER_L = 6 * STALL                      # 72
-L = INNER_L + 2 * WALL                   # 76
-D = 2 * ROW_D + AISLE + 2 * WALL         # 42
-HL, HD = L / 2, D / 2
+slope = (RIDGE - EAVE) / HD
+def roof_z(y): return RIDGE - slope * abs(y)       # rafter centre line
 
 V, F = [], []
-ROT = math.radians(90 - GABLE)           # long axis from east, counter-clockwise
+ROT = math.radians(90 - GABLE)
 rc, rs = math.cos(ROT), math.sin(ROT)
 def world(x, y, z): return (x * rc - y * rs, x * rs + y * rc, z)
 
@@ -38,82 +42,101 @@ def box(x0, x1, y0, y1, z0, z1):
         for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)): V.append(world(x, y, z))
     for f in ((0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)):
         F.append(tuple(i + k for k in f))
+def bar(p, q, d, n=8):                   # a round-ish tube from p to q
+    p, q = [float(v) for v in p], [float(v) for v in q]
+    ax_ = [q[k] - p[k] for k in range(3)]; Ln = math.sqrt(sum(a * a for a in ax_)); u = [a / Ln for a in ax_]
+    t = [0, 0, 1] if abs(u[2]) < .9 else [1, 0, 0]
+    a = [u[1] * t[2] - u[2] * t[1], u[2] * t[0] - u[0] * t[2], u[0] * t[1] - u[1] * t[0]]; na = math.sqrt(sum(v * v for v in a)); a = [v / na for v in a]
+    b = [u[1] * a[2] - u[2] * a[1], u[2] * a[0] - u[0] * a[2], u[0] * a[1] - u[1] * a[0]]
+    ring = lambda c: [tuple(c[k] + d / 2 * (math.cos(2 * math.pi * j / n) * a[k] + math.sin(2 * math.pi * j / n) * b[k]) for k in range(3)) for j in range(n)]
+    i = len(V) + 1; V.extend(world(*v) for v in ring(p) + ring(q))
+    for j in range(n):
+        j2 = (j + 1) % n; F.append((i + j, i + j2, i + n + j2, i + n + j))
+    F.append(tuple(i + j for j in range(n))[::-1]); F.append(tuple(i + n + j for j in range(n)))
 
-def wall_x(xa, xb, y, t, h, holes):     # a wall along x with door holes [(x0, x1, dh)]
+def wall_x(xa, xb, y, t, z0, z1, holes):    # wall along x between z0 and z1, door holes [(x0, x1, top)]
     x = xa
-    for a, b, dh in sorted(holes):
-        box(x, a, y - t / 2, y + t / 2, 0, h); box(a, b, y - t / 2, y + t / 2, dh, h); x = b
-    box(x, xb, y - t / 2, y + t / 2, 0, h)
-def wall_y(ya, yb, x, t, h, holes):
-    y = ya
-    for a, b, dh in sorted(holes):
-        box(x - t / 2, x + t / 2, y, a, 0, h); box(x - t / 2, x + t / 2, a, b, dh, h); y = b
-    box(x - t / 2, x + t / 2, y, yb, 0, h)
+    for a, b, top in sorted(holes):
+        box(x, a, y - t / 2, y + t / 2, z0, z1)
+        if top < z1: box(a, b, y - t / 2, y + t / 2, max(z0, top), z1)
+        x = b
+    box(x, xb, y - t / 2, y + t / 2, z0, z1)
 
-# rooms, laid out west to east from the inner face
+# ---- rooms ----
 rooms = []
-for row in ROWS:
-    s = row['side']; outer = s * (HD - WALL); inner = outer - s * ROW_D
-    x = -INNER_L / 2
-    for kind in row['rooms']:
-        rooms.append({'kind': kind, 'x0': x, 'x1': x + STALL, 'side': s, 'outer': outer, 'inner': inner}); x += STALL
+x = -HL
+for kind in NORTH: rooms.append(dict(kind=kind, x0=x, x1=x + STALL, side=+1)); x += STALL
+x = -HL
+for kind, w in SOUTH: rooms.append(dict(kind=kind, x0=x, x1=x + w, side=-1)); x += w
+for r in rooms: r['c'] = (r['x0'] + r['x1']) / 2
 
-# long stone walls, a door per stall and one for the wash bay
-for row in ROWS:
-    s = row['side']
-    holes = []
-    for r in rooms:
-        if r['side'] == s and r['kind'] in ('stall', 'wash'):
-            c, (w, h) = (r['x0'] + r['x1']) / 2, (STALL_DOOR if r['kind'] == 'stall' else ROOM_DOOR)
-            holes.append((c - w / 2, c + w / 2, h))
-    wall_x(-HL, HL, s * (HD - WALL / 2), WALL, EAVE, holes)
+# ---- long walls: rock to 4.5 ft, stakes to the eave, a door per room ----
+for s in (1, -1):
+    y = s * HD
+    holes = [(r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, DOOR[1]) for r in rooms if r['side'] == s]
+    wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, holes)
+    wall_x(-HL, HL, y, STICK_T, ROCK_H, EAVE, holes)
 
-# end walls with the aisle cut through, and the gable triangles over them
+# ---- gable ends: rock and stakes either side of the big entry; stakes fill the gable over the rooms ----
 for sx in (-1, 1):
-    x = sx * (HL - WALL / 2)
-    wall_y(-HD + WALL, HD - WALL, x, WALL, EAVE, [(-AISLE_DOOR[0] / 2, AISLE_DOOR[0] / 2, AISLE_DOOR[1])])
-    x0, x1 = x - WALL / 2, x + WALL / 2
-    for xa in (x0, x1):
-        i = len(V) + 1; V.extend(world(*p) for p in ((xa, -HD, EAVE), (xa, HD, EAVE), (xa, 0, EAVE + RISE))); F.append((i, i + 1, i + 2))
-    quad((x0, -HD, EAVE), (x1, -HD, EAVE), (x1, 0, EAVE + RISE), (x0, 0, EAVE + RISE))
-    quad((x0, 0, EAVE + RISE), (x1, 0, EAVE + RISE), (x1, HD, EAVE), (x0, HD, EAVE))
+    x = sx * HL
+    for s in (-1, 1):
+        y0, y1 = sorted((s * ENTRY_W / 2, s * HD))
+        box(x - ROCK_T / 2, x + ROCK_T / 2, y0, y1, 0, ROCK_H)
+        n = 6                               # stake panel stepped up under the rafter
+        for k in range(n):
+            ya, yb = y0 + (y1 - y0) * k / n, y0 + (y1 - y0) * (k + 1) / n
+            box(x - STICK_T / 2, x + STICK_T / 2, ya, yb, ROCK_H, roof_z((ya + yb) / 2) - COL_D / 2)
 
-# dividers: stone dado between stalls, a timber partition beside wash and tack
-for row in ROWS:
-    rr = [r for r in rooms if r['side'] == row['side']]
-    for a, b in zip(rr, rr[1:]):
-        y0, y1 = sorted((b['inner'], b['outer']))
-        if a['kind'] == b['kind'] == 'stall': box(b['x0'] - DIVIDER / 2, b['x0'] + DIVIDER / 2, y0, y1, 0, DADO)
-        else: box(b['x0'] - PARTITION / 2, b['x0'] + PARTITION / 2, y0, y1, 0, 10)
-
-# fronts onto the aisle: boarded stall fronts to the dado, full timber walls for wash and tack
-for r in rooms:
-    y = r['inner']; c = (r['x0'] + r['x1']) / 2
-    if r['kind'] == 'stall':
-        wall_x(r['x0'] + .1, r['x1'] - .1, y, .4, DADO, [(c - STALL_DOOR[0] / 2, c + STALL_DOOR[0] / 2, DADO)])
-    else:
-        wall_x(r['x0'], r['x1'], y, PARTITION, 10, [(c - ROOM_DOOR[0] / 2, c + ROOM_DOOR[0] / 2, ROOM_DOOR[1])])
-
-# roof: two metal planes to a ridge on the long axis, no overhang, a little thickness so it reads from below
-T = .3
+# ---- the frames: 12 in pipe columns and rafters, rafters run 2 ft past the columns ----
+for x in FRAMES:
+    for s in (-1, 1):
+        bar((x, s * HD, 0), (x, s * HD, EAVE), COL_D)
+        bar((x, s * (HD + OH), roof_z(HD + OH)), (x, 0, RIDGE), COL_D)
+# eave beams and purlins, 8 in pipe on top of the rafters, about 5 ft apart along the slope
+top = COL_D / 2 + PURL_D / 2
+run = HD + OH; n_p = 5
 for s in (-1, 1):
-    for z in (0, T):
-        quad((-HL, s * HD, EAVE + z), (HL, s * HD, EAVE + z), (HL, 0, EAVE + RISE + z), (-HL, 0, EAVE + RISE + z))
+    for k in range(n_p + 1):
+        y = s * run * k / n_p
+        if k == 0: y = s * 0.6
+        bar((-HL, y, roof_z(y) + top), (HL, y, roof_z(y) + top), PURL_D, 6)
+    bar((-HL, s * HD, EAVE - 0.2), (HL, s * HD, EAVE - 0.2), PURL_D, 6)      # eave beam at the column heads
 
-# runs: 12 x 30 ft off every stall, three-rail pipe fence at 5 ft 6 in
+# ---- roof: two sheets on the purlins, 2 ft past the walls on the long sides, a little thickness ----
+T, zr = .25, top + PURL_D / 2
+for s in (-1, 1):
+    y_out = s * (HD + OH)
+    for dz in (0, T):
+        quad((-HL - .5, y_out, roof_z(y_out) + zr + dz), (HL + .5, y_out, roof_z(y_out) + zr + dz),
+             (HL + .5, 0, RIDGE + zr + dz), (-HL - .5, 0, RIDGE + zr + dz))
+
+# ---- inside: stall partitions to 4.5 ft with a grille look (solid here), rooms walled to 10 ft ----
+for s in (1, -1):
+    rr = [r for r in rooms if r['side'] == s]
+    y0, y1 = sorted((s * (HD - ROCK_T / 2), s * (HD - ROW_D)))
+    for a, b in zip(rr, rr[1:]):
+        h = ROCK_H if a['kind'] == b['kind'] == 'stall' else 10
+        box(b['x0'] - .25, b['x0'] + .25, y0, y1, 0, h)
+    yi = s * (HD - ROW_D)
+    for r in rr:
+        h = ROCK_H if r['kind'] == 'stall' else 10
+        wall_x(r['x0'] + .1, r['x1'] - .1, yi, .4, 0, h, [(r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, DOOR[1])])
+
+# ---- runs: 12 x 40 ft off every north stall, three-rail pipe fence at 5 ft 6 in ----
 P, R = .35, .2
 for r in rooms:
     if r['kind'] != 'stall': continue
-    s = r['side']; yw, ye = s * HD, s * (HD + RUN_D)
+    yw, ye = HD + ROCK_T / 2, HD + RUN_D
     for x in (r['x0'], r['x1']):
-        for k in range(4): y = yw + (ye - yw) * k / 3; box(x - P / 2, x + P / 2, min(y, y) - P / 2, y + P / 2, 0, RAIL_H)
-        for h in (1.8, 3.6, RAIL_H - R): box(x - R / 2, x + R / 2, min(yw, ye), max(yw, ye), h, h + R)
+        for k in range(5): y = yw + (ye - yw) * k / 4; box(x - P / 2, x + P / 2, y - P / 2, y + P / 2, 0, RAIL_H)
+        for h in (1.8, 3.6, RAIL_H - R): box(x - R / 2, x + R / 2, yw, ye, h, h + R)
     for h in (1.8, 3.6, RAIL_H - R): box(r['x0'], r['x1'], ye - R / 2, ye + R / 2, h, h + R)
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'centro-equino-barn.obj')
 with open(out, 'w', newline='\n') as f:
-    f.write(f"# Centro Equino barn, from Walker's spec: {L} x {D} ft stone, eave {EAVE}, ridge {EAVE + RISE}, ten 12x12 stalls, 14 ft aisle, 12x30 runs\n")
-    f.write(f"# geo {LAT} {LON}\n# unit ft\n# name walker barn 76x42\n")
+    f.write(f"# Centro Equino stable, 24 Sep design: {L:.0f} x {D:.0f} ft pipe portal frames, rock 4.5 ft + tomato stakes, gable entries, 2 ft overhangs, 6 stalls + 12x40 runs north\n")
+    f.write(f"# geo {LAT} {LON}\n# unit ft\n# name walker barn 72x40\n")
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
     for fc in F: f.write('f ' + ' '.join(map(str, fc)) + '\n')
-print(out, len(V), 'verts', len(F), 'faces', f'{L} x {D} ft')
+print(out, len(V), 'verts', len(F), 'faces', f'{L:.0f} x {D:.0f} ft')

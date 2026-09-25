@@ -1,0 +1,80 @@
+layer 12 (1073 ft) -> sheet 1
+layer 13 (1074 ft) -> sheet 2
+layer  9 (1070 ft) -> sheet 3
+layer  6 (1067 ft) -> sheet 4
+layer  7 (1068 ft) -> sheet 5
+layer  8 (1069 ft) -> sheet 6
+layer 10 (1071 ft) -> sheet 7
+layer  5 (1066 ft) -> sheet 8
+layer 11 (1072 ft) -> sheet 9
+layer 14 (1075 ft) -> sheet 10
+layer 15 (1076 ft) -> sheet 11
+layer 21 (1082 ft) -> sheet 12
+layer  4 (1065 ft) -> sheet 13
+layer  3 (1064 ft) -> sheet 14
+layer  2 (1063 ft) -> sheet 15
+layer  1 (1062 ft) -> sheet 16
+layer 16 (1077 ft) -> sheet 12
+layer 17 (1078 ft) -> sheet 17
+layer 19 (1080 ft) -> sheet 18
+layer 18 (1079 ft) -> sheet 18
+layer 20 (1081 ft) -> sheet 17
+layer 22 (1083 ft) -> sheet 11
+layer 26 (1087 ft) -> sheet 1
+layer 23 (1084 ft) -> sheet 19
+layer 24 (1085 ft) -> sheet 10
+layer 25 (1086 ft) -> sheet 2
+layer 27 (1088 ft) -> sheet 9
+layer 28 (1089 ft) -> sheet 19
+layer 29 (1090 ft) -> sheet 3
+layer 30 (1091 ft) -> sheet 4
+layer 31 (1092 ft) -> sheet 5
+layer 32 (1093 ft) -> sheet 6
+layer 33 (1094 ft) -> sheet 1
+layer 34 (1095 ft) -> sheet 2
+layer 35 (1096 ft) -> sheet 3
+layer 36 (1097 ft) -> sheet 3
+layer 37 (1098 ft) -> sheet 2
+layer 38 (1099 ft) -> sheet 1
+layer 39 (1100 ft) -> sheet 1
+layer 40 (1101 ft) -> sheet 1
+layer 41 (1102 ft) -> sheet 1
+layer 42 (1103 ft) -> sheet 1
+layer 43 (1104 ft) -> sheet 1
+layer 44 (1105 ft) -> sheet 1
+layer 45 (1106 ft) -> sheet 1
+layer 46 (1107 ft) -> sheet 1
+layer 47 (1108 ft) -> sheet 1
+layer 48 (1109 ft) -> sheet 1
+layer 49 (1110 ft) -> sheet 1
+{
+ "layers": 49,
+ "base_ft": 1062,
+ "top_ft": 1110,
+ "sheets": 19,
+ "model_in": [
+  27.98,
+  15.29,
+  6.12
+ ],
+ "barn_rect_grid": [
+  [
+   105.43965499642765,
+   50.842542553069734
+  ],
+  [
+   113.38362486728494,
+   53.399153421154175
+  ],
+  [
+   110.51280517247986,
+   62.31944138710598
+  ],
+  [
+   102.56883530162257,
+   59.76283051902155
+  ]
+ ],
+ "barn_pad_layer": 26,
+ "board_sq_in": 1909.0
+}

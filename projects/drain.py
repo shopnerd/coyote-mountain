@@ -4,7 +4,7 @@ import geo18 as geo
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-p=json.load(open(r'C:\Users\zolar\Downloads\centro-equino-final-2026-09-23b.json'))
+p=json.load(open(r'C:\Users\zolar\Downloads\centro-equino-final-2026-09-24.json'))
 W,H=p['grid']; FT=0.3048; cs=float(p['sliders']['siteW'])/(W-1); cf=cs/FT
 z=np.array(p['z']).reshape(H,W)/FT; b=np.array(p['base']).reshape(H,W)/FT
 fl=p['__flow']; acc=np.array(fl['acc']).reshape(H,W); down=np.array(fl['down'])
@@ -30,7 +30,7 @@ def features(ax,lw=1):
         if k=='path':
             P=np.array([q[:2] for q in s['pts']]); w=(s.get('pw',3.66)/FT)/cf
             ax.plot(P[:,0],P[:,1],color='#c9b48f',lw=max(1.2,w*5.2),solid_capstyle='round',zorder=2,alpha=.9)
-        elif k=='obj' and n in ('walker barn 76x42','four paddocks','trailer 8 x 40','stone trough 12x4'):
+        elif k=='obj' and n in ('walker barn 72x40','four paddocks','trailer 8 x 40','stone trough 12x4'):
             P=np.array(foot(s)+[foot(s)[0]]); ax.fill(P[:,0],P[:,1],color='white',alpha=.85,zorder=3); ax.plot(P[:,0],P[:,1],color=INK,lw=.8,zorder=4)
         elif k=='obj' and n in ('arena fence','round pen fence','site fence','cross fence'):
             pass
@@ -92,14 +92,14 @@ def callout(ax,xy,n):
     ax.text(xy[0],xy[1],str(n),ha='center',va='center',fontsize=8.5,weight='bold',color='#b5602e',zorder=23)
 CALL=[((79,79),1),((68,71.5),2),((65.4,76.2),3),((46,57.2),4),((27,61.8),5),((113,69),6),((121.5,50),7),((104,58.5),8),((96.4,50.6),9),((34.5,55.5),10)]
 NOTES=[
- ('Road-bend crossing','Cruce en la curva del camino','About 10 acres of hillside cross here. Rock-lined ford or 24 in culvert with a rock apron.','Unas 4 ha de ladera cruzan aquí. Vado empedrado o alcantarilla de 60 cm con delantal de piedra.'),
+ ('Road-bend crossing','Cruce en la curva del camino','Up to about 16 acres of hillside can reach this crossing (the full watershed above the site, measured zoomed out). Rock-lined ford preferred; if piped, a 30 in culvert with a rock apron.','Hasta unas 6.5 ha de ladera pueden llegar a este cruce (toda la cuenca arriba del sitio, medida con vista amplia). Se prefiere vado empedrado; si se entuba, alcantarilla de 75 cm con delantal de piedra.'),
  ('Grassed waterway','Canal empastado','Wide, shallow, planted channel along the natural low line; joined by the paddock-end branch.','Canal ancho, poco profundo y sembrado sobre la línea baja natural; recibe el ramal del extremo de los corrales.'),
- ('Natural water sink at the track end','Bajo natural al final de la pista','A soft, shallow low spot with no banks where water is meant to collect and soak in, beside the paddocks; about 1.5 ft deep at the centre, roughly 4,000 gal; overflow continues west along the waterway.','Un bajo suave y poco profundo, sin bordos, donde el agua se junta y se infiltra, junto a los corrales; unos 45 cm de hondo al centro, aproximadamente 15,000 L; el excedente sigue al oeste por el canal.'),
+ ('Natural sink at the track end','Bajo natural al final de la pista','A soft, shallow low spot with no banks where water is meant to collect and soak in, beside the paddocks; about 1.5 ft deep at the centre, roughly 4,000 gal; overflow continues west along the waterway.','Un bajo suave y poco profundo, sin bordos, donde el agua se junta y se infiltra, junto a los corrales; unos 45 cm de hondo al centro, aproximadamente 15,000 L; el excedente sigue al oeste por el canal.'),
  ('Infield basin','Cuenca del interior','Shallow planted basin where the infield flattens; slows and soaks the first flush.','Cuenca baja y sembrada donde el interior se aplana; frena y absorbe la primera lluvia.'),
- ('Outlet at the west fence','Salida en la cerca oeste','Rock level spreader; water leaves as a thin sheet toward the gully and the vineyard (same owner).','Esparcidor de piedra a nivel; el agua sale en lámina delgada hacia la cañada y el viñedo (mismo dueño).'),
+ ('Outlet at the west fence','Salida en la cerca oeste','Rock level spreader sized for the full watershed (about twice what the site alone shows); water leaves as a thin sheet toward the gully and the vineyard (same owner).','Esparcidor de piedra a nivel, dimensionado para toda la cuenca (cerca del doble de lo que muestra el sitio solo); el agua sale en lámina delgada hacia la cañada y el viñedo (mismo dueño).'),
  ('Crossings under roads and track','Cruces bajo caminos y pista','Seven rock-armoured dips or culverts where the waterway meets a road or the track.','Siete vados empedrados o alcantarillas donde el canal cruza un camino o la pista.'),
  ('Barn diversion and outfall','Desvío del establo y descarga','Swale on the uphill side carries water around the barn pad to the natural draw.','Zanja del lado alto que lleva el agua alrededor del establo hacia la cañada natural.'),
- ('Roof water to the trough','Agua del techo al bebedero','The 76 × 42 ft roof sheds about 2,000 gal per inch of rain; a pipe feeds the long stone trough.','El techo de 23 × 13 m capta unos 7,500 L por cada 2.5 cm de lluvia; un tubo alimenta el bebedero largo de piedra.'),
+ ('Roof water to the trough','Agua del techo al bebedero','The 72 × 44 ft roof (with its overhangs) sheds about 2,000 gal per inch of rain; gutters on both long sides, a pipe feeds the long stone trough.','El techo de 22 × 13.4 m (con aleros) capta unos 7,500 L por cada 2.5 cm de lluvia; canales en ambos lados largos, un tubo alimenta el bebedero largo de piedra.'),
  ('Ditch above the barn road','Zanja arriba del camino del establo','Protects the round pen and arena from runoff off the slope above.','Protege el corral redondo y la pista oval del escurrimiento de la pendiente.'),
  ('Existing watering station','Bebedero existente','Round stone trough, kept and filled.','Bebedero redondo de piedra, se conserva y se llena.'),
 ]

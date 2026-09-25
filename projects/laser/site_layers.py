@@ -21,7 +21,7 @@ from shapely.ops import unary_union
 from shapely import affinity
 from shapely.prepared import prep
 
-SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(r'~/Downloads/2026-09-23 Centro Equino topo drawing.json')
+SRC = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser(r'~/Downloads/centro-equino-final-2026-09-24.json')
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'out')
 os.makedirs(OUT, exist_ok=True)
 
@@ -114,7 +114,7 @@ for s in S:
     nm = s.get('name') or ''
     if s.get('kind') == 'path':
         features.append((LineString([q[:2] for q in s['pts']]), 'road'))
-    elif s.get('kind') == 'obj' and nm in ('walker barn 76x42', 'four paddocks', 'stone trough 12x4', 'watering station 10ft'):
+    elif s.get('kind') == 'obj' and nm in ('walker barn 72x40', 'four paddocks', 'stone trough 12x4', 'watering station 10ft'):
         r = min_rect(foot(s)) if nm != 'watering station 10ft' else None
         if r: features.append((Polygon(r).exterior, 'building'))
     elif nm in ('natural water sink', 'existing watering station'):
@@ -122,7 +122,7 @@ for s in S:
 for i in (1, 2):   # arena and round pen outlines
     features.append((LineString([q[:2] for q in S[i]['pts']]), 'building'))
 features.append((fence.exterior, 'fence'))
-barn = [s for s in S if s.get('name') == 'walker barn 76x42'][0]
+barn = [s for s in S if s.get('name') == 'walker barn 72x40'][0]
 barn_rect = min_rect(foot(barn))
 
 # stake grid (same as the operator sheet): 50 ft, columns A.., rows 1..

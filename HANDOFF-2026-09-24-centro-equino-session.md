@@ -29,10 +29,29 @@ predates the sticks and the steel. Will's merged direction, word for word in spi
   14 ft centre aisle; roof colour (her sheet: dark; earlier: sky blue); whether the barn stays where the
   topo drawing has it (her site plan shows another spot).
 
-**Nothing has been rebuilt to this yet.** Everything built so far (below) uses the older 76 × 42 ft,
-10-stall, 10-run layout. Next session: confirm the open points, then update in one pass: the topo
-drawing's barn object, pack pages 2/13/14/15/16 and the renderings, the laser model's barn outline, and
-the 1:480 print parts.
+**CONFIRMED by Will 24 Sep (later session):** Walker's layout (72 × 40 ft, 6 stalls + 12 × 40 ft runs
+north, wash/tack/feed/alfalfa south, 14 ft aisle) · roof **sky blue** · barn stays at the topo-drawing
+spot (pad 1087.6) · **big pipe for eave beams and purlins for now** (Andrés' timbers later, sizes unknown).
+
+**REBUILT 24 Sep (later session). Everything except the renderings now uses the new design:**
+- Frame check `laser/portal_frame.py`: 40 ft span, 2 ft overhangs → worst **68 %** (Sch 40), ridge ≈ ⅔ in,
+  base ≈ 44 kip-ft / 8.3 kip shear / 8.4 kip uplift. Pipe purlins + eave beams: **8 in Sch 40 at ~5 ft**
+  (38–49 %, ½ in sag); 6 in is too bouncy. Old results kept in `portal_frame_results-42ft-old.json`.
+- Barn object `centro-equino-barn.py` → `.obj` (old one kept as `centro-equino-barn-76x42.obj`), name
+  **`walker barn 72x40`**. `swap_barn.py` writes **`~/Downloads/centro-equino-final-2026-09-24.json`**
+  (23b untouched). The barn sits **10 ft south** of the old centre on the same pad so the 40 ft north
+  runs stay flat (graded z 1086.9–1088.0); earthwork unchanged. **Will's browser still holds the old
+  barn:** open the 09-24 json in topo.html to load it.
+- drain.py / pack.py / topo_pages.py / site_layers.py now read the 09-24 json and the new name.
+- Pack **`~/Downloads/Centro-Equino-pack-11x17-2026-09-24-v4.pdf`**: p.13 plan (72 × 40 layout + roof
+  and skylight plan: 6 panels 3½ × 10 ft over the aisle), p.14 structure (40 ft frame, gable entry,
+  72 ft north wall), p.15 anchors (44 kip-ft, 15 of 27 kip per rod), p.16 spec (8 in pipe, 44 × 20 ft,
+  skylights, gutters on both sides), p.2 and p.11 texts. **Not yet on Drive.**
+- Laser `site_layers.py` rerun (19 sheets, barn on layer 26); old outputs in `laser/out-2026-09-23-76x42/`.
+- Print parts `stable_parts.py`: new body (6 stalls, 4 south rooms, open gable entries), 6 runs of
+  12 × 40, gable frames open over the entry. Also fixed the frames' missing top chord (a bug in the old version too).
+- **Still old:** the renderings (page 1 cover, page 2 plan-view image, pages 8–10 views and their
+  captions, which still say "sticks stacked like a bird's nest").
 
 ## 2. Structure work already done (older layout, reusable method)
 
@@ -127,3 +146,17 @@ the 1:480 print parts.
 3. Draw the skylight layout and the stick-wall detail (verticals, fixing, spacing) for the pack.
 4. Walker fills in the agreements page; add inspirations, logistics and the metal-building supplier's
    drawings when they exist.
+
+## 9. Watershed correction (24 Sep, late)
+
+The "about 10 acres at the road bend" figure came from the 400 m sheet, which cuts the hill off at its
+south edge. Zoomed out to 1,600 m, about **15.6 acres (6.3 ha)** of hill drains into the lot; the 400 m
+sheet shows ~7.7. At 30 m resolution the flow at any single crossing is not reliable (the water arrives
+along the whole south fence as ~8 small flows), so the crossings are now sized for the full watershed:
+- Drainage note 1 (drain.py): road-bend crossing "up to about 16 acres"; rock-lined ford preferred, or
+  a **30 in** culvert (was 24 in). Note 5: the west spreader is sized for the full watershed.
+- Note 3's English heading shortened to "Natural sink at the track end" (it ran 5 pt off the page).
+- Pack rebuilt: `~/Downloads/Centro-Equino-pack-11x17-2026-09-24-v5.pdf`; copied over the Drive file `Centro-Equino-pack-11x17-2026-09-23.pdf` (same name, so shared links stay live). Drive had been holding v3.
+- Water plan artifact republished (v3): new lede, watershed fact, the pond replaced by the natural low
+  spot, the new D-1 sheet.
+- Method: `coyote-studio/lessons/workflow.html` step 2. Zoom out BEFORE grading.

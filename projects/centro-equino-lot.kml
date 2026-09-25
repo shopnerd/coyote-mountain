@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Centro Equino site boundary</name>
+<Placemark><name>site boundary (drawn 22 Sep 2026, 3,096 ft)</name><Polygon><outerBoundaryIs><LinearRing><coordinates>-116.7656300,31.9995630,0 -116.7636541,32.0011860,0 -116.7629711,32.0005030,0 -116.7623950,32.0009299,0 -116.7623440,32.0008790,0 -116.7626779,32.0004341,0 -116.7635520,31.9996190,0 -116.7638389,31.9989421,0 -116.7644558,31.9984700,0 -116.7656300,31.9995630,0</coordinates></LinearRing></outerBoundaryIs></Polygon></Placemark>
+</Document></kml>

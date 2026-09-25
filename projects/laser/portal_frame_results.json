@@ -1,134 +1,236 @@
 {
  "bay 24 ft | 12 in Sch 40 (12.75 x 0.406) | D + Lr": {
-  "M": 61.7,
+  "M": 56.2,
   "cap": 82.4,
-  "used": 75,
-  "sag_in": 0.8,
-  "sway_in": 0.18,
-  "base_M": 50.0,
-  "base_V": 9.3,
-  "base_vert": 12.6,
-  "axial": 12.6
+  "used": 68,
+  "sag_in": 0.67,
+  "sway_in": 0.16,
+  "base_M": 44.4,
+  "base_V": 8.3,
+  "base_vert": 13.2,
+  "axial": 13.2
  },
  "bay 24 ft | 12 in Sch 40 (12.75 x 0.406) | 0.6D + 0.6W (uplift)": {
-  "M": 42.1,
+  "M": 38.6,
   "cap": 82.4,
-  "used": 51,
-  "sag_in": 0.48,
-  "sway_in": 0.17,
-  "base_M": 42.1,
-  "base_V": 8.3,
-  "base_vert": -7.7,
-  "axial": 7.7
+  "used": 47,
+  "sag_in": 0.41,
+  "sway_in": 0.16,
+  "base_M": 38.6,
+  "base_V": 7.6,
+  "base_vert": -8.4,
+  "axial": 8.4
  },
  "bay 24 ft | 12 in Sch 40 (12.75 x 0.406) | D + 0.75(0.6W) + 0.75Lr": {
-  "M": 51.3,
+  "M": 47.0,
   "cap": 82.4,
-  "used": 62,
-  "sag_in": 0.63,
-  "sway_in": 0.19,
-  "base_M": 30.8,
-  "base_V": 8.9,
-  "base_vert": 10.0,
-  "axial": 10.2
+  "used": 57,
+  "sag_in": 0.53,
+  "sway_in": 0.17,
+  "base_M": 26.4,
+  "base_V": 8.1,
+  "base_vert": 10.4,
+  "axial": 10.7
  },
  "bay 24 ft | 12 in Sch 80 (12.75 x 0.500) | D + Lr": {
-  "M": 61.7,
+  "M": 56.2,
   "cap": 99.2,
-  "used": 62,
-  "sag_in": 0.66,
-  "sway_in": 0.15,
-  "base_M": 50.0,
-  "base_V": 9.3,
-  "base_vert": 12.6,
-  "axial": 12.6
+  "used": 57,
+  "sag_in": 0.55,
+  "sway_in": 0.13,
+  "base_M": 44.4,
+  "base_V": 8.3,
+  "base_vert": 13.2,
+  "axial": 13.2
  },
  "bay 24 ft | 12 in Sch 80 (12.75 x 0.500) | 0.6D + 0.6W (uplift)": {
-  "M": 42.1,
+  "M": 38.6,
   "cap": 99.2,
-  "used": 42,
-  "sag_in": 0.4,
-  "sway_in": 0.14,
-  "base_M": 42.1,
-  "base_V": 8.3,
-  "base_vert": -7.7,
-  "axial": 7.7
+  "used": 39,
+  "sag_in": 0.34,
+  "sway_in": 0.13,
+  "base_M": 38.6,
+  "base_V": 7.6,
+  "base_vert": -8.4,
+  "axial": 8.4
  },
  "bay 24 ft | 12 in Sch 80 (12.75 x 0.500) | D + 0.75(0.6W) + 0.75Lr": {
-  "M": 51.3,
+  "M": 47.0,
   "cap": 99.2,
-  "used": 52,
-  "sag_in": 0.52,
-  "sway_in": 0.16,
-  "base_M": 30.8,
-  "base_V": 8.9,
-  "base_vert": 10.0,
-  "axial": 10.2
+  "used": 47,
+  "sag_in": 0.44,
+  "sway_in": 0.14,
+  "base_M": 26.4,
+  "base_V": 8.1,
+  "base_vert": 10.4,
+  "axial": 10.7
  },
  "bay 12 ft | 12 in Sch 40 (12.75 x 0.406) | D + Lr": {
-  "M": 30.8,
+  "M": 28.1,
   "cap": 82.4,
-  "used": 37,
-  "sag_in": 0.4,
-  "sway_in": 0.09,
-  "base_M": 25.0,
-  "base_V": 4.7,
-  "base_vert": 6.3,
-  "axial": 6.3
- },
- "bay 12 ft | 12 in Sch 40 (12.75 x 0.406) | 0.6D + 0.6W (uplift)": {
-  "M": 21.0,
-  "cap": 82.4,
-  "used": 26,
-  "sag_in": 0.24,
-  "sway_in": 0.08,
-  "base_M": 21.0,
-  "base_V": 4.1,
-  "base_vert": -3.8,
-  "axial": 3.8
- },
- "bay 12 ft | 12 in Sch 40 (12.75 x 0.406) | D + 0.75(0.6W) + 0.75Lr": {
-  "M": 25.7,
-  "cap": 82.4,
-  "used": 31,
-  "sag_in": 0.32,
-  "sway_in": 0.09,
-  "base_M": 15.4,
-  "base_V": 4.5,
-  "base_vert": 5.0,
-  "axial": 5.1
- },
- "bay 12 ft | 12 in Sch 80 (12.75 x 0.500) | D + Lr": {
-  "M": 30.8,
-  "cap": 99.2,
-  "used": 31,
+  "used": 34,
   "sag_in": 0.33,
   "sway_in": 0.08,
-  "base_M": 25.0,
-  "base_V": 4.7,
-  "base_vert": 6.3,
-  "axial": 6.3
+  "base_M": 22.2,
+  "base_V": 4.1,
+  "base_vert": 6.6,
+  "axial": 6.6
+ },
+ "bay 12 ft | 12 in Sch 40 (12.75 x 0.406) | 0.6D + 0.6W (uplift)": {
+  "M": 19.3,
+  "cap": 82.4,
+  "used": 23,
+  "sag_in": 0.2,
+  "sway_in": 0.08,
+  "base_M": 19.3,
+  "base_V": 3.8,
+  "base_vert": -4.2,
+  "axial": 4.2
+ },
+ "bay 12 ft | 12 in Sch 40 (12.75 x 0.406) | D + 0.75(0.6W) + 0.75Lr": {
+  "M": 23.5,
+  "cap": 82.4,
+  "used": 29,
+  "sag_in": 0.26,
+  "sway_in": 0.09,
+  "base_M": 13.2,
+  "base_V": 4.1,
+  "base_vert": 5.2,
+  "axial": 5.3
+ },
+ "bay 12 ft | 12 in Sch 80 (12.75 x 0.500) | D + Lr": {
+  "M": 28.1,
+  "cap": 99.2,
+  "used": 28,
+  "sag_in": 0.28,
+  "sway_in": 0.07,
+  "base_M": 22.2,
+  "base_V": 4.1,
+  "base_vert": 6.6,
+  "axial": 6.6
  },
  "bay 12 ft | 12 in Sch 80 (12.75 x 0.500) | 0.6D + 0.6W (uplift)": {
-  "M": 21.0,
+  "M": 19.3,
   "cap": 99.2,
-  "used": 21,
-  "sag_in": 0.2,
-  "sway_in": 0.07,
-  "base_M": 21.0,
-  "base_V": 4.1,
-  "base_vert": -3.8,
-  "axial": 3.8
+  "used": 19,
+  "sag_in": 0.17,
+  "sway_in": 0.06,
+  "base_M": 19.3,
+  "base_V": 3.8,
+  "base_vert": -4.2,
+  "axial": 4.2
  },
  "bay 12 ft | 12 in Sch 80 (12.75 x 0.500) | D + 0.75(0.6W) + 0.75Lr": {
-  "M": 25.7,
+  "M": 23.5,
   "cap": 99.2,
+  "used": 24,
+  "sag_in": 0.22,
+  "sway_in": 0.07,
+  "base_M": 13.2,
+  "base_V": 4.1,
+  "base_vert": 5.2,
+  "axial": 5.3
+ },
+ "purlin 6 in Sch 40 (6.625 x 0.280) @ 4 ft": {
+  "M": 8.6,
+  "cap": 14.9,
+  "used": 58,
+  "defl_in": 1.09,
+  "L_over": 265,
+  "lb_per_ft": 19.0,
+  "count": 12
+ },
+ "purlin 6 in Sch 40 (6.625 x 0.280) @ 5 ft": {
+  "M": 10.4,
+  "cap": 14.9,
+  "used": 70,
+  "defl_in": 1.32,
+  "L_over": 219,
+  "lb_per_ft": 19.0,
+  "count": 10
+ },
+ "purlin 6 in Sch 40 (6.625 x 0.280) @ 6 ft": {
+  "M": 12.2,
+  "cap": 14.9,
+  "used": 82,
+  "defl_in": 1.55,
+  "L_over": 186,
+  "lb_per_ft": 19.0,
+  "count": 9
+ },
+ "eave beam 6 in Sch 40 (6.625 x 0.280)": {
+  "M": 13.7,
+  "cap": 14.9,
+  "used": 92,
+  "defl_in": 1.74,
+  "L_over": 166
+ },
+ "purlin 8 in Sch 40 (8.625 x 0.322) @ 4 ft": {
+  "M": 9.3,
+  "cap": 29.4,
+  "used": 31,
+  "defl_in": 0.46,
+  "L_over": 631,
+  "lb_per_ft": 28.6,
+  "count": 12
+ },
+ "purlin 8 in Sch 40 (8.625 x 0.322) @ 5 ft": {
+  "M": 11.1,
+  "cap": 29.4,
+  "used": 38,
+  "defl_in": 0.55,
+  "L_over": 528,
+  "lb_per_ft": 28.6,
+  "count": 10
+ },
+ "purlin 8 in Sch 40 (8.625 x 0.322) @ 6 ft": {
+  "M": 12.9,
+  "cap": 29.4,
+  "used": 44,
+  "defl_in": 0.63,
+  "L_over": 454,
+  "lb_per_ft": 28.6,
+  "count": 9
+ },
+ "eave beam 8 in Sch 40 (8.625 x 0.322)": {
+  "M": 14.4,
+  "cap": 29.4,
+  "used": 49,
+  "defl_in": 0.71,
+  "L_over": 406
+ },
+ "purlin 10 in Sch 40 (10.75 x 0.365) @ 4 ft": {
+  "M": 10.1,
+  "cap": 52.3,
+  "used": 19,
+  "defl_in": 0.22,
+  "L_over": 1280,
+  "lb_per_ft": 40.5,
+  "count": 12
+ },
+ "purlin 10 in Sch 40 (10.75 x 0.365) @ 5 ft": {
+  "M": 11.9,
+  "cap": 52.3,
+  "used": 23,
+  "defl_in": 0.27,
+  "L_over": 1087,
+  "lb_per_ft": 40.5,
+  "count": 10
+ },
+ "purlin 10 in Sch 40 (10.75 x 0.365) @ 6 ft": {
+  "M": 13.7,
+  "cap": 52.3,
   "used": 26,
-  "sag_in": 0.26,
-  "sway_in": 0.08,
-  "base_M": 15.4,
-  "base_V": 4.5,
-  "base_vert": 5.0,
-  "axial": 5.1
+  "defl_in": 0.31,
+  "L_over": 944,
+  "lb_per_ft": 40.5,
+  "count": 9
+ },
+ "eave beam 10 in Sch 40 (10.75 x 0.365)": {
+  "M": 15.2,
+  "cap": 52.3,
+  "used": 29,
+  "defl_in": 0.34,
+  "L_over": 850
  }
 }

@@ -1,0 +1,515 @@
+<title>Topo Workflow Lessons</title>
+<style>
+:root{
+  --page:#dcdcd6;--paper:#f0f0ec;--panel:#e6e6e0;--ink:#1a1a18;--ink2:#454440;--ink3:#5c5b56;--line:#c8c8c2;
+  --accent:#C96B3A;--accent2:#924a24;--wash:#f3e4d8;--ai:#2f5d6e;--aiwash:#dde8ea;
+  --mono:'SF Mono','Cascadia Mono',Consolas,'Liberation Mono',Menlo,monospace;
+  --serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --page:#161615;--paper:#1f1f1e;--panel:#262624;--ink:#e6e5df;--ink2:#b8b7b0;--ink3:#9d9c95;--line:#3b3b38;
+  --accent:#e08a5a;--accent2:#f0a57a;--wash:#3a2a20;--ai:#8cc3d4;--aiwash:#1d2c31;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --page:#161615;--paper:#1f1f1e;--panel:#262624;--ink:#e6e5df;--ink2:#b8b7b0;--ink3:#9d9c95;--line:#3b3b38;
+  --accent:#e08a5a;--accent2:#f0a57a;--wash:#3a2a20;--ai:#8cc3d4;--aiwash:#1d2c31;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--mono);font-size:13.5px;line-height:1.6;padding:28px 16px 64px}
+.wrap{max-width:980px;margin:0 auto;background:var(--paper);border:1px solid var(--line);padding:32px clamp(16px,4vw,48px) 40px}
+.brand{font-size:12px;color:var(--ink3);letter-spacing:.04em}
+.brand b{color:var(--ink);font-weight:600}.brand i{color:var(--accent);font-style:normal}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,5vw,40px);line-height:1.1;margin:14px 0 10px;text-wrap:balance}
+h2{font-family:var(--serif);font-weight:500;font-size:26px;margin:0 0 6px;text-wrap:balance}
+h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);margin:0 0 6px;font-weight:600}
+p{margin:0 0 12px;max-width:68ch}
+.lede{font-family:var(--serif);font-size:18px;line-height:1.5;color:var(--ink2);max-width:62ch}
+hr{border:0;border-top:1px solid var(--line);margin:32px 0}
+a{color:var(--accent2)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);margin:18px 0}
+.split>div{background:var(--paper);padding:16px 18px}
+.split .you h3{color:var(--accent2)}.split .ai h3{color:var(--ai)}
+.split ul{margin:0;padding-left:18px}.split li{margin:3px 0}
+.loop{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:14px 0 4px;font-size:12.5px}
+.loop span{border:1px solid var(--line);padding:4px 10px;background:var(--panel)}
+.loop span.y{border-color:var(--accent);background:var(--wash)}.loop span.a{border-color:var(--ai);background:var(--aiwash)}
+.loop em{color:var(--ink3);font-style:normal}
+.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:10px}
+.modes div{border-left:2px solid var(--ai);padding:2px 0 2px 12px}
+.modes b{display:block;color:var(--ink)}
+.course{list-style:none;padding:0;margin:14px 0 0;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;counter-reset:s}
+.course li{border:1px solid var(--line);padding:10px 12px;font-size:12px;color:var(--ink3);counter-increment:s;background:var(--paper)}
+.course li::before{content:counter(s);display:block;font-family:var(--serif);font-size:22px;line-height:1;color:var(--ink3);margin-bottom:4px}
+.course li b{display:block;color:var(--ink2);font-weight:600}
+.course li.now{border-color:var(--accent);background:var(--wash);color:var(--ink2)}
+.course li.now::before{color:var(--accent)}
+.course li.now b{color:var(--ink)}
+.stephead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+.stephead .num{font-family:var(--serif);font-size:56px;line-height:.9;color:var(--accent)}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:16px 0 22px}
+.facts div{background:var(--panel);padding:10px 12px}
+.facts small{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)}
+.facts b{font-size:15px;font-variant-numeric:tabular-nums;font-weight:600}
+.sub{display:grid;grid-template-columns:150px 1fr;gap:10px 22px;padding:20px 0;border-top:1px solid var(--line)}
+.sub .tag{font-size:12px;color:var(--ink3)}
+.sub .tag b{display:block;font-family:var(--serif);font-size:19px;color:var(--ink);font-weight:500;line-height:1.2;margin-bottom:4px}
+.sub ol,.sub ul{margin:0 0 12px;padding-left:20px}.sub li{margin:3px 0;max-width:66ch}
+kbd{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line);border-bottom-width:2px;padding:0 5px;background:var(--panel);white-space:nowrap}
+figure{margin:12px 0 4px}
+figure img{display:block;width:100%;border:1px solid var(--line)}
+figcaption{font-size:11.5px;color:var(--ink3);margin-top:6px;max-width:80ch}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.say{border:1px solid var(--ai);background:var(--aiwash);padding:10px 12px 10px;margin:10px 0 4px;position:relative}
+.say small{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ai);margin-bottom:4px}
+.say p{margin:0;font-family:var(--serif);font-size:15.5px;line-height:1.45;color:var(--ink);padding-right:58px}
+.say button{position:absolute;top:8px;right:8px;font:inherit;font-size:11px;padding:3px 8px;border:1px solid var(--ai);background:transparent;color:var(--ai);cursor:pointer}
+.say button:hover,.say button:focus-visible{background:var(--ai);color:var(--paper);outline:none}
+.warn{border:1px solid var(--accent);background:var(--wash);padding:10px 14px;margin:10px 0}
+.warn b{color:var(--accent2)}
+.checks{list-style:none;padding:0;margin:0}
+.checks li{padding:8px 0 8px 26px;border-bottom:1px dashed var(--line);position:relative;max-width:none}
+.checks li::before{content:"";position:absolute;left:2px;top:13px;width:12px;height:12px;border:1.5px solid var(--ink2)}
+.checks li.flag::before{border-color:var(--accent);background:var(--wash)}
+.out{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.out div{border:1px solid var(--line);padding:10px 12px;font-size:12px}
+.out b{display:block;color:var(--ink);font-size:13px}
+code{font-family:var(--mono);font-size:12px;background:var(--panel);padding:0 4px;word-break:break-all}
+.note{font-size:11.5px;color:var(--ink3)}
+.next{margin-top:28px;padding:14px 16px;border:1px dashed var(--ink3);font-size:12.5px}
+.lens{font-family:var(--serif);font-style:italic;font-size:15px;color:var(--ink2);margin:14px 0 0;padding-left:14px;border-left:1px solid var(--accent);max-width:66ch}
+.lens b{font-style:normal;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);margin-right:6px}
+.course a{display:block;color:inherit;text-decoration:none}
+.course li:hover{border-color:var(--accent)}
+.step{scroll-margin-top:16px;margin-top:8px}
+.gal{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0 4px}
+.gal figure{margin:0}.gal img{aspect-ratio:3/2;object-fit:cover}
+.gal figcaption{margin-top:3px}
+.gal .bad img{outline:2px solid var(--accent);outline-offset:-2px}
+.tbl{overflow-x:auto;margin:8px 0 12px}
+.tbl table{border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;min-width:420px}
+.tbl th,.tbl td{text-align:left;padding:5px 12px 5px 0;border-bottom:1px solid var(--line)}
+.tbl th{font-weight:600;color:var(--ink3);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.est{font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor;padding:0 5px;color:var(--accent2);white-space:nowrap}
+.est.ok{color:var(--ai)}
+@media (max-width:760px){
+  .split,.modes,.pair{grid-template-columns:1fr}
+  .course{grid-template-columns:repeat(2,1fr)}
+  .facts,.out,.gal{grid-template-columns:repeat(2,1fr)}
+  .sub{grid-template-columns:1fr}
+}
+</style>
+
+<div class="wrap">
+  <div class="brand"><b>coyote_mountain</b><i>_topo</i> · workflow lessons · worked example: Centro Equino, Chichihuas</div>
+  <h1>From a place on the map to a finished site: a workflow lesson</h1>
+  <p class="lede">The topo app turns any place on Earth into a drawing sheet and a model you can grade, study and build. This course walks one real project, Centro Equino, an equestrian center, from the empty hillside to a saved project file, a rendering gallery and a laser-cut model.</p>
+
+  <hr>
+  <h3>What the app is</h3>
+  <p>One page, no install: <a href="https://coyotemountainfarm.com/topo.html">coyotemountainfarm.com/topo.html</a>. It fetches real ground (public elevation data and a satellite photo) for any place, then gives you four tasks down the left side. The course follows them top to bottom, with one exception: it reads the water in STUDY before shaping anything.</p>
+  <p><b>SITE</b>: where you are and how much ground. <b>SHAPE</b>: pads, roads, ditches, hand sculpting, plants, objects. <b>STUDY</b>: water, sun, sections. <b>MAKE</b>: renderings, drawing sheets, 3D prints, laser layers, files.</p>
+
+  <h3 style="margin-top:22px">How AI fits in</h3>
+  <p>The whole drawing is data: a grid of heights plus a list of shapes and objects. So Claude can work on it two ways. You decide what happens; Claude does the measuring and the repeating.</p>
+  <div class="modes">
+    <div><b>Watching: in your Chrome</b>Claude drives the open topo page while you watch it change. Best for layout and grading you want to react to live.</div>
+    <div><b>Heads-down: no browser needed</b>Claude runs the same math on the project file with small scripts: batch renderings, drainage checks, print packs, laser sheets. You get pictures back.</div>
+  </div>
+  <div class="split">
+    <div class="you"><h3>You: the taste work</h3><ul>
+      <li>Say what the site is for</li>
+      <li>Mark intent with the red pen (SHAPE → sketch)</li>
+      <li>Hand-sculpt where feel matters</li>
+      <li>Pick from the proof sheet</li></ul></div>
+    <div class="ai"><h3>Claude: the measurable work</h3><ul>
+      <li>Water analysis, cut and fill, grades</li>
+      <li>Turning red marks into exact roads and pads</li>
+      <li>Checking your sculpting still drains</li>
+      <li>Rendering batches, plan sheets, laser files</li></ul></div>
+  </div>
+  <p><b>The one rule:</b> every step ends in a picture you can react to, never a paragraph. That rule is what stops the conversation going in circles.</p>
+  <div class="loop"><span class="y">you mark intent</span><em>→</em><span class="a">Claude builds it</span><em>→</em><span class="a">shows a picture</span><em>→</em><span class="y">you react or sculpt</span><em>→</em><span class="a">Claude checks + saves</span></div>
+  <p class="lens"><b>permaculture lens</b>The order isn't arbitrary. It follows the old scale of permanence: deal first with what is hardest to change (the landform and its water), then access and buildings, then plants. Each step carries one quiet note like this one.</p>
+
+  <hr>
+  <h3>The course</h3>
+  <ol class="course">
+    <li><a href="#step1"><b>Get the land</b>fetch · size · rotate · lot line</a></li>
+    <li><a href="#step2"><b>Read the water</b>zoom out to the watershed, then flow</a></li>
+    <li><a href="#step3"><b>Program</b>red-pen sketch of what goes where</a></li>
+    <li><a href="#step4"><b>Place</b>barn, roads, fences, objects</a></li>
+    <li><a href="#step5"><b>Grade</b>Claude roughs in, you sculpt</a></li>
+    <li><a href="#step6"><b>Water again</b>does the design still drain?</a></li>
+    <li><a href="#step7"><b>Plant + proof</b>planting, then the rendering gallery</a></li>
+    <li><a href="#step8"><b>Make</b>project file, plan sheets, laser model</a></li>
+  </ol>
+
+  <hr>
+  <div class="stephead step" id="step1"><span class="num">1</span><div><h2>Get the land</h2><span class="note">Find the place, choose how much ground, turn the sheet, load the lot line, then lock it.</span></div></div>
+
+  <div class="facts">
+    <div><small>centre</small><b>31.99987, −116.76412</b></div>
+    <div><small>site width</small><b>400 m · 1,312 × 872 ft</b></div>
+    <div><small>rotation</small><b>318°</b></div>
+    <div><small>lot (KML)</small><b>9.59 ac · 3,092 ft</b></div>
+  </div>
+
+  <div class="warn"><b>Why this step comes first:</b> changing site width, rotation or detail later refetches the ground and <b>wipes all grading</b> (it also clears undo). Shapes and objects keep their places, but pads, roads and ditches have to be replayed. Get the frame right, then never touch it.</div>
+
+  <div class="sub">
+    <div class="tag"><b>1a · Find it</b>SITE → place</div>
+    <div>
+      <ol>
+        <li>Type a place name or <kbd>lat, lng</kbd> into <b>place or lat, lng</b> and press <kbd>fetch terrain</kbd>. For a ranch with no address, drop a pin in Google Maps and paste its numbers.</li>
+        <li>Or use <kbd>pick an area on a map</kbd> to drag a box instead.</li>
+        <li>The status line tells you the source. Centro Equino: <i>elevation tiles, 30 m or finer</i>, heights 1,058 to 1,218 ft. (US sites get USGS 3DEP, far sharper.)</li>
+      </ol>
+      <figure><img src="img/1a-fetched.jpg" alt="The topo app after fetching Centro Equino: contours over a satellite photo, the SITE panel on the left showing the place and elevation source" loading="lazy"><figcaption>Fetched at 0°, north up. The hill is on the right and the contours run top to bottom, across what will be the working direction of the site.</figcaption></figure>
+      <div class="say"><small>say to Claude</small><p>Here's a Google Maps pin for the site: [paste link]. Fetch it in the topo app at a width that holds the whole property with some margin, and show me a screenshot.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>1b · Size it</b>SITE → site width</div>
+    <div>
+      <ul>
+        <li>The sheet is always 3 wide by 2 tall. Width is set in metres: 400 m makes a 1,312 × 872 ft sheet.</li>
+        <li><b>Wider means coarser.</b> The grid is 150 × 100 points, so each cell here is about 8.8 ft. <kbd>detail 2×</kbd> halves that but makes every redraw 4× the work.</li>
+        <li>Rule of thumb: the lot plus about 10% on every side for the working frame. The water above the lot is measured separately with a zoom-out in step 2, before any grading.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>1c · Turn it</b>SITE → site rotation</div>
+    <div>
+      <ul>
+        <li>Turn the sheet so the site's long feature lies along it: the valley, the main road, the building's long axis. Centro Equino uses <b>318°</b>, which lays the slope and the road left to right.</li>
+        <li>The north arrow on the sheet turns with it. Every export (KML, GeoTIFF) still lands at true coordinates.</li>
+        <li>The slider refetches on release. Try a few angles <i>before</i> any grading.</li>
+      </ul>
+      <figure><img src="img/1b-rotated.jpg" alt="The same site turned to 318 degrees: contours now run left to right across the sheet with the hill along the bottom" loading="lazy"><figcaption>Turned to 318°: the contours now run along the sheet, the hill sits along the bottom, and the flat working ground fills the middle.</figcaption></figure>
+      <div class="say"><small>say to Claude</small><p>Try the site at three rotations that lay the main slope along the sheet, and show them side by side so I can pick one.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>1d · Lot line</b>SITE → lot and survey → kml / kmz / geojson</div>
+    <div>
+      <ul>
+        <li>Load the property line as a <b>KML, KMZ or GeoJSON</b> file. It pins to real coordinates, so it survives any later rotation. The terrain has to be fetched first.</li>
+        <li>Where the file comes from: a polygon drawn in Google Earth (right-click → save place as KMZ), the owner's survey, or a cadastral/RAN export. A KMZ can also carry an image overlay, like a scanned site plan, which gets pinned to its box.</li>
+        <li>Once loaded, the lot shows as a dashed line with its acreage. <kbd>trim to lot</kbd> cuts the 3D model, STL and laser layers to it while the plan keeps its context.</li>
+        <li><b>Centro Equino had no official file.</b> Will drew the boundary by hand on 22 Sep. For this lesson Claude converted that 3,096 ft loop into <code>projects/centro-equino-lot.kml</code> and loaded it back in to prove the round trip: 3,092 ft, 9.59 acres.</li>
+      </ul>
+      <figure><img src="img/1c-lot-kml.jpg" alt="The rotated site with the Centro Equino lot boundary loaded from KML, shown as a dash-dot line labelled lot 9.59 ac" loading="lazy"><figcaption>The KML loaded: lot · 9.59 ac. Look at the east corner, where the lot touches the edge of the sheet. See the checks below.</figcaption></figure>
+      <div class="say"><small>say to Claude</small><p>Here's the lot line [KMZ / survey PDF / photo of the plat]. Turn it into a KML, load it into the topo app, and tell me the acreage and perimeter so I can check them against the deed.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>1e · Lock + save</b>project → copy link, save</div>
+    <div>
+      <ul>
+        <li><kbd>copy a link</kbd> stores the place, width, rotation, units and lot line in a URL. Centro Equino's frame:<br><code>coyotemountainfarm.com/topo.html?lat=31.999873&amp;lon=-116.764125&amp;w=400&amp;rot=318&amp;u=ft&amp;name=Centro%20Equino</code></li>
+        <li><kbd>save</kbd> downloads the project file (<code>.json</code>). The drawing lives in your browser; this file is the backup and the thing you hand to Claude or to the client.</li>
+        <li>Keep only one topo tab open. An old tab can save over the new drawing.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>Check before moving on</b>the picture test</div>
+    <div>
+      <ul class="checks">
+        <li><b>Photo and contours agree.</b> Roads should sit in the draws they follow. <code>check-road.html</code> overlays the drawing on live imagery. The app shows Esri zoom 18. Zoom 19 sits about 13 ft off here, so fit things to the photo the app shows.</li>
+        <li class="flag"><b>The lot sits inside the sheet with margin.</b> Centro Equino's east corner touches the edge at 400 m. On a new site, go to about 450 m now. Here, grading already exists, so the frame stays.</li>
+        <li class="flag"><b>The blue patch is real water or not.</b> At the west edge the app has flagged flat low ground as water. Compare it with the photo; if it's dry, <kbd>raw ground</kbd> turns it off.</li>
+        <li><b>Know the ground's limits.</b> 30 m public data has several feet of vertical error and can't see road cuts or terraces. Volumes are planning numbers, ±30–50%. A drone survey (SITE → lot and survey → drone survey DEM) is the real fix and can be loaded later without a refetch.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>You finish with</b>step 1 outputs</div>
+    <div class="out">
+      <div><b>Share link</b>place + frame in one URL</div>
+      <div><b>Project file</b>the empty, framed site</div>
+      <div><b>Lot KML</b>boundary with acreage</div>
+      <div><b>3 pictures</b>fetched · turned · with lot</div>
+    </div>
+  </div>
+
+  <p class="lens"><b>permaculture lens</b>Observe before you act. The frame is how you look at the land, so it should include the neighbours' hill, not just your fence line.</p>
+
+  <!-- ============ STEP 2 ============ -->
+  <hr>
+  <div class="stephead step" id="step2"><span class="num">2</span><div><h2>Read the water</h2><span class="note">Zoom out to find every acre that drains onto you, then zoom back in and trace where it goes.</span></div></div>
+
+  <div class="facts">
+    <div><small>watershed into the lot</small><b>≈ 15.6 ac</b></div>
+    <div><small>seen at 400 m</small><b>≈ 7.7 ac (half)</b></div>
+    <div><small>frame that holds it</small><b>1,600 m</b></div>
+    <div><small>main exit</small><b>west fence</b></div>
+  </div>
+
+  <div class="warn"><b>Zoom out first, before any drawing.</b> The water on a site is set by the ground <i>above</i> it, and that is usually off the sheet. Widening the site later wipes grading, so do the watershed pass now while there is nothing to lose. Shapes and the KML lot line are pinned to real coordinates, so they come back with you.</div>
+
+  <div class="sub">
+    <div class="tag"><b>2a · The trap</b>STUDY → water, at 400 m</div>
+    <div>
+      <p>At the working frame the catchments run off the sheet edges. Every number on them is cut short. On this sheet only about 7.7 acres of hill appear to drain onto the lot.</p>
+      <figure><img src="img/2a-400m.jpg" alt="Water analysis at the 400 metre frame: coloured catchments with acre labels, all clipped by the sheet edges" loading="lazy"><figcaption>Flow lines and catchments at 400 m. The catchments touch the sheet edge, so their acreages are incomplete.</figcaption></figure>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>2b · Zoom out</b>site width → 1,600 m</div>
+    <div>
+      <ol>
+        <li>Widen the site (the zoom-out button doubles it, or type a width) until no catchment that touches the lot runs off the sheet. Here 1,600 m was enough.</li>
+        <li>Read the big picture. The lot sits low in a ~262-acre catchment that drains west, with a steep scrub hill to the south-east.</li>
+        <li>Ask Claude for the one number that matters: <b>how many acres drain into the lot line</b>. Answer here: about 15.6 acres, all from that hill, starting roughly 1,300 ft upslope.</li>
+        <li>Trace that watershed as a shape (it stays pinned when you zoom back), then return to 400 m.</li>
+      </ol>
+      <div class="pair">
+        <figure><img src="img/2b-1600m.jpg" alt="Water analysis at 1,600 metres: the lot small in the centre inside a large tan catchment, pond sites marked" loading="lazy"><figcaption>The same site at 1,600 m. Now every catchment around the lot is whole.</figcaption></figure>
+        <figure><img src="img/2c-watershed.jpg" alt="Diagram: hillshade with the 15.6 acre watershed in blue extending south-east well outside the orange 400 metre working frame" loading="lazy"><figcaption>Claude's check: the watershed (blue) runs far outside the 400 m frame (orange). Computed from the app's own heights.</figcaption></figure>
+      </div>
+      <div class="say"><small>say to Claude</small><p>Before we design anything, zoom out until the whole watershed above my lot is on the sheet. Tell me how many acres drain into the lot line and where they enter, draw that watershed as a shape, then bring me back to the working frame.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>2c · Trace it</b>flow · catchments · rain</div>
+    <div>
+      <ul>
+        <li>Back at 400 m, turn on <kbd>flow</kbd> and <kbd>catchments</kbd> only. Keypoints, keyline and dam site are for later. Press <kbd>rain (r)</kbd> and watch where the drops go and where they pool.</li>
+        <li>Centro Equino's reading: <b>one flow matters.</b> The hill's water crosses the road at the bend by the paddocks, runs through the track infield and leaves by the west fence. Everything in steps 3–6 was built around that line.</li>
+        <li>Claude writes it up as a one-page water plan. Centro Equino's is <a href="https://claude.ai/artifact/3aVtBDrvF5LAYf6XwhSamw">here</a>, bilingual.</li>
+      </ul>
+      <div class="say"><small>say to Claude</small><p>Run the water analysis on the natural ground. Show me flow and catchments only, then tell me in two sentences which flow matters most and where it crosses the lot.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+  <p class="lens"><b>permaculture lens</b>Water comes right after landform on the scale of permanence. Catch it high, slow it, spread it, sink it. You can't do any of that until you know where it enters.</p>
+
+  <!-- ============ STEP 3 ============ -->
+  <hr>
+  <div class="stephead step" id="step3"><span class="num">3</span><div><h2>Program</h2><span class="note">What goes where, drawn roughly in red, before anything is exact.</span></div></div>
+
+  <div class="sub">
+    <div class="tag"><b>3a · Loose lines</b>SHAPE → sketch, red pen</div>
+    <div>
+      <ul>
+        <li><b>For roads and paths, draw them loosely.</b> Wobbly freehand is fine: follow the ground and the existing tracks in the photo, mark gates with a small circle, parking with small boxes, a fence with dashes.</li>
+        <li>Then say what each mark means: "red lines are 12 ft truck roads, this one is a 5 ft walking path, the dashes are a fence." Claude straightens and grades each one into a road that fits the ground.</li>
+      </ul>
+      <figure><img src="img/3a-program.jpg" alt="Red freehand markup on natural ground: loose lines and loops for the dirt roads, ring roads and paths, small boxes for parking, and a dashed cross fence" loading="lazy"><figcaption>The actual red markup for the roads and paths (22–23 Sep), on the natural ground: loose freehand lines along the existing dirt tracks, the loops that became the ring roads around the arena and round pen, the road around the west field, small boxes for parking and a dashed cross fence. Rough on purpose.</figcaption></figure>
+      <div class="say"><small>say to Claude</small><p>Read my red lines. They're dirt roads and paths: make them 12 ft truck roads, except the one from parking to the barn, which is a 5 ft walking path. The dashed line is a fence. Tell me what you think each mark is before you build anything.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>3b · Exact shapes</b>ask Claude for sizes</div>
+    <div>
+      <ul>
+        <li><b>For anything with a real size, don't draw it; ask for it.</b> An arena, a round pen, a riding track, a barn footprint, paddocks: name the type, the size and roughly where. Claude draws the exact geometry, and you move it if it's wrong.</li>
+        <li>This is where AI saves the most time. A stadium-shaped arena with 39 ft ends, or a 1,200 ft track with 60 ft corner radii, is tedious to draw by hand and one sentence to ask for.</li>
+      </ul>
+      <div class="tbl"><table>
+        <tr><th>what you asked for</th><th>what Claude drew</th></tr>
+        <tr><td>an oval arena</td><td>182 × 78 ft stadium, 39 ft ends</td></tr>
+        <tr><td>a round pen</td><td>60 ft circle</td></tr>
+        <tr><td>a riding track around the outside</td><td>12 ft wide loop, 60 ft corner radii, about 1,200 ft</td></tr>
+        <tr><td>the barn</td><td>72 × 40 ft footprint, turned to the slope</td></tr>
+        <tr><td>outdoor paddocks</td><td>4 paddocks, 67.5 × 75 ft each</td></tr>
+      </table></div>
+      <figure><img src="img/3b-shapes.jpg" alt="Clean geometric shapes on natural ground: a rounded rectangular riding track loop on the west, a stadium-shaped arena, a circular round pen, a turned barn rectangle and a paddock rectangle" loading="lazy"><figcaption>The same site with the exact shapes Claude drew on request: the track loop, the stadium arena, the 60 ft round pen, the barn footprint and the paddock block. Still on natural ground: nothing is graded yet.</figcaption></figure>
+      <div class="say"><small>say to Claude</small><p>Draw an oval arena 182 × 78 ft with rounded ends, centred where my red loop is. Add a 60 ft round pen south of it, and a 12 ft riding track around the west field with 60 ft corner radii. Give me the lengths and areas, and show me the plan.</p><button type="button">copy</button></div>
+      <p class="note">The measure tool (SHAPE → measure) and typed sizes on the line, rectangle and circle tools do the same by hand if you prefer.</p>
+    </div>
+  </div>
+  <p class="lens"><b>permaculture lens</b>Zones by how often you visit. The barn, trough and parking are daily, so they sit close together. Paddocks and track are regular. The scrub hill is left wild, and it is also the watershed.</p>
+
+  <!-- ============ STEP 4 ============ -->
+  <hr>
+  <div class="stephead step" id="step4"><span class="num">4</span><div><h2>Place</h2><span class="note">Turn the marks into real objects and roads, still on natural ground.</span></div></div>
+
+  <div class="sub">
+    <div class="tag"><b>4a · Build the marks</b>path · object · select</div>
+    <div>
+      <ul>
+        <li>Claude turns red lines into <b>path</b> strokes: 12 ft truck roads, a 5 ft walking path, the riding track.</li>
+        <li>Buildings and fences come in as <b>objects</b> (OBJ files Claude generates from dimensions): the barn, four paddocks with shade stalls, and fences that follow the ground with gate openings.</li>
+        <li>Nothing is graded yet. Cut and fill still read 0. You can move things freely with <kbd>select</kbd>: drag, turn, <kbd>[</kbd> <kbd>]</kbd> to scale.</li>
+      </ul>
+      <figure><img src="img/4a-place.jpg" alt="Roads, arena, round pen, barn circle, paddocks and fences placed on the ungraded natural contours" loading="lazy"><figcaption>Everything placed, nothing graded. The bottom bar still reads cut 0 / fill 0. This is the cheapest moment to move things.</figcaption></figure>
+      <div class="say"><small>say to Claude</small><p>Build my marks: roads as 12 ft paths, the barn as an object at its real size, fences draped on the ground with gates where I drew circles. Don't grade anything yet. Show me the plan.</p><button type="button">copy</button></div>
+      <ul class="checks">
+        <li class="flag"><b>One topo tab only, and save before big changes.</b> At Centro Equino an undo silently removed the site fence and the paddocks mid-session. Ask Claude to list what's in the drawing before it assumes something is there.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="lens"><b>permaculture lens</b>Stack functions. The barn roof is also a water catchment: about 2,000 gallons per inch of rain, piped to the stone trough beside it.</p>
+
+  <!-- ============ STEP 5 ============ -->
+  <hr>
+  <div class="stephead step" id="step5"><span class="num">5</span><div><h2>Grade</h2><span class="note">Claude roughs in the pads and roads to numbers; you sculpt the places that need a hand.</span></div></div>
+
+  <div class="sub">
+    <div class="tag"><b>5a · Rough in</b>pad · path · ditch and berm</div>
+    <div>
+      <p>Claude grades in a fixed order so the pads stay flat. <b>Replay order: reset → roads → pads → ditches → trough apron.</b> Each pad is balanced (cut ≈ fill) with soft edges.</p>
+      <div class="tbl"><table>
+        <tr><th>pad</th><th>level</th><th>fall</th></tr>
+        <tr><td>barn + runs</td><td>1,087.6 ft</td><td>1%</td></tr>
+        <tr><td>paddocks</td><td>1,082.5 ft</td><td>1%</td></tr>
+        <tr><td>round pen</td><td>1,080.6 ft</td><td>1%</td></tr>
+        <tr><td>arena</td><td>1,073.3 ft</td><td>1%</td></tr>
+        <tr><td>parking</td><td>1,102.4 ft</td><td>follows ground</td></tr>
+      </table></div>
+      <div class="pair">
+        <figure><img src="img/5a-grade.jpg" alt="Graded plan: finished contours around flat pads, ember fill wash and grey cut, roads and fences" loading="lazy"><figcaption>Graded plan. Ember wash is fill, grey is cut. Bottom bar: cut 4,800 yd³ / fill 4,600 yd³.</figcaption></figure>
+        <figure><img src="img/5b-grade-3d.jpg" alt="3D axon view of the graded site: barn, paddocks with shade stalls, arena, round pen, fences" loading="lazy"><figcaption>The same design in 3D. Orbit it and ask "does this feel right?", not "are the numbers right?"</figcaption></figure>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>5b · You sculpt</b>SHAPE → sculpt</div>
+    <div>
+      <ul>
+        <li>Raise, lower, smooth, flatten with a brush, in plan or 3D. This is the part that should feel like clay: berms that curve, a softer bank, a mound for shade trees.</li>
+        <li>Then hand it back: "check my sculpting." Claude re-measures cut and fill, re-runs the water (step 6), and snapshots before touching anything.</li>
+      </ul>
+      <figure><img src="img/5c-grading-plan.jpg" alt="Print pack page 4: bilingual grading plan with finished contours, pads, and a pad schedule" loading="lazy"><figcaption>What grading becomes on paper: pack page 4, the bilingual grading plan.</figcaption></figure>
+      <div class="say"><small>say to Claude</small><p>Grade the pads balanced with soft edges, then the roads with a 2.5% cap on the track. Give me cut and fill per pad and a 3D view. After that I'll sculpt; then check that my sculpting still drains.</p><button type="button">copy</button></div>
+      <ul class="checks">
+        <li class="flag"><b>Volumes are ±30–50%</b> on 30 m public terrain. Good for planning and balance; not for a contractor's bid. A drone survey fixes it, and the pads can be re-cut in minutes on the new ground. <span class="est">estimate</span></li>
+      </ul>
+    </div>
+  </div>
+  <p class="lens"><b>permaculture lens</b>Least change for the most effect. A balanced cut and fill keeps every yard of soil on site, with nothing trucked in or out.</p>
+
+  <!-- ============ STEP 6 ============ -->
+  <hr>
+  <div class="stephead step" id="step6"><span class="num">6</span><div><h2>Water again</h2><span class="note">The step people skip. Run step 2 again on the finished ground.</span></div></div>
+
+  <div class="sub">
+    <div class="tag"><b>6a · Re-read</b>STUDY → water, graded</div>
+    <div>
+      <ul>
+        <li>Pads and roads change where water goes. Re-run flow and catchments on the graded ground and compare with step 2.</li>
+        <li>Every place a road crosses a flow gets a <b>culvert</b> (7 at Centro Equino). Every ditch needs a <b>safe outlet</b>: an open item on 9/22 was a swale that dumped everything at one point and would cut a gully.</li>
+        <li>Centro Equino's answer: a grassed waterway in two legs, an infield basin, a barn diversion, and a <b>natural water sink at the track's south-east end</b> instead of a dug pond.</li>
+      </ul>
+      <div class="pair">
+        <figure><img src="img/6a-water.jpg" alt="Water analysis on the graded design: catchment wash with culvert marks at road crossings" loading="lazy"><figcaption>The app's water analysis on the graded ground, with culvert marks at the crossings.</figcaption></figure>
+        <figure><img src="img/6b-drainage.jpg" alt="Print pack page 6: bilingual drainage plan with flow arrows, waterway, basin, culverts and numbered notes" loading="lazy"><figcaption>Drainage plan D-1 (pack page 6): flow arrows, the waterway, basin and culverts, with numbered notes.</figcaption></figure>
+      </div>
+      <figure><img src="img/6c-sections.jpg" alt="Print pack page 7: three grading sections with existing ground dashed and finished grade solid" loading="lazy"><figcaption>Sections through the heaviest grading (pack page 7): existing ground dashed, finished grade solid.</figcaption></figure>
+      <div class="say"><small>say to Claude</small><p>Re-run the water on the graded design and compare it with the natural ground. Show me every place a road crosses a flow and every ditch outlet, and tell me which one would erode first.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+  <p class="lens"><b>permaculture lens</b>The problem is the solution. The low corner where water gathers became the water sink the design is built around.</p>
+
+  <!-- ============ STEP 7 ============ -->
+  <hr>
+  <div class="stephead step" id="step7"><span class="num">7</span><div><h2>Plant + proof</h2><span class="note">Put plants where the water now goes, then paint the design from every angle.</span></div></div>
+
+  <div class="sub">
+    <div class="tag"><b>7a · Plant</b>SHAPE → plant · agroforestry · STUDY → what grows where</div>
+    <div>
+      <ul>
+        <li>Plants follow the water from step 6: trees along the waterway and below the sink, shade trees beside the paddocks, hedges on the fence line against the wind.</li>
+        <li><kbd>what grows where</kbd> reads each plant in the library against slope, sun side, wetness and frost pockets. <kbd>agroforestry</kbd> grows the rows with a year slider.</li>
+      </ul>
+      <ul class="checks">
+        <li class="flag"><b>Honest gap in the example:</b> Centro Equino has not been planted yet. Traced vineyard rows were tried and rejected twice. This sub-step is the one to do next on the real project. <span class="est">not done</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>7b · Proof sheet</b>MAKE → paint · check the painting</div>
+    <div>
+      <p>Claude sets up a batch: top, 3/4, eye level, low golden hour, green season, and the white site model, with different painters and reference images. About 45 paintings came out of Centro Equino, <b>and every one was kept</b>, good and bad.</p>
+      <div class="gal">
+        <figure><img src="img/7-r45.jpg" alt="Top view, golden light" loading="lazy"><figcaption>top · golden</figcaption></figure>
+        <figure><img src="img/7-r07.jpg" alt="Three-quarter view toward the barn" loading="lazy"><figcaption>3/4 · barn</figcaption></figure>
+        <figure><img src="img/7-r08.jpg" alt="Oblique aerial of the whole site" loading="lazy"><figcaption>oblique</figcaption></figure>
+        <figure><img src="img/7-r26.jpg" alt="Close view of the barn, arena and fences" loading="lazy"><figcaption>close · arena</figcaption></figure>
+        <figure><img src="img/7-r27.jpg" alt="Eye-level view across the site toward the barn" loading="lazy"><figcaption>eye level</figcaption></figure>
+        <figure><img src="img/7-r36.jpg" alt="Painted plan view" loading="lazy"><figcaption>plan · painted</figcaption></figure>
+        <figure><img src="img/7-r20.jpg" alt="White site model on a table in a vineyard at sunset" loading="lazy"><figcaption>white model · vineyard</figcaption></figure>
+        <figure><img src="img/7-r24.jpg" alt="White site model under a stormy sky" loading="lazy"><figcaption>white model · storm</figcaption></figure>
+        <figure><img src="img/7-r23.jpg" alt="White site model at sunset" loading="lazy"><figcaption>white model · dusk</figcaption></figure>
+        <figure><img src="img/7-r00.jpg" alt="Top view, late light" loading="lazy"><figcaption>top · late</figcaption></figure>
+        <figure><img src="img/7-r47.jpg" alt="Top view in green season" loading="lazy"><figcaption>top · green</figcaption></figure>
+        <figure class="bad"><img src="img/7-r17.jpg" alt="Low sunset view where the painter invented a river along the model edge" loading="lazy"><figcaption>drift: invented a river</figcaption></figure>
+      </div>
+      <p class="note">Outlined: the painter read the grey model edge as water and invented a river. <kbd>check the painting</kbd> compares each painting with the model and lists what drifted, so you can paint again with fixes.</p>
+      <ul>
+        <li><b>What worked:</b> gpt-image-2 holds the layout better than Gemini. A top-view barn reference image tagged "the building" stops the barn coming out wrong. Frame out the model edge. Low camera angles make the sky read as real.</li>
+        <li><b>Masked edit</b> fixes one spot without repainting the whole picture.</li>
+      </ul>
+      <div class="say"><small>say to Claude</small><p>Paint a proof sheet: top, 3/4, eye level and white site model, at midday, golden hour and green season, with the barn reference image. Check each painting against the model, keep every one, and give me a gallery so I can pick.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+  <p class="lens"><b>permaculture lens</b>Plants go in last because they are the easiest thing to change. They are also what the place will be remembered for, so the proof sheet shows seasons, not just one day.</p>
+
+  <!-- ============ STEP 8 ============ -->
+  <hr>
+  <div class="stephead step" id="step8"><span class="num">8</span><div><h2>Make</h2><span class="note">The finished products: pick one or all three.</span></div></div>
+
+  <div class="sub">
+    <div class="tag"><b>8a · Project file</b>project → save</div>
+    <div>
+      <p>The <code>.json</code> holds the ground, the grading, every shape and object. It's what you hand to the client, reopen next season, or give Claude for any script. Centro Equino: <code>centro-equino-final-2026-09-24.json</code>. Load it in the app with <kbd>project</kbd> → open.</p>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>8b · Plan sheets</b>bilingual 11 × 17 pack</div>
+    <div>
+      <p>Claude builds the print pack from the project file with scripts: cover, plan, existing topo, grading plan, an operator's stake sheet, drainage, sections, views, stable plans and structure. 18 pages, Spanish first, English italic.</p>
+      <div class="pair">
+        <figure><img src="img/8a-operator.jpg" alt="Pack page 5: the operator's grading sheet with a 50 foot stake grid and cut and fill per stake" loading="lazy"><figcaption>Page 5, for the machine operator: a 50 ft A–Z / 1–17 stake grid with cut or fill at every stake.</figcaption></figure>
+        <figure><img src="img/8d-structure.jpg" alt="Pack page 14: stable structure with pipe portal frames, rock wall and stick wall" loading="lazy"><figcaption>Page 14: the stable's pipe portal frames. Feasibility only; a Mexican structural engineer signs off.</figcaption></figure>
+      </div>
+      <div class="say"><small>say to Claude</small><p>Build the print pack from the final project file: 11 × 17, bilingual, with grading, drainage, sections, an operator stake sheet and the best renderings. Share it as a Drive link; it's too big to email.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>8c · Laser model</b>MAKE → laser-cut model</div>
+    <div>
+      <p>The graded ground as stacked board. Centro Equino: <b>49 layers of 1/8 in board, 1 in = 40 ft, 5× vertical</b>, about 28 × 15 × 6 in, on 19 sheets of 32 × 18 in. Red cuts, blue scores the next layer's glue line and the design, green scores the stake grid, and each layer is labelled with its elevation.</p>
+      <div class="pair">
+        <figure><img src="img/8b-preview-stepped.jpg" alt="Stacked model preview: 49 layers shaded from dark orange to pale, with the pads, roads, arena and barn outlined" loading="lazy"><figcaption>Preview of the stack before cutting: each band is one 1/8 in layer.</figcaption></figure>
+        <figure><img src="img/8b-preview-sheets.jpg" alt="Laser cut sheets laid out, with hollow ring layers nested for cutting" loading="lazy"><figcaption>The cut sheets. Hollow rings with glue lips save board; most sheets are edge frames.</figcaption></figure>
+      </div>
+      <div class="say"><small>say to Claude</small><p>Make the laser-cut site model from the final grading: 1/8 in board, fenced site plus 20 ft, 1 in = 40 ft, hollow layers, with the pads and roads scored. Show me the stacked preview before I cut.</p><button type="button">copy</button></div>
+    </div>
+  </div>
+
+  <div class="sub">
+    <div class="tag"><b>You finish with</b>the whole course</div>
+    <div class="out">
+      <div><b>Project file</b>ground, grading, every object</div>
+      <div><b>Water plan</b>watershed, flows, outlets</div>
+      <div><b>Proof sheet</b>renderings, good and bad</div>
+      <div><b>Pack + model</b>sheets to build from, board to cut</div>
+    </div>
+  </div>
+  <p class="lens"><b>permaculture lens</b>Produce no waste. Keep every rendering and every version of the file. The rejected vineyard rows are still saved in case they come back.</p>
+
+  <div class="next"><b>Measured vs estimated.</b> <span class="est ok">measured</span> site frame, lot acreage, pad levels, road lines fitted to the app's own photo. <span class="est">estimate</span> the watershed acreage, cut and fill, storm flows: all on 30 m public terrain, ±30–50%. A drone survey (SITE → lot and survey) upgrades every number without redrawing.</div>
+</div>
+
+<script>
+document.querySelectorAll('.say button').forEach(b => b.addEventListener('click', () => {
+  const t = b.parentElement.querySelector('p').textContent;
+  const done = () => { b.textContent = 'copied'; setTimeout(() => b.textContent = 'copy', 1400); };
+  const pick = () => { const r = document.createRange(); r.selectNodeContents(b.parentElement.querySelector('p')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'selected'; };
+  try { navigator.clipboard.writeText(t).then(done, pick); } catch (_) { pick(); }
+}));
+</script>

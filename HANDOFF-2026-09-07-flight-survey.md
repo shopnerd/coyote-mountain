@@ -13,7 +13,7 @@ Will runs a small creative web studio at https://coyotemountainfarm.com for his 
 
 Will does not own a drone right now. He asked for the planner to cover the DJI Mavic Pro and Mini families so it's ready when he buys one.
 
-Will also has a real drone survey of Encino Solo, made with DroneDeploy, sitting in Google Drive at `MEXICO (1)/DroneDeploy/`. He wants a workflow to import high-resolution drone surveys into the topo tool.
+Will also has a real drone survey of Encino Solo, made with DroneDeploy, sitting in Google Drive at `MEXICO/DroneDeploy/`. He wants a workflow to import high-resolution drone surveys into the topo tool.
 
 ## 2. The flight planner (flight.html), as built
 
@@ -81,7 +81,7 @@ My answer: photogrammetry software reconstructs camera positions and the surface
 
 ## 4. The Encino Solo DroneDeploy export, inspected
 
-Folder: `C:\Users\zolar\Google Drive\MEXICO (1)\DroneDeploy\`. Export timestamps say "TueMar19", files dated August 2022.
+Folder: `C:\Users\zolar\Google Drive\MEXICO\DroneDeploy\`. Export timestamps say "TueMar19", files dated August 2022.
 
 What's there and what each actually is (read from the file headers, not from the file names):
 
@@ -99,7 +99,7 @@ Footprint check: the elevation LatLonBox is 405.1 x 437.5 m, the mesh bounding b
 
 ## 5. Derived products, made today
 
-All in `MEXICO (1)\DroneDeploy\coyote-studio-import\` with a README. Scripts need only Python with numpy and Pillow.
+All in `MEXICO\DroneDeploy\coyote-studio-import\` with a README. Scripts need only Python with numpy and Pillow.
 
 - `encino-heightfield.npy` + `.json`: the mesh rasterised onto a 0.5 m grid, 804 x 862 cells, NaN outside the survey. Made by sampling every triangle on a barycentric lattice at half-cell spacing and keeping the maximum height per cell (`mesh2grid.py`). Coverage is 50.8% of the bounding box, which is the rotated rectangle. Small gaps were filled by six passes of neighbour averaging.
 - Georeference: I assumed the mesh bounding-box centre coincides with the DroneDeploy elevation LatLonBox centre (32.014699, -116.777974). Estimated uncertainty about 2 m horizontally.

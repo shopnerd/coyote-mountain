@@ -19,7 +19,7 @@ def tblock(fig,num,es,en,dark=False):
     if not dark: fig.add_artist(matplotlib.lines.Line2D([0.02,0.98],[0.055,0.055],color=INK,lw=.8))
     fig.text(0.02,0.025,'CENTRO EQUINO · CHICHIHUAS',fontsize=10,weight='bold',color=c)
     fig.text(0.215,0.025,f'{es}  ·  {en}',fontsize=10,color=c)
-    fig.text(0.70,0.025,'Diseño preliminar · Preliminary design · 23 sep 2026',fontsize=8.5,color=m)
+    fig.text(0.70,0.025,'Diseño preliminar · Preliminary design · 24 sep 2026',fontsize=8.5,color=m)
     fig.text(0.98,0.022,f'{num:02d}',fontsize=18,weight='bold',color=CLAY,ha='right')
 def heading(fig,es,en,y=0.945):
     fig.text(0.02,y,es,fontsize=24,weight='bold',color=INK); fig.text(0.02,y-0.033,en,fontsize=14,color=MUTED,style='italic')
@@ -48,7 +48,7 @@ def cover(win):
 def planview(n):
     fig=newpage(); heading(fig,'Vista en planta','Plan view')
     ax=fig.add_axes([0.02,0.075,0.70,0.81]); ax.imshow(img(n)); ax.axis('off')
-    items=[('Establo principal','Main stable','76 × 42 ft · muros de piedra a 4.5 ft, varas apiladas arriba, techo azul cielo · 10 caballerizas con corral de 12 × 30 ft','stone to 4.5 ft, stacked sticks above, sky-blue roof · 10 stalls, each with a 12 × 30 ft run'),
+    items=[('Establo principal','Main stable','72 × 40 ft · marcos de tubo a la vista, piedra a 4.5 ft, varas de tomate arriba, techo azul cielo con tragaluces · 6 caballerizas con corral de 12 × 40 ft','72 × 40 ft · exposed pipe frames, rock to 4.5 ft, tomato stakes above, sky-blue roof with skylights · 6 stalls, each with a 12 × 40 ft run'),
            ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
            ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),
@@ -108,7 +108,7 @@ def grading():
         if s.get('kind')=='path':
             P=np.array([q[:2] for q in s['pts']]); w=(s.get('pw',3.66)/FT)/cf
             ax.plot(P[:,0],P[:,1],color='#c9b48f',lw=max(1.2,w*4.6),alpha=.55,solid_capstyle='round',zorder=4)
-    for nm in ('walker barn 76x42','four paddocks','stone trough 12x4','trailer 8 x 40'):
+    for nm in ('walker barn 72x40','four paddocks','stone trough 12x4','trailer 8 x 40'):
         for s in byname(nm):
             P=np.array(foot(s)+[foot(s)[0]]); ax.fill(P[:,0],P[:,1],color='white',alpha=.9,zorder=5); ax.plot(P[:,0],P[:,1],color=INK,lw=.9,zorder=6)
     for i in (1,2):
@@ -163,7 +163,7 @@ def text_refs():
     fig=newpage(); heading(fig,'Texto y referencias','Text and references')
     y=0.85
     blocks=[('La idea','The idea','Un centro ecuestre sencillo y bien cuidado en el valle: un establo de piedra y varas bajo un techo azul, corrales abiertos, una pista oval, un corral redondo y una pista de trote que aprovecha el camino existente. Todo acomodado a la pendiente natural, con el agua de lluvia guiada y guardada en lugar de dejarla correr.','A simple, well-kept equestrian centre in the valley: a stone-and-stick stable under a blue roof, open paddocks, an oval arena, a round pen and a riding track that uses the existing road. Everything sits into the natural slope, and rainwater is guided and kept instead of left to run off.'),
-            ('Materiales','Materials','Piedra del lugar hasta 4.5 ft; arriba, varas apiladas en horizontal como nido de pájaro; lámina metálica azul cielo; cercas de tubo pintado de blanco; caminos de tierra compactada; arena rastrillada en pista y corral.','Local fieldstone to 4.5 ft; above it, sticks stacked horizontally like a bird\'s nest; sky-blue metal roofing; white-painted pipe fencing; compacted dirt roads; raked sand in the arena and round pen.'),
+            ('Materiales','Materials','Marcos de tubo de acero de 12 in a la vista; piedra del lugar apilada hasta 4.5 ft; arriba, varas de tomate en horizontal; lámina metálica azul cielo con tragaluces; cercas de tubo pintado de blanco; caminos de tierra compactada; arena rastrillada en pista y corral.','Local fieldstone to 4.5 ft; above it, sticks stacked horizontally like a bird\'s nest; sky-blue metal roofing; white-painted pipe fencing; compacted dirt roads; raked sand in the arena and round pen.'),
             ('Agua','Water','El techo del establo alimenta el bebedero largo; el agua del cerro se lleva por un canal empastado a un bajo natural junto a los corrales; el excedente sale al oeste.','The stable roof feeds the long trough; hillside water runs down a grassed waterway to a natural low spot beside the paddocks; overflow leaves to the west.')]
     for tes,ten,bes,ben in blocks:
         fig.text(0.02,y,f'{tes} · {ten}',fontsize=13,weight='bold',color=INK); y-=.028
@@ -180,30 +180,46 @@ def barn_plan():
     fig=newpage(); heading(fig,'Planos arquitectónicos · Establo','Architectural drawings · Stable')
     ax=fig.add_axes([0.03,0.1,0.62,0.76]); ax.set_aspect('equal'); ax.axis('off')
     Rect=matplotlib.patches.Rectangle
-    L,D,RUN,ST,AI=76,42,30,12,14
+    L,D,RUN,ST,AI=72,40,40,12,14; HL,HD=L/2,D/2; RD=(D-AI)/2
     for k in range(6):
-        x=-36+12*k; ax.add_patch(Rect((x,21),12,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,21+RUN/2,'corral\nrun\n12×30',ha='center',va='center',fontsize=6.5,color=MUTED)
-    for k in range(2,6):
-        x=-36+12*k; ax.add_patch(Rect((x,-21-RUN),12,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,-21-RUN/2,'corral\nrun\n12×30',ha='center',va='center',fontsize=6.5,color=MUTED)
-    ax.add_patch(Rect((-38,-21),76,42,fc='#d9d2c2',ec=INK,lw=2.2))
-    ax.add_patch(Rect((-36,-19),72,38,fc='white',ec='none'))
-    labs_n=['caballeriza\nstall']*6; labs_s=['lavado\nwash','montura\ntack']+['caballeriza\nstall']*4
+        x=-HL+ST*k; ax.add_patch(Rect((x,HD),ST,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,HD+RUN/2,'corral\nrun\n12×40',ha='center',va='center',fontsize=6.5,color=MUTED)
+    ax.plot([-HL,HL,HL,-HL,-HL],[-HD-2,-HD-2,HD+2,HD+2,-HD-2],color=MUTED,lw=.7,ls=(0,(4,3)))        # roof edge, 2 ft overhang on the long sides
+    ax.add_patch(Rect((-HL,-HD),L,D,fc='#b9ad97',ec=INK,lw=2.2))                                      # rock wall on the column lines
+    ax.add_patch(Rect((-HL+1.3,-HD+1.3),L-2.6,D-2.6,fc='white',ec='none'))
     for k in range(6):
-        x=-36+12*k; ax.add_patch(Rect((x,7),12,12,fc='white',ec=INK,lw=.8)); ax.text(x+6,13,labs_n[k],ha='center',va='center',fontsize=6.5)
-        ax.add_patch(Rect((x,-19),12,12,fc='white',ec=INK,lw=.8)); ax.text(x+6,-13,labs_s[k],ha='center',va='center',fontsize=6.5)
+        x=-HL+ST*k; ax.add_patch(Rect((x+(1.3 if k==0 else 0),HD-RD),ST-(1.3 if k in (0,5) else 0),RD-1.3,fc='white',ec=INK,lw=.8)); ax.text(x+6,HD-RD/2,f'{k+1}\ncaballeriza\nstall',ha='center',va='center',fontsize=6.3)
+        ax.add_patch(Rect((x+4,HD-.7),4,1.4,fc=CLAY,ec='none'))                                    # stall door to its run
+    x=-HL
+    for es,en,w in (('lavado','wash',12),('monturas','tack',12),('alimento','feed',12),('bodega de alfalfa','alfalfa / storage',36)):
+        ax.add_patch(Rect((x+(1.3 if x==-HL else 0),-HD+1.3),w-(1.3 if x==-HL or x+w==HL else 0),RD-1.3,fc='white',ec=INK,lw=.8)); ax.text(x+w/2,-HD+RD/2,f'{es}\n{en}',ha='center',va='center',fontsize=6.3)
+        ax.add_patch(Rect((x+w/2-2,-HD-.7),4,1.4,fc=CLAY,ec='none')); x+=w
     ax.text(0,0,'pasillo · aisle 14 ft',ha='center',va='center',fontsize=9,color=MUTED)
-    for x in (-38,38): ax.add_patch(Rect((x-1,-5),2,10,fc=CLAY,ec='none'))
-    ax.annotate('',xy=(-38,-58),xytext=(38,-58),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(0,-61,'76 ft (23.2 m)',ha='center',va='top',fontsize=9)
-    ax.annotate('',xy=(44,-21),xytext=(44,21),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(46,0,'42 ft\n(12.8 m)',va='center',fontsize=9)
-    ax.set_xlim(-50,62); ax.set_ylim(-66,56)
+    for x in (-HL,HL): ax.add_patch(Rect((x-1,-AI/2),2,AI,fc='white',ec='none')); ax.plot([x,x],[-AI/2,AI/2],color=CLAY,lw=3,ls=(0,(2,1.5)))
+    for sx in (-1,1): ax.text(sx*(HL+3),0,'entrada\nentry',ha='center',va='center',fontsize=7,color=CLAY,rotation=90)
+    for x in (-36,-12,12,36):
+        for y in (-HD,HD): ax.add_patch(matplotlib.patches.Circle((x,y),.9,fc='#6f7d86',ec=INK,lw=.6,zorder=5))
+    ax.annotate('',xy=(-HL,-HD-7),xytext=(HL,-HD-7),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(0,-HD-9,'72 ft (21.9 m)',ha='center',va='top',fontsize=9)
+    ax.annotate('',xy=(HL+8,-HD),xytext=(HL+8,HD),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,0,'40 ft\n(12.2 m)',va='center',fontsize=9)
+    ax.annotate('',xy=(HL+8,HD),xytext=(HL+8,HD+RUN),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,HD+RUN/2,'40 ft\ncorrales\nruns',va='center',fontsize=8)
+    ax.text(-HL,HD+RUN+3,'N ↑',fontsize=10,weight='bold')
+    ax.set_xlim(-50,58); ax.set_ylim(-HD-14,HD+RUN+6)
     y=0.85
-    specs=[('Planta 76 × 42 ft, pasillo central de 14 ft, puertas de 10 × 11 ft en ambos extremos.','76 × 42 ft plan, 14 ft centre aisle, 10 × 11 ft doors at both ends.'),
-           ('10 caballerizas de 12 × 12 ft, cuarto de lavado y cuarto de monturas; cada caballeriza abre a su corral de 12 × 30 ft con cerca de tubo a 5.5 ft.','10 stalls of 12 × 12 ft, a wash bay and a tack room; each stall opens to its own 12 × 30 ft run with a 5.5 ft pipe fence.'),
-           ('Muros de piedra hasta 4.5 ft; arriba varas apiladas en horizontal. Alero a 12 ft, cumbrera a 17 ft, techo metálico azul cielo a dos aguas.','Stone walls to 4.5 ft; stacked sticks above. Eave 12 ft, ridge 17 ft, sky-blue metal gable roof.'),
-           ('Pendiente: muros de piedra (42 ft de fondo, 102 ft con corrales) o crujías abiertas sobre pilotes (38 ft, 98 ft). Decisión de Walker.','Open decision: stone walls (42 ft deep, 102 ft with runs) or open bays on piers (38 ft, 98 ft). Walker\'s call.')]
-    for es,en in specs: y=para(fig,0.68,y,es,en,w=48,fs=9.5)
-    fig.text(0.68,0.12,'Esquema preliminar a partir de la especificación de Walker; no es plano de construcción.',fontsize=8,color=MUTED)
-    fig.text(0.68,0.105,'Preliminary diagram from Walker\'s spec; not a construction drawing.',fontsize=8,color=MUTED,style='italic')
+    specs=[('Planta 72 × 40 ft a ejes, pasillo central de 14 ft abierto de punta a punta; una entrada grande en cada extremo, con el marco de tubo a la vista.','72 × 40 ft on the column lines, a 14 ft centre aisle open end to end; a large entry at each gable end, with the pipe frame exposed.'),
+           ('6 caballerizas de 12 × 13 ft al norte, cada una abre a su corral de 12 × 40 ft con cerca de tubo a 5.5 ft. Al sur: lavado, monturas, alimento y bodega de alfalfa.','6 stalls of 12 × 13 ft on the north, each opening to its own 12 × 40 ft run with a 5.5 ft pipe fence. On the south: wash, tack, feed and alfalfa storage.'),
+           ('Piedra apilada, de grande a chica, hasta 4.5 ft en todo el perímetro; arriba varas de tomate horizontales sobre verticales ligeras que dejan pasar aire y luz.','Stacked rock, big to small, to 4.5 ft all the way round; above it horizontal tomato stakes on light verticals that let air and light through.'),
+           ('Alero a 12 ft, cumbrera a 17 ft, 2 ft de alero en los lados largos. Techo metálico azul cielo; 6 tragaluces traslúcidos de 3½ × 10 ft sobre el pasillo (≈ 7 % del techo); sin ventila de cumbrera.','Eave 12 ft, ridge 17 ft, 2 ft overhang on the long sides. Sky-blue metal roof; 6 translucent skylights 3½ × 10 ft over the aisle (≈ 7% of the roof); no ridge vent.'),
+           ('En la misma plataforma, el establo se recorre 10 ft al sur para que los corrales de 40 ft queden en plano.','On the same pad, the stable moves 10 ft south so the 40 ft runs stay on the flat.')]
+    for es,en in specs: y=para(fig,0.68,y,es,en,w=58,fs=8.0)
+    # roof plan with the skylights
+    ar=fig.add_axes([0.69,0.125,0.26,0.13]); ar.set_aspect('equal'); ar.axis('off')
+    ar.add_patch(Rect((-HL,-HD-2),L,D+4,fc='#9cc3e0',ec=INK,lw=1)); ar.plot([-HL,HL],[0,0],color=INK,lw=.8)
+    for x in (-36,-12,12,36): ar.plot([x,x],[-HD-2,HD+2],color='#4f6f86',lw=.5,ls=(0,(3,2)))
+    for bx in (-24,0,24):
+        for s in (-1,1): ar.add_patch(Rect((bx-1.75,min(s*1,s*11)),3.5,10,fc='#f4f7f2',ec=INK,lw=.6,hatch='////'))
+    ar.set_xlim(-HL-2,HL+2); ar.set_ylim(-HD-4,HD+9)
+    ar.text(0,HD+5,'Techo y tragaluces · Roof and skylights',ha='center',fontsize=8.5,weight='bold')
+    fig.text(0.68,0.1,'Esquema preliminar a partir del diseño de Walker; no es plano de construcción.',fontsize=8,color=MUTED)
+    fig.text(0.68,0.085,'Preliminary diagram from Walker’s design; not a construction drawing.',fontsize=8,color=MUTED,style='italic')
     tblock(fig,nxt(),'Planos arquitectónicos','Architectural drawings'); PAGES.append(fig)
 
 def posts_page():
@@ -297,7 +313,7 @@ metal_page()
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
 
-out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-24-v3.pdf')
+out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-24-v5.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)

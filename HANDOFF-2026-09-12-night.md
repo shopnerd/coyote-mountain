@@ -7,7 +7,7 @@ Written at Will's stopping point, 12 September. **Read this first**, then `HANDO
 - **Repo** `C:\Users\zolar\WebDev\coyote-studio` = public GitHub `shopnerd/coyote-mountain`, Pages at https://coyotemountainfarm.com. `topo.html` is the tool; `flight.html`, `index.html`, `teachers.html`, `walk/`, `projects/centro-equino.json`, `home.json`, `tools/`.
 - **Artifacts**: topo copy https://claude.ai/code/artifact/062c2198-f39e-45bc-aa65-6025b1e7b42c (republish with `url` after every push, outer document tags stripped) · section style board https://claude.ai/code/artifact/f4c00b13-c082-4374-b0a1-bc2043785aac · Hooke Park brief https://claude.ai/code/artifact/0340d171-4614-423e-9d14-92b5229e08bd · plan https://claude.ai/code/artifact/40b48406-3be9-4d5f-9b1f-24fb3d019609
 - **This session's scratchpad**: `C:\Users\zolar\AppData\Local\Temp\claude\C--Users-zolar-WebDev\1ae08b44-2083-42ad-a09f-64eeaeb6740a\scratchpad`. Tests e2e160–e2e174, patches 110–116, `dump-profile.js` + `profile.json` (the Encino Solo A–B section), `section-styles.src.html` (the style board's source), `board-shots.js`, `check-mesh.py`.
-- **Points file**: `Google Drive\MEXICO (1)\DroneDeploy\coyote-studio-import\encino-solo-points.bin` (1.02 M points, 8.2 MB).
+- **Points file**: `Google Drive\MEXICO\DroneDeploy\coyote-studio-import\encino-solo-points.bin` (1.02 M points, 8.2 MB).
 
 ## Standing rules (unchanged, plus what tonight added)
 
@@ -68,7 +68,7 @@ Written at Will's stopping point, 12 September. **Read this first**, then `HANDO
 
 ## Open, waiting on Will
 
-- **Tour copy.** He is still moving things around. The Drive docx (`INBOX (1)\coyote-tour-stops.docx`, 9 Sept 10:20) is **stale**: walk and the sculpt/draw split both changed cards. When he says he is done, rebuild it from the live TOUR with `scratchpad/tour-doc.py` (previous session's scratchpad), then his edits → respell → record.
+- **Tour copy.** He is still moving things around. The Drive docx (`INBOX\coyote-tour-stops.docx`, 9 Sept 10:20) is **stale**: walk and the sculpt/draw split both changed cards. When he says he is done, rebuild it from the live TOUR with `scratchpad/tour-doc.py` (previous session's scratchpad), then his edits → respell → record.
 - **The digital voice-over.** Pipeline proven, nothing recorded. Four test lines from the twin voice sit in the previous session's scratchpad awaiting his verdict. Record with `WebDev/twin` F5-TTS **in float32** (`vo-batch32.py`; fp16 is silent on the GTX 1660 Ti) → `vo-assemble.py` → `vo_check.py`. Narrated cut goes live only after he hears it; the silent cut is live now.
 - **Points night view** (item 16): his reaction, then the next looks: section slicing the cloud, dust dissolving, rising contour light.
 - **References for the animation** before anything else happens to it.

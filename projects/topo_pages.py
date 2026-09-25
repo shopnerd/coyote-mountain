@@ -45,7 +45,7 @@ def operator_sheet():
     for s in S:
         if s.get('kind') == 'path':
             P = np.array([q[:2] for q in s['pts']]); ax.plot(P[:, 0], P[:, 1], color='#8a7a5a', lw=.8, dashes=(10, 3, 2, 3), zorder=3)
-    for nm in ('walker barn 76x42', 'four paddocks'):
+    for nm in ('walker barn 72x40', 'four paddocks'):
         for s in byname(nm):
             P = np.array(foot(s) + [foot(s)[0]]); ax.plot(P[:, 0], P[:, 1], color=INK, lw=1.1, zorder=4)
     for i in (1, 2):
@@ -72,7 +72,7 @@ def operator_sheet():
             ax.text(x+.5, y-.5, f'{"C" if v < 0 else "F"} {abs(v):.1f}', fontsize=6, color=col, weight='bold', zorder=6)
             ax.text(x+.5, y+1.3, f'{samp(z, x, y):.1f}', fontsize=4.8, color='#555', zorder=6)
     # pad corner stakes with finished elevation
-    for nm in ('walker barn 76x42', 'four paddocks'):
+    for nm in ('walker barn 72x40', 'four paddocks'):
         for s in byname(nm):
             rc = min_rect(foot(s)); cc = np.mean(rc, axis=0)
             for q in rc:
