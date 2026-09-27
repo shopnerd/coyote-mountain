@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Centro Equino Chichihuas 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,400&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -15,7 +17,8 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.5 "Public Sans",system-ui,sans-serif;display:grid;grid-template-columns:340px minmax(0,1fr);overflow:hidden}
-aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:22px 20px 32px;display:grid;gap:22px;align-content:start}
+aside{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;overflow-x:hidden;padding:22px 20px 32px;display:grid;grid-template-columns:minmax(0,1fr);gap:22px;align-content:start}
+aside > *{min-width:0}
 h1{font:500 30px/1.05 Newsreader,Georgia,serif;margin:0;text-wrap:balance}
 .lede{color:var(--muted);font-size:13px;margin:6px 0 0}
 .lede b{color:var(--ink);font-weight:600}
@@ -28,7 +31,7 @@ button:focus-visible,input:focus-visible,.tog:focus-within{outline:2px solid var
 button[aria-pressed="true"]{background:var(--clay);border-color:var(--clay);color:#fff}
 .tog{display:inline-flex;align-items:center;gap:6px}
 .tog input{accent-color:var(--clay);margin:0}
-.sun{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
+.sun{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px}
 .sun input{width:100%;accent-color:var(--clay)}
 .sun output{font:500 13px "IBM Plex Mono",monospace;font-variant-numeric:tabular-nums}
 .note{font-size:12px;color:var(--muted);margin:6px 0 0}
@@ -38,7 +41,7 @@ table{width:100%;border-collapse:collapse;font-size:12.5px}
 td{padding:5px 0;border-bottom:1px solid var(--line);vertical-align:top}
 td:last-child{text-align:right;font-family:"IBM Plex Mono",monospace;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:10px}
 td .en{display:block;color:var(--muted);font-style:italic;font-size:11.5px}
-tr.head td{font-weight:600;color:var(--clay);border-bottom:1px solid var(--clay);padding-top:12px}
+tr.head td{font-weight:600;color:var(--clay);border-bottom:1px solid var(--clay);padding-top:12px;text-align:left!important;font-family:"Public Sans",sans-serif!important;font-size:12.5px!important;white-space:normal!important;padding-left:0!important}
 main{position:relative;min-width:0}
 #view{position:absolute;inset:0;background:linear-gradient(var(--sky-top),var(--sky-bot))}
 #view canvas{display:block}
@@ -63,7 +66,10 @@ body.shot{grid-template-columns:1fr}
   aside:not(.open) .more{display:none}
   aside:not(.open) h2{display:none}
   aside.peek > section{display:none}
-  #views,#show{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  #views,#show{flex-wrap:nowrap;overflow-x:auto;padding-bottom:2px;scrollbar-width:none;max-width:100%}
+  #views::-webkit-scrollbar,#show::-webkit-scrollbar{display:none}
+  aside.open #views,aside.open #show{flex-wrap:wrap;overflow-x:visible}
+  .lede{font-size:12.5px}
   #views button,#show .tog{flex:none;padding:9px 11px}
   #moreBtn{display:inline-flex;flex:none}
   h1{font-size:22px}
