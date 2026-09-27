@@ -51,7 +51,7 @@ def cover(win):
 def planview(n):
     fig=newpage(); heading(fig,'Vista en planta','Plan view')
     ax=fig.add_axes([0.02,0.075,0.70,0.81]); ax.imshow(img(n)); ax.axis('off')
-    items=[('Establo principal','Main stable','72 × 40 ft · marcos de tubo a la vista, piedra a 4.5 ft, varas de tomate arriba, techo azul cielo con tragaluces · 6 caballerizas con corral de 12 × 40 ft','72 × 40 ft · exposed pipe frames, rock to 4.5 ft, tomato stakes above, sky-blue roof with skylights · 6 stalls, each with a 12 × 40 ft run'),
+    items=[('Establo principal','Main stable','72 × 40 ft · marcos de acero a la vista, piedra a 4.5 ft alrededor, varas tejidas arriba, techo oscuro con claraboya corrida · 6 caballerizas con corral de 12 × 40 ft','72 × 40 ft · exposed steel frames, rock to 4.5 ft all round, woven sticks above, dark roof with a clerestory along the ridge · 6 stalls, each with a 12 × 40 ft run'),
            ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
            ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),
@@ -165,13 +165,13 @@ def placeholder(es,en,goes_es,goes_en,boxes):
 def text_refs():
     fig=newpage(); heading(fig,'Texto y referencias','Text and references')
     y=0.85
-    blocks=[('La idea','The idea','Un centro ecuestre sencillo y bien cuidado en el valle: un establo de piedra y varas bajo un techo azul, 8 caballerizas techadas entre las palmas, una pista oval, un corral redondo y una pista de trote que aprovecha el camino existente. Todo acomodado a la pendiente natural, con el agua de lluvia guiada y guardada en lugar de dejarla correr.','A simple, well-kept equestrian centre in the valley: a stone-and-stick stable under a blue roof, 8 covered stalls among the palms, an oval arena, a round pen and a riding track that uses the existing road. Everything sits into the natural slope, and rainwater is guided and kept instead of left to run off.'),
-            ('Materiales','Materials','Marcos de tubo de acero de 12 in a la vista; piedra del lugar apilada hasta 4.5 ft; arriba, varas de tomate en horizontal; lámina metálica azul cielo con tragaluces; cercas de tubo pintado de blanco; caminos de tierra compactada; arena rastrillada en pista y corral.','Local fieldstone to 4.5 ft; above it, sticks stacked horizontally like a bird\'s nest; sky-blue metal roofing; white-painted pipe fencing; compacted dirt roads; raked sand in the arena and round pen.'),
+    blocks=[('La idea','The idea','Un centro ecuestre sencillo y bien cuidado en el valle: un establo de piedra y varas tejidas bajo un techo oscuro con claraboya, 8 caballerizas techadas entre las palmas, una pista oval, un corral redondo y una pista de trote que aprovecha el camino existente. Todo acomodado a la pendiente natural, con el agua de lluvia guiada y guardada en lugar de dejarla correr.','A simple, well-kept equestrian centre in the valley: a stable of stone and woven sticks under a dark roof with a clerestory, 8 covered stalls among the palms, an oval arena, a round pen and a riding track that uses the existing road. Everything sits into the natural slope, and rainwater is guided and kept instead of left to run off.'),
+            ('Materiales','Materials','Marcos de tubo de acero de 12 in a la vista; piedra del lugar apilada hasta 4.5 ft; arriba, varas tejidas casi verticales entre postes de acero oscuro; lámina metálica gris oscuro con una claraboya corrida en la cumbrera; cercas de tubo pintado de blanco; caminos de tierra compactada; arena rastrillada en pista y corral.','Local fieldstone to 4.5 ft; above it, woven, mostly vertical sticks between dark steel posts; dark grey metal roofing with a clerestory along the ridge; white-painted pipe fencing; compacted dirt roads; raked sand in the arena and round pen.'),
             ('Agua','Water','El techo del establo alimenta el bebedero largo y el techo mariposa de las caballerizas llena un bebedero redondo; el agua del cerro se lleva por un canal empastado a un bajo natural abajo de la pista; el excedente sale al oeste.','The stable roof feeds the long trough and the stalls’ butterfly roof fills a round trough; hillside water runs down a grassed waterway to a natural low spot below the track; overflow leaves to the west.')]
     for tes,ten,bes,ben in blocks:
         fig.text(0.02,y,f'{tes} · {ten}',fontsize=13,weight='bold',color=INK); y-=.028
         y=para(fig,0.02,y,bes,ben,w=78,fs=10)
-    boxes=[('Muro de piedra','Fieldstone wall'),('Varas apiladas','Stacked-stick walls'),('Techo azul cielo','Sky-blue metal roof'),('Cerca de tubo','Pipe-rail fence'),('Bebedero de piedra','Stone trough'),('Canal empastado','Grassed waterway')]
+    boxes=[('Muro de piedra','Fieldstone wall'),('Varas tejidas','Woven-stick walls'),('Techo con claraboya','Clerestory roof'),('Cerca de tubo','Pipe-rail fence'),('Bebedero de piedra','Stone trough'),('Canal empastado','Grassed waterway')]
     cw=0.145; ch=0.23
     for k,(es,en) in enumerate(boxes):
         r,c=divmod(k,3); x=0.52+c*(cw+.012); yy=0.62-r*(ch+.05)
@@ -209,18 +209,18 @@ def barn_plan():
     y=0.85
     specs=[('Planta 72 × 40 ft a ejes, pasillo central de 14 ft abierto de punta a punta; una entrada grande en cada extremo, con el marco de tubo a la vista.','72 × 40 ft on the column lines, a 14 ft centre aisle open end to end; a large entry at each gable end, with the pipe frame exposed.'),
            ('6 caballerizas de 12 × 13 ft al norte, cada una abre a su corral de 12 × 40 ft con cerca de tubo a 5.5 ft. Al sur: lavado, monturas, alimento y bodega de alfalfa.','6 stalls of 12 × 13 ft on the north, each opening to its own 12 × 40 ft run with a 5.5 ft pipe fence. On the south: wash, tack, feed and alfalfa storage.'),
-           ('Piedra apilada, de grande a chica, hasta 4.5 ft en todo el perímetro; arriba varas de tomate horizontales sobre verticales ligeras que dejan pasar aire y luz.','Stacked rock, big to small, to 4.5 ft all the way round; above it horizontal tomato stakes on light verticals that let air and light through.'),
-           ('Alero a 12 ft, cumbrera a 17 ft, 2 ft de alero en los lados largos. Techo metálico azul cielo; 6 tragaluces traslúcidos de 3½ × 10 ft sobre el pasillo (≈ 7 % del techo); sin ventila de cumbrera.','Eave 12 ft, ridge 17 ft, 2 ft overhang on the long sides. Sky-blue metal roof; 6 translucent skylights 3½ × 10 ft over the aisle (≈ 7% of the roof); no ridge vent.'),
+           ('Piedra apilada, de grande a chica, hasta 4.5 ft en todo el perímetro; arriba varas tejidas, casi verticales, que dejan pasar aire y luz.','Stacked rock, big to small, to 4.5 ft all the way round; above it woven, mostly vertical sticks that let air and light through.'),
+           ('Alero a 12 ft, cumbrera a 17 ft, 2 ft de alero en los lados largos. Techo metálico gris oscuro con una claraboya corrida de 60 × 10 ft sobre el pasillo: 2½ ft de vidrio a cada lado bajo su propio techo, luz y ventilación de cumbrera.','Eave 12 ft, ridge 17 ft, 2 ft overhang on the long sides. Dark grey metal roof with a 60 × 10 ft clerestory over the aisle: 2½ ft of glazing each side under its own roof, for light and ridge ventilation.'),
            ('En la misma plataforma, el establo se recorre 10 ft al sur para que los corrales de 40 ft queden en plano.','On the same pad, the stable moves 10 ft south so the 40 ft runs stay on the flat.')]
     for es,en in specs: y=para(fig,0.68,y,es,en,w=58,fs=8.0)
-    # roof plan with the skylights
+    # roof plan with the clerestory (27 Sep)
     ar=fig.add_axes([0.69,0.125,0.26,0.13]); ar.set_aspect('equal'); ar.axis('off')
-    ar.add_patch(Rect((-HL,-HD-2),L,D+4,fc='#9cc3e0',ec=INK,lw=1)); ar.plot([-HL,HL],[0,0],color=INK,lw=.8)
+    ar.add_patch(Rect((-HL,-HD-2),L,D+4,fc='#6c7278',ec=INK,lw=1)); ar.plot([-HL,HL],[0,0],color=INK,lw=.8)
     for x in (-36,-12,12,36): ar.plot([x,x],[-HD-2,HD+2],color='#4f6f86',lw=.5,ls=(0,(3,2)))
-    for bx in (-24,0,24):
-        for s in (-1,1): ar.add_patch(Rect((bx-1.75,min(s*1,s*11)),3.5,10,fc='#f4f7f2',ec=INK,lw=.6,hatch='////'))
+    ar.add_patch(Rect((-30,-6),60,12,fc='#4a4f55',ec=INK,lw=.8)); ar.plot([-30,30],[0,0],color='#d9d4c8',lw=.6)
+    for s in (-1,1): ar.add_patch(Rect((-30,s*5-.5),60,1,fc='#e8f0f4',ec=INK,lw=.4))
     ar.set_xlim(-HL-2,HL+2); ar.set_ylim(-HD-4,HD+9)
-    ar.text(0,HD+5,'Techo y tragaluces · Roof and skylights',ha='center',fontsize=8.5,weight='bold')
+    ar.text(0,HD+5,'Techo y claraboya · Roof and clerestory',ha='center',fontsize=8.5,weight='bold')
     fig.text(0.68,0.1,'Esquema preliminar a partir del diseño de Walker; no es plano de construcción.',fontsize=8,color=MUTED)
     fig.text(0.68,0.085,'Preliminary diagram from Walker’s design; not a construction drawing.',fontsize=8,color=MUTED,style='italic')
     tblock(fig,nxt(),'Planos arquitectónicos','Architectural drawings'); PAGES.append(fig)
@@ -280,32 +280,32 @@ exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
 exec(open('structure_pages.py',encoding='utf-8').read())
 exec(open('stalls_page.py',encoding='utf-8').read())
-MS=DL+'/2026-09-27 money shots v2 (8 stalls 16x20)/'         # the 27 Sep golden-hour set (renders/shoot.mjs + paint.py)
-cover(MS+'3-site-ne-openai-4.png')
-planview(MS+'7-plan-openai-5-cropped.png')
+MS=DL+'/2026-09-27 money shots v3 (new stable)/'         # the 27 Sep golden-hour set (renders/shoot.mjs + paint.py)
+cover(MS+'6-west-openai-5.png')
+planview(MS+'7-plan-openai-7-cropped.png')
 existing()
 grading()
 operator_sheet()
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('sheet2.py','Cortes de terracería','Grading sections')
-views2([(MS+'1-hero-sw-openai-5.png','Sobre las caballerizas','Over the stalls',
+views2([(MS+'1-hero-sw-openai-6.png','Sobre las caballerizas','Over the stalls',
          'Desde el suroeste, sobre el bebedero redondo: las ocho caballerizas y su alfalfa bajo el mismo techo, junto al establo, el corral redondo y la pista.',
          'From the south-west, over the round trough: the eight stalls and their alfalfa under one roof, beside the stable, the round pen and the arena.'),
-        (MS+'4-hill-s-openai-4.png','Desde el cerro','From the hill',
+        (MS+'4-hill-s-openai-5.png','Desde el cerro','From the hill',
          'Las caballerizas siguen la curva de nivel al pie de la ladera, con las palmas entre los fondos abiertos.',
          'The stalls follow the contour at the foot of the slope, with palms among the open stall backs.')],
        'Otras vistas','Other views')
-views2([(MS+'5-corridor-out-openai-5.png','Bajo el techo mariposa','Under the butterfly roof',
+views2([(MS+'5-corridor-out-openai-6.png','Bajo el techo mariposa','Under the butterfly roof',
          'El techo casi plano baja hacia el centro del pasillo y da sombra a buena parte de cada caballeriza; a la derecha, la alfalfa al final del pasillo.',
          'The nearly flat roof dips to the middle of the corridor and shades a good part of every stall; the alfalfa at the end of the corridor on the right.'),
-        (MS+'2-corridor-openai-4.png','El bebedero y el pasillo','The trough and the corridor',
+        (MS+'2-corridor-openai-5.png','El bebedero y el pasillo','The trough and the corridor',
          'El canalón abierto vierte del valle del techo al bebedero redondo, sin bajante; hay paso libre alrededor.',
          'The open chute pours from the roof valley into the round trough, with no downspout; there is room to walk round it.')],
        'Otras vistas','Other views')
-views2([(MS+'6-west-openai-4.png','Desde el oeste','From the west',
-         'Con el sol detrás de la cámara: la cerca que cruza el potrero, las caballerizas, el establo y el cerro de granito.',
-         'With the sun behind the camera: the fence across the turnout, the stalls, the stable and the granite hill.'),
-        (MS+'3-site-ne-openai-4.png','Todo el centro','The whole centre',
+views2([(MS+'6-west-openai-5.png','Desde el oeste','From the west',
+         'Con el sol detrás de la cámara: el establo con su claraboya, piedra y varas tejidas, sus corrales, las caballerizas y el cerro de granito.',
+         'With the sun behind the camera: the stable with its clerestory, stone and woven sticks, its runs, the covered stalls and the granite hill.'),
+        (MS+'3-site-ne-openai-6.png','Todo el centro','The whole centre',
          'Del noreste hacia la puesta de sol: el establo con sus corrales, las caballerizas techadas, la pista oval, el corral redondo y el valle con viñedos.',
          'From the north-east into the sunset: the stable and its runs, the covered stalls, the oval arena, the round pen and the valley with its vineyards.')],
        'Otras vistas','Other views')
@@ -319,7 +319,7 @@ metal_page()
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-09-27-v9.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-09-27-v10.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)

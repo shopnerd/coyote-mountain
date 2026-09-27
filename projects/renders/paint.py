@@ -32,7 +32,9 @@ SCENE = (   # 27 Sep, Will: "not very accurate to the terrain and to the buildin
     'The bay at the north-east end of the same building, under the same roof, is the alfalfa bay: a stack of green-gold alfalfa bales behind pipe panels, '
     'with no walls and no separate roof. '
     'At the south-west end a round galvanised stock-water trough sits on the ground, fed by a short open chute from the roof valley; nothing stands under the chute. '
-    'The larger building is the main stable: stacked fieldstone walls to about 4.5 ft with horizontal wooden stakes above, under a sky-blue metal roof. '
+    'The larger gabled building is the main stable: a stacked fieldstone base about 4.5 ft high all the way round, woven stick panels above it between dark steel posts, '
+    'dark steel frames with trusses showing at the two open gable ends, and a dark charcoal corrugated metal roof with a raised glazed clerestory strip along the ridge; '
+    'its six runs on one long side have black pipe fences. '
     'The oval is a raked-sand riding arena and the circle a round pen, both with white pipe fences; roads are compacted pale dirt. '
     'Beyond the edge of the modelled ground, where the first image shows a flat pale band, continue the real landscape (the valley floor with vineyards '
     'and blue hills in the far distance), never an empty plane, a sea or fog. Keep the camera exactly where the first image puts it. '
@@ -67,9 +69,21 @@ def google(png_path, prompt, refs, k, model='gemini-3-pro-image'):
 PLAN_NOTE = (' This view looks straight down from above like an aerial survey photograph, north up: keep it exactly top-down with no horizon and no sky; '
              'the long evening shadows fall toward the east.')
 
-FIXES = {'5-corridor-out': ' The last attempt got this wrong and it must be right this time: the first image is taken standing at eye level INSIDE the covered corridor, '
+FIXES = {'3-site-ne': ' The last attempt got this wrong and it must be right this time: the long building in the foreground with six fenced runs along one side is the MAIN STABLE, '
+         'not the covered stalls: paint it with a dark charcoal roof with the raised glazed clerestory along its ridge, a stone base and woven stick walls, exactly as the stable reference shows. '
+         'The covered stalls are the smaller light-roofed building further away.',
+         '7-plan': ' The last attempt got this wrong and it must be right this time: the large fenced area on the left is OPEN GROUND, a turnout with a dirt riding track around '
+         'its edge; there is no roof, building, cover or arena structure over it. The only roofed buildings are the two the first image shows: the dark-roofed stable with '
+         'its clerestory and the light-roofed covered stalls.',
+'5-corridor-out': ' The last attempt got this wrong and it must be right this time: the first image is taken standing at eye level INSIDE the covered corridor, '
          'under the roof, looking straight down the corridor between the two rows of stalls toward the far open end and the low sun. The roof fills the top of '
          'the picture seen from below, posts line both sides, stall panels run along both sides at waist to shoulder height. It is never an aerial view.'}
+
+STABLE_REF = os.path.join(HERE, 'ref', 'stable-ref.jpg')     # Walker's image of the stable, 27 Sep
+STABLE_NOTE = (' The last image shows the main stable as designed. Wherever the first image shows the main stable (the gabled building with the raised '
+    'clerestory along its ridge and six fenced runs on one long side), paint it as the building in that last image: its stone base, woven stick walls, '
+    'dark steel frames and trusses, dark roof with the clerestory, wood stall fronts and black run fences. Take only the building from that image, never '
+    'its mountains, vineyard, trough, sky or camera; keep the stable exactly at the size, position, angle and outline the first image shows.')
 
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY' if ENGINE == 'openai' else 'GEMINI_API_KEY')
@@ -78,7 +92,8 @@ if __name__ == '__main__':
     for v in views:
         if ONLY and v not in ONLY: continue
         prompt = open(os.path.join(CTL, f'prompt-{v}.txt'), encoding='utf-8').read() + SCENE + (PLAN_NOTE if v == '7-plan' else '') + FIXES.get(v, '')
-        refs = sorted(os.path.join(CTL, f) for f in os.listdir(CTL) if f.startswith(f'ref-{v}-'))
+        refs = sorted(os.path.join(CTL, f) for f in os.listdir(CTL) if f.startswith(f'ref-{v}-')) + ([STABLE_REF] if os.path.exists(STABLE_REF) else [])
+        if os.path.exists(STABLE_REF): prompt += STABLE_NOTE
         n = 1 + sum(1 for f in os.listdir(OUT) if f.startswith(f'{v}-{ENGINE}-'))
         t = time.time()
         try:

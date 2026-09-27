@@ -1,6 +1,4 @@
-"""Walker's Centro Equino stable as an OBJ for the topo tool, 27 Sep 2026: the 24 Sep plan unchanged, with a clerestory
-monitor along the ridge and woven, mostly vertical stick panels above the rock (Walker's image, confirmed by Will).
-The 24 Sep design:
+"""Walker's Centro Equino stable as an OBJ for the topo tool, 24 Sep 2026 design:
 72 x 40 ft on 12 in pipe portal frames (4 frames at 24 ft), stacked rock to 4.5 ft all round,
 tomato-stake walls above, a big entry at both gable ends, metal roof with 2 ft overhangs on the
 long sides, 8 in pipe purlins and eave beams. Walker's layout: 6 stalls north with 12 x 40 ft runs,
@@ -23,8 +21,6 @@ COL_D, PURL_D = 12.75 / 12, 8.625 / 12
 ENTRY_W = AISLE                          # the big gable entries, open up to the rafters
 DOOR = (4.0, 8.0)
 RAIL_H = 5.5
-MON_HW, MON_H, MON_X = 5.0, 2.5, 30.0   # clerestory monitor: half width, glazing height, half length (27 Sep)
-STICK_W, STICK_P = .22, .5            # woven sticks: width and spacing
 NORTH = ['stall'] * 6
 SOUTH = [('wash', 12), ('tack', 12), ('feed', 12), ('alfalfa', 36)]
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
@@ -74,25 +70,12 @@ x = -HL
 for kind, w in SOUTH: rooms.append(dict(kind=kind, x0=x, x1=x + w, side=-1)); x += w
 for r in rooms: r['c'] = (r['x0'] + r['x1']) / 2
 
-def sticks_x(xa, xb, y, z0, z1, holes):      # woven sticks along x: near-vertical, alternately in and out, three weave battens
-    x, k = xa + STICK_P / 2, 0
-    while x < xb:
-        w = .09 * (1 if k % 2 else -1); lo = z0
-        for a, b, top in holes:
-            if a - .1 < x < b + .1: lo = max(z0, top)
-        box(x - STICK_W / 2, x + STICK_W / 2, y - STICK_W / 2 + w, y + STICK_W / 2 + w, lo, z1 - .15 * (k % 3)); x += STICK_P; k += 1
-    for h in (6.5, 9.0, 11.2):
-        xs = xa
-        for a, b, top in sorted(holes):
-            if h < top: box(xs, a, y - .12, y + .12, h, h + .15); xs = b
-        box(xs, xb, y - .12, y + .12, h, h + .15)
-
-# ---- long walls: rock to 4.5 ft, woven sticks to the eave, a door per room ----
+# ---- long walls: rock to 4.5 ft, stakes to the eave, a door per room ----
 for s in (1, -1):
     y = s * HD
     holes = [(r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, DOOR[1]) for r in rooms if r['side'] == s]
     wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, holes)
-    sticks_x(-HL, HL, y, ROCK_H, EAVE - .3, holes)
+    wall_x(-HL, HL, y, STICK_T, ROCK_H, EAVE, holes)
 
 # ---- gable ends: rock and stakes either side of the big entry; stakes fill the gable over the rooms ----
 for sx in (-1, 1):
@@ -100,12 +83,10 @@ for sx in (-1, 1):
     for s in (-1, 1):
         y0, y1 = sorted((s * ENTRY_W / 2, s * HD))
         box(x - ROCK_T / 2, x + ROCK_T / 2, y0, y1, 0, ROCK_H)
-        yy = y0 + STICK_P / 2; k = 0                 # woven sticks up to the rafter
-        while yy < y1:
-            w = .09 * (1 if k % 2 else -1); top = roof_z(yy) - COL_D / 2
-            box(x - STICK_W / 2 + w, x + STICK_W / 2 + w, yy - STICK_W / 2, yy + STICK_W / 2, ROCK_H, top); yy += STICK_P; k += 1
-        for h in (6.5, 9.0, 11.5):
-            if h < roof_z(y1 if abs(y1) > abs(y0) else y0): box(x - .12, x + .12, y0, y1, h, h + .15)
+        n = 6                               # stake panel stepped up under the rafter
+        for k in range(n):
+            ya, yb = y0 + (y1 - y0) * k / n, y0 + (y1 - y0) * (k + 1) / n
+            box(x - STICK_T / 2, x + STICK_T / 2, ya, yb, ROCK_H, roof_z((ya + yb) / 2) - COL_D / 2)
 
 # ---- the frames: 12 in pipe columns and rafters, rafters run 2 ft past the columns ----
 for x in FRAMES:
@@ -129,18 +110,6 @@ for s in (-1, 1):
     for dz in (0, T):
         quad((-HL - .5, y_out, roof_z(y_out) + zr + dz), (HL + .5, y_out, roof_z(y_out) + zr + dz),
              (HL + .5, 0, RIDGE + zr + dz), (-HL - .5, 0, RIDGE + zr + dz))
-
-# ---- clerestory monitor along the ridge: glazing on both long sides, its own low gable roof above (27 Sep) ----
-zb = roof_z(MON_HW) + zr
-for sgn in (-1, 1):
-    box(-MON_X, MON_X, sgn * MON_HW - .1, sgn * MON_HW + .1, zb, zb + MON_H)
-    for k in range(9): xm = -MON_X + 2 * MON_X * k / 8; box(xm - .2, xm + .2, sgn * MON_HW - .2, sgn * MON_HW + .2, zb, zb + MON_H)   # mullions
-    for dz in (0, T):
-        quad((-MON_X - .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz), (MON_X + .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz),
-             (MON_X + .8, 0, zb + MON_H + slope * MON_HW + dz), (-MON_X - .8, 0, zb + MON_H + slope * MON_HW + dz))
-for xm in (-MON_X, MON_X):
-    quad((xm, -MON_HW, zb), (xm, MON_HW, zb), (xm, MON_HW, zb + MON_H), (xm, -MON_HW, zb + MON_H))
-    quad((xm, -MON_HW, zb + MON_H), (xm, MON_HW, zb + MON_H), (xm, 0, zb + MON_H + slope * MON_HW), (xm, 0, zb + MON_H + slope * MON_HW))
 
 # ---- inside: stall partitions to 4.5 ft with a grille look (solid here), rooms walled to 10 ft ----
 for s in (1, -1):
@@ -166,7 +135,7 @@ for r in rooms:
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'centro-equino-barn.obj')
 with open(out, 'w', newline='\n') as f:
-    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft pipe portal frames, rock 4.5 ft all round + woven sticks, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls + 12x40 runs north\n")
+    f.write(f"# Centro Equino stable, 24 Sep design: {L:.0f} x {D:.0f} ft pipe portal frames, rock 4.5 ft + tomato stakes, gable entries, 2 ft overhangs, 6 stalls + 12x40 runs north\n")
     f.write(f"# geo {LAT} {LON}\n# unit ft\n# name walker barn 72x40\n")
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
     for fc in F: f.write('f ' + ' '.join(map(str, fc)) + '\n')

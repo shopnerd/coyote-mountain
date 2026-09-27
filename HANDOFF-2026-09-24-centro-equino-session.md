@@ -272,3 +272,19 @@ along the whole south fence as ~8 small flows), so the crossings are now sized f
   gallery v3, water plan v7. Known liberty: 5-corridor-out-5 has an extra stock tank in the foreground.
 - Walker sent a 3D viewer artifact (https://claude.ai/artifact/7dHdStVCWd2rjz3UW1ezXq, hers); Will wants it rebuilt
   with this work + her renderings. Reading it needs Will's yes in-session.
+
+## 14. Stable redesign + 3D viewer (27 Sep, Will + Walker's ChatGPT image)
+- Walker's image `projects/renders/ref/stable-walker-2026-09-27.png` (Drive: `renderings/stable reference from Walker
+  2026-09-27.png`). Will: keep the 24 Sep FLOOR PLAN (6 stalls + runs north, wash/tack/feed/alfalfa south — her
+  "4 south doors" are those rooms); DECIDED from the image: clerestory roof, woven sticks, low rock wall all round.
+  Roof colour taken as dark charcoal from the image (24 Sep had sky blue): confirm with Will.
+- `centro-equino-barn.py`: clerestory monitor 60 x 10 ft (2.5 ft glazing, mullions, own roof), woven near-vertical
+  sticks (0.22 ft at 0.5 ft, alternating, three battens) on long walls and gables. Old model kept as
+  `centro-equino-barn-2026-09-24.{py,obj}`. `swap_stable.py` swaps it into all three drawings in place.
+- `paint.py`: STABLE_REF (her image as a jpg) goes to the painter as the last reference with STABLE_NOTE (take only
+  the building); FIXES for 3-site-ne and 7-plan. Set v3 in Drive `2026-09-27 money shots v3 (new stable)`.
+- Pack v10 (cover = 6-west-5): stable texts, roof inset (clerestory), structure elevation strip, spec row
+  (Claraboya) updated. NOT yet: the frame cross-section on the structure page still draws no monitor.
+- 3D viewer artifact https://claude.ai/artifact/NiKaQ9hYfGgu5UATQGEPzh — source `projects/viewer/` (`export.py` ->
+  data.json + aerial.jpg; `index.html`, three r128 + OrbitControls). Wheel zooms to the cursor (raycast, caught on
+  the parent in capture), middle/right drag pans, R hides roofs, sun slider 27 Sep solar time.
