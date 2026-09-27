@@ -1171,7 +1171,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   flushLines(); if (rawPass) return;   /* the height pass wants the ground alone */
   if (cutSide) drawCutFace(c, proj, cutSide, lo, hi);
   nightInk = night ? 'rgba(214,226,238,.5)' : null; drawRoads(c, (i, j) => proj(i, j, sample(zv, i, j) + .03), mini ? .7 : 1, true); nightInk = null;
-  drawStrokes(c, (i, j) => proj(i, j, sample(zv, i, j) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
+  drawStrokes(c, (i, j, zz) => proj(i, j, (zz == null ? sample(zv, i, j) : zz) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   if (S.cloud && CLOUD.buf && !mini) drawCloud(c, proj, w, h, fast, cutSide ? onCamSide : null, night);
   if (S.labels && !mini && !fast && !R && !night) {
@@ -1215,6 +1215,29 @@ function camera(w = S.w, h = S.h) {
   const MF = viewFrame(); const proj = (i, j, zz) => { const X = (i - MF.ci) * s, Y = (j - MF.cj) * s, Z = (zz - zmid) * S.ve;
     const x1 = X * cy - Y * sy, y1 = X * sy + Y * cy; const dv = y1 * sp + Z * cp, f = S.cam.persp ? PD / Math.max(PD * .15, PD - dv) : 1; return [ox + x1 * scale * f, oy + (y1 * cp - Z * sp) * scale * f, dv]; };
   return { proj, scale, s };
+}
+function ray3(px, py) {                  // screen point -> [gi, gj, zAbs] where the eye ray first meets the drawn ground or a placed object; null if it misses (orbit camera only)
+  if (S.walk) return null;
+  const { yaw, pitch, zoom } = S.cam, cy = Math.cos(yaw), sy = Math.sin(yaw), cp = Math.cos(pitch), sp = Math.sin(pitch);
+  const s = cs(), [lo, hi] = rangeT(), zmid = (lo + hi) / 2, scale = zoom * Math.min(S.w, S.h) / (viewFrame().fitW * 1.25), ox = S.w / 2 + S.cam.pan.x, oy = S.h / 2 + 10 + S.cam.pan.y, MF = viewFrame();
+  const atW = t => { const f = S.cam.persp ? PD / (PD - t) : 1, x1 = (px - ox) / (scale * f), a = (py - oy) / (scale * f); return [x1, a * cp + t * sp, -a * sp + t * cp]; };   // view metres [x1, y1, Z] at depth t (the inverse of proj)
+  const toG = ([x1, y1, Z]) => [(x1 * cy + y1 * sy) / s + MF.ci, (-x1 * sy + y1 * cy) / s + MF.cj, Z / S.ve + zmid];
+  const R = Math.hypot(W * s, H * s) + (hi - lo) * S.ve + 1, tNear = S.cam.persp ? PD * .84 : R, O = atW(tNear), D1 = atW(tNear - 1), D = [D1[0] - O[0], D1[1] - O[1], D1[2] - O[2]];   // the ray runs from the eye (large depth) away
+  let bestU = Infinity, best = null;
+  const dt = Math.max(.15, s * .25), n = Math.ceil((tNear + R) / dt); let prev = null;   // the ground: march down the ray, the first crossing from above
+  for (let k = 0; k <= n; k++) { const t = tNear - k * dt, g = toG(atW(t)); const inside = g[0] >= 0 && g[1] >= 0 && g[0] <= W - 1 && g[1] <= H - 1;
+    const d = inside ? g[2] - sample(zv, g[0], g[1]) : null;
+    if (d !== null && prev !== null && prev > 0 && d <= 0) { const f = prev / (prev - d), t2 = t + dt - f * dt; bestU = k * dt - dt + f * dt; best = toG(atW(t2)); break; }
+    prev = d; }
+  for (const st of S.strokes) { if (st.kind !== 'obj' || !st.tris) continue; const v = objPlace(st);   // objects: the nearest triangle on the ray (Moller-Trumbore)
+    for (let k = 0; k < v.length; k += 9) { const A = [(v[k] - MF.ci) * s, (v[k + 1] - MF.cj) * s, (v[k + 2] - zmid) * S.ve], B = [(v[k + 3] - MF.ci) * s, (v[k + 4] - MF.cj) * s, (v[k + 5] - zmid) * S.ve], C = [(v[k + 6] - MF.ci) * s, (v[k + 7] - MF.cj) * s, (v[k + 8] - zmid) * S.ve];
+      const Aw = [A[0] * cy - A[1] * sy, A[0] * sy + A[1] * cy, A[2]], Bw = [B[0] * cy - B[1] * sy, B[0] * sy + B[1] * cy, B[2]], Cw = [C[0] * cy - C[1] * sy, C[0] * sy + C[1] * cy, C[2]];   // into view metres
+      const e1 = [Bw[0] - Aw[0], Bw[1] - Aw[1], Bw[2] - Aw[2]], e2 = [Cw[0] - Aw[0], Cw[1] - Aw[1], Cw[2] - Aw[2]];
+      const h = [D[1] * e2[2] - D[2] * e2[1], D[2] * e2[0] - D[0] * e2[2], D[0] * e2[1] - D[1] * e2[0]], det = e1[0] * h[0] + e1[1] * h[1] + e1[2] * h[2]; if (Math.abs(det) < 1e-9) continue;
+      const sv = [O[0] - Aw[0], O[1] - Aw[1], O[2] - Aw[2]], u = (sv[0] * h[0] + sv[1] * h[1] + sv[2] * h[2]) / det; if (u < 0 || u > 1) continue;
+      const q = [sv[1] * e1[2] - sv[2] * e1[1], sv[2] * e1[0] - sv[0] * e1[2], sv[0] * e1[1] - sv[1] * e1[0]], w = (D[0] * q[0] + D[1] * q[1] + D[2] * q[2]) / det; if (w < 0 || u + w > 1) continue;
+      const tt = (e2[0] * q[0] + e2[1] * q[1] + e2[2] * q[2]) / det; if (tt > 0 && tt < bestU) { bestU = tt; best = toG(atW(tNear - tt)); } } }
+  return best;
 }
 function pick(px, py) {
   const { proj } = camera(); let best = null, bd = 1e9;
@@ -1275,7 +1298,7 @@ function drawStepped0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
-  drawStrokes(c, (i, j) => proj(i, j, sample(zv, i, j) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
+  drawStrokes(c, (i, j, zz) => proj(i, j, (zz == null ? sample(zv, i, j) : zz) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) {   // the brush ring draped on the ground around the pick
@@ -1907,7 +1930,7 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot(keepRedo) { if (!keepRedo) redoStack.length = 0; undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, secs: S.secs.map(q => [q[0].slice(), q[1].slice()]), secI: S.secI, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot(keepRedo) { if (!keepRedo) redoStack.length = 0; undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, secs: S.secs.map(q => [q[0].slice(), q[1].slice()]), secI: S.secI, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, z3: st.z3 || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function setGrid(f, quiet) {              // rebuild the ground at 150f × 100f; everything in grid coords is rescaled; terrain refetches
   const nw = Math.round(150 * f), nh = Math.round(100 * f); if (nw === W && nh === H) return; const k = nw / W;
   W = nw; H = nh; base = new Float32Array(W * H); z = new Float32Array(W * H); zv = z; zvKey = ''; rawBase = null; waterMask = null; waterLevel = null; wF = null; S.hasSea = S.hasWater = false; S.coast = null;
@@ -1939,6 +1962,8 @@ cv.addEventListener('pointerdown', e => {
     if (btn === 1 || e.shiftKey) { drag = { p, kind: 'pan' }; S.lowQ = true; return; }
     if (btn === 2 && e.ctrlKey) { drag = { p, kind: 'zoom', at: p }; S.lowQ = true; return; }
     if (btn === 2) { drag = { p, kind: 'orbit' }; S.lowQ = true; return; }
+    if (S.brush === 'pen' && !S.plant && !S.walk && e.button === 0) { const g = ray3(p[0], p[1]); if (!g) return; snapshot();   // sketch in 3d: the line lands on the ground or on an object, with its height
+      const st = { color: S.penColor, w: S.penW, a: S.penA, dash: S.penDash, z3: true, pts: [[g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5, g[2]]] }; S.strokes.push(st); drag = { kind: 'pen', st, last: p, z3: true }; return; }
     if (S.sculpt) { const g = pick(p[0], p[1]); if (!g) return; snapshot(); const kind = S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj' ? 'raise' : S.brush; drag = { g, kind: 'sculpt', brush: kind, z0: z[idx(g[0], g[1])] }; dab(g[0], g[1], kind, drag.z0); S.pick = g; S.dirty = true; return; }
     drag = { p, kind: 'orbit' }; S.lowQ = true; return; }
   if ((S.mode === 'plan' || S.mode === 'analysis') && (e.button === 1 || e.shiftKey)) { drag = { p, kind: 'planpan' }; return; }
@@ -1982,8 +2007,8 @@ cv.addEventListener('pointermove', e => {
   else if (drag.kind === 'pad') { drag.p1 = p; if (S.padShape === 'draw') { const g = toGrid(p[0], p[1]), l = drag.pts[drag.pts.length - 1]; if (Math.hypot(g[0] - l[0], g[1] - l[1]) > .5) drag.pts.push(g); } S.dirty = true; }
   else if (drag.kind === 'pen') { const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; if (!evs.length) evs.push(e);
     ctx.strokeStyle = PEN[drag.st.color] || INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = drag.st.a; ctx.setLineDash(drag.st.dash ? [7 * drag.st.w + 2, 5 * drag.st.w + 2] : []);
-    for (const ev of evs) { const q = pt(ev), g = toGrid(q[0], q[1]), last = drag.st.pts[drag.st.pts.length - 1]; if (Math.hypot(q[0] - drag.last[0], q[1] - drag.last[1]) < 1.5) continue;
-      const pr = ev.pointerType === 'pen' ? Math.max(.15, ev.pressure || .5) : .5; drag.st.pts.push([g[0], g[1], pr]);
+    for (const ev of evs) { const q = pt(ev), g = drag.z3 ? ray3(q[0], q[1]) : toGrid(q[0], q[1]), last = drag.st.pts[drag.st.pts.length - 1]; if (!g || Math.hypot(q[0] - drag.last[0], q[1] - drag.last[1]) < 1.5) continue;
+      const pr = ev.pointerType === 'pen' ? Math.max(.15, ev.pressure || .5) : .5; drag.st.pts.push(drag.z3 ? [g[0], g[1], pr, g[2]] : [g[0], g[1], pr]);
       ctx.lineWidth = (1 + 2.4 * (last[2] + pr) / 2) * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * drag.st.w; ctx.beginPath(); ctx.moveTo(drag.last[0], drag.last[1]); ctx.lineTo(q[0], q[1]); ctx.stroke(); drag.last = q; }
     ctx.lineCap = 'butt'; ctx.globalAlpha = 1; ctx.setLineDash([]); }
   else if (drag.kind === 'erase') eraseAt(toGrid(p[0], p[1]));
@@ -2049,8 +2074,9 @@ function endPointer(e) {
   if (S.lowQ) { S.lowQ = false; S.dirty = true; }
   if (drag && drag.kind === 'shape' && S.exLen > 0 && S.plant !== 'tree' && drag.p1) toast(S.penMode + ' \u00b7 ' + (S.exWid > 0 && S.penMode === 'rect' ? fL(S.exLen, 1) + ' \u00d7 ' + fL(S.exWid, 1) : fL(S.exLen, 1)) + ' \u00b7 drag again to point it another way');
   if (drag && drag.kind === 'shape') { const far = drag.p1 && Math.hypot(drag.p1[0] - drag.p0[0], drag.p1[1] - drag.p0[1]) > 4; if (S.plant === 'tree') S.strokes.push(shapeFromDrag('tree', drag.p0, far ? drag.p1 : null)); else if (far || (S.exLen > 0 && drag.p1)) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); if (!S.plant && !(S.exLen > 0)) snapEnds(st); S.strokes.push(applyPlant(st)); } S.strokeVer++; S.dirty = true; }
-  if (drag && drag.kind === 'pen') { const st = drag.st; if (st.pts.length < 2) S.strokes.pop(); else { if (st.pts.length > 3) { const sm = st.pts.map((q, i) => i === 0 || i === st.pts.length - 1 ? q : [(st.pts[i - 1][0] + 2 * q[0] + st.pts[i + 1][0]) / 4, (st.pts[i - 1][1] + 2 * q[1] + st.pts[i + 1][1]) / 4, q[2]]); st.pts = sm; }
-      if (S.penMode === 'smart') { const rec = recognizeStroke(st); if (rec) { if (!S.plant) snapEnds(rec); S.strokes[S.strokes.length - 1] = applyPlant(rec); if (!S.plant) toast(rec.pts.length === 2 ? 'straightened' : rec.pts.length === 49 ? 'circle' : 'shape'); } else { if (!S.plant) snapEnds(st); applyPlant(st); } }
+  if (drag && drag.kind === 'pen') { const st = drag.st; if (st.pts.length < 2) S.strokes.pop(); else { if (st.pts.length > 3) { const sm = st.pts.map((q, i) => i === 0 || i === st.pts.length - 1 ? q : [(st.pts[i - 1][0] + 2 * q[0] + st.pts[i + 1][0]) / 4, (st.pts[i - 1][1] + 2 * q[1] + st.pts[i + 1][1]) / 4, q[2]].concat(q.length > 3 ? [(st.pts[i - 1][3] + 2 * q[3] + st.pts[i + 1][3]) / 4] : [])); st.pts = sm; }
+      if (st.z3) { const lo = Math.min(...st.pts.map(q => q[3])), hi = Math.max(...st.pts.map(q => q[3])); toast(`3d line · ${fL(lo, 1)} to ${fL(hi, 1)} · it keeps its height; erase it in plan`); }
+      else if (S.penMode === 'smart') { const rec = recognizeStroke(st); if (rec) { if (!S.plant) snapEnds(rec); S.strokes[S.strokes.length - 1] = applyPlant(rec); if (!S.plant) toast(rec.pts.length === 2 ? 'straightened' : rec.pts.length === 49 ? 'circle' : 'shape'); } else { if (!S.plant) snapEnds(st); applyPlant(st); } }
       else applyPlant(st); }
     S.strokeVer++; S.dirty = true; }
   pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
@@ -2350,7 +2376,7 @@ document.getElementById('extents').onclick = () => { planReset(); if (S.mode ===
 const TOUCH = matchMedia('(pointer: coarse)').matches;   // a finger or a pencil rather than a mouse: the hints say so
 const DESC = { analysis: 'where water goes: flow lines, catchments, ridges, keypoints, keyline, rain and sun. the model view shows whatever is running here.', plan: 'sketch grade with the brush. contours redraw as you go.', model: TOUCH ? 'one finger orbits, two fingers pan and pinch to zoom. in sculpt, one finger shapes the ground.' : 'right drag orbits, middle drag pans, wheel zooms. left drag sculpts.', section: 'cut line A to B: proposed solid over existing dashed, with cut and fill.' };
 function setMode(m) {
-  if (m === 'model' && S.mode !== 'model' && (S.brush === 'pen' || S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj')) { S.planBrush = S.brush; setBrush('raise'); }   // the model sculpts; pen tools wait for the plan
+  if (m === 'model' && S.mode !== 'model' && (S.brush === 'erase' || S.brush === 'section' || S.brush === 'grade' || S.brush === 'spot' || S.brush === 'pad' || S.brush === 'path' || S.brush === 'obj')) { S.planBrush = S.brush; setBrush('raise'); }   // the model sculpts; pen tools wait for the plan
   else if (m !== 'model' && S.mode === 'model' && S.planBrush) { setBrush(S.planBrush); S.planBrush = null; }
   document.querySelectorAll('#brushes .planOnly').forEach(b => b.style.display = m === 'model' ? 'none' : '');
   S.mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
@@ -2461,7 +2487,7 @@ function plantSummary() {                  // for the sheet notes
 function drawStrokes(c, toXY, k, dense) {   // pen strokes through any projection as smooth curves; k scales width with zoom
   c.lineCap = 'round'; c.lineJoin = 'round';
   for (const st of S.strokes) { if (st.kind) { drawPlant(c, st, toXY, k, dense); continue; } if (st.pts.length < 2 || S.hideStrokes || (S.hideSketch && !st.shape)) continue; c.strokeStyle = PEN[st.color] || INK; const sw = st.w || 1; c.globalAlpha = st.a == null ? 1 : st.a; c.setLineDash(st.dash ? [7 * sw + 2, 5 * sw + 2] : []);
-    const pts = dense ? densify(st.pts, .3) : st.pts, P = pts.map(q => toXY(q[0], q[1]));
+    const pts = dense && !st.z3 ? densify(st.pts, .3) : st.pts, P = pts.map(q => toXY(q[0], q[1], q[3]));
     if (st.shape) { c.lineWidth = 2.2 * k * sw; c.beginPath(); P.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); continue; }
     if ((st.a != null && st.a < 1) || st.dash) {   // one continuous path: no overlap darkening, unbroken dash pattern
       let pr = 0; for (const q of pts) pr += q[2]; pr /= pts.length; c.lineWidth = (1 + 2.4 * pr) * k * sw; c.beginPath(); c.moveTo(P[0][0], P[0][1]);
@@ -4716,7 +4742,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise', 'grade', 'strip', 'swell', 'runoff', 'side', 'padGrade', 'pathW', 'pathH', 'bldMM', 'boxW', 'sandGain'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, secs: S.secs, secI: S.secI, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, bldMode: S.bldMode, rendOn: S.rendOn, rendCut: S.rendCut, rendSky: S.rendSky, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, hideSketch: S.hideSketch || undefined, labelUp: S.labelUp, showBase: S.showBase, showCF: S.showCF, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, secs: S.secs, secI: S.secI, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, z3: st.z3 || undefined, pts: st.pts.map(q => q.length > 3 ? [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100, Math.round(q[3] * 1000) / 1000] : [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, bldMode: S.bldMode, rendOn: S.rendOn, rendCut: S.rendCut, rendSky: S.rendSky, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, hideSketch: S.hideSketch || undefined, labelUp: S.labelUp, showBase: S.showBase, showCF: S.showCF, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value, records: S.rec || {} };
 }
 function loadProject(pr, fromHome) {
@@ -4887,7 +4913,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'select', name: 'select', view: 'plan', panel: box => selectPanel(box), note: 'click a drawing, a plant or an object on the plan to pick it; drag to move it, turn or scale it in the panel' },
       { id: 'measure', name: 'measure', view: 'plan', panel: box => measurePanel(box), note: 'click point to point for distances; click the first point again to close a shape and read its area' },
       { id: 'sculpt', name: 'sculpt', pick: '#sculptBrushes button[data-b=raise]', keepBrush: ['raise', 'lower', 'smooth', 'flatten'], rows: ['#sculptBrushes', '#brushParams'], sculpt3d: true, note: 'drag on the ground, in plan or 3d' },
-      { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', view: 'plan', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode', '#penSizeRow'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']] },
+      { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode', '#penSizeRow'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']], note: 'draw in plan, or in 3d: there the line lands on the ground or on an object and keeps its height (left drag draws, right drag orbits)' },
       { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['=footprint', '#padRow', '=level and grade', '#padLevelRow', '#padGradeRow', '=edges', '#padEdgeRow', '#padSoftRow', '#sideRow', '=earthwork', '#strip', '#swell'] },
       { id: 'grade', name: 'grade a→b', pick: '#brushes button[data-b=grade]', view: 'plan', rows: ['#gradeRow'], more: ['#sideRow'] },
       { id: 'spots', name: 'spot grading', view: 'plan', planLabel: 'draw in plan', panel: box => sgPanel(box), note: 'a design surface from spot heights, breaklines and a boundary, with slopes coloured and flow arrows, then applied to the ground' },
@@ -8083,7 +8109,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     state.tool[state.task] = id; save(); const t = tool();
     if (t.view === '3d') state.view = '3d';
     else if (t.view === 'plan' && state.view === '3d') state.view = 'plan';
-    if (t.pick && !(t.keepBrush && t.keepBrush.includes(S.brush))) { state.busy = true; try { if (t.view === 'plan' && S.mode === 'model') setMode('plan'); press(t.pick); } finally { state.busy = false; } }
+    if (t.pick && !(t.keepBrush && t.keepBrush.includes(S.brush))) { state.busy = true; try { if (t.view === 'plan' && S.mode === 'model') setMode('plan'); press(t.pick); if (t.id === 'sketch' && S.brush !== 'pen') setBrush('pen'); } finally { state.busy = false; } }   /* the pen button is hidden in the model view, so press it by hand there */
     if (!t.pick && !t.sculpt3d && S.brush !== 'look') { state.busy = true; try { setBrush('look'); } finally { state.busy = false; } }   /* a tool with no brush of its own must not leave the last brush digging */
     if (t.unplant && S.plant) { const b = $(`#plantRow button[data-pm="${S.plant}"]`); if (b) b.click(); }
     renderTasks(); renderTool(); applyView(); onToolChanged();
