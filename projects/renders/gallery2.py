@@ -42,12 +42,13 @@ RAIN = (' It is just after a rain, late afternoon: the sky clearing with broken 
         'besides that only small puddles in road ruts. Keep every building, road, fence and ditch exactly where the render has it.')
 TROUGH = (' At the end of the covered stalls the round water trough is low and built of rounded field stone with a stone cap, iron tie rings set in its '
           'side; a horse or two is tied at it, drinking.')
-STABLE = (' At the road end of the stable (the two rooms rendered in plain beige), the walls above the fieldstone are solid straw-bale or cob with a smooth, '
-          'slightly uneven warm earth-coloured lime plaster, with one plain wooden door; everywhere else above the stone are the horizontal tomato stakes. '
-          'Horses stand in the black pipe-fenced runs.')
-AISLE = (' This is inside the stable, down its 14 ft aisle: on both sides are the stall fronts, low solid wooden walls about 4.5 ft high with a sliding '
-         'door each (horses looking out over them); the tall plain walls on the right are the plastered tack and wash rooms. Add NO water tank or trough, '
-         'no pipe panels and no stone wall inside; the aisle floor is packed earth.')
+STABLE = (' The stable (27 Sep design): a 5 ft stacked fieldstone wall all round; a black steel pipe floats 1 ft above the stone on short posts, '
+          'and above it, up to the eave, panels of thin horizontal wooden branches/tomato stakes held in slim dark steel frames, loose and organic like a '
+          'bird nest screen. Inside, exposed timber roof trusses on timber posts. Only the one room at the road end (rendered plain beige) is solid, '
+          'lime-plastered straw bale or cob with a wooden door; the wash bay next to it is open. Each gable end has a big wooden sliding barn door on a '
+          'steel track, shown slid open. The stalls have black pipe fronts and pipe gates, like the corrals. Horses stand in the black pipe-fenced runs.')
+AISLE = (' This is inside the stable, down its 14 ft aisle under exposed timber trusses: both sides are stall fronts of black steel pipe with a pipe '
+         'gate each, horses looking out; the plain walls are the plastered tack room. Add NO water tank, tub or trough; the aisle floor is packed earth.')
 
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()

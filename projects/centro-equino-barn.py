@@ -17,7 +17,9 @@ HL, HD = L / 2, D / 2
 AISLE, STALL, RUN_D = 14.0, 12.0, 40.0
 ROW_D = (D - AISLE) / 2                  # 14 ft
 EAVE, RIDGE, OH = 12.0, 17.0, 2.0
-ROCK_H, ROCK_T, STICK_T = 4.5, 1.5, 0.4
+ROCK_H, ROCK_T, STICK_T = 5.0, 1.5, 0.4    # 27 Sep (Will): rock walls 5 ft, a pipe floating 1 ft above them (6 ft overall)
+RAIL_Z, PIPE = 6.0, .2                      # top of that pipe, pipe size (ft)
+STAKES = True                              # horizontal stakes in dark steel frames above the rail, to the eave (Will's reference photo, 27 Sep)
 FRAMES = [-38.0, -19.0, 0.0, 19.0, 38.0]   # 5 frames at 19 ft
 COL_D, PURL_D = 12.75 / 12, 8.625 / 12
 ENTRY_W = AISLE                          # the big gable entries, open up to the rafters
@@ -27,7 +29,7 @@ MON_HW, MON_H, MON_X = 5.0, 2.5, 30.0   # clerestory monitor: half width, glazin
 STAKE_H, STAKE_T, STAKE_P = .12, .16, .3   # tomato stakes, horizontal: height, thickness, course spacing (gaps between)
 NORTH = ['stall'] * 6                    # 6 x 12.67 ft
 SOUTH = [('tack / feed', 13), ('wash', 13)] + [('stall', 12.5)] * 4   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
-SOLID = ('tack / feed', 'wash')           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
+SOLID = ('tack / feed',)                  # only the tack room is closed (27 Sep); the wash bay is open           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
 RUN_FALL = .05                           # the south runs climb the slope at 5 % (graded), a low rock wall at their uphill end
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
 
@@ -89,47 +91,88 @@ def sticks_x(xa, xb, y, z0, z1, holes):      # tomato stakes laid HORIZONTAL, bi
         for a, b in segs:
             if b - a > .3: box(a - (.3 if k % 3 == 0 else 0), b + (.3 if k % 3 == 1 else 0), y - STAKE_T / 2 + w, y + STAKE_T / 2 + w, zz, zz + STAKE_H)
         zz += STAKE_P; k += 1
-    xv = xa
-    while xv <= xb + .01:
-        box(xv - .08, xv + .08, y - .1, y + .1, z0, z1); xv += 4.0
+    keep = CUR[0]; mat('steel')                     # dark steel frame: posts every ~4 ft, top and bottom members
+    n = max(1, round((xb - xa) / 4))
+    for k in range(n + 1): xv = xa + (xb - xa) * k / n; box(xv - .1, xv + .1, y - .12, y + .12, z0, z1)
+    for zz in (z0, z1 - .15): box(xa, xb, y - .12, y + .12, zz, zz + .15)
+    mat(keep)
 
-# ---- long walls: rock to 4.5 ft, woven sticks to the eave, a door per room ----
+# ---- walls (27 Sep, Will): rock 5 ft all round, a black pipe floating 1 ft above on short pipe posts, open above;
+# the tack room alone is closed to the roof (straw bale / cob, plastered). Pipe gates from each stall to its run.
+def rail_x(xa, xb, y):                        # the floating pipe along x, with short posts down to the rock every ~6 ft
+    if xb - xa < .3: return
+    mat('fence'); box(xa, xb, y - PIPE / 2, y + PIPE / 2, RAIL_Z - PIPE, RAIL_Z)
+    n = max(1, round((xb - xa) / 6))
+    for k in range(n + 1): xp = xa + (xb - xa) * k / n; box(xp - PIPE / 2, xp + PIPE / 2, y - PIPE / 2, y + PIPE / 2, ROCK_H, RAIL_Z)
+def rail_y(ya, yb, x):
+    if yb - ya < .3: return
+    mat('fence'); box(x - PIPE / 2, x + PIPE / 2, ya, yb, RAIL_Z - PIPE, RAIL_Z)
+    n = max(1, round((yb - ya) / 6))
+    for k in range(n + 1): yp = ya + (yb - ya) * k / n; box(x - PIPE / 2, x + PIPE / 2, yp - PIPE / 2, yp + PIPE / 2, ROCK_H, RAIL_Z)
+def gate_x(xa, xb, y, h=RAIL_Z):              # a pipe gate across an opening along x: two stiles and four rails
+    mat('fence')
+    for xx in (xa, xb): box(xx - PIPE / 2, xx + PIPE / 2, y - PIPE / 2, y + PIPE / 2, .4, h)
+    for zz in (.6, 2.4, 4.2, h - PIPE): box(xa, xb, y - PIPE / 2, y + PIPE / 2, zz, zz + PIPE)
+TACK_DOOR = (4.0, 8.0)
 for s in (1, -1):
-    y = s * HD
-    holes = [(r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, DOOR[1]) for r in rooms if r['side'] == s and r['kind'] != 'wash']   # the sketch: one door in the solid rooms (tack), none to the wash
-    mat('rock'); wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, holes)
-    solid = sorted((r['x0'], r['x1']) for r in rooms if r['side'] == s and r['kind'] in SOLID)
+    y = s * HD; holes, solid = [], []
+    for r in rooms:
+        if r['side'] != s: continue
+        if r['kind'] == 'stall': holes.append((r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, 99))           # gate to the run, full height
+        elif r['kind'] in SOLID: solid.append((r['x0'], r['x1'])); holes.append((r['c'] - TACK_DOOR[0] / 2, r['c'] + TACK_DOOR[0] / 2, TACK_DOOR[1]))
+    mat('rock'); wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, [(a, b, t if t != 99 else ROCK_H) for a, b, t in holes])
+    for a, b, t in holes:
+        if t == 99: gate_x(a, b, y)
     xs = -HL
-    for a, b in solid + [(HL, HL)]:                   # stakes between the solid rooms, infill across them
-        if a > xs: mat('stakes'); sticks_x(xs, a, y, ROCK_H, EAVE - .3, [h for h in holes if xs <= h[0] < a])
+    for a, b in sorted(solid) + [(HL, HL)]:
+        xx = xs
+        for ha, hb, _ in sorted(h for h in holes if h[2] == 99 and xs <= h[0] < a): rail_x(xx, ha, y); xx = hb
+        rail_x(xx, a, y)
+        if STAKES and a > xs: mat('stakes'); sticks_x(xs, a, y, RAIL_Z, EAVE - .3, [])   # the stall gates stop at the rail; stakes carry on above them
         if b > a: mat('cob'); wall_x(a, b, y, ROCK_T * .8, ROCK_H, EAVE - .3, [h for h in holes if a <= h[0] < b])
         xs = b
 
-# ---- gable ends: rock and stakes either side of the big entry; stakes fill the gable over the rooms ----
+# ---- gable ends: rock and rail either side of the big entry; the tack room's gable bay solid up to the truss;
+# a big sliding door at each end (two leaves on a track above the entry, shown parked open over the rock) ----
 for sx in (-1, 1):
     x = sx * HL
     for s in (-1, 1):
         y0, y1 = sorted((s * ENTRY_W / 2, s * HD))
         mat('rock'); box(x - ROCK_T / 2, x + ROCK_T / 2, y0, y1, 0, ROCK_H)
-        cob = any(r['side'] == s and r['kind'] in SOLID and abs(r['x0' if sx < 0 else 'x1'] - x) < .1 for r in rooms)   # gable wall of a solid room
-        mat('cob' if cob else 'stakes'); zz, k = ROCK_H + (0 if cob else .25), 0                     # horizontal stakes stepping up under the rafter
-        while True:
-            ya, yb = y0, y1
-            yin, yout = (ya, yb) if abs(ya) < abs(yb) else (yb, ya)          # the entry side stays, the outer end stops under the rafter
-            lim = HD - (zz + STAKE_H - EAVE) / slope if zz + STAKE_H > EAVE else HD
-            if lim <= abs(yin) + .5: break
-            yo = math.copysign(min(abs(yout), lim - COL_D / 2), yout)
-            w = 0 if cob else .08 * (1, -1, .5, -.5)[k % 4]
-            if cob: box(x - ROCK_T * .4, x + ROCK_T * .4, min(yin, yo), max(yin, yo), zz, zz + STAKE_P)
-            else: box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, min(yin, yo), max(yin, yo), zz, zz + STAKE_H)
-            zz += STAKE_P; k += 1
+        cob = any(r['side'] == s and r['kind'] in SOLID and abs(r['x0' if sx < 0 else 'x1'] - x) < .1 for r in rooms)
+        if cob: mat('cob'); box(x - ROCK_T * .4, x + ROCK_T * .4, y0, y1, ROCK_H, EAVE - .3)
+        else:
+            rail_y(y0, y1, x)
+            if STAKES:                         # framed stakes on the gable bays too, up to the eave
+                mat('stakes'); zz, k = RAIL_Z + .25, 0
+                while zz < EAVE - .4:
+                    w = .08 * (1, -1, .5, -.5)[k % 4]; box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, y0, y1, zz, zz + STAKE_H); zz += STAKE_P; k += 1
+                mat('steel'); n = max(1, round((y1 - y0) / 4))
+                for q in range(n + 1): yv = y0 + (y1 - y0) * q / n; box(x - .12, x + .12, yv - .1, yv + .1, RAIL_Z, EAVE - .3)
+                for zz in (RAIL_Z, EAVE - .45): box(x - .12, x + .12, y0, y1, zz, zz + .15)
+    xo = x + sx * (ROCK_T / 2 + .35)
+    mat('steel'); box(min(xo, xo + sx * .2), max(xo, xo + sx * .2), -HD + 1, HD - 1, EAVE - .2, EAVE + .2)          # the door track
+    mat('wood')
+    for s in (-1, 1):                          # leaves 7.5 x 11.5 ft
+        ya, yb = sorted((s * (ENTRY_W / 2 + .3), s * (ENTRY_W / 2 + 7.8)))
+        box(min(xo, xo + sx * .3), max(xo, xo + sx * .3), ya, yb, .3, EAVE - .2)
 
-# ---- the frames: 12 in pipe columns and rafters, rafters run 2 ft past the columns ----
+# ---- structure (27 Sep, Will): timber trusses on timber posts instead of the pipe portal frames, one at every
+# north stall line (7 lines, 12.7 ft apart): top chords, a bottom chord at the eave, king post, verticals and webs ----
+TRUSS = [-HL + L * k / 6 for k in range(7)]
+POST = .8
+for x in TRUSS:
+    mat('wood')
+    for s in (-1, 1): box(x - POST / 2, x + POST / 2, s * HD - POST / 2, s * HD + POST / 2, 0, EAVE)
+    for s in (-1, 1): bar((x, s * (HD + OH), roof_z(HD + OH)), (x, 0, RIDGE), COL_D, 4)                          # top chords
+    bar((x, -HD, EAVE), (x, HD, EAVE), .7, 4)                                                                     # bottom chord
+    bar((x, 0, EAVE), (x, 0, RIDGE), .5, 4)                                                                       # king post
+    for k in (1, 2, 3):
+        for s in (-1, 1):
+            yv = s * HD * k / 4; yw = s * HD * (k - 1) / 4
+            bar((x, yv, EAVE), (x, yv, roof_z(yv)), .45, 4)                                                        # verticals
+            bar((x, yv, EAVE), (x, yw, roof_z(yw)), .4, 4)                                                         # webs toward the ridge
 mat('steel')
-for x in FRAMES:
-    for s in (-1, 1):
-        bar((x, s * HD, 0), (x, s * HD, EAVE), COL_D)
-        bar((x, s * (HD + OH), roof_z(HD + OH)), (x, 0, RIDGE), COL_D)
 # eave beams and purlins, 8 in pipe on top of the rafters, about 5 ft apart along the slope
 top = COL_D / 2 + PURL_D / 2
 run = HD + OH; n_p = 5
@@ -163,18 +206,25 @@ for xm in (-MON_X, MON_X):
     mat('glass'); quad((xm, -MON_HW, zb), (xm, MON_HW, zb), (xm, MON_HW, zb + MON_H), (xm, -MON_HW, zb + MON_H))
     mat('roof'); quad((xm, -MON_HW, zb + MON_H), (xm, MON_HW, zb + MON_H), (xm, 0, zb + MON_H + slope * MON_HW), (xm, 0, zb + MON_H + slope * MON_HW))
 
-# ---- inside: stall partitions to 4.5 ft with a grille look (solid here), rooms walled to 10 ft ----
-mat('wood')
+# ---- inside (27 Sep): stall partitions 5 ft wood with the floating pipe above (6 ft), pipe fronts with a pipe gate
+# to the aisle; the tack room walled to the eave with a door; the wash bay open to the aisle ----
 for s in (1, -1):
     rr = [r for r in rooms if r['side'] == s]
     y0, y1 = sorted((s * (HD - ROCK_T / 2), s * (HD - ROW_D)))
     for a, b in zip(rr, rr[1:]):
-        h = ROCK_H if a['kind'] == b['kind'] == 'stall' else 10
-        box(b['x0'] - .25, b['x0'] + .25, y0, y1, 0, h)
+        if a['kind'] in SOLID or b['kind'] in SOLID: mat('cob'); box(b['x0'] - .3, b['x0'] + .3, y0, y1, 0, EAVE - .3)
+        else: mat('wood'); box(b['x0'] - .2, b['x0'] + .2, y0, y1, 0, ROCK_H); rail_y(y0, y1, b['x0'])
     yi = s * (HD - ROW_D)
     for r in rr:
-        h = ROCK_H if r['kind'] == 'stall' else 10
-        wall_x(r['x0'] + .1, r['x1'] - .1, yi, .4, 0, h, [(r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, DOOR[1])])
+        if r['kind'] in SOLID:
+            mat('cob'); wall_x(r['x0'] + .1, r['x1'] - .1, yi, .6, 0, EAVE - .3, [(r['c'] - TACK_DOOR[0] / 2, r['c'] + TACK_DOOR[0] / 2, TACK_DOOR[1])])
+        elif r['kind'] == 'stall':
+            ga, gb = r['c'] - 2.5, r['c'] + 2.5
+            mat('fence')
+            for xx in (r['x0'] + .2, r['x1'] - .2): box(xx - PIPE / 2, xx + PIPE / 2, yi - PIPE / 2, yi + PIPE / 2, 0, RAIL_Z)
+            for xa, xb in ((r['x0'] + .2, ga), (gb, r['x1'] - .2)):
+                for zz in (.6, 2.4, 4.2, RAIL_Z - PIPE): box(xa, xb, yi - PIPE / 2, yi + PIPE / 2, zz, zz + PIPE)
+            gate_x(ga, gb, yi)
 
 # ---- runs: 12 x 40 ft off every stall on both sides, three-rail black pipe fence at 5 ft 6 in; the south ones climb at RUN_FALL ----
 mat('fence')
@@ -194,7 +244,7 @@ for r in rooms:
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'centro-equino-barn.obj')
 with open(out, 'w', newline='\n') as f:
-    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft pipe portal frames, rock 4.5 ft all round + horizontal tomato stakes, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls north + 4 south with 12x40 runs, tack/feed + wash at the west end (by the barn road) with solid straw-bale/cob infill above the rock\n")
+    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft timber trusses on timber posts, rock 5 ft all round with a floating pipe to 6 ft, open above, big sliding doors at both ends, pipe stall fronts and gates, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls north + 4 south with 12x40 runs, tack/feed (closed, straw bale/cob) + open wash bay at the west end by the barn road\n")
     f.write(f"# geo {LAT} {LON}\n# unit ft\n# name walker barn 72x40\n")
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
     last = None
