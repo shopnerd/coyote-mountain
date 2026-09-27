@@ -26,13 +26,14 @@ SCENE = (   # 27 Sep, Will: "not very accurate to the terrain and to the buildin
     'Light: golden hour, the sun low in the west about half an hour before sunset, warm light, long soft shadows; big puffy cumulus clouds lit gold and pink against clear blue. '
     'Place: the Valle de Guadalupe, Baja California, dry season: golden grass, olive-green scrub and granite boulders on the ground the model shows. '
     'The low building whose roof dips to a valley along its middle is a set of covered horse stalls. Its roof is ONE continuous, nearly flat, light grey '
-    'standing-seam metal surface, V-shaped in cross-section (the centre line over the corridor is the lowest part, the two long outer edges the highest), '
+    'standing-seam metal surface, a shallow but clearly visible V in cross-section (the centre line over the corridor is the lowest part, the two long outer edges the highest), '
     'with no notch, gap, cutout, step, ridge or skylight anywhere in it, carried on slim steel posts. Under it are two rows of four open stalls '
     'made of white-painted steel pipe panels facing a sand corridor; the back part of each stall is open to the sky. A few horses stand in the stalls. '
     'The bay at the north-east end of the same building, under the same roof, is the alfalfa bay: a stack of green-gold alfalfa bales behind pipe panels, '
     'with no walls and no separate roof. '
     'At the south-west end a round galvanised stock-water trough sits on the ground, fed by a short open chute from the roof valley; nothing stands under the chute. '
-    'The larger gabled building is the main stable: a stacked fieldstone base about 4.5 ft high all the way round, woven stick panels above it between dark steel posts, '
+    'The larger gabled building is the main stable: a stacked fieldstone base about 4.5 ft high all the way round; above it, thin wooden tomato stakes laid HORIZONTALLY '
+    'in loose, slightly uneven courses with small gaps, like a bird\'s nest, between dark steel posts; '
     'dark steel frames with trusses showing at the two open gable ends, and a dark charcoal corrugated metal roof with a raised glazed clerestory strip along the ridge; '
     'its six runs on one long side have black pipe fences. '
     'The oval is a raked-sand riding arena and the circle a round pen, both with white pipe fences; roads are compacted pale dirt. '
@@ -81,8 +82,9 @@ FIXES = {'3-site-ne': ' The last attempt got this wrong and it must be right thi
 
 STABLE_REF = os.path.join(HERE, 'ref', 'stable-ref.jpg')     # Walker's image of the stable, 27 Sep
 STABLE_NOTE = (' The last image shows the main stable as designed. Wherever the first image shows the main stable (the gabled building with the raised '
-    'clerestory along its ridge and six fenced runs on one long side), paint it as the building in that last image: its stone base, woven stick walls, '
-    'dark steel frames and trusses, dark roof with the clerestory, wood stall fronts and black run fences. Take only the building from that image, never '
+    'clerestory along its ridge and six fenced runs on one long side), paint it as the building in that last image: its stone base, '
+    'dark steel frames and trusses, dark roof with the clerestory, wood stall fronts and black run fences, with ONE change: the sticks above the stone run '
+    'HORIZONTALLY, as stacked tomato stakes like a bird\'s nest, not vertically as in that image. Take only the building from that image, never '
     'its mountains, vineyard, trough, sky or camera; keep the stable exactly at the size, position, angle and outline the first image shows.')
 
 if __name__ == '__main__':

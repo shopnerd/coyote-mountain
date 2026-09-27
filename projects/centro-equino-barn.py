@@ -1,5 +1,5 @@
 """Walker's Centro Equino stable as an OBJ for the topo tool, 27 Sep 2026: the 24 Sep plan unchanged, with a clerestory
-monitor along the ridge and woven, mostly vertical stick panels above the rock (Walker's image, confirmed by Will).
+monitor along the ridge (Walker's image) and horizontal tomato stakes above the rock, bird's-nest style (Will, 27 Sep).
 The 24 Sep design:
 72 x 40 ft on 12 in pipe portal frames (4 frames at 24 ft), stacked rock to 4.5 ft all round,
 tomato-stake walls above, a big entry at both gable ends, metal roof with 2 ft overhangs on the
@@ -24,7 +24,7 @@ ENTRY_W = AISLE                          # the big gable entries, open up to the
 DOOR = (4.0, 8.0)
 RAIL_H = 5.5
 MON_HW, MON_H, MON_X = 5.0, 2.5, 30.0   # clerestory monitor: half width, glazing height, half length (27 Sep)
-STICK_W, STICK_P = .22, .5            # woven sticks: width and spacing
+STAKE_H, STAKE_T, STAKE_P = .12, .16, .3   # tomato stakes, horizontal: height, thickness, course spacing (gaps between)
 NORTH = ['stall'] * 6
 SOUTH = [('wash', 12), ('tack', 12), ('feed', 12), ('alfalfa', 36)]
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
@@ -74,18 +74,20 @@ x = -HL
 for kind, w in SOUTH: rooms.append(dict(kind=kind, x0=x, x1=x + w, side=-1)); x += w
 for r in rooms: r['c'] = (r['x0'] + r['x1']) / 2
 
-def sticks_x(xa, xb, y, z0, z1, holes):      # woven sticks along x: near-vertical, alternately in and out, three weave battens
-    x, k = xa + STICK_P / 2, 0
-    while x < xb:
-        w = .09 * (1 if k % 2 else -1); lo = z0
-        for a, b, top in holes:
-            if a - .1 < x < b + .1: lo = max(z0, top)
-        box(x - STICK_W / 2, x + STICK_W / 2, y - STICK_W / 2 + w, y + STICK_W / 2 + w, lo, z1 - .15 * (k % 3)); x += STICK_P; k += 1
-    for h in (6.5, 9.0, 11.2):
-        xs = xa
+def sticks_x(xa, xb, y, z0, z1, holes):      # tomato stakes laid HORIZONTAL, bird's-nest style (Will, 27 Sep): loose courses with gaps,
+    zz, k = z0 + .25, 0                           # each stake a little in or out and a little long or short, on light verticals every 4 ft
+    while zz < z1 - .1:
+        w = .08 * (1, -1, .5, -.5)[k % 4]; xs = xa
+        segs = []
         for a, b, top in sorted(holes):
-            if h < top: box(xs, a, y - .12, y + .12, h, h + .15); xs = b
-        box(xs, xb, y - .12, y + .12, h, h + .15)
+            if zz < top: segs.append((xs, a)); xs = b
+        segs.append((xs, xb))
+        for a, b in segs:
+            if b - a > .3: box(a - (.3 if k % 3 == 0 else 0), b + (.3 if k % 3 == 1 else 0), y - STAKE_T / 2 + w, y + STAKE_T / 2 + w, zz, zz + STAKE_H)
+        zz += STAKE_P; k += 1
+    xv = xa
+    while xv <= xb + .01:
+        box(xv - .08, xv + .08, y - .1, y + .1, z0, z1); xv += 4.0
 
 # ---- long walls: rock to 4.5 ft, woven sticks to the eave, a door per room ----
 for s in (1, -1):
@@ -100,12 +102,16 @@ for sx in (-1, 1):
     for s in (-1, 1):
         y0, y1 = sorted((s * ENTRY_W / 2, s * HD))
         box(x - ROCK_T / 2, x + ROCK_T / 2, y0, y1, 0, ROCK_H)
-        yy = y0 + STICK_P / 2; k = 0                 # woven sticks up to the rafter
-        while yy < y1:
-            w = .09 * (1 if k % 2 else -1); top = roof_z(yy) - COL_D / 2
-            box(x - STICK_W / 2 + w, x + STICK_W / 2 + w, yy - STICK_W / 2, yy + STICK_W / 2, ROCK_H, top); yy += STICK_P; k += 1
-        for h in (6.5, 9.0, 11.5):
-            if h < roof_z(y1 if abs(y1) > abs(y0) else y0): box(x - .12, x + .12, y0, y1, h, h + .15)
+        zz, k = ROCK_H + .25, 0                     # horizontal stakes stepping up under the rafter
+        while True:
+            ya, yb = y0, y1
+            yin, yout = (ya, yb) if abs(ya) < abs(yb) else (yb, ya)          # the entry side stays, the outer end stops under the rafter
+            lim = HD - (zz + STAKE_H - EAVE) / slope if zz + STAKE_H > EAVE else HD
+            if lim <= abs(yin) + .5: break
+            yo = math.copysign(min(abs(yout), lim - COL_D / 2), yout)
+            w = .08 * (1, -1, .5, -.5)[k % 4]
+            box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, min(yin, yo), max(yin, yo), zz, zz + STAKE_H)
+            zz += STAKE_P; k += 1
 
 # ---- the frames: 12 in pipe columns and rafters, rafters run 2 ft past the columns ----
 for x in FRAMES:
@@ -166,7 +172,7 @@ for r in rooms:
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'centro-equino-barn.obj')
 with open(out, 'w', newline='\n') as f:
-    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft pipe portal frames, rock 4.5 ft all round + woven sticks, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls + 12x40 runs north\n")
+    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft pipe portal frames, rock 4.5 ft all round + horizontal tomato stakes, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls + 12x40 runs north\n")
     f.write(f"# geo {LAT} {LON}\n# unit ft\n# name walker barn 72x40\n")
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
     for fc in F: f.write('f ' + ' '.join(map(str, fc)) + '\n')

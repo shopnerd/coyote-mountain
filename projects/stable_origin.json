@@ -1,0 +1,8 @@
+{
+ "grid": [
+  107.3185398166717,
+  58.62467724890372
+ ],
+ "rot": 318,
+ "note": "the stable centre (obj origin) in site grid coords; swap_stable.py places every rebuilt stable here"
+}

@@ -87,7 +87,7 @@ def portal_page():
     ax2.add_patch(Rt((-30, 13.6), 60, 2.5, fc='#e8f0f4', ec=INK, lw=.6, zorder=9)); ax2.plot([-30.8, 30.8], [16.3, 16.3], color='#4a4f55', lw=3, zorder=9)   # clerestory seen from the side (27 Sep)
     for a_, b_ in zip(cols[:-1], cols[1:]): _dim(ax2, (a_, -2.6), (b_, -2.6), '24 ft', off=(0, -.7))
     ax2.text(0, 14.6, 'Muro lateral · Long side wall (norte · north, 72 ft)', ha='center', fontsize=9.5, weight='bold')
-    ax2.text(-24, 2.0, 'piedra 4.5 ft · rock', ha='center', fontsize=6.5, zorder=9); ax2.text(-24, 9.7, 'varas tejidas · woven sticks', ha='center', fontsize=6.5, color='white', zorder=9, bbox=dict(fc=STICK, ec='none', pad=1))
+    ax2.text(-24, 2.0, 'piedra 4.5 ft · rock', ha='center', fontsize=6.5, zorder=9); ax2.text(-24, 9.7, 'varas de tomate · tomato stakes', ha='center', fontsize=6.5, color='white', zorder=9, bbox=dict(fc=STICK, ec='none', pad=1))
     ax2.text(24, 10.4, 'viga de alero tubo 8 in · 8 in pipe eave beam', ha='center', fontsize=6.3, color='white', zorder=9, bbox=dict(fc='#4a4a4a', ec='none', pad=1))
     # ---------- notes ----------
     rows = [('Marcos · Frames', '4 marcos rígidos, uno cada 24 ft (los dos extremos quedan a la vista en las entradas): 2 columnas y 2 vigas de tubo de 12 in, soldadas en la rodilla y atornilladas en la cumbrera; las vigas siguen 2 ft afuera para el alero', '4 rigid frames at 24 ft (the two end frames exposed at the entries): two 12 in pipe columns and two pipe rafters, welded at the knees, bolted at the ridge; rafters run 2 ft out for the overhang'),
@@ -101,7 +101,7 @@ def portal_page():
     fig.text(0.68, y, 'Por etapas · In stages', fontsize=9.3, weight='bold', color=INK); y -= .019
     for es, en in (('1 · Marcos, largueros y techo: el establo ya funciona con frentes de caballeriza de tubo. Las pilas se diseñan para sostener el techo SIN la piedra.', '1 · Frames, purlins and roof: the stable works with pipe stall fronts. Piers are sized to hold the roof down WITHOUT the rock.'),
                    ('2 · Piedra a 4.5 ft en todo el perímetro, sobre la trabe de liga, con una cadena de concreto arriba y varillas de amarre a las columnas.', '2 · Rock to 4.5 ft all round on the grade beam, with a concrete cap on top and tie rods to the columns.'),
-                   ('3 · Varas tejidas casi verticales entre verticales de tubo de 2 in cada 4 ft, con tres travesaños, fijas a la cadena y a la viga de alero.', '3 · Woven, mostly vertical sticks between 2 in pipe verticals every 4 ft, on three rails, fixed to the cap and the eave beam.')):
+                   ('3 · Varas de tomate horizontales, sueltas como nido de pájaro, sobre verticales de tubo de 2 in cada 4 ft, fijas a la cadena y a la viga de alero.', '3 · Horizontal tomato stakes, loose like a bird’s nest, on 2 in pipe verticals every 4 ft, fixed to the cap and the eave beam.')):
         y = para(fig, 0.68, y, es, en, w=70, fs=7.0)
     y = para(fig, 0.68, y, 'Sismo: con la piedra sólo a 4.5 ft ya no hay fachadas altas de piedra; el muro bajo lleva castillos de varilla cada ~8 ft y la cadena arriba.',
              'Earthquakes: with rock only to 4.5 ft there are no tall stone facades any more; the low wall gets rebar cores every ~8 ft and the cap on top.', w=70, fs=7.0)

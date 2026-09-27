@@ -18,7 +18,7 @@ HAY_H = 7.5                                             # top of the alfalfa sta
 PANEL, POST = 5.0, .5
 # butterfly roof (Will, 26 Sep): both planes fall to a valley gutter over the corridor, the valley falls 1 % to the SW end,
 # where a leader carries the water 8 ft past the roof and down into the ditch outlet
-VALLEY_NE, FALL, RISE = 10.7, .005, .75                # valley 10.7 ft at the NE end, 0.5 % fall to the SW; eaves .75 ft higher = 1/2:12 over 18 ft (27 Sep: flatter)
+VALLEY_NE, FALL, RISE = 10.7, .005, 1.5                # valley 10.7 ft at the NE end, 0.5 % fall to the SW; eaves 1.5 ft higher = 1:12 over 18 ft (27 Sep: 1/2:12 was too flat)
 FLAT = 6.0                                              # level strip at every stall front: waterers + feeders (Will, 26 Sep)
 L, D = NB * STALL_W, 2 * STALL_D + CORR                # 80 x 52 ft
 T0 = float(sys.argv[1]) if len(sys.argv) > 1 else 114.0 - L   # the NE (stable) end stays where the 16-stall block ended (t = 114); the block shrinks from the SW

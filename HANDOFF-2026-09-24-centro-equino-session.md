@@ -288,3 +288,15 @@ along the whole south fence as ~8 small flows), so the crossings are now sized f
 - 3D viewer artifact https://claude.ai/artifact/NiKaQ9hYfGgu5UATQGEPzh — source `projects/viewer/` (`export.py` ->
   data.json + aerial.jpg; `index.html`, three r128 + OrbitControls). Wheel zooms to the cursor (raycast, caught on
   the parent in capture), middle/right drag pans, R hides roofs, sun slider 27 Sep solar time.
+
+## 15. Stakes horizontal, stall roof 1:12, fences re-seated (27 Sep, Will)
+- Stable walls back to HORIZONTAL tomato stakes, bird's-nest (loose courses 0.12 ft at 0.3 ft, jittered, on light
+  verticals every 4 ft); clerestory kept. Walker's image stays the painter's building reference but STABLE_NOTE says
+  the sticks run horizontal, not vertical as in her image.
+- Stall roof RISE 1.5 = 1:12 (1/2:12 was too flat). Eaves ≈11.8–12.2 ft, valley 10.3–10.7 ft.
+- The site and cross fences were buried up to 2 m (draped before the regrading): `redrape_fences.py` re-seats each
+  vertex on today's ground by its height above the local post foot. Now visible in the app, the viewer and paintings.
+- NEW CHAIN ORDER: covered_stalls.py -> undo_paddock_pad.py -> remove_road.py (x2) -> fix_junction.py ->
+  swap_stable.py (places centro-equino-barn.obj at stable_origin.json) -> redrape_fences.py.
+- Set v4 in Drive `2026-09-27 money shots v4 (stakes, 1-12 roof, fence)`; pack v11 (cover 3-site-ne-7) behind the
+  shared link; viewer v3, gallery v5, water plan v9. Liberty: the painter copies Walker's stone trough near the stalls.
