@@ -83,8 +83,8 @@ body.shot{grid-template-columns:1fr}
   <button type="button" id="grab" aria-label="Arrastrar para ver más o menos · Drag to show more or less"></button>
   <header class="more">
     <h1>Centro Equino Chichihuas</h1>
-    <p class="lede">Establo <b>72 × 40 ft</b> con claraboya corrida, piedra y varas de tomate · 10 caballerizas con corrales a ambos lados · <b>8 caballerizas techadas</b> de 16 × 20 ft con alfalfa bajo el mismo techo · terreno nivelado del 27 sep 2026</p>
-    <p class="lede"><i>Stable 72 × 40 ft with a clerestory, stone and tomato stakes · 10 stalls with runs on both sides · 8 covered 16 × 20 ft stalls with the alfalfa under one roof · graded ground, 27 Sep 2026</i></p>
+    <p class="lede">Establo <b>76 × 42 ft</b> con claraboya corrida, piedra y varas de tomate · 10 caballerizas con corrales a ambos lados · <b>8 caballerizas techadas</b> de 16 × 20 ft con alfalfa bajo el mismo techo · terreno nivelado del 27 sep 2026</p>
+    <p class="lede"><i>Stable 76 × 42 ft with a clerestory, stone and tomato stakes · 10 stalls with runs on both sides · 8 covered 16 × 20 ft stalls with the alfalfa under one roof · graded ground, 27 Sep 2026</i></p>
   </header>
 
   <section><h2>Vistas <i>· Views</i></h2>
@@ -126,12 +126,12 @@ body.shot{grid-template-columns:1fr}
       <tr><td>Captación del techo <span class="en">Roof catchment</span></td><td>≈1,900 gal/in</td></tr>
       <tr><td>Bebedero redondo <span class="en">Round trough</span></td><td>Ø 8 ft · ≈500 gal</td></tr>
       <tr class="head"><td colspan="2">Establo <span class="en">Stable</span></td></tr>
-      <tr><td>Planta <span class="en">Footprint</span></td><td>72 × 40 ft</td></tr>
+      <tr><td>Planta <span class="en">Footprint</span></td><td>76 × 42 ft</td></tr>
       <tr><td>Bajo techo <span class="en">Under roof</span></td><td>3,168 ft²</td></tr>
       <tr><td>Captación del techo <span class="en">Roof catchment</span></td><td>≈2,000 gal/in</td></tr>
-      <tr><td>Caballerizas, 10 (6 norte, 4 sur) <span class="en">Stalls, ten (6 north, 4 south)</span></td><td>12 × 13 ft</td></tr>
+      <tr><td>Caballerizas, 10 (6 norte, 4 sur) <span class="en">Stalls, ten (6 north, 4 south)</span></td><td>12.5–12.7 × 14 ft</td></tr>
       <tr><td>Corrales, 10, a ambos lados <span class="en">Runs, ten, both sides</span></td><td>12 × 40 ft</td></tr>
-      <tr><td>Monturas y alimento · lavado, lado del camino, muro macizo (paja o cob) <span class="en">Tack and feed · wash, road end, solid straw-bale or cob infill</span></td><td>12 × 13 ft c/u</td></tr>
+      <tr><td>Monturas y alimento · lavado, lado del camino, muro macizo (paja o cob) <span class="en">Tack and feed · wash, road end, solid straw-bale or cob infill</span></td><td>13 × 14 ft c/u</td></tr>
       <tr class="head"><td colspan="2">Sitio <span class="en">Site</span></td></tr>
       <tr><td>Corte · relleno <span class="en">Cut · fill</span></td><td>3,185 · 2,714 yd³</td></tr>
       <tr><td>Cuenca arriba del sitio <span class="en">Watershed above the site</span></td><td>≈16 ac</td></tr>
@@ -359,20 +359,21 @@ body.shot{grid-template-columns:1fr}
       g += `<line x1="${ox}" y1="${oy + 57 * s}" x2="${ox + 80 * s}" y2="${oy + 57 * s}" stroke="currentColor" stroke-width=".8"/><text x="${ox + 40 * s}" y="${oy + 57 * s + 11}" font-size="9" text-anchor="middle" fill="currentColor">80 ft · 5 × 16</text>`;
       g += `<text x="${ox + 82 * s}" y="${oy + 5 * s}" font-size="8" fill="var(--muted)">NE →</text>`;
       return `<svg viewBox="0 0 330 222" role="img" aria-label="Plano de las caballerizas techadas · Covered stalls plan" style="color:var(--ink)">${g}<text x="6" y="14" font-size="9" fill="var(--muted)">roof ▭ dashed · 84 × 36 ft</text></svg>`; },
-    stable: () => { const s = 2.35, ox = 44, oy = 10; let g = '';
+    stable: () => { const s = 2.35, ox = 40, oy = 10; let g = '';                       // 76 x 42 ft (Walker's elevation sketch, 27 Sep)
       const R = (x, y, w, h, f) => `<rect x="${ox + x * s}" y="${oy + y * s}" width="${w * s}" height="${h * s}" fill="${f}" stroke="currentColor" stroke-width=".8"/>`;
       const T = (x, y, t, fill = 'currentColor', size = 7.5) => `<text x="${ox + x * s}" y="${oy + y * s}" font-size="${size}" text-anchor="middle" fill="${fill}">${t}</text>`;
-      for (let k = 0; k < 6; k++) g += R(k * 12, 0, 12, 40, 'var(--chip)');                       // north runs
-      g += T(36, 21, 'corrales · runs 12 × 40');
-      g += R(0, 40, 72, 40, 'none');
-      for (let k = 0; k < 6; k++) { g += R(k * 12, 40, 12, 13, 'var(--panel)'); g += T(k * 12 + 6, 48.5, k + 1); }
-      [['mont. · alim.', 12], ['lavado', 12], ['7', 12], ['8', 12], ['9', 12], ['10', 12]].reduce((x, [n, w]) => { g += R(x, 67, w, 13, n.length > 3 ? '#cbb393' : 'var(--panel)') + T(x + w / 2, 75.5, n, 'currentColor', n.length > 3 ? 5.6 : 7.5); return x + w; }, 0);
-      g += T(36, 61.5, 'pasillo · aisle 14 ft');
-      for (let k = 0; k < 4; k++) g += R(24 + k * 12, 80, 12, 40, 'var(--chip)');                  // south runs, east end (27 Sep)
-      g += T(12, 92, 'patio abierto', 'var(--muted)', 6.5) + T(12, 99, 'open apron · road', 'var(--muted)', 6.5);
-      g += `<line x1="${ox + 24 * s}" y1="${oy + 120 * s}" x2="${ox + 72 * s}" y2="${oy + 120 * s}" stroke="#8a7d66" stroke-width="3"/>` + T(48, 125, 'muro bajo · low rock wall', 'var(--muted)', 7);
-      g += T(48, 104, 'corrales · runs', 'currentColor', 7.5) + T(80, 4, 'N ↑', 'var(--muted)', 8);
-      return `<svg viewBox="0 0 300 312" role="img" aria-label="Plano del establo · Stable plan" style="color:var(--ink)">${g}</svg>`; },
+      const N = 76 / 6;
+      for (let k = 0; k < 6; k++) g += R(k * N, 0, N, 40, 'var(--chip)');                        // north runs
+      g += T(38, 21, 'corrales · runs 12.7 × 40');
+      g += R(0, 40, 76, 42, 'none');
+      for (let k = 0; k < 6; k++) { g += R(k * N, 40, N, 14, 'var(--panel)'); g += T(k * N + N / 2, 49, k + 1); }
+      [['mont. · alim.', 13], ['lavado', 13], ['7', 12.5], ['8', 12.5], ['9', 12.5], ['10', 12.5]].reduce((x, [n, w]) => { g += R(x, 68, w, 14, n.length > 3 ? '#cbb393' : 'var(--panel)') + T(x + w / 2, 77, n, n.length > 3 ? '#26241f' : 'currentColor', n.length > 3 ? 5.6 : 7.5); return x + w; }, 0);
+      g += T(38, 62.5, 'pasillo · aisle 14 ft');
+      for (let k = 0; k < 4; k++) g += R(26 + k * 12.5, 82, 12.5, 40, 'var(--chip)');             // south runs, east end
+      g += T(13, 94, 'patio abierto', 'var(--muted)', 6.5) + T(13, 101, 'open apron · road', 'var(--muted)', 6.5);
+      g += `<line x1="${ox + 26 * s}" y1="${oy + 122 * s}" x2="${ox + 76 * s}" y2="${oy + 122 * s}" stroke="#8a7d66" stroke-width="3"/>` + T(51, 127, 'muro bajo · low rock wall', 'var(--muted)', 7);
+      g += T(51, 106, 'corrales · runs', 'currentColor', 7.5) + T(84, 4, 'N ↑', 'var(--muted)', 8);
+      return `<svg viewBox="0 0 300 318" role="img" aria-label="Plano del establo · Stable plan" style="color:var(--ink)">${g}</svg>`; },
   };
   const showPlan = k => { $('plan').innerHTML = PLANS[k](); document.querySelectorAll('#planTabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.plan === k)); };
   document.querySelectorAll('#planTabs button').forEach(b => b.onclick = () => showPlan(b.dataset.plan)); showPlan('stalls');

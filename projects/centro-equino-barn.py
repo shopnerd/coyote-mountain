@@ -1,7 +1,7 @@
 """Walker's Centro Equino stable as an OBJ for the topo tool, 27 Sep 2026: the 24 Sep plan unchanged, with a clerestory
 monitor along the ridge (Walker's image) and horizontal tomato stakes above the rock, bird's-nest style (Will, 27 Sep).
 The 24 Sep design:
-72 x 40 ft on 12 in pipe portal frames (4 frames at 24 ft), stacked rock to 4.5 ft all round,
+76 x 42 ft (27 Sep, Walker's elevation sketch; was 72 x 40) on 12 in pipe portal frames (5 frames at 19 ft), stacked rock to 4.5 ft all round,
 tomato-stake walls above, a big entry at both gable ends, metal roof with 2 ft overhangs on the
 long sides, 8 in pipe purlins and eave beams. Walker's layout: 6 stalls north with 12 x 40 ft runs,
 wash / tack / feed / alfalfa-storage south, 14 ft aisle. Feet, z up, x along the long axis, y north,
@@ -12,21 +12,21 @@ turned to her bearing; the origin is the barn centre. The # geo line tells topo.
 """
 import math, os
 
-L, D = 72.0, 40.0                        # column centre lines
+L, D = 76.0, 42.0                        # column centre lines: Walker's elevation sketch, 27 Sep (76 ft south face; gable 14 + 14 entry + 14)
 HL, HD = L / 2, D / 2
 AISLE, STALL, RUN_D = 14.0, 12.0, 40.0
-ROW_D = (D - AISLE) / 2                  # 13 ft
+ROW_D = (D - AISLE) / 2                  # 14 ft
 EAVE, RIDGE, OH = 12.0, 17.0, 2.0
 ROCK_H, ROCK_T, STICK_T = 4.5, 1.5, 0.4
-FRAMES = [-36.0, -12.0, 12.0, 36.0]
+FRAMES = [-38.0, -19.0, 0.0, 19.0, 38.0]   # 5 frames at 19 ft
 COL_D, PURL_D = 12.75 / 12, 8.625 / 12
 ENTRY_W = AISLE                          # the big gable entries, open up to the rafters
-DOOR = (4.0, 8.0)
+DOOR = (5.0, 10.0)                       # Walker's sketch: tall openings, near the eave
 RAIL_H = 5.5
 MON_HW, MON_H, MON_X = 5.0, 2.5, 30.0   # clerestory monitor: half width, glazing height, half length (27 Sep)
 STAKE_H, STAKE_T, STAKE_P = .12, .16, .3   # tomato stakes, horizontal: height, thickness, course spacing (gaps between)
-NORTH = ['stall'] * 6
-SOUTH = [('tack / feed', 12), ('wash', 12)] + [('stall', 12)] * 4   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
+NORTH = ['stall'] * 6                    # 6 x 12.67 ft
+SOUTH = [('tack / feed', 13), ('wash', 13)] + [('stall', 12.5)] * 4   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
 SOLID = ('tack / feed', 'wash')           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
 RUN_FALL = .05                           # the south runs climb the slope at 5 % (graded), a low rock wall at their uphill end
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
@@ -73,7 +73,7 @@ def wall_x(xa, xb, y, t, z0, z1, holes):    # wall along x between z0 and z1, do
 # ---- rooms ----
 rooms = []
 x = -HL
-for kind in NORTH: rooms.append(dict(kind=kind, x0=x, x1=x + STALL, side=+1)); x += STALL
+for kind in NORTH: rooms.append(dict(kind=kind, x0=x, x1=x + L / len(NORTH), side=+1)); x += L / len(NORTH)
 x = -HL
 for kind, w in SOUTH: rooms.append(dict(kind=kind, x0=x, x1=x + w, side=-1)); x += w
 for r in rooms: r['c'] = (r['x0'] + r['x1']) / 2
@@ -96,7 +96,7 @@ def sticks_x(xa, xb, y, z0, z1, holes):      # tomato stakes laid HORIZONTAL, bi
 # ---- long walls: rock to 4.5 ft, woven sticks to the eave, a door per room ----
 for s in (1, -1):
     y = s * HD
-    holes = [(r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, DOOR[1]) for r in rooms if r['side'] == s]
+    holes = [(r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, DOOR[1]) for r in rooms if r['side'] == s and r['kind'] != 'wash']   # the sketch: one door in the solid rooms (tack), none to the wash
     mat('rock'); wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, holes)
     solid = sorted((r['x0'], r['x1']) for r in rooms if r['side'] == s and r['kind'] in SOLID)
     xs = -HL
