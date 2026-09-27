@@ -2401,8 +2401,8 @@ function applyPlant(st) {                 // give a finished stroke its planting
   else st.kind = k;
   return st;
 }
-const PEN = { ink: INK, ember: '#c8321e', water: '#3f6488', will: '#c8321e', brendan: '#2a7a55', annabel: '#8a3fa8' };
-const AUTHORS = ['Will', 'Brendan', 'Annabel'];
+const PEN = { ink: INK, ember: '#c8321e', water: '#3f6488', will: '#c8321e', brendan: '#2a7a55', annabel: '#8a3fa8', bird: '#d8791a' };
+const AUTHORS = ['Will', 'Brendan', 'Annabel', 'Bird'];
 S.author = (() => { try { return localStorage.getItem('coyote-author') || ''; } catch (_) { return ''; } })();   // who is drawing: their own ink, their name on every line and note
 const penFor = () => (S.author && PEN[S.author.toLowerCase()]) ? S.author.toLowerCase() : S.penColor;
 function noteAdd(g) {                    // a note pinned at a point (grid i, j and the height it was placed at, on the ground or on an object)
@@ -8323,7 +8323,16 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
         b.append(make('span', { style: `width:8px;height:8px;background:${PEN[st.color] || INK};display:inline-block` }), make('span', { text: st.text }), make('span', { text: st.by || '', style: 'opacity:.6' }));
         b.onclick = () => { if (confirm(`delete the note "${st.text}"?`)) { snapshot(); S.strokes = S.strokes.filter(x => x !== st); S.strokeVer++; S.dirty = true; renderSketchPanel(); } }; list.append(b); }
       w.append(list); }
-    w.append(make('p', { cls: 'u2note', text: 'lines and notes save with the project (project → save) — send the file back and every line keeps who drew it and where.' }));
+    if (/100xbtr\.com$/.test(location.hostname)) {   // on will-os: the lines and notes go back to Will with one press, no file to email
+      const send = make('button', { cls: 'btn', type: 'button', text: 'send ideas to Will', 'data-tip': 'sends every line and note that has a name on it; press again any time, the latest set replaces the last' });
+      send.onclick = async () => { const mine = S.strokes.filter(st => st.by); if (!mine.length) { toast('nothing with a name on it yet: pick who is drawing, then draw or pin a note'); return; }
+        send.disabled = true; send.textContent = 'sending…';
+        try { const proj = (new URLSearchParams(location.search).get('proj') || 'project').replace(/\.json$/i, '').replace(/[^\w-]/g, '_');
+          const r = await fetch('/topo/api/ideas', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ project: proj, strokes: snapshotProject().strokes.filter(st => st.by) }) });
+          const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); toast(`sent: ${Object.entries(j.counts).map(([k, v]) => `${k} ${v}`).join(', ')} · Will can see them now`); }
+        catch (e) { toast('could not send: ' + e.message); } send.disabled = false; send.textContent = 'send ideas to Will'; };
+      w.append(send); w.append(make('p', { cls: 'u2note', text: 'pick your name, draw or pin notes in 3d or on the plan, then send. nothing else on the site changes.' })); }
+    else w.append(make('p', { cls: 'u2note', text: 'lines and notes save with the project (project → save) — send the file back and every line keeps who drew it and where.' }));
   }
   function selectPanel(box) { selBox = box; renderSelPanel(); }
   function renderSelPanel() {
