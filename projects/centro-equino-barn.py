@@ -29,7 +29,7 @@ MON_HW, MON_H, MON_X = 5.0, 2.5, 30.0   # clerestory monitor: half width, glazin
 STAKE_H, STAKE_T, STAKE_P = .12, .16, .3   # tomato stakes, horizontal: height, thickness, course spacing (gaps between)
 NORTH = ['stall'] * 6                    # 6 x 12.67 ft
 SOUTH = [('tack / feed', 13), ('wash', 13)] + [('stall', 12.5)] * 4   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
-SOLID = ('tack / feed',)                  # only the tack room is closed (27 Sep); the wash bay is open           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
+SOLID = ('tack / feed', 'wash')           # both rooms at the road end closed (27 Sep, Will's markup: 'enclose the tack room as well')           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
 RUN_FALL = .05                           # the south runs climb the slope at 5 % (graded), a low rock wall at their uphill end
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
 
@@ -92,7 +92,7 @@ def sticks_x(xa, xb, y, z0, z1, holes):      # tomato stakes laid HORIZONTAL, bi
             if b - a > .3: box(a - (.3 if k % 3 == 0 else 0), b + (.3 if k % 3 == 1 else 0), y - STAKE_T / 2 + w, y + STAKE_T / 2 + w, zz, zz + STAKE_H)
         zz += STAKE_P; k += 1
     keep = CUR[0]; mat('steel')                     # dark steel frame: posts every ~4 ft, top and bottom members
-    n = max(1, round((xb - xa) / 4))
+    n = max(1, round((xb - xa) / 3))                # stake panels 3 ft wide (Walker)
     for k in range(n + 1): xv = xa + (xb - xa) * k / n; box(xv - .1, xv + .1, y - .12, y + .12, z0, z1)
     for zz in (z0, z1 - .15): box(xa, xb, y - .12, y + .12, zz, zz + .15)
     mat(keep)
@@ -119,7 +119,9 @@ for s in (1, -1):
     for r in rooms:
         if r['side'] != s: continue
         if r['kind'] == 'stall': holes.append((r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, 99))           # gate to the run, full height
-        elif r['kind'] in SOLID: solid.append((r['x0'], r['x1'])); holes.append((r['c'] - TACK_DOOR[0] / 2, r['c'] + TACK_DOOR[0] / 2, TACK_DOOR[1]))
+        elif r['kind'] in SOLID:
+            solid.append((r['x0'], r['x1']))
+            if r['kind'] == 'tack / feed': holes.append((r['c'] - TACK_DOOR[0] / 2, r['c'] + TACK_DOOR[0] / 2, TACK_DOOR[1]))   # one outside door (Walker's sketch); the wash room opens to the aisle
     mat('rock'); wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, [(a, b, t if t != 99 else ROCK_H) for a, b, t in holes])
     for a, b, t in holes:
         if t == 99: gate_x(a, b, y)
@@ -147,7 +149,7 @@ for sx in (-1, 1):
                 mat('stakes'); zz, k = RAIL_Z + .25, 0
                 while zz < EAVE - .4:
                     w = .08 * (1, -1, .5, -.5)[k % 4]; box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, y0, y1, zz, zz + STAKE_H); zz += STAKE_P; k += 1
-                mat('steel'); n = max(1, round((y1 - y0) / 4))
+                mat('steel'); n = max(1, round((y1 - y0) / 3))
                 for q in range(n + 1): yv = y0 + (y1 - y0) * q / n; box(x - .12, x + .12, yv - .1, yv + .1, RAIL_Z, EAVE - .3)
                 for zz in (RAIL_Z, EAVE - .45): box(x - .12, x + .12, y0, y1, zz, zz + .15)
     xo = x + sx * (ROCK_T / 2 + .35)
@@ -195,7 +197,6 @@ for s in (-1, 1):
 # ---- clerestory monitor along the ridge: glazing on both long sides, its own low gable roof above (27 Sep) ----
 zb = roof_z(MON_HW) + zr
 for sgn in (-1, 1):
-    mat('glass'); box(-MON_X, MON_X, sgn * MON_HW - .1, sgn * MON_HW + .1, zb, zb + MON_H)
     mat('steel')
     for k in range(9): xm = -MON_X + 2 * MON_X * k / 8; box(xm - .2, xm + .2, sgn * MON_HW - .2, sgn * MON_HW + .2, zb, zb + MON_H)   # mullions
     mat('roof')
@@ -203,7 +204,6 @@ for sgn in (-1, 1):
         quad((-MON_X - .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz), (MON_X + .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz),
              (MON_X + .8, 0, zb + MON_H + slope * MON_HW + dz), (-MON_X - .8, 0, zb + MON_H + slope * MON_HW + dz))
 for xm in (-MON_X, MON_X):
-    mat('glass'); quad((xm, -MON_HW, zb), (xm, MON_HW, zb), (xm, MON_HW, zb + MON_H), (xm, -MON_HW, zb + MON_H))
     mat('roof'); quad((xm, -MON_HW, zb + MON_H), (xm, MON_HW, zb + MON_H), (xm, 0, zb + MON_H + slope * MON_HW), (xm, 0, zb + MON_H + slope * MON_HW))
 
 # ---- inside (27 Sep): stall partitions 5 ft wood with the floating pipe above (6 ft), pipe fronts with a pipe gate

@@ -42,10 +42,10 @@ RAIN = (' It is just after a rain, late afternoon: the sky clearing with broken 
         'besides that only small puddles in road ruts. Keep every building, road, fence and ditch exactly where the render has it.')
 TROUGH = (' At the end of the covered stalls the round water trough is low and built of rounded field stone with a stone cap, iron tie rings set in its '
           'side; a horse or two is tied at it, drinking.')
-STABLE = (' The stable (27 Sep design): a 5 ft stacked fieldstone wall all round; a black steel pipe floats 1 ft above the stone on short posts, '
+STABLE = (' The stable (27 Sep design): a 5 ft stacked fieldstone wall all round in fairly uniform light tan / buff stone; a black steel pipe floats 1 ft above the stone on short posts, '
           'and above it, up to the eave, panels of thin horizontal wooden branches/tomato stakes held in slim dark steel frames, loose and organic like a '
-          'bird nest screen. Inside, exposed timber roof trusses on timber posts. Only the one room at the road end (rendered plain beige) is solid, '
-          'lime-plastered straw bale or cob with a wooden door; the wash bay next to it is open. Each gable end has a big wooden sliding barn door on a '
+          'bird nest screen, in 3 ft wide panels. The clerestory along the ridge is OPEN, no glass: just posts under its little roof. Inside, exposed timber roof trusses on timber posts. The two rooms at the road end (rendered plain beige) are solid, '
+          'lime-plastered straw bale or cob, with one wooden door. Each gable end has a big wooden sliding barn door on a '
           'steel track, shown slid open. The stalls have black pipe fronts and pipe gates, like the corrals. Horses stand in the black pipe-fenced runs.')
 AISLE = (' This is inside the stable, down its 14 ft aisle under exposed timber trusses: both sides are stall fronts of black steel pipe with a pipe '
          'gate each, horses looking out; the plain walls are the plastered tack room. Add NO water tank, tub or trough; the aisle floor is packed earth.')
