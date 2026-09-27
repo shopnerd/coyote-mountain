@@ -288,6 +288,11 @@ body.shot{grid-template-columns:1fr}
     for (let k = 0; k < p.count; k++) { const x = p.getX(k), z = p.getY(k); p.setXYZ(k, x, hAt(x, z) + .1, z); } g.computeVertexNormals();
     water.push(scene.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x5b93c9, transparent: true, opacity: .55, side: THREE.DoubleSide }))).children.slice(-1)[0]); }
 
+  if (D.ponds && D.ponds.length) {       // standing water after a rain: the filled low spots of the graded ground, one sheet per cell at its water level
+    const v = [], h = cs / 2 + .15; for (const [i, j, y] of D.ponds) { const x = i * cs, z = j * cs;
+      v.push(x - h, y, z - h, x + h, y, z - h, x + h, y, z + h, x - h, y, z - h, x + h, y, z + h, x - h, y, z + h); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals();
+    const pm = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x4f86b8, transparent: true, opacity: .72, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3 })); scene.add(pm); water.push(pm); }
   // labels
   const labBox = $('labels'), labs = D.labels.map(l => { const e = document.createElement('div'); e.className = 'lab'; e.innerHTML = `${l.es}<i>${l.en}</i>`; labBox.appendChild(e); return { e, p: new THREE.Vector3(l.x, hAt(l.x, l.z) + 7, l.z) }; });
 
@@ -414,17 +419,17 @@ body.shot{grid-template-columns:1fr}
   // white study-model look for the "floating model" shots: every surface matte white, no photo, no roads' colour, white void behind
   const whiteMat = new THREE.MeshLambertMaterial({ color: 0xf4f2ee, side: THREE.DoubleSide }), whiteRoof = new THREE.MeshLambertMaterial({ color: 0xe6e4df, side: THREE.DoubleSide });
   const saved = new Map(); let whiteOn = false;
-  // the white model is cut to a block round the built area (grid i 58-142, j 28-82) with sides, so it floats as a site model
-  const BK = { x0: 58 * cs, x1: 142 * cs, z0: 28 * cs, z1: 82 * cs };
+  // the white model is cut to a block round the built area (grid i 24-146, j 18-88: the whole site, track included) with sides, so it floats as a site model
+  const BK = { x0: 24 * cs, x1: 146 * cs, z0: 18 * cs, z1: 88 * cs };
   const clip = [new THREE.Plane(new THREE.Vector3(1, 0, 0), -BK.x0 + .01), new THREE.Plane(new THREE.Vector3(-1, 0, 0), BK.x1 + .01),
                 new THREE.Plane(new THREE.Vector3(0, 0, 1), -BK.z0 + .01), new THREE.Plane(new THREE.Vector3(0, 0, -1), BK.z1 + .01)];
   whiteMat.clippingPlanes = whiteRoof.clippingPlanes = clip;
-  const block = (() => { let lo = 1e9; for (let j = 28; j <= 82; j++) for (let i = 58; i <= 142; i++) lo = Math.min(lo, Z[j * W + i]); const base = lo - 7, v = [];
-    const edge = []; for (let i = 58; i <= 142; i++) edge.push([i, 28]); for (let j = 29; j <= 82; j++) edge.push([142, j]); for (let i = 141; i >= 58; i--) edge.push([i, 82]); for (let j = 81; j >= 28; j--) edge.push([58, j]);
+  const block = (() => { let lo = 1e9; for (let j = 18; j <= 88; j++) for (let i = 24; i <= 146; i++) lo = Math.min(lo, Z[j * W + i]); const base = lo - 7, v = [];
+    const edge = []; for (let i = 24; i <= 146; i++) edge.push([i, 18]); for (let j = 19; j <= 88; j++) edge.push([146, j]); for (let i = 145; i >= 24; i--) edge.push([i, 88]); for (let j = 87; j >= 18; j--) edge.push([24, j]);
     for (let k = 0; k < edge.length - 1; k++) { const [i1, j1] = edge[k], [i2, j2] = edge[k + 1], y1 = Z[j1 * W + i1], y2 = Z[j2 * W + i2];
       v.push(i1 * cs, y1, j1 * cs, i2 * cs, y2, j2 * cs, i2 * cs, base, j2 * cs, i1 * cs, y1, j1 * cs, i2 * cs, base, j2 * cs, i1 * cs, base, j1 * cs); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x7a5a3e, side: THREE.DoubleSide })); m.visible = false; m.userData.keep = true; scene.add(m); return m; })();
+    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0xd4d4d0, side: THREE.DoubleSide })); m.visible = false; m.userData.keep = true; scene.add(m); return m; })();
   function whiteModel(on) {
     if (on === whiteOn) return; whiteOn = on; renderer.localClippingEnabled = on; block.visible = on;
     scene.traverse(m => { if (!m.isMesh || m.userData.keep) return; m.material.clippingPlanes = on ? clip : null; m.material.needsUpdate = true; });

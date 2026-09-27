@@ -24,16 +24,16 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: '13-bleachers', i: 96.11, j: 39.25, h: 2.4, yaw: 0.648, pitch: 1.62 },
   { id: '14-bleachers-high', i: 99.4, j: 37.54, h: 9, yaw: 0.0, pitch: 1.9 },
   // white study model, floating on white (27 Sep): orbit views around the site centre
-  { id: 'b1-ne', white: true, block: true, orbit: { ti: 100, tj: 55, az: -40, el: 32, dist: 440 } },
-  { id: 'b2-se', white: true, block: true, orbit: { ti: 100, tj: 55, az: 50, el: 32, dist: 440 } },
-  { id: 'b3-sw', white: true, block: true, orbit: { ti: 100, tj: 55, az: 140, el: 32, dist: 440 } },
-  { id: 'b4-nw', white: true, block: true, orbit: { ti: 100, tj: 55, az: 230, el: 32, dist: 440 } },
-  { id: 'b5-top', white: true, block: true, orbit: { ti: 100, tj: 55, az: 0, el: 90, dist: 470 } },
+  { id: 'b1-ne', white: true, block: true, orbit: { ti: 85, tj: 53, az: -40, el: 32, dist: 560 } },
+  { id: 'b2-se', white: true, block: true, orbit: { ti: 85, tj: 53, az: 50, el: 32, dist: 560 } },
+  { id: 'b3-sw', white: true, block: true, orbit: { ti: 85, tj: 53, az: 140, el: 32, dist: 560 } },
+  { id: 'b4-nw', white: true, block: true, orbit: { ti: 85, tj: 53, az: 230, el: 32, dist: 560 } },
+  { id: 'b5-top', white: true, block: true, orbit: { ti: 85, tj: 53, az: 0, el: 90, dist: 500 } },
   { id: 'r1-plan-rain', water: true, top: { i: 88, j: 60, w: 420 } },
   { id: 'r2-sink-rain', water: true, orbit: { ti: 66, tj: 72, az: -70, el: 42, dist: 170 } },
   { id: 'r3-stable-rain', water: true, orbit: { ti: 104, tj: 62, az: 95, el: 48, dist: 150 } },
   { id: 'r4-top-rain', water: true, orbit: { ti: 88, tj: 62, az: 0, el: 90, dist: 330 } },
-  { id: 'b6-low', white: true, block: true, orbit: { ti: 100, tj: 57, az: 115, el: 16, dist: 300 } },
+  { id: 'b6-low', white: true, block: true, orbit: { ti: 85, tj: 55, az: 115, el: 16, dist: 450 } },
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1536, height: 864 }, deviceScaleFactor: 1 });
