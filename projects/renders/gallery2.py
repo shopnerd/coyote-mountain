@@ -42,6 +42,12 @@ RAIN = (' It is just after a rain, late afternoon: the sky clearing with broken 
         'besides that only small puddles in road ruts. Keep every building, road, fence and ditch exactly where the render has it.')
 TROUGH = (' At the end of the covered stalls the round water trough is low and built of rounded field stone with a stone cap, iron tie rings set in its '
           'side; a horse or two is tied at it, drinking.')
+STABLE = (' At the road end of the stable (the two rooms rendered in plain beige), the walls above the fieldstone are solid straw-bale or cob with a smooth, '
+          'slightly uneven warm earth-coloured lime plaster, with one plain wooden door; everywhere else above the stone are the horizontal tomato stakes. '
+          'Horses stand in the black pipe-fenced runs.')
+AISLE = (' This is inside the stable, down its 14 ft aisle: on both sides are the stall fronts, low solid wooden walls about 4.5 ft high with a sliding '
+         'door each (horses looking out over them); the tall plain walls on the right are the plastered tack and wash rooms. Add NO water tank or trough, '
+         'no pipe panels and no stone wall inside; the aisle floor is packed earth.')
 
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
@@ -51,7 +57,7 @@ if __name__ == '__main__':
         v = f[6:-4]
         if ONLY and v not in ONLY: continue
         blockv = v.startswith('b')
-        prompt = (BLOCK if blockv else BRIEF) + LIFE + (' This view looks straight down from above: keep it exactly top-down.' if v in ('7-plan', 'b5-top') else '') + (BLEACH if 'bleachers' in v else '') + (RAIN if 'rain' in v else '') + (TROUGH if v in ('2-corridor', '5-corridor-out', '1-hero-sw') else '')
+        prompt = (BLOCK if blockv else BRIEF) + LIFE + (' This view looks straight down from above: keep it exactly top-down.' if v in ('7-plan', 'b5-top') else '') + (BLEACH if 'bleachers' in v else '') + (RAIN if 'rain' in v else '') + (STABLE if 'stable' in v else '') + (AISLE if v == '10-stable-aisle' else '') + (TROUGH if v in ('2-corridor', '5-corridor-out', '1-hero-sw') else '')
         t = time.time()
         try:
             im = openai(os.path.join(SRC, f), prompt, [], k) if ENGINE == 'openai' else google(os.path.join(SRC, f), prompt, [], k)
