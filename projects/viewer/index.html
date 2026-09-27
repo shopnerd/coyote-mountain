@@ -2,7 +2,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Centro Equino Chichihuas 3D</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,400&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,500;1,6..72,400&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@500&family=Rye&display=swap">
 <style>
 :root{
   --paper:#f2eee6; --panel:#fbf9f4; --ink:#26241f; --muted:#6f6a5f; --line:#ddd6c8; --clay:#b5602e; --water:#2f78c4; --chip:#efe9dd;
@@ -195,7 +195,48 @@ body.shot{grid-template-columns:1fr}
     corr: tex(x => { const g = x.createLinearGradient(0, 0, 32, 0); g.addColorStop(0, '#fff'); g.addColorStop(.5, '#7d7d7d'); g.addColorStop(1, '#fff'); for (let k = 0; k < 256; k += 32) { x.fillStyle = g; x.save(); x.translate(k, 0); x.fillRect(0, 0, 32, 256); x.restore(); } }, 1.2),
     hay: tex(x => { x.fillStyle = '#b8a35c'; x.fillRect(0, 0, 256, 256); for (let k = 0; k < 900; k++) { x.strokeStyle = `rgba(${120 + rnd() * 90 | 0},${110 + rnd() * 70 | 0},${40 + rnd() * 40 | 0},.6)`; const a = rnd() * 6.3, X = rnd() * 256, Y = rnd() * 256; x.beginPath(); x.moveTo(X, Y); x.lineTo(X + Math.cos(a) * 9, Y + Math.sin(a) * 9); x.stroke(); } x.fillStyle = 'rgba(60,45,20,.35)'; for (let k = 0; k < 256; k += 64) x.fillRect(0, k, 256, 2); }, 1.4),
   };
+  // the trailer: Will's photos (27 Sep) on its sides and ends; the arena side carries the hand-painted sign
+  const loadImg = src => new Promise(r => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
+  const [sideImg, endImg] = await Promise.all([loadImg('trailer-side.jpg'), loadImg('trailer-end.jpg')]);
+  try { await Promise.race([document.fonts.load('110px Rye'), new Promise(r => setTimeout(r, 2500))]); } catch (e) {}
+  const photoTex = (img, paint) => { if (!img) return null; const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0); if (paint) paint(x, c.width, c.height);
+    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; return t; };
+  function paintSign(x, W, H) {          // rotulación: painted straight onto the corrugated side, under the ochre stripe, above the bleachers
+    const cx = W / 2, top = H * .31, bot = H * .76, w = W * .66, R_ = 26;
+    x.save(); x.globalAlpha = .93;
+    x.beginPath(); x.roundRect ? x.roundRect(cx - w / 2, top, w, bot - top, R_) : x.rect(cx - w / 2, top, w, bot - top);
+    x.fillStyle = '#efe2c0'; x.fill(); x.lineWidth = 14; x.strokeStyle = '#a8261c'; x.stroke();
+    x.beginPath(); x.roundRect ? x.roundRect(cx - w / 2 + 16, top + 16, w - 32, bot - top - 32, R_ - 10) : x.rect(cx - w / 2 + 16, top + 16, w - 32, bot - top - 32); x.lineWidth = 4; x.strokeStyle = '#1f5a34'; x.stroke();
+    x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+    const word = (t, px, y, fill, line) => { x.font = `${px}px Rye, "Rockwell Extra Bold", Georgia, serif`;
+      x.fillStyle = '#c98a2a'; x.fillText(t, cx + 6, y + 6); x.lineWidth = 7; x.strokeStyle = line; x.strokeText(t, cx, y); x.fillStyle = fill; x.fillText(t, cx, y); };
+    word('CENTRO EQUINO', 104, top + (bot - top) * .5, '#b3261e', '#173f24');
+    word('CHICHIHUAS', 66, top + (bot - top) * .86, '#1f5a34', '#efe2c0');
+    // flourishes: painted scrolls either side of the lower line and small stars
+    x.strokeStyle = '#a8261c'; x.lineWidth = 6; x.lineCap = 'round';
+    for (const sgn of [-1, 1]) { const x0 = cx + sgn * 260, y0 = top + (bot - top) * .8;
+      x.beginPath(); x.moveTo(x0, y0); x.bezierCurveTo(x0 + sgn * 70, y0 - 40, x0 + sgn * 150, y0 + 30, x0 + sgn * 210, y0 - 6); x.stroke();
+      x.beginPath(); x.arc(x0 + sgn * 222, y0 - 12, 13, 0, 6.3); x.stroke();
+      x.fillStyle = '#c98a2a'; const sx = cx + sgn * (w / 2 - 70), sy = top + (bot - top) * .3; x.beginPath();
+      for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 11 : 26; x.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } x.closePath(); x.fill(); }
+    x.restore();
+    // weathering: the paint has flaked where the corrugations catch the sun
+    x.save(); x.globalCompositeOperation = 'destination-out'; let q = 11; const rr = () => (q = (q * 16807) % 2147483647) / 2147483647;
+    for (let k = 0; k < 1400; k++) { x.globalAlpha = .15 + rr() * .45; x.fillRect(cx - w / 2 + rr() * w, top + rr() * (bot - top), 2 + rr() * 9, 1 + rr() * 3); } x.restore();
+    x.save(); x.globalCompositeOperation = 'destination-over'; x.drawImage(sideImg, 0, 0, W, H); x.restore();   // the photo shows through the flakes
+  }
+  const PHOTO = { tsideA: photoTex(sideImg, paintSign), tsideB: photoTex(sideImg), tend: photoTex(endImg) };
+  function photoUV(g, ctr) {             // each flat face gets the whole photo, read from outside (not mirrored)
+    const p = g.attributes.position, n = p.count, uv = new Float32Array(n * 2), raw = [], key = [], box = {}, a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), nv = new THREE.Vector3();
+    for (let k = 0; k < n; k += 3) { a.fromBufferAttribute(p, k); b.fromBufferAttribute(p, k + 1); c.fromBufferAttribute(p, k + 2); nv.subVectors(b, a).cross(c.clone().sub(a)); nv.y = 0; nv.normalize();
+      const m = a.clone().add(b).add(c).multiplyScalar(1 / 3); if ((m.x - ctr.x) * nv.x + (m.z - ctr.z) * nv.z < 0) nv.negate();
+      const kk = Math.round(Math.atan2(nv.z, nv.x) * 4);
+      for (const P of [a, b, c]) { const u = P.x * nv.z - P.z * nv.x, v = P.y; raw.push(u, v); key.push(kk); const B = box[kk] || (box[kk] = [1e9, -1e9, 1e9, -1e9]); B[0] = Math.min(B[0], u); B[1] = Math.max(B[1], u); B[2] = Math.min(B[2], v); B[3] = Math.max(B[3], v); } }
+    for (let k = 0; k < n; k++) { const B = box[key[k]]; uv[k * 2] = (raw[k * 2] - B[0]) / (B[1] - B[0] || 1); uv[k * 2 + 1] = (raw[k * 2 + 1] - B[2]) / (B[3] - B[2] || 1); }
+    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  }
   const MATS = {
+    troof: { color: 0xb9bab4 }, chassis: { color: 0x4a3526 }, tsideA: { color: 0xf2f2f0, photo: 'tsideA' }, tsideB: { color: 0xf2f2f0, photo: 'tsideB' }, tend: { color: 0xa9793e, photo: 'tend' },
     rock: { map: TEX.rock }, stakes: { map: TEX.stakes }, steel: { color: 0x2c2f33 }, glass: { color: 0xcfdde5, transparent: true, opacity: .6 }, wood: { color: 0x6a4e33 },
     fence: { color: 0x1d1f21 }, panel: { color: 0xefede8 }, galv: { color: 0xb4b9bd }, water: { color: 0x5b87a6 }, hay: { map: TEX.hay },
   };
@@ -213,17 +254,19 @@ body.shot{grid-template-columns:1fr}
     let xx = 0, zz = 0, xz = 0; for (let k = 0; k < arr.length; k += 3) { const dx = arr[k] - mx, dz = arr[k + 2] - mz; xx += dx * dx; zz += dz * dz; xz += dx * dz; }
     const t = .5 * Math.atan2(2 * xz, xx - zz); return { x: Math.cos(t), z: Math.sin(t) };
   }
-  const part = (arr, m, axis, roofCol) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(arr, 3)); g.computeVertexNormals();
+  const part = (arr, m, axis, roofCol, ctr) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(arr, 3)); g.computeVertexNormals();
     let mt;
     if (m === 'roof') { const t = TEX.corr.clone(); t.needsUpdate = true; t.repeat.set(1 / .3, 1 / .3); planarUV(g, axis); mt = new THREE.MeshLambertMaterial({ color: roofCol, map: t, side: THREE.DoubleSide }); }
-    else { const spec = MATS[m] || { color: 0xcccccc }; if (spec.map) { planarUV(g, axis); spec.map.repeat.set(1 / spec.map.rep, 1 / spec.map.rep); } mt = new THREE.MeshLambertMaterial({ ...spec, side: THREE.DoubleSide }); }
+    else if (MATS[m] && MATS[m].photo && PHOTO[MATS[m].photo]) { photoUV(g, ctr); mt = new THREE.MeshLambertMaterial({ map: PHOTO[MATS[m].photo], side: THREE.DoubleSide }); }
+    else { const spec = MATS[m] || { color: 0xcccccc }; if (spec.map) { planarUV(g, axis); spec.map.repeat.set(1 / spec.map.rep, 1 / spec.map.rep); } const { photo, ...sp } = spec; mt = new THREE.MeshLambertMaterial({ ...sp, side: THREE.DoubleSide }); }
     const mesh = new THREE.Mesh(g, mt); mesh.castShadow = m !== 'glass'; mesh.receiveShadow = true; scene.add(mesh); return mesh; };
   const soup = (arr, color) => { const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(arr, 3)); g.computeVertexNormals();
     const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide })); m.castShadow = m.receiveShadow = true; scene.add(m); return m; };
   for (const o of D.objects) {
     if (o.parts) {                        // the stable and the covered stalls: one mesh per material
       const arrs = Object.fromEntries(Object.entries(o.parts).map(([m, s]) => [m, f32(s)])), axis = axisOf(arrs.roof || Object.values(arrs)[0]);
-      let all = []; for (const [m, arr] of Object.entries(arrs)) { const mesh = part(arr, m, axis, ROOF[o.name]); if (m === 'roof' || m === 'glass') groups.roof.push(mesh); all.push(arr); }
+      const ctr = new THREE.Vector3(); { let n = 0; for (const a of Object.values(arrs)) for (let k = 0; k < a.length; k += 3) { ctr.x += a[k]; ctr.z += a[k + 2]; n++; } ctr.multiplyScalar(1 / n); }
+      let all = []; for (const [m, arr] of Object.entries(arrs)) { const mesh = part(arr, m, axis, ROOF[o.name], ctr); if (m === 'roof' || m === 'glass') groups.roof.push(mesh); all.push(arr); }
       const b = all.reduce((acc, a) => { const c = new Float32Array(acc.length + a.length); c.set(acc); c.set(a, acc.length); return c; }, new Float32Array(0));
       let sx = 0, sz = 0, sy = 0, n = b.length / 3; for (let k = 0; k < b.length; k += 3) { sx += b[k]; sy = Math.max(sy, b[k + 1]); sz += b[k + 2]; } centres[o.name] = new THREE.Vector3(sx / n, sy, sz / n); continue;
     }
@@ -368,10 +411,37 @@ body.shot{grid-template-columns:1fr}
       if (!labBox.hidden) { const w = box.clientWidth, h = box.clientHeight; for (const l of labs) { v3.copy(l.p).project(camera); const on = v3.z < 1 && Math.abs(v3.x) < 1.05 && Math.abs(v3.y) < 1.05; l.e.style.display = on ? '' : 'none'; if (on) { l.e.style.left = (v3.x + 1) / 2 * w + 'px'; l.e.style.top = (1 - v3.y) / 2 * h + 'px'; } } } }
     requestAnimationFrame(frame);
   }
+  // white study-model look for the "floating model" shots: every surface matte white, no photo, no roads' colour, white void behind
+  const whiteMat = new THREE.MeshLambertMaterial({ color: 0xf4f2ee, side: THREE.DoubleSide }), whiteRoof = new THREE.MeshLambertMaterial({ color: 0xe6e4df, side: THREE.DoubleSide });
+  const saved = new Map(); let whiteOn = false;
+  // the white model is cut to a block round the built area (grid i 58-142, j 28-82) with sides, so it floats as a site model
+  const BK = { x0: 58 * cs, x1: 142 * cs, z0: 28 * cs, z1: 82 * cs };
+  const clip = [new THREE.Plane(new THREE.Vector3(1, 0, 0), -BK.x0 + .01), new THREE.Plane(new THREE.Vector3(-1, 0, 0), BK.x1 + .01),
+                new THREE.Plane(new THREE.Vector3(0, 0, 1), -BK.z0 + .01), new THREE.Plane(new THREE.Vector3(0, 0, -1), BK.z1 + .01)];
+  whiteMat.clippingPlanes = whiteRoof.clippingPlanes = clip;
+  const block = (() => { let lo = 1e9; for (let j = 28; j <= 82; j++) for (let i = 58; i <= 142; i++) lo = Math.min(lo, Z[j * W + i]); const base = lo - 7, v = [];
+    const edge = []; for (let i = 58; i <= 142; i++) edge.push([i, 28]); for (let j = 29; j <= 82; j++) edge.push([142, j]); for (let i = 141; i >= 58; i--) edge.push([i, 82]); for (let j = 81; j >= 28; j--) edge.push([58, j]);
+    for (let k = 0; k < edge.length - 1; k++) { const [i1, j1] = edge[k], [i2, j2] = edge[k + 1], y1 = Z[j1 * W + i1], y2 = Z[j2 * W + i2];
+      v.push(i1 * cs, y1, j1 * cs, i2 * cs, y2, j2 * cs, i2 * cs, base, j2 * cs, i1 * cs, y1, j1 * cs, i2 * cs, base, j2 * cs, i1 * cs, base, j1 * cs); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals();
+    const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x7a5a3e, side: THREE.DoubleSide })); m.visible = false; m.userData.keep = true; scene.add(m); return m; })();
+  function whiteModel(on) {
+    if (on === whiteOn) return; whiteOn = on; renderer.localClippingEnabled = on; block.visible = on;
+    scene.traverse(m => { if (!m.isMesh || m.userData.keep) return; m.material.clippingPlanes = on ? clip : null; m.material.needsUpdate = true; });
+    scene.background = on ? new THREE.Color(0xffffff) : null; renderer.setClearColor(0xffffff, on ? 1 : 0);
+  }
   window.__shot = async o => {           // {eye:[x,y,z] or grid walk {i,j,h}, dir:[x,y,z] | yaw/pitch, fov, top:{i,j,w}, hour}
     document.body.classList.add('shot'); labBox.hidden = true; anim = null; controls.enabled = false; resize();
     if (o.hour) setSun(o.hour);
+    whiteModel(!!o.white); if (o.white) { vis(roads, true); labBox.hidden = true; }
     vis(water, o.water === true);          // the drainage lines are engineering marks: off in the money shots
+    if (o.orbit) {                        // {ti, tj, az (deg, grid), el (deg), dist (m), fov}: looking at a target from around it
+      const q = o.orbit, tx = q.ti * cs, tz = q.tj * cs, ty = hAt(tx, tz), az = q.az * Math.PI / 180, el = q.el * Math.PI / 180;
+      camera.fov = q.fov || 30; camera.up.set(0, 1, 0);
+      camera.position.set(tx + Math.cos(el) * Math.cos(az) * q.dist, ty + Math.sin(el) * q.dist, tz + Math.cos(el) * Math.sin(az) * q.dist);
+      if (q.el >= 89.5) { camera.up.set(0, 0, -1); camera.position.set(tx, ty + q.dist, tz); }
+      camera.lookAt(tx, ty, tz); camera.updateProjectionMatrix(); window.__cam = camera; renderer.render(scene, camera); return true;
+    }
     if (o.top) { const w = o.top.w, h = w * box.clientHeight / box.clientWidth; const cam = new THREE.OrthographicCamera(-w / 2, w / 2, h / 2, -h / 2, 1, 3000);
       cam.position.set(o.top.i * cs, 900, o.top.j * cs); cam.up.set(0, 0, -1); cam.lookAt(o.top.i * cs, 0, o.top.j * cs); window.__cam = cam; }
     else { const x = o.i * cs, z = o.j * cs, y = hAt(x, z) + o.h; camera.fov = o.fov || 50; camera.position.set(x, y, z);

@@ -17,6 +17,23 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: '6-west', i: 64.5, j: 46.5, h: 18, yaw: 0.838, pitch: 1.82 },
   { id: '7-plan', top: { i: 88, j: 56, w: 420 } },
   { id: '8-stable', i: 112.5, j: 49, h: 9, yaw: -0.50, pitch: 1.72 },
+  { id: '9-arrival', i: 128, j: 64.5, h: 2.2, yaw: -1.83, pitch: 1.6 },
+  { id: '10-stable-aisle', i: 104.1, j: 57.56, h: 1.7, yaw: 1.26, pitch: 1.57 },
+  { id: '11-arena', i: 89.4, j: 38.4, h: 3, yaw: 0.725, pitch: 1.6 },
+  { id: '12-high-south', i: 95, j: 97, h: 55, yaw: 3.14, pitch: 1.97 },
+  { id: '13-bleachers', i: 96.11, j: 39.25, h: 2.4, yaw: 0.648, pitch: 1.62 },
+  { id: '14-bleachers-high', i: 99.4, j: 37.54, h: 9, yaw: 0.0, pitch: 1.9 },
+  // white study model, floating on white (27 Sep): orbit views around the site centre
+  { id: 'b1-ne', white: true, block: true, orbit: { ti: 100, tj: 55, az: -40, el: 32, dist: 440 } },
+  { id: 'b2-se', white: true, block: true, orbit: { ti: 100, tj: 55, az: 50, el: 32, dist: 440 } },
+  { id: 'b3-sw', white: true, block: true, orbit: { ti: 100, tj: 55, az: 140, el: 32, dist: 440 } },
+  { id: 'b4-nw', white: true, block: true, orbit: { ti: 100, tj: 55, az: 230, el: 32, dist: 440 } },
+  { id: 'b5-top', white: true, block: true, orbit: { ti: 100, tj: 55, az: 0, el: 90, dist: 470 } },
+  { id: 'r1-plan-rain', water: true, top: { i: 88, j: 60, w: 420 } },
+  { id: 'r2-sink-rain', water: true, orbit: { ti: 66, tj: 72, az: -70, el: 42, dist: 170 } },
+  { id: 'r3-stable-rain', water: true, orbit: { ti: 104, tj: 62, az: 95, el: 48, dist: 150 } },
+  { id: 'r4-top-rain', water: true, orbit: { ti: 88, tj: 62, az: 0, el: 90, dist: 330 } },
+  { id: 'b6-low', white: true, block: true, orbit: { ti: 100, tj: 57, az: 115, el: 16, dist: 300 } },
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: 1536, height: 864 }, deviceScaleFactor: 1 });
@@ -24,8 +41,8 @@ page.on('pageerror', e => console.log('page error:', e.message));
 await page.goto(URL_); await page.waitForFunction(() => window.__shot && !document.getElementById('load'), null, { timeout: 90000 });
 await page.waitForTimeout(1500);                                                   // the photo texture
 for (const v of VIEWS) {
-  if (ONLY && v.id !== ONLY) continue;
-  await page.evaluate(v => window.__shot({ ...v, fov: 70, hour: 17.4 }), v);
+  if (ONLY && !ONLY.split(',').includes(v.id)) continue;
+  await page.evaluate(v => window.__shot({ fov: 70, hour: v.white ? 16.6 : 17.4, ...v }), v);
   await page.waitForTimeout(400);
   await page.locator('#view canvas').screenshot({ path: path.join(OUT, `model-${v.id}.png`) });
   console.log(v.id, 'ok');

@@ -24,9 +24,9 @@ STYLE = {   # name -> (group, body colour, roof colour, roof threshold above its
     'arena fence': ('fence', '#f4f2ec', None, 0), 'round pen fence': ('fence', '#f4f2ec', None, 0),
     'site fence': ('fence', '#e9e6de', None, 0), 'cross fence': ('fence', '#e9e6de', None, 0),
     'stone trough 12x4': ('water', '#a79f90', None, 0), 'watering station 10ft': ('water', '#a79f90', None, 0),
-    'trailer 8 x 40': ('vehicle', '#f2f2f0', None, 0),
+    'trailer 8 x 40': ('vehicle', '#f2f2f0', None, 0), 'bleachers': ('stable', '#8a6a48', None, 0),
 }
-MATOBJ = {'walker barn 72x40': 'centro-equino-barn.obj', 'covered stalls': 'covered-stalls.obj'}   # tagged meshes: split by material
+MATOBJ = {'walker barn 72x40': 'centro-equino-barn.obj', 'covered stalls': 'covered-stalls.obj', 'bleachers': 'bleachers.obj', 'trailer 8 x 40': 'trailer-8x40.obj'}   # tagged meshes: split by material
 def obj_labels(path):                    # one material label per triangle, in the order topo.html triangulates the faces
     lab, cur, vn = [], 'body', 0
     for line in open(path, encoding='utf-8'):
@@ -80,7 +80,10 @@ for es, en, nm in LABELS:
 t = math.radians(float(d['sliders']['rot']))
 north = [round(math.sin(t) * -1 * -1, 4), 0]
 n_ij = (-math.sin(t), -math.cos(t)); e_ij = (math.cos(t), -math.sin(t))          # from geo.GR: sx = dx cos t - dy sin t, j = -sy/cs
-data = dict(grid=[W, H], cs=cs, y0=Y0, z=b64(z.reshape(-1) - Y0), objects=objs, paths=paths, ditches=ditches, sink=sink, labels=labels,
+from ponds import ponds as _ponds                                      # standing water after a rain: filled low spots (27 Sep)
+dep, zf = _ponds(d); pc = np.argwhere(dep > .04)
+ponds = [[int(i), int(j), round(float(zf[j, i] - Y0), 3)] for j, i in pc]
+data = dict(ponds=ponds, grid=[W, H], cs=cs, y0=Y0, z=b64(z.reshape(-1) - Y0), objects=objs, paths=paths, ditches=ditches, sink=sink, labels=labels,
             north=[round(n_ij[0], 4), round(-(-math.cos(t)) * -1, 4)], lat=float(d['world']['lat']),
             n_ij=[round(v, 4) for v in n_ij], e_ij=[round(v, 4) for v in e_ij])
 # check the directions against the conversion itself

@@ -98,7 +98,8 @@ vz = roof_z(-RX, 0)                                                             
 mat('steel'); box(-RX, RX, -.6, .6, vz - .6, vz)
 # round trough past the SW end (Will, 26 Sep): the valley carries on as an open chute and pours into it, no downspout.
 # GAP of clear ground between the building end and the trough, and all round it; overflow piped to the ditch outlet.
-TROUGH_D, TROUGH_H, GAP = 8.0, 2.0, 10.0                 # GAP: clear ground round the trough's open sides
+TROUGH_D, TROUGH_H, GAP = 8.0, 1.75, 10.0                # 27 Sep (Will): a low round ROCK trough, wall ROCK_T thick, iron tie rings set in it
+ROCK_T = 1.1                                              # GAP: clear ground round the trough's open sides
 END_GAP, CHUTE = 7.0, 7.0                                # 7 ft walk-through at the building end; chute cantilevers 7 ft past the roof, no post (Will)
 TX = -HL - END_GAP - TROUGH_D / 2                        # trough centre on the corridor's centre line
 def ring(cx, r0, r1, z0, z1, n=24):                      # an open round tank: outer + inner wall, rim, bottom
@@ -111,14 +112,22 @@ def ring(cx, r0, r1, z0, z1, n=24):                      # an open round tank: o
     i = len(V) + 1
     for q in range(n): V.append(world(*P(r0, 2 * math.pi * q / n, TROUGH_H * .75)))    # the water
     F.append(tuple(range(i, i + n))); MAT.append('water')
-mat('galv'); ring(TX, TROUGH_D / 2 - .25, TROUGH_D / 2, 0, TROUGH_H)
+mat('rock'); ring(TX, TROUGH_D / 2 - ROCK_T, TROUGH_D / 2, 0, TROUGH_H)
+mat('steel')                                             # tie rings: 5 in iron rings in the outer face, clear of the chute side
+for a in (math.radians(d_) for d_ in (60, 120, 180, 240, 300)):
+    rr, c0 = .22, (TX + (TROUGH_D / 2 + .05) * math.cos(a), (TROUGH_D / 2 + .05) * math.sin(a), TROUGH_H - .45)
+    tx_, ty_ = -math.sin(a), math.cos(a)
+    for q in range(8):
+        b0, b1 = 2 * math.pi * q / 8, 2 * math.pi * (q + 1) / 8
+        pt = lambda b, r: (c0[0] + tx_ * r * math.cos(b), c0[1] + ty_ * r * math.cos(b), c0[2] + r * math.sin(b))
+        quad(pt(b0, rr), pt(b1, rr), pt(b1, rr - .06), pt(b0, rr - .06))
 CH_END = -RX - CHUTE                                     # open chute, cantilevered, pours in 2 ft inside the near rim
 assert TX + TROUGH_D / 2 - 1.5 > CH_END > TX, 'the chute must end over the trough'
 cz = lambda x: vz - .02 * (-RX - x)                      # falls 2 % from the valley
 box(CH_END, -RX, -.6, .6, cz(CH_END) - .5, vz - .1)
 OBJ = os.path.join(HERE, 'covered-stalls.obj')
 with open(OBJ, 'w', newline='\n') as f:
-    f.write(f'# covered stalls: {2*PER_SIDE} stalls + alfalfa bay, {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a round trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; {PER_SIDE} waterers (one per pair) on a {FLAT:g} ft level strip at the stall fronts; alfalfa bay {STALL_W:g} x {2*RE:g} ft under the roof at the NE end\n')
+    f.write(f'# covered stalls: {2*PER_SIDE} stalls + alfalfa bay, {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a low round rock trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {ROCK_T:g} ft stone wall with 5 iron tie rings, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; {PER_SIDE} waterers (one per pair) on a {FLAT:g} ft level strip at the stall fronts; alfalfa bay {STALL_W:g} x {2*RE:g} ft under the roof at the NE end\n')
     f.write('# geo %.7f %.7f\n# unit ft\n# name covered stalls\n' % ctr)
     for p in V: f.write('v %.3f %.3f %.3f\n' % p)
     last = None
