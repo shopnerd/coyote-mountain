@@ -17,7 +17,7 @@ export const VIEWS = [   // all first-person cameras (walk), some flown up to dr
   { id: '2-corridor', what: 'eye level beyond the round trough looking up the covered corridor', walk: { i: 77.4, j: 65.8, h: 1.7 }, yaw: 1.716, pitch: 1.57 },
   { id: '3-site-ne', what: 'high drone view of the whole centre from the north-east into the sunset', walk: { i: 124, j: 53, h: 45 }, yaw: -1.52, pitch: 1.92 },
   { id: '4-hill-s', what: 'from the hillside to the south over the stalls toward the arena and the vineyard', walk: { i: 70, j: 81, h: 12 }, yaw: 2.41, pitch: 1.78 },
-  { id: '5-corridor-out', what: 'eye level at the north-east end of the corridor looking down it to the trough and the sunset', walk: { i: 93.6, j: 63.6, h: 1.7 }, yaw: -1.436, pitch: 1.56 },
+  { id: '5-corridor-out', what: 'eye level at the north-east end of the corridor looking down it to the trough and the sunset', walk: { i: 89.6, j: 64.2, h: 1.7 }, yaw: -1.436, pitch: 1.56 },
   { id: '7-plan', what: 'straight down over the whole site, north up, for the plan-view page', yaw: 0, pitch: 0, zoom: 2.1, target: [88, 56], persp: false },
   { id: '6-west', what: 'drone view from the west with the low sun behind the camera', walk: { i: 64.5, j: 46.5, h: 18 }, yaw: 0.838, pitch: 1.82 },
 ];

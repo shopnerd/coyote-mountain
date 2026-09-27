@@ -12,17 +12,17 @@ FT = .3048
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC, DST = os.path.join(HERE, 'centro-equino-2026-09-26.json'), os.path.join(HERE, 'centro-equino-2026-09-26-stalls16.json')
 
-PER_SIDE, STALL_W, STALL_D, CORR, OVER = 4, 16.0, 30.0, 12.0, 12.0  # 27 Sep: 8 stalls (4 a side), 30 deep; roof reaches 12 ft over each stall front
-NB = PER_SIDE + 1                                       # one more bay at the NE (stable) end: alfalfa room uphill, open tie-up bay downhill
-HAY_H = 10.0                                            # alfalfa room walls
+PER_SIDE, STALL_W, STALL_D, CORR, OVER = 4, 16.0, 20.0, 12.0, 12.0  # 27 Sep: 8 stalls 16 x 20 (4 a side); roof reaches 12 ft over each stall front
+NB = PER_SIDE + 1                                       # one more bay at the NE (stable) end, under the same roof: the alfalfa bay
+HAY_H = 7.5                                             # top of the alfalfa stack
 PANEL, POST = 5.0, .5
 # butterfly roof (Will, 26 Sep): both planes fall to a valley gutter over the corridor, the valley falls 1 % to the SW end,
 # where a leader carries the water 8 ft past the roof and down into the ditch outlet
 VALLEY_NE, FALL, RISE = 10.7, .005, .75                # valley 10.7 ft at the NE end, 0.5 % fall to the SW; eaves .75 ft higher = 1/2:12 over 18 ft (27 Sep: flatter)
 FLAT = 6.0                                              # level strip at every stall front: waterers + feeders (Will, 26 Sep)
-L, D = NB * STALL_W, 2 * STALL_D + CORR                # 80 x 72 ft
+L, D = NB * STALL_W, 2 * STALL_D + CORR                # 80 x 52 ft
 T0 = float(sys.argv[1]) if len(sys.argv) > 1 else 114.0 - L   # the NE (stable) end stays where the 16-stall block ended (t = 114); the block shrinks from the SW
-S0 = -8.0                                                 # and from its NW (downhill) side: 10 ft past it, the deeper stalls grow both ways
+S0 = 2.0                                                  # and 2 ft in from its NW (downhill) side
 
 # the yellow line's frame: A = open SW end on the NW (downhill) side, t toward B (NE), s toward D (SE, uphill)
 st = [(-116.7637927468709, 31.99970749966619), (-116.7635094983617, 31.99998532313917), (-116.7633790473066, 31.99988684382775), (-116.7636714287398, 31.99959200352455)]
@@ -71,12 +71,13 @@ for q in range(1, PER_SIDE, 2):                                                 
 for zz in (0, .25):                                                                             # the butterfly roof: two planes down to the valley
     quad((-RX, -RE, roof_z(-RX, -RE) + zz), (RX, -RE, roof_z(RX, -RE) + zz), (RX, 0, roof_z(RX, 0) + zz), (-RX, 0, roof_z(-RX, 0) + zz))
     quad((-RX, 0, roof_z(-RX, 0) + zz), (RX, 0, roof_z(RX, 0) + zz), (RX, RE, roof_z(RX, RE) + zz), (-RX, RE, roof_z(-RX, RE) + zz))
-# the alfalfa room: the NE bay on the uphill side, walled to HAY_H with a 10 ft door on the corridor, under its own shed roof out to the back
-y0, y1 = HC, HD
-box(XS, HL, y1 - .4, y1, 0, HAY_H); box(XS, XS + .4, y0, y1, 0, HAY_H); box(HL - .4, HL, y0, y1, 0, HAY_H)
-box(XS, XS + 3, y0, y0 + .4, 0, HAY_H); box(HL - 3, HL, y0, y0 + .4, 0, HAY_H)
-ze = roof_z(HL, RE)
-for zz in (0, .25): quad((XS - .5, RE, ze + zz), (HL + 2, RE, ze + zz), (HL + 2, y1 + 1.5, HAY_H + .3 + zz), (XS - .5, y1 + 1.5, HAY_H + .3 + zz))
+# the alfalfa bay (27 Sep, Will: part of the same roof, not a separate structure): the NE end bay, the full roofed width,
+# pipe panels on three sides, a 12 ft gate on the road end for the truck; the corridor stops at it, horses can't reach the hay
+box(XS - .12, XS + .12, -RE, RE, 0, PANEL)
+for sgn in (-1, 1):
+    box(XS, HL, min(sgn * RE, sgn * (RE - .25)), max(sgn * RE, sgn * (RE - .25)), 0, PANEL)
+    box(HL - .25, HL, min(sgn * 6, sgn * RE), max(sgn * 6, sgn * RE), 0, PANEL)
+box(XS + 1, HL - 1, -RE + 2, RE - 2, .4, HAY_H)                                                # the stack, on pallets
 vz = roof_z(-RX, 0)                                                                             # valley gutter
 box(-RX, RX, -.6, .6, vz - .6, vz)
 # round trough past the SW end (Will, 26 Sep): the valley carries on as an open chute and pours into it, no downspout.
@@ -101,7 +102,7 @@ cz = lambda x: vz - .02 * (-RX - x)                      # falls 2 % from the va
 box(CH_END, -RX, -.6, .6, cz(CH_END) - .5, vz - .1)
 OBJ = os.path.join(HERE, 'covered-stalls.obj')
 with open(OBJ, 'w', newline='\n') as f:
-    f.write(f'# covered stalls: {2*PER_SIDE} stalls + alfalfa room, {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a round trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; {PER_SIDE} waterers (one per pair) on a {FLAT:g} ft level strip at the stall fronts; alfalfa room {STALL_W:g} x {STALL_D:g} ft at the NE end, uphill\n')
+    f.write(f'# covered stalls: {2*PER_SIDE} stalls + alfalfa bay, {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a round trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; {PER_SIDE} waterers (one per pair) on a {FLAT:g} ft level strip at the stall fronts; alfalfa bay {STALL_W:g} x {2*RE:g} ft under the roof at the NE end\n')
     f.write('# geo %.7f %.7f\n# unit ft\n# name covered stalls\n' % ctr)
     for p in V: f.write('v %.3f %.3f %.3f\n' % p)
     for fc in F: f.write('f ' + ' '.join(map(str, fc)) + '\n')

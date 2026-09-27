@@ -258,3 +258,17 @@ along the whole south fence as ~8 small flows), so the crossings are now sized f
   `...-2026-09-27-v8.pdf` (cover 3-site-ne-3, plan 7-plan-4 cropped, pp.8-10) copied over the shared
   `-2026-09-23.pdf`. Gallery artifact v2 and water plan artifact v6 (new views) republished. Known liberties: in
   5-corridor-out the trough sits inside the corridor and the alfalfa room is stone, not metal.
+
+## 13. Stalls 16 x 20, alfalfa under the same roof, strict render brief (27 Sep, Will)
+- Stalls back to Walker's 16 x 20 (STALL_D 20, S0 2) -> 80 x 52 ft; roof unchanged (84 x 36, 1/2:12, 12 ft over each
+  stall). The NE end bay is the ALFALFA BAY under the same butterfly roof, full roofed width 16 x 36: pipe panels on
+  three sides, 12 ft gate on the road end; it closes the corridor's NE end. No separate structure (the old shed roof
+  was the "notch" Will saw). Clearances 18 / 34 / 29 ft. Site ≈3,190 cut / 2,710 fill yd³.
+- Paintings drifted from the model (Will): `paint.py` SCENE is now a STRICT one-to-one brief (same count, outline,
+  position, size, orientation, roof shape; add nothing, remove nothing; terrain silhouette kept; no palms, they aren't
+  modelled). `FIXES` dict appends a per-view correction for a repaint. Camera 5 moved to the new corridor end (89.6,
+  64.2). Method: after each round, pair every painting with its control view and repaint the ones that drift.
+- Drive `renderings/2026-09-27 money shots v2 (8 stalls 16x20)`; pack v9 copied over the shared `-2026-09-23.pdf`;
+  gallery v3, water plan v7. Known liberty: 5-corridor-out-5 has an extra stock tank in the foreground.
+- Walker sent a 3D viewer artifact (https://claude.ai/artifact/7dHdStVCWd2rjz3UW1ezXq, hers); Will wants it rebuilt
+  with this work + her renderings. Reading it needs Will's yes in-session.

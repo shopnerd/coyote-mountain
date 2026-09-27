@@ -15,19 +15,28 @@ def key(name):
         v = subprocess.run(['powershell', '-NoProfile', '-Command', f"[Environment]::GetEnvironmentVariable('{name}','User')"], capture_output=True, text=True).stdout.strip()
     return v or None
 
-SCENE = (' Golden hour: the sun is low in the west about half an hour before sunset, warm golden light, long soft shadows and glowing rim light on the '
-         'buildings, fences and horses; the sky is full of big puffy cumulus clouds lit gold, peach and pink against clear blue. '
-         'This is a small equestrian centre in the Valle de Guadalupe, Baja California, in the dry season: golden grass, olive-green scrub and '
-         'granite boulders on the hills, vineyard rows in the valley beyond. '
-         'The low building whose roof dips to a valley along its middle (a butterfly roof) is a small set of covered horse stalls: two rows of four open '
-         'stalls made of white-painted steel pipe panels, facing a sand corridor under a nearly flat, light grey standing-seam metal butterfly roof on slim steel posts that shades a good part of every stall; '
-         'the roof is a butterfly roof: V-shaped in cross-section, its two halves slope DOWN toward the middle so the centre line over the corridor is the LOWEST part and the two outer edges are the highest; never a peaked or gabled roof. The back part of every stall is open to the sky, and several tall date palms with full green crowns stand in and around the open stall backs. Horses (bay, chestnut, grey) stand in about half of the stalls. '
-         'At its north-east end, the end nearest the stable, one bay is a closed alfalfa hay room with plain metal walls and a wide door, and the bay across the corridor from it is open. '
-         'At its south-west end a round galvanised stock-water trough sits directly on the ground, fed from above by a short open metal chute that sticks out from the roof valley; nothing stands under the chute: no pole, no post, no pipe, no stand, no downspout. '
-         'The larger building is the main stable: stacked fieldstone walls to about 4.5 ft with horizontal wooden stakes above, under a sky-blue metal roof. '
-         'The oval is a raked-sand riding arena and the circle a round pen, both with white pipe fences; roads are compacted pale dirt. '
-         'Where the first image shows a flat pale band or an empty plane beyond the edge of the modelled ground, continue the real landscape there: the valley floor with vineyards, oak and scrub, and blue hills in the far distance; never an empty grey plane, a sea or fog. Keep the camera exactly where the first image puts it: if it is a view at eye level standing under a roof, the result is at eye level under that roof, never an aerial view. '
-         'Photorealistic, like a professional architectural photograph: natural colour, sharp detail, no text, no labels, no people posing.')
+SCENE = (   # 27 Sep, Will: "not very accurate to the terrain and to the buildings" -> strict, one-to-one with the model view
+    ' STRICT FIDELITY. This is a faithful photographic rendering of an architectural model, not a reinterpretation. '
+    'Everything built in the first image appears in the result one-to-one: the same number of buildings, fences, roads, troughs and vehicles, '
+    'each with the same outline, the same position in the frame, the same size, the same orientation and the same roof shape. '
+    'Add nothing that the first image does not show: no extra building, shed, room, wall, roof, fence, gate, tree, palm, vehicle, pond or water. '
+    'Remove nothing. Do not straighten, lengthen, widen, rotate, shrink, enlarge or rearrange anything. '
+    'The terrain keeps exactly the silhouette, ridgelines, slopes and horizon of the first image; hills stay the same height and shape. '
+    'Only surfaces, materials, light and sky change. '
+    'Light: golden hour, the sun low in the west about half an hour before sunset, warm light, long soft shadows; big puffy cumulus clouds lit gold and pink against clear blue. '
+    'Place: the Valle de Guadalupe, Baja California, dry season: golden grass, olive-green scrub and granite boulders on the ground the model shows. '
+    'The low building whose roof dips to a valley along its middle is a set of covered horse stalls. Its roof is ONE continuous, nearly flat, light grey '
+    'standing-seam metal surface, V-shaped in cross-section (the centre line over the corridor is the lowest part, the two long outer edges the highest), '
+    'with no notch, gap, cutout, step, ridge or skylight anywhere in it, carried on slim steel posts. Under it are two rows of four open stalls '
+    'made of white-painted steel pipe panels facing a sand corridor; the back part of each stall is open to the sky. A few horses stand in the stalls. '
+    'The bay at the north-east end of the same building, under the same roof, is the alfalfa bay: a stack of green-gold alfalfa bales behind pipe panels, '
+    'with no walls and no separate roof. '
+    'At the south-west end a round galvanised stock-water trough sits on the ground, fed by a short open chute from the roof valley; nothing stands under the chute. '
+    'The larger building is the main stable: stacked fieldstone walls to about 4.5 ft with horizontal wooden stakes above, under a sky-blue metal roof. '
+    'The oval is a raked-sand riding arena and the circle a round pen, both with white pipe fences; roads are compacted pale dirt. '
+    'Beyond the edge of the modelled ground, where the first image shows a flat pale band, continue the real landscape (the valley floor with vineyards '
+    'and blue hills in the far distance), never an empty plane, a sea or fog. Keep the camera exactly where the first image puts it. '
+    'Photorealistic, like a professional architectural photograph: natural colour, sharp detail, no text, no labels.')
 
 def openai(png_path, prompt, refs, k):
     im = Image.open(png_path).convert('RGB'); W2, H2 = 1536, 1024; pad = (H2 - 864) // 2
@@ -58,13 +67,17 @@ def google(png_path, prompt, refs, k, model='gemini-3-pro-image'):
 PLAN_NOTE = (' This view looks straight down from above like an aerial survey photograph, north up: keep it exactly top-down with no horizon and no sky; '
              'the long evening shadows fall toward the east.')
 
+FIXES = {'5-corridor-out': ' The last attempt got this wrong and it must be right this time: the first image is taken standing at eye level INSIDE the covered corridor, '
+         'under the roof, looking straight down the corridor between the two rows of stalls toward the far open end and the low sun. The roof fills the top of '
+         'the picture seen from below, posts line both sides, stall panels run along both sides at waist to shoulder height. It is never an aerial view.'}
+
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY' if ENGINE == 'openai' else 'GEMINI_API_KEY')
     if not k: sys.exit(f'no {"OPENAI" if ENGINE == "openai" else "GEMINI"}_API_KEY in this user\'s environment')
     views = sorted(f[4:-4] for f in os.listdir(CTL) if f.startswith('ctl-') and f.endswith('.png'))
     for v in views:
         if ONLY and v not in ONLY: continue
-        prompt = open(os.path.join(CTL, f'prompt-{v}.txt'), encoding='utf-8').read() + SCENE + (PLAN_NOTE if v == '7-plan' else '')
+        prompt = open(os.path.join(CTL, f'prompt-{v}.txt'), encoding='utf-8').read() + SCENE + (PLAN_NOTE if v == '7-plan' else '') + FIXES.get(v, '')
         refs = sorted(os.path.join(CTL, f) for f in os.listdir(CTL) if f.startswith(f'ref-{v}-'))
         n = 1 + sum(1 for f in os.listdir(OUT) if f.startswith(f'{v}-{ENGINE}-'))
         t = time.time()

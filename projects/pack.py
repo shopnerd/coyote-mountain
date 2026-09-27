@@ -55,7 +55,7 @@ def planview(n):
            ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
            ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),
-           ('Caballerizas techadas','Covered stalls','8 caballerizas de 16 × 30 ft entre las palmas y una bodega de alfalfa, pasillo de 12 ft, techo mariposa que llena un bebedero redondo','8 stalls of 16 × 30 ft among the palms and an alfalfa room, a 12 ft corridor, a butterfly roof that fills a round trough'),
+           ('Caballerizas techadas','Covered stalls','8 caballerizas de 16 × 20 ft y la alfalfa bajo el mismo techo mariposa, que llena un bebedero redondo','8 stalls of 16 × 20 ft and the alfalfa under one butterfly roof that fills a round trough'),
            ('Agua','Water','bajo natural abajo de la pista (confirmado en sitio), bebedero largo de piedra 12 × 4 ft, bebedero redondo en las caballerizas, bebedero redondo existente','natural water sink below the track (confirmed on site), 12 × 4 ft stone trough, round trough at the stalls, existing round watering station'),
            ('Estacionamiento','Parking','franja angosta al extremo este, 13 cajones a 60°','narrow strip at the far east corner, 13 stalls at 60°')]
     y=0.86
@@ -280,32 +280,32 @@ exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
 exec(open('structure_pages.py',encoding='utf-8').read())
 exec(open('stalls_page.py',encoding='utf-8').read())
-MS=DL+'/2026-09-27 money shots (8 stalls)/'         # the 27 Sep golden-hour set (renders/shoot.mjs + paint.py)
-cover(MS+'3-site-ne-openai-3.png')
-planview(MS+'7-plan-openai-4-cropped.png')
+MS=DL+'/2026-09-27 money shots v2 (8 stalls 16x20)/'         # the 27 Sep golden-hour set (renders/shoot.mjs + paint.py)
+cover(MS+'3-site-ne-openai-4.png')
+planview(MS+'7-plan-openai-5-cropped.png')
 existing()
 grading()
 operator_sheet()
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('sheet2.py','Cortes de terracería','Grading sections')
-views2([(MS+'1-hero-sw-openai-4.png','Sobre las caballerizas','Over the stalls',
-         'Desde el suroeste, sobre el bebedero redondo: las ocho caballerizas con su bodega de alfalfa junto al establo, el corral redondo y la pista.',
-         'From the south-west, over the round trough: the eight stalls with their alfalfa room beside the stable, the round pen and the arena.'),
-        (MS+'4-hill-s-openai-3.png','Desde el cerro','From the hill',
+views2([(MS+'1-hero-sw-openai-5.png','Sobre las caballerizas','Over the stalls',
+         'Desde el suroeste, sobre el bebedero redondo: las ocho caballerizas y su alfalfa bajo el mismo techo, junto al establo, el corral redondo y la pista.',
+         'From the south-west, over the round trough: the eight stalls and their alfalfa under one roof, beside the stable, the round pen and the arena.'),
+        (MS+'4-hill-s-openai-4.png','Desde el cerro','From the hill',
          'Las caballerizas siguen la curva de nivel al pie de la ladera, con las palmas entre los fondos abiertos.',
          'The stalls follow the contour at the foot of the slope, with palms among the open stall backs.')],
        'Otras vistas','Other views')
-views2([(MS+'5-corridor-out-openai-3.png','Bajo el techo mariposa','Under the butterfly roof',
-         'El techo casi plano baja hacia el centro del pasillo y da sombra a buena parte de cada caballeriza; a la derecha, la bodega de alfalfa.',
-         'The nearly flat roof dips to the middle of the corridor and shades a good part of every stall; the alfalfa room on the right.'),
-        (MS+'2-corridor-openai-3.png','El bebedero y el pasillo','The trough and the corridor',
+views2([(MS+'5-corridor-out-openai-5.png','Bajo el techo mariposa','Under the butterfly roof',
+         'El techo casi plano baja hacia el centro del pasillo y da sombra a buena parte de cada caballeriza; a la derecha, la alfalfa al final del pasillo.',
+         'The nearly flat roof dips to the middle of the corridor and shades a good part of every stall; the alfalfa at the end of the corridor on the right.'),
+        (MS+'2-corridor-openai-4.png','El bebedero y el pasillo','The trough and the corridor',
          'El canalón abierto vierte del valle del techo al bebedero redondo, sin bajante; hay paso libre alrededor.',
          'The open chute pours from the roof valley into the round trough, with no downspout; there is room to walk round it.')],
        'Otras vistas','Other views')
-views2([(MS+'6-west-openai-3.png','Desde el oeste','From the west',
+views2([(MS+'6-west-openai-4.png','Desde el oeste','From the west',
          'Con el sol detrás de la cámara: la cerca que cruza el potrero, las caballerizas, el establo y el cerro de granito.',
          'With the sun behind the camera: the fence across the turnout, the stalls, the stable and the granite hill.'),
-        (MS+'3-site-ne-openai-3.png','Todo el centro','The whole centre',
+        (MS+'3-site-ne-openai-4.png','Todo el centro','The whole centre',
          'Del noreste hacia la puesta de sol: el establo con sus corrales, las caballerizas techadas, la pista oval, el corral redondo y el valle con viñedos.',
          'From the north-east into the sunset: the stable and its runs, the covered stalls, the oval arena, the round pen and the valley with its vineyards.')],
        'Otras vistas','Other views')
@@ -319,7 +319,7 @@ metal_page()
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-09-27-v8.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-09-27-v9.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)
