@@ -131,7 +131,7 @@ body.shot{grid-template-columns:1fr}
       <tr><td>Captación del techo <span class="en">Roof catchment</span></td><td>≈2,000 gal/in</td></tr>
       <tr><td>Caballerizas, 10 (6 norte, 4 sur) <span class="en">Stalls, ten (6 north, 4 south)</span></td><td>12 × 13 ft</td></tr>
       <tr><td>Corrales, 10, a ambos lados <span class="en">Runs, ten, both sides</span></td><td>12 × 40 ft</td></tr>
-      <tr><td>Monturas y alimento · lavado <span class="en">Tack and feed · wash</span></td><td>12 × 13 ft c/u</td></tr>
+      <tr><td>Monturas y alimento · lavado, lado del camino, muro macizo (paja o cob) <span class="en">Tack and feed · wash, road end, solid straw-bale or cob infill</span></td><td>12 × 13 ft c/u</td></tr>
       <tr class="head"><td colspan="2">Sitio <span class="en">Site</span></td></tr>
       <tr><td>Corte · relleno <span class="en">Cut · fill</span></td><td>3,185 · 2,714 yd³</td></tr>
       <tr><td>Cuenca arriba del sitio <span class="en">Watershed above the site</span></td><td>≈16 ac</td></tr>
@@ -236,7 +236,7 @@ body.shot{grid-template-columns:1fr}
     g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   }
   const MATS = {
-    troof: { color: 0xb9bab4 }, chassis: { color: 0x4a3526 }, tsideA: { color: 0xf2f2f0, photo: 'tsideA' }, tsideB: { color: 0xf2f2f0, photo: 'tsideB' }, tend: { color: 0xa9793e, photo: 'tend' },
+    cob: { color: 0xcbb393 }, troof: { color: 0xb9bab4 }, chassis: { color: 0x4a3526 }, tsideA: { color: 0xf2f2f0, photo: 'tsideA' }, tsideB: { color: 0xf2f2f0, photo: 'tsideB' }, tend: { color: 0xa9793e, photo: 'tend' },
     rock: { map: TEX.rock }, stakes: { map: TEX.stakes }, steel: { color: 0x2c2f33 }, glass: { color: 0xcfdde5, transparent: true, opacity: .6 }, wood: { color: 0x6a4e33 },
     fence: { color: 0x1d1f21 }, panel: { color: 0xefede8 }, galv: { color: 0xb4b9bd }, water: { color: 0x5b87a6 }, hay: { map: TEX.hay },
   };
@@ -366,11 +366,12 @@ body.shot{grid-template-columns:1fr}
       g += T(36, 21, 'corrales · runs 12 × 40');
       g += R(0, 40, 72, 40, 'none');
       for (let k = 0; k < 6; k++) { g += R(k * 12, 40, 12, 13, 'var(--panel)'); g += T(k * 12 + 6, 48.5, k + 1); }
-      [['7', 12], ['8', 12], ['9', 12], ['10', 12], ['mont. · alim.', 12], ['lavado', 12]].reduce((x, [n, w]) => { g += R(x, 67, w, 13, 'var(--panel)') + T(x + w / 2, 75.5, n, 'currentColor', n.length > 3 ? 5.6 : 7.5); return x + w; }, 0);
+      [['mont. · alim.', 12], ['lavado', 12], ['7', 12], ['8', 12], ['9', 12], ['10', 12]].reduce((x, [n, w]) => { g += R(x, 67, w, 13, n.length > 3 ? '#cbb393' : 'var(--panel)') + T(x + w / 2, 75.5, n, 'currentColor', n.length > 3 ? 5.6 : 7.5); return x + w; }, 0);
       g += T(36, 61.5, 'pasillo · aisle 14 ft');
-      for (let k = 0; k < 4; k++) g += R(k * 12, 80, 12, 40, 'var(--chip)');                       // south runs
-      g += `<line x1="${ox}" y1="${oy + 120 * s}" x2="${ox + 48 * s}" y2="${oy + 120 * s}" stroke="#8a7d66" stroke-width="3"/>` + T(24, 125, 'muro bajo · low rock wall', 'var(--muted)', 7);
-      g += T(36, 104, 'corrales · runs', 'currentColor', 7.5) + T(80, 4, 'N ↑', 'var(--muted)', 8);
+      for (let k = 0; k < 4; k++) g += R(24 + k * 12, 80, 12, 40, 'var(--chip)');                  // south runs, east end (27 Sep)
+      g += T(12, 92, 'patio abierto', 'var(--muted)', 6.5) + T(12, 99, 'open apron · road', 'var(--muted)', 6.5);
+      g += `<line x1="${ox + 24 * s}" y1="${oy + 120 * s}" x2="${ox + 72 * s}" y2="${oy + 120 * s}" stroke="#8a7d66" stroke-width="3"/>` + T(48, 125, 'muro bajo · low rock wall', 'var(--muted)', 7);
+      g += T(48, 104, 'corrales · runs', 'currentColor', 7.5) + T(80, 4, 'N ↑', 'var(--muted)', 8);
       return `<svg viewBox="0 0 300 312" role="img" aria-label="Plano del establo · Stable plan" style="color:var(--ink)">${g}</svg>`; },
   };
   const showPlan = k => { $('plan').innerHTML = PLANS[k](); document.querySelectorAll('#planTabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.plan === k)); };

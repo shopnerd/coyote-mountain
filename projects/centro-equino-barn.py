@@ -26,7 +26,8 @@ RAIL_H = 5.5
 MON_HW, MON_H, MON_X = 5.0, 2.5, 30.0   # clerestory monitor: half width, glazing height, half length (27 Sep)
 STAKE_H, STAKE_T, STAKE_P = .12, .16, .3   # tomato stakes, horizontal: height, thickness, course spacing (gaps between)
 NORTH = ['stall'] * 6
-SOUTH = [('stall', 12)] * 4 + [('tack / feed', 12), ('wash', 12)]   # 27 Sep (Will): 4 stalls with runs south too, rooms at the east end; alfalfa lives at the covered stalls
+SOUTH = [('tack / feed', 12), ('wash', 12)] + [('stall', 12)] * 4   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
+SOLID = ('tack / feed', 'wash')           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
 RUN_FALL = .05                           # the south runs climb the slope at 5 % (graded), a low rock wall at their uphill end
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
 
@@ -97,7 +98,12 @@ for s in (1, -1):
     y = s * HD
     holes = [(r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, DOOR[1]) for r in rooms if r['side'] == s]
     mat('rock'); wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, holes)
-    mat('stakes'); sticks_x(-HL, HL, y, ROCK_H, EAVE - .3, holes)
+    solid = sorted((r['x0'], r['x1']) for r in rooms if r['side'] == s and r['kind'] in SOLID)
+    xs = -HL
+    for a, b in solid + [(HL, HL)]:                   # stakes between the solid rooms, infill across them
+        if a > xs: mat('stakes'); sticks_x(xs, a, y, ROCK_H, EAVE - .3, [h for h in holes if xs <= h[0] < a])
+        if b > a: mat('cob'); wall_x(a, b, y, ROCK_T * .8, ROCK_H, EAVE - .3, [h for h in holes if a <= h[0] < b])
+        xs = b
 
 # ---- gable ends: rock and stakes either side of the big entry; stakes fill the gable over the rooms ----
 for sx in (-1, 1):
@@ -105,15 +111,17 @@ for sx in (-1, 1):
     for s in (-1, 1):
         y0, y1 = sorted((s * ENTRY_W / 2, s * HD))
         mat('rock'); box(x - ROCK_T / 2, x + ROCK_T / 2, y0, y1, 0, ROCK_H)
-        mat('stakes'); zz, k = ROCK_H + .25, 0                     # horizontal stakes stepping up under the rafter
+        cob = any(r['side'] == s and r['kind'] in SOLID and abs(r['x0' if sx < 0 else 'x1'] - x) < .1 for r in rooms)   # gable wall of a solid room
+        mat('cob' if cob else 'stakes'); zz, k = ROCK_H + (0 if cob else .25), 0                     # horizontal stakes stepping up under the rafter
         while True:
             ya, yb = y0, y1
             yin, yout = (ya, yb) if abs(ya) < abs(yb) else (yb, ya)          # the entry side stays, the outer end stops under the rafter
             lim = HD - (zz + STAKE_H - EAVE) / slope if zz + STAKE_H > EAVE else HD
             if lim <= abs(yin) + .5: break
             yo = math.copysign(min(abs(yout), lim - COL_D / 2), yout)
-            w = .08 * (1, -1, .5, -.5)[k % 4]
-            box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, min(yin, yo), max(yin, yo), zz, zz + STAKE_H)
+            w = 0 if cob else .08 * (1, -1, .5, -.5)[k % 4]
+            if cob: box(x - ROCK_T * .4, x + ROCK_T * .4, min(yin, yo), max(yin, yo), zz, zz + STAKE_P)
+            else: box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, min(yin, yo), max(yin, yo), zz, zz + STAKE_H)
             zz += STAKE_P; k += 1
 
 # ---- the frames: 12 in pipe columns and rafters, rafters run 2 ft past the columns ----
@@ -186,7 +194,7 @@ for r in rooms:
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'centro-equino-barn.obj')
 with open(out, 'w', newline='\n') as f:
-    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft pipe portal frames, rock 4.5 ft all round + horizontal tomato stakes, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls north + 4 south with 12x40 runs, tack/feed + wash at the east end\n")
+    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft pipe portal frames, rock 4.5 ft all round + horizontal tomato stakes, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls north + 4 south with 12x40 runs, tack/feed + wash at the west end (by the barn road) with solid straw-bale/cob infill above the rock\n")
     f.write(f"# geo {LAT} {LON}\n# unit ft\n# name walker barn 72x40\n")
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
     last = None
