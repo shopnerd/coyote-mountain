@@ -1,0 +1,214 @@
+<meta charset="utf-8">
+<title>Centro Equino at Golden Hour</title>
+<link id="fonts" rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Karla:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@500&display=swap">
+<style id="css">
+:root{--dusk:#16130f;--panel:#221d17;--ink:#f1e7d6;--muted:#b3a48b;--gold:#e3a75a;--rule:#3a3127;--field:#1c1813;--red:#e0765a;color-scheme:dark}
+*{box-sizing:border-box}
+html{background:var(--dusk)}
+body{background:var(--dusk);color:var(--ink);font:16px/1.6 Karla,system-ui,sans-serif;margin:0;padding-inline:clamp(16px,3.5vw,44px);padding-block:30px 110px}
+main{max-width:1500px;margin:0 auto;display:grid;gap:56px}
+header{display:grid;gap:12px;max-width:820px}
+.eyebrow{font:500 12px/1.4 "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+h1{font:400 clamp(40px,7vw,84px)/1 "Instrument Serif",Georgia,serif;margin:0;text-wrap:balance}
+h1 i,h2 i{color:var(--muted)}
+h2{font:400 clamp(28px,4vw,40px)/1.1 "Instrument Serif",Georgia,serif;margin:0}
+p{margin:0;max-width:70ch}
+.en{color:var(--muted);font-style:italic}
+nav{display:flex;flex-wrap:wrap;gap:8px}
+nav a,.chip{font:500 12px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);text-decoration:none;border:1px solid var(--rule);border-radius:20px;padding:7px 12px;background:none;cursor:pointer}
+nav a:hover,.chip:hover{border-color:var(--gold);color:var(--gold)}
+.chip[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.howto{display:grid;gap:4px;border-left:2px solid var(--gold);padding-left:14px;font-size:15px}
+.ro{font:500 12px "IBM Plex Mono",monospace;color:var(--red);letter-spacing:.04em}
+section{display:grid;gap:26px;scroll-margin-top:16px}
+.sec-head{display:grid;gap:6px;border-top:1px solid var(--rule);padding-top:22px}
+.view{display:grid;gap:10px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pair.one{grid-template-columns:minmax(0,1fr);max-width:1100px}
+.pair figure{margin:0;display:grid;gap:8px;align-content:start}
+.pair figure.gone .shot{opacity:.28}
+.shot{position:relative}
+.shot button{all:unset;cursor:zoom-in;display:block;border-radius:4px;overflow:hidden}
+.shot button:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.pair img{display:block;width:100%;max-width:100%;aspect-ratio:16/9;object-fit:cover;background:#2a241d}
+.tag{position:absolute;left:8px;top:8px;font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.1em;text-transform:uppercase;background:rgba(22,19,15,.72);color:var(--ink);padding:4px 7px;border-radius:3px}
+.ctl{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;align-items:start}
+.rm{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:none;border:1px solid var(--rule);border-radius:4px;padding:8px 10px;cursor:pointer;white-space:nowrap}
+.rm:hover{color:var(--red);border-color:var(--red)}
+.gone .rm{color:var(--gold);border-color:var(--gold)}
+.dl:hover{color:var(--gold);border-color:var(--gold)}
+.ctl textarea{width:100%;min-height:40px;resize:vertical;background:var(--field);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:8px 10px;font:14px/1.45 Karla,system-ui,sans-serif}
+.ctl textarea:focus{outline:none;border-color:var(--gold)}
+.ctl textarea[readonly]{border-style:dashed}
+.cap{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+.t{font:400 24px/1.15 "Instrument Serif",Georgia,serif}
+.t i{color:var(--muted)}
+.meta{font:500 11px "IBM Plex Mono",monospace;letter-spacing:.06em;color:var(--gold);text-transform:uppercase}
+.note{font-size:15px;color:var(--muted);display:grid;gap:8px}
+.note b{color:var(--ink);font-weight:600}
+.bar{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:rgba(22,19,15,.94);border-top:1px solid var(--gold);font:500 13px "IBM Plex Mono",monospace}
+.bar button{font:600 13px Karla,system-ui,sans-serif;background:var(--gold);color:#1b140c;border:0;border-radius:4px;padding:9px 16px;cursor:pointer}
+.bar button.ghost{background:none;color:var(--muted);border:1px solid var(--rule)}
+.bar button:disabled{opacity:.6;cursor:progress}
+dialog{border:0;padding:0;background:transparent;max-width:min(96vw,1800px);max-height:94vh}
+dialog::backdrop{background:rgba(10,8,6,.93)}
+dialog img{display:block;max-width:100%;max-height:88vh;border-radius:3px}
+dialog p{font:500 12px "IBM Plex Mono",monospace;color:var(--muted);margin-top:10px;text-align:center;max-width:none}
+@media (max-width:760px){.pair{grid-template-columns:1fr}.t{font-size:21px}.ctl{grid-template-columns:auto auto}.ctl textarea{grid-column:1/-1}}
+</style>
+<template id="shell">
+<main>
+  <header>
+    <div class="eyebrow">Centro Equino · Chichihuas · 27 sep 2026</div>
+    <h1>La hora dorada <i>Golden hour</i></h1>
+    <p>Cada vista sale directamente del modelo 3D (terreno, edificios, cercas y caminos exactos) y un pintor la termina (OpenAI o Gemini), agregando sólo materiales, luz, cielo, gente y caballos.</p>
+    <p class="en">Every view is rendered straight from the 3D model (ground, buildings, fences and roads exact) and finished by a painter (OpenAI or Gemini), who adds only materials, light, sky, people and horses.</p>
+    <div class="howto">
+      <p><b>Quitar</b> las que no sirven y escribir notas en las que quedan; luego <b>Guardar</b>. Todos ven lo mismo.</p>
+      <p class="en">Remove the ones you don't like and write tweak notes on the ones that stay, then Save. Everyone sees the same picks and notes.</p>
+      <p class="ro" id="ro" hidden>Solo lectura: pide a Will acceso de editor para guardar · Read-only: ask Will for edit access to save</p>
+    </div>
+    <nav aria-label="Secciones · Sections"><a href="#gradas">Gradas · Bleachers</a><a href="#lluvia">Lluvia · Rain</a><a href="#tomas">Tomas · Money shots</a><a href="#bloque">Bloque · Block</a><button type="button" class="chip" id="showGone" aria-pressed="false">Ver quitadas · Show removed (<span id="nGone">0</span>)</button></nav>
+  </header>
+
+  <section id="gradas">
+    <div class="sec-head"><h2>Gradas y letrero <i>Bleachers and sign</i></h2>
+      <p>Idea de Walker: gradas abiertas de acero con tablones frente al tráiler, mirando a la pista, con techo de sombra. El tráiler lleva las fotos reales de Will y el letrero pintado a mano (primer borrador).</p>
+      <p class="en">Walker's idea: open steel bleachers with plank seats in front of the trailer facing the arena, with a shade roof. The trailer carries Will's photos of the real one and the hand-painted sign (first draft).</p></div>
+    <div id="g1" style="display:grid;gap:40px"></div>
+  </section>
+
+  <section id="lluvia">
+    <div class="sec-head"><h2>Después de la lluvia <i>After a rain</i></h2>
+      <p>El agua se queda en el bajo natural bajo la pista (hasta ~55 cm) y en dos bolsas al sur del establo. La vista del modelo es la exacta; las pinturas son de ambiente.</p>
+      <p class="en">Water stands in the natural sink below the track (up to ~22 in) and two pockets south of the stable. The model view is the exact one; the paintings are for mood.</p></div>
+    <div id="g0" style="display:grid;gap:40px"></div>
+  </section>
+
+  <section id="tomas">
+    <div class="sec-head"><h2>Tomas principales <i>Money shots</i></h2>
+      <p class="en">The stable views are the current 72 × 42 ft design; the wide site views still show the earlier stable and bleachers.</p></div>
+    <div id="g2" style="display:grid;gap:40px"></div>
+  </section>
+
+  <section id="bloque">
+    <div class="sec-head"><h2>El sitio como bloque <i>The site as a block</i></h2>
+      <p>El sitio recortado como una maqueta que flota sobre blanco, con los costados en gris claro.</p>
+      <p class="en">The site cut out like a presentation model floating on white, with light-grey sides.</p></div>
+    <div id="g3" style="display:grid;gap:40px"></div>
+  </section>
+
+  <section class="note">
+    <p><b>Diseño preliminar.</b> Las pinturas son para ambiente; las medidas y el diseño están en el paquete.</p>
+    <p class="en">Preliminary design. The paintings are for mood; the dimensions and the design are in the pack.</p>
+  </section>
+</main>
+<div class="bar" id="bar" hidden><span id="barMsg"></span><button type="button" class="ghost" id="discard">Descartar · Discard</button><button type="button" id="save">Guardar · Save</button></div>
+<dialog id="lb" aria-label="Vista ampliada · Enlarged view"><img id="lbImg" alt=""><p>clic o Esc para cerrar · click or Esc to close</p></dialog>
+</template>
+<script type="application/json" id="state">{"picks":{}}</script>
+<script id="app">
+(() => {
+const V = {
+  g1: [['13-bleachers', 'Las gradas desde la pista', 'The bleachers from the arena', 'a la altura de los ojos', ['openai']], ['14-bleachers-high', 'Las gradas desde arriba', 'The bleachers from above', 'dron 9 m', ['openai']]],
+  g0: [['r4-top-rain', 'Dónde se queda el agua (modelo)', 'Where water stands (the model)', 'desde arriba · agua en azul', ['model']], ['r2-sink-rain', 'El bajo natural lleno', 'The natural sink full', 'dron', ['openai']], ['r3-stable-rain', 'El establo después de la lluvia', 'The stable after a rain', 'dron', ['openai']]],
+  g2: [['18-stable-west-elev', 'El establo desde el camino', 'The stable from the road', 'a la altura de los ojos', ['openai', 'model']], ['16-stable-sw', 'El establo, 72 × 42 ft', 'The stable, 72 × 42 ft', 'dron', ['openai']], ['8-stable', 'El lado norte y sus corrales', 'The north side and its runs', 'dron 9 m', ['openai']], ['10-stable-aisle', 'El pasillo del establo', 'The stable aisle', 'a la altura de los ojos', ['openai']],
+       ['2-corridor', 'El bebedero de piedra, con argollas', 'The stone trough, with tie rings', 'a la altura de los ojos', ['google', 'model']], ['5-corridor-out', 'El bebedero y el techo mariposa', 'The trough and the butterfly roof', 'a la altura de los ojos', ['google']],
+       ['1-hero-sw', 'Sobre las caballerizas', 'Over the covered stalls', 'dron 20 m'], ['9-arrival', 'La llegada', 'Arriving', 'desde el estacionamiento'], ['11-arena', 'Desde la pista', 'From the arena', '3 m'], ['3-site-ne', 'Todo el centro', 'The whole centre', 'dron 45 m'],
+       ['12-high-south', 'Desde el sur, en alto', 'High from the south', 'dron 55 m'], ['4-hill-s', 'Desde el cerro', 'From the hill', '10 m'], ['6-west', 'Desde el oeste', 'From the west', 'dron 18 m'], ['7-plan', 'En planta', 'Plan view', 'desde arriba']],
+  g3: [['b1-ne', 'Desde el noreste', 'From the north-east', '', ['openai']], ['b2-se', 'Desde el sureste', 'From the south-east', '', ['openai']], ['b3-sw', 'Desde el suroeste', 'From the south-west', '', ['openai']],
+       ['b4-nw', 'Desde el noroeste', 'From the north-west', '', ['openai']], ['b5-top', 'Desde arriba', 'From above', 'el pintor rellenó el interior de la pista · the painter filled in the track', ['openai', 'model']], ['b6-low', 'Bajo y de lado', 'Low, from the side', '', ['openai']]],
+};
+const NM = { openai: 'OpenAI', google: 'Gemini', model: 'Modelo · Model' };
+const $ = id => document.getElementById(id);
+// pristine sources, read before anything renders: the page republishes itself from these plus its state
+const SRC = { css: $('css').textContent, shell: $('shell').innerHTML, app: $('app').textContent, fonts: $('fonts').outerHTML, title: document.title };
+let saved; try { saved = JSON.parse($('state').textContent); } catch (e) { saved = { picks: {} }; }
+saved.picks = saved.picks || {};
+const picks = JSON.parse(JSON.stringify(saved.picks));       // working copy: key -> {gone: bool, note: string}
+const STASH = 'ce-gallery-pending';
+try {                                                        // unsaved changes survive a reload (or a save that lost to someone else's)
+  const st = JSON.parse(sessionStorage.getItem(STASH) || 'null');
+  if (st) { let left = 0; for (const [k, v] of Object.entries(st)) { const cur = picks[k] || {}; if (!!cur.gone !== !!v.gone || (cur.note || '') !== (v.note || '')) { picks[k] = v; left++; } }
+    if (!left) sessionStorage.removeItem(STASH); }
+} catch (e) {}
+if (!document.body) document.documentElement.append(document.createElement('body'));
+document.body.append($('shell').content.cloneNode(true));
+let readOnly = false, showGone = false, art = null, dls = null;
+const dirtyKeys = () => { const ks = new Set([...Object.keys(picks), ...Object.keys(saved.picks)]); return [...ks].filter(k => { const a = picks[k] || {}, b = saved.picks[k] || {}; return !!a.gone !== !!b.gone || (a.note || '').trim() !== (b.note || '').trim(); }); };
+function stash() { try { const d = {}; for (const k of dirtyKeys()) d[k] = picks[k] || { gone: false, note: '' }; if (Object.keys(d).length) sessionStorage.setItem(STASH, JSON.stringify(d)); else sessionStorage.removeItem(STASH); } catch (e) {} }
+function bar() { const n = dirtyKeys().length; $('bar').hidden = !n || readOnly; $('barMsg').textContent = `${n} cambio${n === 1 ? '' : 's'} sin guardar · ${n} unsaved change${n === 1 ? '' : 's'}`; }
+function counts() { $('nGone').textContent = Object.values(picks).filter(p => p.gone).length; }
+const lb = $('lb'), li = $('lbImg'); lb.addEventListener('click', () => lb.close());
+const views = [];
+for (const [box, list] of Object.entries(V)) {
+  const host = $(box);
+  for (const [id, es, en, meta, eng = ['openai', 'google']] of list) {
+    const v = document.createElement('div'); v.className = 'view';
+    const pair = document.createElement('div'); pair.className = 'pair';
+    const figs = eng.map(e => {
+      const key = `${id}-${e}`, f = document.createElement('figure'); f.dataset.key = key;
+      f.innerHTML = `<div class="shot"><button type="button" aria-label="Ampliar · Enlarge"><img loading="lazy" src="${key}.jpg" alt=""></button><span class="tag"></span></div>
+        <div class="ctl"><button type="button" class="rm"></button><button type="button" class="rm dl" hidden>Descargar · Download</button><textarea rows="2" placeholder="Notas para ajustar · Tweak notes"></textarea></div>`;
+      f.querySelector('img').alt = `${en}, ${NM[e]}`; f.querySelector('.tag').textContent = NM[e];
+      f.querySelector('.shot button').onclick = () => { const im = f.querySelector('img'); li.src = im.src; li.alt = im.alt; lb.showModal(); };
+      const ta = f.querySelector('textarea'); ta.value = (picks[key] || {}).note || '';
+      ta.oninput = () => { picks[key] = { ...(picks[key] || { gone: false }), note: ta.value }; stash(); bar(); };
+      ta.onkeydown = ev => { if ((ev.ctrlKey || ev.metaKey) && ev.key === 'Enter') save(); };
+      f.querySelector('.dl').onclick = async ev => { const btn = ev.currentTarget; if (!dls) return; btn.disabled = true;
+        try { const blob = await (await fetch(`${key}.jpg`)).blob(); await dls.save({ filename: `centro-equino-${key}.jpg`, data: blob }); }
+        catch (e) { if (e && e.code === 'unavailable') { dls = null; document.querySelectorAll('.dl').forEach(b => b.hidden = true); } }
+        btn.disabled = false; };
+      f.querySelector('.rm:not(.dl)').onclick = () => { picks[key] = { ...(picks[key] || { note: '' }), gone: !(picks[key] || {}).gone }; stash(); render(); bar(); };
+      pair.append(f); return f;
+    });
+    const cap = document.createElement('div'); cap.className = 'cap';
+    cap.innerHTML = `<span class="t"></span>${meta ? '<span class="meta"></span>' : ''}`;
+    cap.querySelector('.t').innerHTML = `${es} <i></i>`; cap.querySelector('.t i').textContent = en; if (meta) cap.querySelector('.meta').textContent = meta;
+    v.append(pair, cap); host.append(v); views.push({ v, pair, figs });
+  }
+}
+function render() {
+  for (const { v, pair, figs } of views) {
+    let shown = 0;
+    for (const f of figs) {
+      const gone = !!(picks[f.dataset.key] || {}).gone;
+      f.classList.toggle('gone', gone); f.hidden = gone && !showGone; if (!f.hidden) shown++;
+      const rm = f.querySelector('.rm:not(.dl)'); rm.textContent = gone ? 'Restaurar · Restore' : 'Quitar · Remove'; rm.hidden = readOnly; const ta = f.querySelector('textarea'); ta.readOnly = readOnly; ta.hidden = readOnly && !ta.value;
+    }
+    v.hidden = !shown; pair.classList.toggle('one', shown === 1);
+  }
+  counts();
+}
+$('showGone').onclick = () => { showGone = !showGone; $('showGone').setAttribute('aria-pressed', showGone); render(); };
+$('discard').onclick = () => { for (const k of Object.keys(picks)) delete picks[k]; Object.assign(picks, JSON.parse(JSON.stringify(saved.picks)));
+  for (const { figs } of views) for (const f of figs) f.querySelector('textarea').value = (picks[f.dataset.key] || {}).note || '';
+  try { sessionStorage.removeItem(STASH); } catch (e) {} render(); bar(); };
+function page(state) {
+  const json = JSON.stringify(state).replace(/</g, '\\u003c');
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  return '<!doctype html>\n<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>' + esc(SRC.title) + '</title>'
+    + SRC.fonts + '<style id="css">' + SRC.css + '</style></head><body><template id="shell">' + SRC.shell + '</template>'
+    + '<script type="application/json" id="state">' + json + '</scr' + 'ipt><script id="app">' + SRC.app + '</scr' + 'ipt></body></html>';
+}
+function goReadOnly() { readOnly = true; $('ro').hidden = false; render(); bar(); }
+async function save() {
+  if (readOnly || !dirtyKeys().length) return;
+  if (!art) { goReadOnly(); return; }
+  const clean = {}; for (const [k, p] of Object.entries(picks)) { const note = (p.note || '').trim(); if (p.gone || note) clean[k] = { gone: !!p.gone, note }; }
+  stash(); $('save').disabled = true; $('barMsg').textContent = 'Guardando… · Saving…';
+  try { await art.publish(page({ picks: clean, savedAt: new Date().toISOString() })); }          // every open view reloads to the new version
+  catch (e) {
+    const c = e && e.code;
+    if (c === 'conflict') { $('barMsg').textContent = 'Alguien guardó antes; recargando con tus cambios · Someone saved first; reloading with your changes'; return; }
+    if (['not_writer', 'not_granted', 'not_declared', 'consent_required', 'capability_disabled', 'capability_removed'].includes(c)) { goReadOnly(); return; }
+    $('save').disabled = false; $('barMsg').textContent = c === 'rate_limited' ? 'Demasiado seguido; espera un momento · Too many saves; wait a moment' : 'No se pudo guardar; intenta otra vez · Could not save; try again';
+  }
+}
+$('save').onclick = save;
+render(); bar();
+if (window.claude && claude.use) claude.use('artifact').then(a => { art = a; if (!a) goReadOnly(); }).catch(() => goReadOnly());
+else goReadOnly();
+if (window.claude && claude.use) claude.use('downloads').then(d => { dls = d; document.querySelectorAll('.dl').forEach(b => b.hidden = !d); }).catch(() => {});
+})();
+</script>

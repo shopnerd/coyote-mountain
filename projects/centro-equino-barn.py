@@ -163,21 +163,21 @@ for sx in (-1, 1):
         ya, yb = sorted((s * (ENTRY_W / 2 + .3), s * (ENTRY_W / 2 + 7.8)))
         box(min(xo, xo + sx * .3), max(xo, xo + sx * .3), ya, yb, .3, EAVE - .2)
 
-# ---- structure (27 Sep, Will): timber trusses on timber posts instead of the pipe portal frames, one at every
+# ---- structure (27 Sep, Will): steel trusses on 6 in steel pipe posts instead of the pipe portal frames, one at every
 # north stall line (7 lines, 12.7 ft apart): top chords, a bottom chord at the eave, king post, verticals and webs ----
 TRUSS = [-HL + L * k / 6 for k in range(7)]
-POST = .8
+POST = 6.625 / 12                               # 6 in steel pipe posts (Will, 27 Sep); steel trusses
 for x in TRUSS:
-    mat('wood')
-    for s in (-1, 1): box(x - POST / 2, x + POST / 2, s * HD - POST / 2, s * HD + POST / 2, 0, EAVE)
-    for s in (-1, 1): bar((x, s * (HD + OH), roof_z(HD + OH)), (x, 0, RIDGE), COL_D, 4)                          # top chords
-    bar((x, -HD, EAVE), (x, HD, EAVE), .7, 4)                                                                     # bottom chord
-    bar((x, 0, EAVE), (x, 0, RIDGE), .5, 4)                                                                       # king post
+    mat('steel')
+    for s in (-1, 1): bar((x, s * HD, 0), (x, s * HD, EAVE), POST, 10)
+    for s in (-1, 1): bar((x, s * (HD + OH), roof_z(HD + OH)), (x, 0, RIDGE), .5, 8)                            # top chords
+    bar((x, -HD, EAVE), (x, HD, EAVE), .4, 8)                                                                     # bottom chord
+    bar((x, 0, EAVE), (x, 0, RIDGE), .3, 6)                                                                       # king post
     for k in (1, 2, 3):
         for s in (-1, 1):
             yv = s * HD * k / 4; yw = s * HD * (k - 1) / 4
-            bar((x, yv, EAVE), (x, yv, roof_z(yv)), .45, 4)                                                        # verticals
-            bar((x, yv, EAVE), (x, yw, roof_z(yw)), .4, 4)                                                         # webs toward the ridge
+            bar((x, yv, EAVE), (x, yv, roof_z(yv)), .25, 6)                                                        # verticals
+            bar((x, yv, EAVE), (x, yw, roof_z(yw)), .22, 6)                                                        # webs toward the ridge
 mat('steel')
 # eave beams and purlins, 8 in pipe on top of the rafters, about 5 ft apart along the slope
 top = COL_D / 2 + PURL_D / 2
@@ -248,7 +248,7 @@ for r in rooms:
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'centro-equino-barn.obj')
 with open(out, 'w', newline='\n') as f:
-    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft timber trusses on timber posts, rock 5 ft all round with a floating pipe to 6 ft, open above, big sliding doors at both ends, pipe stall fronts and gates, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls north + 4 south with 12x40 runs, tack/feed (closed, straw bale/cob) + open wash bay at the west end by the barn road\n")
+    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft steel trusses on 6 in pipe posts, rock 5 ft all round with a floating pipe to 6 ft, open above, big sliding doors at both ends, pipe stall fronts and gates, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls north + 4 south with 12x40 runs, tack/feed (closed, straw bale/cob) + open wash bay at the west end by the barn road\n")
     f.write(f"# geo {LAT} {LON}\n# unit ft\n# name walker barn 72x40\n")
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
     last = None
