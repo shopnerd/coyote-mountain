@@ -12,7 +12,7 @@ turned to her bearing; the origin is the barn centre. The # geo line tells topo.
 """
 import math, os
 
-L, D = 76.0, 42.0                        # column centre lines: Walker's elevation sketch, 27 Sep (76 ft south face; gable 14 + 14 entry + 14)
+L, D = 72.0, 42.0                        # 27 Sep: a 12 ft grid (Will: trusses 12 ft apart, things lined up): 6 bays x 12 = 72 ft (Walker's sketch had 76); gable 14 + 14 entry + 14
 HL, HD = L / 2, D / 2
 AISLE, STALL, RUN_D = 14.0, 12.0, 40.0
 ROW_D = (D - AISLE) / 2                  # 14 ft
@@ -23,12 +23,12 @@ STAKES = True                              # horizontal stakes in dark steel fra
 FRAMES = [-38.0, -19.0, 0.0, 19.0, 38.0]   # 5 frames at 19 ft
 COL_D, PURL_D = 12.75 / 12, 8.625 / 12
 ENTRY_W = AISLE                          # the big gable entries, open up to the rafters
-DOOR = (5.0, 10.0)                       # Walker's sketch: tall openings, near the eave
+DOOR = (6.0, 9.0)                        # open doorways stall -> run, no gate (27 Sep): 6 ft wide between two 3 ft panel posts, 9 ft tall
 RAIL_H = 5.5
-MON_HW, MON_H, MON_X = 5.0, 2.5, 30.0   # clerestory monitor: half width, glazing height, half length (27 Sep)
+MON_HW, MON_H, MON_X = 5.0, 2.5, 24.0   # clerestory monitor: half width, glazing height, half length (27 Sep)
 STAKE_H, STAKE_T, STAKE_P = .12, .16, .3   # tomato stakes, horizontal: height, thickness, course spacing (gaps between)
-NORTH = ['stall'] * 6                    # 6 x 12.67 ft
-SOUTH = [('tack / feed', 13), ('wash', 13)] + [('stall', 12.5)] * 4   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
+NORTH = ['stall'] * 6                    # 6 x 12 ft, one per truss bay
+SOUTH = [('tack / feed', 12), ('wash', 12)] + [('stall', 12)] * 4   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
 SOLID = ('tack / feed', 'wash')           # both rooms at the road end closed (27 Sep, Will's markup: 'enclose the tack room as well')           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
 RUN_FALL = .05                           # the south runs climb the slope at 5 % (graded), a low rock wall at their uphill end
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
@@ -93,8 +93,12 @@ def sticks_x(xa, xb, y, z0, z1, holes):      # tomato stakes laid HORIZONTAL, bi
         zz += STAKE_P; k += 1
     keep = CUR[0]; mat('steel')                     # dark steel frame: posts every ~4 ft, top and bottom members
     n = max(1, round((xb - xa) / 3))                # stake panels 3 ft wide (Walker)
-    for k in range(n + 1): xv = xa + (xb - xa) * k / n; box(xv - .1, xv + .1, y - .12, y + .12, z0, z1)
-    for zz in (z0, z1 - .15): box(xa, xb, y - .12, y + .12, zz, zz + .15)
+    for k in range(n + 1):
+        xv = xa + (xb - xa) * k / n; zb_ = max([top for a, b, top in holes if a + .05 < xv < b - .05] + [z0])
+        box(xv - .1, xv + .1, y - .12, y + .12, zb_, z1)
+    xs_ = xa
+    for a, b, top in sorted(holes): box(xs_, a, y - .12, y + .12, z0, z0 + .15); xs_ = b
+    box(xs_, xb, y - .12, y + .12, z0, z0 + .15); box(xa, xb, y - .12, y + .12, z1 - .15, z1)
     mat(keep)
 
 # ---- walls (27 Sep, Will): rock 5 ft all round, a black pipe floating 1 ft above on short pipe posts, open above;
@@ -118,19 +122,19 @@ for s in (1, -1):
     y = s * HD; holes, solid = [], []
     for r in rooms:
         if r['side'] != s: continue
-        if r['kind'] == 'stall': holes.append((r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, 99))           # gate to the run, full height
+        if r['kind'] == 'stall': holes.append((r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, 99))           # open doorway to the run
         elif r['kind'] in SOLID:
             solid.append((r['x0'], r['x1']))
             if r['kind'] == 'tack / feed': holes.append((r['c'] - TACK_DOOR[0] / 2, r['c'] + TACK_DOOR[0] / 2, TACK_DOOR[1]))   # one outside door (Walker's sketch); the wash room opens to the aisle
     mat('rock'); wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, [(a, b, t if t != 99 else ROCK_H) for a, b, t in holes])
     for a, b, t in holes:
-        if t == 99: gate_x(a, b, y)
+        if t == 99: mat('steel'); box(a, b, y - .12, y + .12, DOOR[1], DOOR[1] + .25)                   # lintel over the doorway
     xs = -HL
     for a, b in sorted(solid) + [(HL, HL)]:
         xx = xs
         for ha, hb, _ in sorted(h for h in holes if h[2] == 99 and xs <= h[0] < a): rail_x(xx, ha, y); xx = hb
         rail_x(xx, a, y)
-        if STAKES and a > xs: mat('stakes'); sticks_x(xs, a, y, RAIL_Z, EAVE - .3, [])   # the stall gates stop at the rail; stakes carry on above them
+        if STAKES and a > xs: mat('stakes'); sticks_x(xs, a, y, RAIL_Z, EAVE - .3, [(ha, hb, DOOR[1] + .25) for ha, hb, t in holes if t == 99 and xs <= ha < a])   # stakes stop at the doorways, carry on above the lintel
         if b > a: mat('cob'); wall_x(a, b, y, ROCK_T * .8, ROCK_H, EAVE - .3, [h for h in holes if a <= h[0] < b])
         xs = b
 
@@ -198,7 +202,7 @@ for s in (-1, 1):
 zb = roof_z(MON_HW) + zr
 for sgn in (-1, 1):
     mat('steel')
-    for k in range(9): xm = -MON_X + 2 * MON_X * k / 8; box(xm - .2, xm + .2, sgn * MON_HW - .2, sgn * MON_HW + .2, zb, zb + MON_H)   # mullions
+    for k in range(int(2 * MON_X / 6) + 1): xm = -MON_X + 6 * k; box(xm - .2, xm + .2, sgn * MON_HW - .2, sgn * MON_HW + .2, zb, zb + MON_H)   # mullions
     mat('roof')
     for dz in (0, T):
         quad((-MON_X - .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz), (MON_X + .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz),

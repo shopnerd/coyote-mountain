@@ -46,7 +46,7 @@ STABLE = (' The stable (27 Sep design): a 5 ft stacked fieldstone wall all round
           'and above it, up to the eave, panels of thin horizontal wooden branches/tomato stakes held in slim dark steel frames, loose and organic like a '
           'bird nest screen, in 3 ft wide panels. The clerestory along the ridge is OPEN, no glass: just posts under its little roof. Inside, exposed timber roof trusses on timber posts. The two rooms at the road end (rendered plain beige) are solid, '
           'lime-plastered straw bale or cob, with one wooden door. Each gable end has a big wooden sliding barn door on a '
-          'steel track, shown slid open. The stalls have black pipe fronts and pipe gates, like the corrals. Horses stand in the black pipe-fenced runs.')
+          'steel track, shown slid open. Each stall opens straight out to its run through an open doorway with a steel lintel, NO gate there; toward the aisle the stalls have black pipe fronts with pipe gates. Horses stand in the black pipe-fenced runs.')
 AISLE = (' This is inside the stable, down its 14 ft aisle under exposed timber trusses: both sides are stall fronts of black steel pipe with a pipe '
          'gate each, horses looking out; the plain walls are the plastered tack room. Add NO water tank, tub or trough; the aisle floor is packed earth.')
 
