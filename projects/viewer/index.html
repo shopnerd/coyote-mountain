@@ -137,7 +137,7 @@ body.shot{grid-template-columns:1fr}
 <main>
   <div id="view" role="img" aria-label="Modelo 3D del Centro Equino · 3D model of the Centro Equino"></div>
   <div id="labels" aria-hidden="true"></div>
-  <div class="hint"><span class="desk">Arrastrar gira · la rueda acerca hacia el cursor · botón central o derecho mueve · R oculta techos · Drag to rotate · scroll zooms to the cursor · middle or right drag pans · R hides roofs</span><span class="phone">Un dedo gira · dos dedos acercan y mueven · One finger rotates · two fingers zoom and pan</span></div>
+  <div class="hint"><span class="desk">Arrastrar gira · la rueda acerca hacia el cursor · botón central o derecho mueve · doble clic centra · R oculta techos · Drag to rotate · scroll zooms to the cursor · middle or right drag pans · double-click centres · R hides roofs</span><span class="phone">Un dedo gira · dos dedos acercan y mueven · doble toque centra · One finger rotates · two fingers zoom and pan · double-tap centres</span></div>
   <div id="load">cargando el modelo · loading the model</div>
 </main>
 
@@ -332,6 +332,24 @@ body.shot{grid-template-columns:1fr}
     const d = camera.position.distanceTo(controls.target) * f; if (d < controls.minDistance || d > controls.maxDistance) return;
     camera.position.sub(P).multiplyScalar(f).add(P); controls.target.sub(P).multiplyScalar(f).add(P); controls.update(); draw();
   }, { capture: true, passive: false });
+
+  // the pivot follows the view (Will, 27 Sep: after a pinch toward the stable, rotating swung the whole scene about the old pivot):
+  // when a gesture starts, the orbit centre moves to whatever is at the middle of the screen, along the line of sight, so nothing jumps
+  const centreHit = () => { ndc.set(0, 0); ray.setFromCamera(ndc, camera); return ray.intersectObjects(pickables, false)[0]; };
+  controls.addEventListener('start', () => { anim = null; const h = centreHit(); if (h && h.distance > controls.minDistance && h.distance < controls.maxDistance) { controls.target.copy(h.point); controls.update(); } });
+  // double-tap or double-click a spot: glide to centre it, and it becomes the pivot
+  function focusAt(cx, cy) {
+    const r = renderer.domElement.getBoundingClientRect(); ndc.set((cx - r.left) / r.width * 2 - 1, -(cy - r.top) / r.height * 2 + 1);
+    ray.setFromCamera(ndc, camera); const h = ray.intersectObjects(pickables, false)[0]; if (!h) return;
+    const off = camera.position.clone().sub(controls.target), d = off.length(), k = Math.max(.35, Math.min(1, 60 / d));   // move in a little when far away
+    const t = h.point.clone(), p = t.clone().add(off.multiplyScalar(k));
+    if (reduce) { camera.position.copy(p); controls.target.copy(t); controls.update(); draw(); return; }
+    anim = { p0: camera.position.clone(), t0: controls.target.clone(), p, t, s: performance.now() };
+  }
+  renderer.domElement.addEventListener('dblclick', e => focusAt(e.clientX, e.clientY));
+  let lastTap = null;
+  renderer.domElement.addEventListener('pointerup', e => { if (e.pointerType !== 'touch') return; const now = performance.now();
+    if (lastTap && now - lastTap.t < 320 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 30) { focusAt(e.clientX, e.clientY); lastTap = null; } else lastTap = { t: now, x: e.clientX, y: e.clientY }; });
 
   // loop
   const v3 = new THREE.Vector3(); let dirty = true; const draw = () => dirty = true;
