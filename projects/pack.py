@@ -3,11 +3,14 @@ PACK=True
 exec(open('drain.py',encoding='utf-8').read())
 from matplotlib.backends.backend_pdf import PdfPages
 from PIL import Image
-DL=r'C:\Users\zolar\Downloads'
+OUTDIR='G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack'
+DL=OUTDIR+'/renderings'
 CLAY='#b5602e'; MUTED='#6a655a'
 PAGES=[]
 def img(n):
-    f=n if os.path.isabs(str(n)) else os.path.join(DL,f'coyote-topo-painted-photo ({n}).png')
+    f=n if os.path.isabs(str(n)) else os.path.join(DL,str(n))
+    if not os.path.exists(f):                      # a rendering not made yet: a quiet placeholder frame
+        a=np.full((900,1400,3),236,np.uint8); a[::40]=226; a[:,::40]=226; return a
     im=Image.open(f).convert('RGB'); a=np.asarray(im).astype(int); c=a[2,2]; d=np.abs(a-c).sum(2)>30
     r=np.where(d.mean(1)>.02)[0]; k=np.where(d.mean(0)>.02)[0]
     if len(r) and len(k) and (r[-1]-r[0])>a.shape[0]*.5 and (k[-1]-k[0])>a.shape[1]*.5: im=im.crop((k[0],r[0],k[-1]+1,r[-1]+1))
@@ -19,7 +22,7 @@ def tblock(fig,num,es,en,dark=False):
     if not dark: fig.add_artist(matplotlib.lines.Line2D([0.02,0.98],[0.055,0.055],color=INK,lw=.8))
     fig.text(0.02,0.025,'CENTRO EQUINO · CHICHIHUAS',fontsize=10,weight='bold',color=c)
     fig.text(0.215,0.025,f'{es}  ·  {en}',fontsize=10,color=c)
-    fig.text(0.70,0.025,'Diseño preliminar · Preliminary design · 24 sep 2026',fontsize=8.5,color=m)
+    fig.text(0.70,0.025,'Diseño preliminar · Preliminary design · 26 sep 2026',fontsize=8.5,color=m)
     fig.text(0.98,0.022,f'{num:02d}',fontsize=18,weight='bold',color=CLAY,ha='right')
 def heading(fig,es,en,y=0.945):
     fig.text(0.02,y,es,fontsize=24,weight='bold',color=INK); fig.text(0.02,y-0.033,en,fontsize=14,color=MUTED,style='italic')
@@ -52,8 +55,8 @@ def planview(n):
            ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
            ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),
-           ('Cuatro corrales','Four paddocks','67.5 × 75 ft cada uno, con sombra de 12 × 16 ft','67.5 × 75 ft each, with a 12 × 16 ft shade stall'),
-           ('Agua','Water','bajo natural al final de la pista, bebedero largo de piedra 12 × 4 ft, bebedero redondo existente','natural water sink at the track end, 12 × 4 ft stone trough, existing round watering station'),
+           ('Caballerizas techadas','Covered stalls','16 caballerizas de 16 × 30 ft entre las palmas, pasillo de 12 ft, techo mariposa que llena un bebedero redondo','16 stalls of 16 × 30 ft among the palms, a 12 ft corridor, a butterfly roof that fills a round trough'),
+           ('Agua','Water','bajo natural abajo de la pista (confirmado en sitio), bebedero largo de piedra 12 × 4 ft, bebedero redondo en las caballerizas, bebedero redondo existente','natural water sink below the track (confirmed on site), 12 × 4 ft stone trough, round trough at the stalls, existing round watering station'),
            ('Estacionamiento','Parking','franja angosta al extremo este, 13 cajones a 60°','narrow strip at the far east corner, 13 stalls at 60°')]
     y=0.86
     for es,en,tes,ten in items:
@@ -95,7 +98,7 @@ def existing():
         fig.add_artist(matplotlib.lines.Line2D([0.78,0.81],[ly,ly],color=c,lw=lw,ls=st)); fig.text(0.818,ly-.005,t,fontsize=8.5,color=INK); ly-=.025
     fig.text(0.78,ly-.005,'+ 1082.4   Punto de elevación · Spot elevation (ft)',fontsize=8.5,color=CLAY)
     tblock(fig,nxt(),'Topografía existente','Existing topography'); PAGES.append(fig)
-PADS=[('Establo · Barn','1087.6',(107.5,57.5),'1 %'),('Corrales · Paddocks','1082.5',(44.2,77.0),'1 %'),('Pista oval · Arena','1073.3',(89.4,38.4),'1 %'),('Corral redondo · Pen','1080.6',(86.4,53.1),'1 %'),('Estacionamiento · Parking','1102.4',(136,60.3),'5 %'),('Bebedero · Trough','1082.2',(96.4,53.8),'0 %')]
+PADS=[('Establo · Barn','1087.6',(107.5,57.5),'1 %'),('Caballerizas · Stalls','1089.3',(84.6,64.8),'0.2 %'),('Bebedero redondo · Round trough','1089.1',(76.2,67.6),'0 %'),('Pista oval · Arena','1073.3',(89.4,38.4),'1 %'),('Corral redondo · Pen','1080.6',(86.4,53.1),'1 %'),('Estacionamiento · Parking','1102.4',(136,60.3),'5 %'),('Bebedero · Trough','1082.2',(96.4,53.8),'0 %')]
 def grading():
     fig=newpage(); heading(fig,'Plan de terracería','Grading plan')
     ax=plain_axes(fig,[0.02,0.075,0.74,0.82])
@@ -108,7 +111,7 @@ def grading():
         if s.get('kind')=='path':
             P=np.array([q[:2] for q in s['pts']]); w=(s.get('pw',3.66)/FT)/cf
             ax.plot(P[:,0],P[:,1],color='#c9b48f',lw=max(1.2,w*4.6),alpha=.55,solid_capstyle='round',zorder=4)
-    for nm in ('walker barn 72x40','four paddocks','stone trough 12x4','trailer 8 x 40'):
+    for nm in ('walker barn 72x40','covered stalls 16','stone trough 12x4','trailer 8 x 40'):
         for s in byname(nm):
             P=np.array(foot(s)+[foot(s)[0]]); ax.fill(P[:,0],P[:,1],color='white',alpha=.9,zorder=5); ax.plot(P[:,0],P[:,1],color=INK,lw=.9,zorder=6)
     for i in (1,2):
@@ -124,7 +127,7 @@ def grading():
     y=para(fig,0.78,y,'Rasante terminada con todos los cambios. Curvas terminadas continuas; terreno existente punteado. Gris es corte, ocre es relleno.','Finished grade with every change. Finished contours solid, existing ground dashed. Grey is cut, ochre is fill.',w=40,fs=9.5)
     fig.text(0.78,y,'Plataformas · Pads (nivel terminado, ft)',fontsize=10,weight='bold',color=INK); y-=.024
     for lab,lev,xy,g in PADS:
-        fig.text(0.78,y,lab,fontsize=8.8,color=INK); fig.text(0.915,y,lev,fontsize=8.8,color=INK,weight='bold',ha='right'); fig.text(0.965,y,g,fontsize=8.8,color=MUTED,ha='right'); y-=.021
+        fig.text(0.78,y,lab,fontsize=8.8,color=INK); fig.text(0.95,y,lev,fontsize=8.8,color=INK,weight='bold',ha='right'); fig.text(0.985,y,g,fontsize=8.8,color=MUTED,ha='right'); y-=.021
     y-=.012
     fig.text(0.78,y,'Movimiento de tierra · Earthwork',fontsize=10,weight='bold',color=INK); y-=.024
     fig.text(0.78,y,f'Corte · Cut   ≈ {cut:,.0f} yd³  ({cut*.7646:,.0f} m³)',fontsize=8.8,color=INK); y-=.02
@@ -162,9 +165,9 @@ def placeholder(es,en,goes_es,goes_en,boxes):
 def text_refs():
     fig=newpage(); heading(fig,'Texto y referencias','Text and references')
     y=0.85
-    blocks=[('La idea','The idea','Un centro ecuestre sencillo y bien cuidado en el valle: un establo de piedra y varas bajo un techo azul, corrales abiertos, una pista oval, un corral redondo y una pista de trote que aprovecha el camino existente. Todo acomodado a la pendiente natural, con el agua de lluvia guiada y guardada en lugar de dejarla correr.','A simple, well-kept equestrian centre in the valley: a stone-and-stick stable under a blue roof, open paddocks, an oval arena, a round pen and a riding track that uses the existing road. Everything sits into the natural slope, and rainwater is guided and kept instead of left to run off.'),
+    blocks=[('La idea','The idea','Un centro ecuestre sencillo y bien cuidado en el valle: un establo de piedra y varas bajo un techo azul, 16 caballerizas techadas entre las palmas, una pista oval, un corral redondo y una pista de trote que aprovecha el camino existente. Todo acomodado a la pendiente natural, con el agua de lluvia guiada y guardada en lugar de dejarla correr.','A simple, well-kept equestrian centre in the valley: a stone-and-stick stable under a blue roof, 16 covered stalls among the palms, an oval arena, a round pen and a riding track that uses the existing road. Everything sits into the natural slope, and rainwater is guided and kept instead of left to run off.'),
             ('Materiales','Materials','Marcos de tubo de acero de 12 in a la vista; piedra del lugar apilada hasta 4.5 ft; arriba, varas de tomate en horizontal; lámina metálica azul cielo con tragaluces; cercas de tubo pintado de blanco; caminos de tierra compactada; arena rastrillada en pista y corral.','Local fieldstone to 4.5 ft; above it, sticks stacked horizontally like a bird\'s nest; sky-blue metal roofing; white-painted pipe fencing; compacted dirt roads; raked sand in the arena and round pen.'),
-            ('Agua','Water','El techo del establo alimenta el bebedero largo; el agua del cerro se lleva por un canal empastado a un bajo natural junto a los corrales; el excedente sale al oeste.','The stable roof feeds the long trough; hillside water runs down a grassed waterway to a natural low spot beside the paddocks; overflow leaves to the west.')]
+            ('Agua','Water','El techo del establo alimenta el bebedero largo y el techo mariposa de las caballerizas llena un bebedero redondo; el agua del cerro se lleva por un canal empastado a un bajo natural abajo de la pista; el excedente sale al oeste.','The stable roof feeds the long trough and the stalls’ butterfly roof fills a round trough; hillside water runs down a grassed waterway to a natural low spot below the track; overflow leaves to the west.')]
     for tes,ten,bes,ben in blocks:
         fig.text(0.02,y,f'{tes} · {ten}',fontsize=13,weight='bold',color=INK); y-=.028
         y=para(fig,0.02,y,bes,ben,w=78,fs=10)
@@ -276,44 +279,47 @@ def posts_page():
 exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
 exec(open('structure_pages.py',encoding='utf-8').read())
-cover(70)
-planview(os.path.join(DL, 'coyote-topo-painted-photo (89) fixed v3.png'))
+exec(open('stalls_page.py',encoding='utf-8').read())
+MS=DL+'/2026-09-26 money shots/'                    # the 26 Sep golden-hour set (renders/shoot.mjs + paint.py)
+cover(MS+'3-site-ne-openai-2.png')
+planview(MS+'7-plan-openai-2-cropped.png')
 existing()
 grading()
 operator_sheet()
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('sheet2.py','Cortes de terracería','Grading sections')
-views2([(85,'Desde el sureste, sobre el establo','From the south-east, over the stable',
-         'El establo de piedra y varas con sus corrales a los lados; un caballo bebe en el bebedero largo, abierto por ambos lados. Al fondo la pista oval y el corral redondo.',
-         'The stone-and-stick stable with its runs on both sides; a horse drinks at the long trough, open on both sides. The oval arena and round pen beyond.'),
-        (84,'Desde el noreste','From the north-east',
-         'Toda la propiedad desde la esquina del viñedo: el establo al frente, la pista de trote y los cuatro corrales al fondo, rodeados de viñedo y cerro.',
-         'The whole property from the vineyard corner: the stable in front, the riding track and the four paddocks beyond, framed by vineyard and hill.')],
+views2([(MS+'1-hero-sw-openai-3.png','Sobre las caballerizas','Over the stalls',
+         'Desde el suroeste, sobre el bebedero redondo: las dos filas de caballerizas, el pasillo techado y, al fondo, el establo, el corral redondo y la pista.',
+         'From the south-west, over the round trough: the two rows of stalls, the covered corridor and, beyond, the stable, round pen and arena.'),
+        (MS+'4-hill-s-openai-2.png','Desde el cerro','From the hill',
+         'Las caballerizas siguen la curva de nivel al pie de la ladera, con las palmas entre los fondos abiertos.',
+         'The stalls follow the contour at the foot of the slope, with palms among the open stall backs.')],
        'Otras vistas','Other views')
-views2([(83,'Vista 3/4 desde el suroeste','Three-quarter from the south-west',
-         'La pista de trote como potrero cercado donde los caballos pueden andar sueltos; los corrales junto al camino y el bajo natural donde se junta el agua.',
-         'The riding track as one fenced turnout where horses can roam loose; the paddocks by the road and the natural low spot where water collects.'),
-        ((72,'left'),'El establo de cerca','The stable up close',
-         'Muros de piedra hasta 4.5 ft y varas apiladas arriba como nido de pájaro, bajo el techo azul cielo.',
-         'Fieldstone walls to 4.5 ft with sticks stacked above like a bird\'s nest, under the sky-blue roof.')],
+views2([(MS+'5-corridor-out-openai-2.png','Bajo el techo mariposa','Under the butterfly roof',
+         'El techo baja hacia el centro del pasillo y lleva la lluvia al bebedero; las palmas quedan en los fondos abiertos.',
+         'The roof dips to the middle of the corridor and carries the rain to the trough; the palms stand in the open stall backs.'),
+        (MS+'2-corridor-openai-2.png','El bebedero y el pasillo','The trough and the corridor',
+         'El canalón abierto vierte del valle del techo al bebedero redondo, sin bajante; hay paso libre alrededor.',
+         'The open chute pours from the roof valley into the round trough, with no downspout; there is room to walk round it.')],
        'Otras vistas','Other views')
-views2([(68,'Temporada verde, hora dorada','Green season, golden hour',
-         'Una clase en la pista oval, un caballo trabajando en el corral redondo y caballos en los corrales, con la luz baja de la tarde.',
-         'A lesson in the arena, a horse working in the round pen and horses in the paddocks, in low evening light.'),
-        (r"C:\Users\zolar\Downloads\coyote-topo-painted-white (5).png",'Maqueta del sitio','Site model',
-         'La misma propuesta como maqueta de capas: se leen la pendiente, las plataformas a nivel y cómo se acomoda todo en el terreno.',
-         'The same proposal as a layered site model: the slope, the level pads and how everything sits into the land.')],
+views2([(MS+'6-west-openai-2.png','Desde el oeste','From the west',
+         'Con el sol detrás de la cámara: la cerca que cruza el potrero, las caballerizas, el establo y el cerro de granito.',
+         'With the sun behind the camera: the fence across the turnout, the stalls, the stable and the granite hill.'),
+        (MS+'3-site-ne-openai-2.png','Todo el centro','The whole centre',
+         'Del noreste hacia la puesta de sol: el establo con sus corrales, las caballerizas techadas, la pista oval, el corral redondo y el valle con viñedos.',
+         'From the north-east into the sunset: the stable and its runs, the covered stalls, the oval arena, the round pen and the valley with its vineyards.')],
        'Otras vistas','Other views')
 text_refs()
 placeholder('Inspiraciones','Inspirations','Imágenes que muestran el ambiente que buscamos: establos de piedra y madera, centros ecuestres del valle, cercas, sombras y paisaje.','Images that show the feeling we are after: stone-and-timber stables, equestrian centres in the valley, fencing, shade and landscape.',[('Establos','Stables'),('Corrales y cercas','Paddocks and fencing'),('Pistas y arena','Arenas and footing'),('Paisaje y agua','Landscape and water'),('Señalética','Signage'),('Detalles','Details')])
 barn_plan()
+stalls_page()
 portal_page()
 base_page()
 metal_page()
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
 
-out=os.path.join(DL,'Centro-Equino-pack-11x17-2026-09-24-v5.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-09-26-v6.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)

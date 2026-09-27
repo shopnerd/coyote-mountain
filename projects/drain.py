@@ -4,10 +4,13 @@ import geo18 as geo
 import matplotlib; matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-p=json.load(open(r'C:\Users\zolar\Downloads\centro-equino-final-2026-09-24.json'))
+import os
+DRAWING=os.path.join(os.path.dirname(os.path.abspath('drain.py')),'centro-equino-2026-09-26-stalls16-nopad.json')   # 26 Sep: covered stalls, paddocks and two roads gone
+p=json.load(open(DRAWING,encoding='utf-8'))
 W,H=p['grid']; FT=0.3048; cs=float(p['sliders']['siteW'])/(W-1); cf=cs/FT
 z=np.array(p['z']).reshape(H,W)/FT; b=np.array(p['base']).reshape(H,W)/FT
-fl=p['__flow']; acc=np.array(fl['acc']).reshape(H,W); down=np.array(fl['down'])
+from flow import flow                     # the export's own __flow is stale once the ground is edited outside the app
+acc,down=flow(np.array(p['z']).reshape(H,W))
 A_ac=cs*cs/4047
 S=p['strokes']; byname=lambda n:[s for s in S if s.get('name')==n]
 la0,lo0=p['world']['lat'],p['world']['lon']; t=math.radians(float(p['sliders']['rot']))
@@ -30,7 +33,7 @@ def features(ax,lw=1):
         if k=='path':
             P=np.array([q[:2] for q in s['pts']]); w=(s.get('pw',3.66)/FT)/cf
             ax.plot(P[:,0],P[:,1],color='#c9b48f',lw=max(1.2,w*5.2),solid_capstyle='round',zorder=2,alpha=.9)
-        elif k=='obj' and n in ('walker barn 72x40','four paddocks','trailer 8 x 40','stone trough 12x4'):
+        elif k=='obj' and n in ('walker barn 72x40','covered stalls 16','trailer 8 x 40','stone trough 12x4'):
             P=np.array(foot(s)+[foot(s)[0]]); ax.fill(P[:,0],P[:,1],color='white',alpha=.85,zorder=3); ax.plot(P[:,0],P[:,1],color=INK,lw=.8,zorder=4)
         elif k=='obj' and n in ('arena fence','round pen fence','site fence','cross fence'):
             pass
@@ -76,6 +79,8 @@ def works(ax,labels=True):
             P=np.array([q[:2] for q in s['pts']]); ax.plot(P[:,0],P[:,1],color='#0b4f8a',lw=4.5,solid_capstyle='butt',zorder=9)
     for s in byname('natural water sink'):
         P=np.array([q[:2] for q in s['pts']]); ax.fill(P[:,0],P[:,1],color=WATER,alpha=.45,zorder=8); ax.plot(P[:,0],P[:,1],color=WATER,lw=1,dashes=(3,2),zorder=8)
+    for s in byname('stalls trough overflow pipe'):
+        P=np.array([q[:2] for q in s['pts']]); ax.plot(P[:,0],P[:,1],color=WATER,lw=1.6,dashes=(2,1.5),zorder=9)
     ws=byname('existing watering station')[0]; P=np.array([q[:2] for q in ws['pts']]); ax.fill(P[:,0],P[:,1],color=WATER,zorder=9)
 d=(z-b); cutyd=-(d[d<0].sum())*cf*cf*FT**0 * (0.3048**0)  # ft * cell ft^2
 cell_ft2=cf*cf; cut=-(d[d<0].sum())*cell_ft2/27; fill=(d[d>0].sum())*cell_ft2/27
@@ -90,16 +95,18 @@ def scalebar(ax,x,y):
 def callout(ax,xy,n):
     ax.add_patch(matplotlib.patches.Circle(xy,2.2,facecolor='white',edgecolor='#b5602e',lw=1.6,zorder=22))
     ax.text(xy[0],xy[1],str(n),ha='center',va='center',fontsize=8.5,weight='bold',color='#b5602e',zorder=23)
-CALL=[((79,79),1),((68,71.5),2),((65.4,76.2),3),((46,57.2),4),((27,61.8),5),((113,69),6),((121.5,50),7),((104,58.5),8),((96.4,50.6),9),((34.5,55.5),10)]
+CALL=[((79,79),1),((68,71.5),2),((65.4,76.2),3),((46,57.2),4),((27,61.8),5),((113,69),6),((121.5,50),7),((104,58.5),8),((96.4,50.6),9),((34.5,55.5),10),((72.5,66.5),11)]
+NCULV=sum(1 for s in S if (s.get('name') or '').startswith('culvert'))
 NOTES=[
  ('Road-bend crossing','Cruce en la curva del camino','Up to about 16 acres of hillside can reach this crossing (the full watershed above the site, measured zoomed out). Rock-lined ford preferred; if piped, a 30 in culvert with a rock apron.','Hasta unas 6.5 ha de ladera pueden llegar a este cruce (toda la cuenca arriba del sitio, medida con vista amplia). Se prefiere vado empedrado; si se entuba, alcantarilla de 75 cm con delantal de piedra.'),
  ('Grassed waterway','Canal empastado','Wide, shallow, planted channel along the natural low line; joined by the paddock-end branch.','Canal ancho, poco profundo y sembrado sobre la línea baja natural; recibe el ramal del extremo de los corrales.'),
- ('Natural sink at the track end','Bajo natural al final de la pista','A soft, shallow low spot with no banks where water is meant to collect and soak in, beside the paddocks; about 1.5 ft deep at the centre, roughly 4,000 gal; overflow continues west along the waterway.','Un bajo suave y poco profundo, sin bordos, donde el agua se junta y se infiltra, junto a los corrales; unos 45 cm de hondo al centro, aproximadamente 15,000 L; el excedente sigue al oeste por el canal.'),
+ ('Natural sink at the track end','Bajo natural al final de la pista','Soft, shallow low spot below the track where water collects and soaks in; Walker confirmed it on site (26 Sep). About 1.5 ft deep, roughly 4,000 gal; it now drains about 0.9 acre, fills in about half an inch of rain, and overflows west along the waterway.','Bajo suave abajo de la pista donde el agua se junta y se infiltra; Walker lo confirmó en sitio (26 sep). Unos 45 cm de hondo, aprox. 15,000 L; ahora recibe unas 0.36 ha, se llena con 1.3 cm de lluvia y el excedente sigue al oeste por el canal.'),
  ('Infield basin','Cuenca del interior','Shallow planted basin where the infield flattens; slows and soaks the first flush.','Cuenca baja y sembrada donde el interior se aplana; frena y absorbe la primera lluvia.'),
  ('Outlet at the west fence','Salida en la cerca oeste','Rock level spreader sized for the full watershed (about twice what the site alone shows); water leaves as a thin sheet toward the gully and the vineyard (same owner).','Esparcidor de piedra a nivel, dimensionado para toda la cuenca (cerca del doble de lo que muestra el sitio solo); el agua sale en lámina delgada hacia la cañada y el viñedo (mismo dueño).'),
- ('Crossings under roads and track','Cruces bajo caminos y pista','Seven rock-armoured dips or culverts where the waterway meets a road or the track.','Siete vados empedrados o alcantarillas donde el canal cruza un camino o la pista.'),
+ ('Crossings under roads and track','Cruces bajo caminos y pista',f'{NCULV} rock-armoured dips or culverts where the waterway meets a road or the track (two roads removed 26 Sep).',f'{NCULV} vados empedrados o alcantarillas donde el canal cruza un camino o la pista (dos caminos quitados el 26 sep).'),
  ('Barn diversion and outfall','Desvío del establo y descarga','Swale on the uphill side carries water around the barn pad to the natural draw.','Zanja del lado alto que lleva el agua alrededor del establo hacia la cañada natural.'),
- ('Roof water to the trough','Agua del techo al bebedero','The 72 × 44 ft roof (with its overhangs) sheds about 2,000 gal per inch of rain; gutters on both long sides, a pipe feeds the long stone trough.','El techo de 22 × 13.4 m (con aleros) capta unos 7,500 L por cada 2.5 cm de lluvia; canales en ambos lados largos, un tubo alimenta el bebedero largo de piedra.'),
- ('Ditch above the barn road','Zanja arriba del camino del establo','Protects the round pen and arena from runoff off the slope above.','Protege el corral redondo y la pista oval del escurrimiento de la pendiente.'),
+ ('Barn roof to the stone trough','Techo del establo al bebedero','The 72 × 44 ft roof (with its overhangs) sheds about 2,000 gal per inch of rain; gutters on both long sides, a pipe feeds the long stone trough.','El techo de 22 × 13.4 m (con aleros) capta unos 7,500 L por cada 2.5 cm de lluvia; canales en ambos lados largos, un tubo alimenta el bebedero largo de piedra.'),
+ ('Ditch above the barn road','Zanja arriba del camino del establo','Protects the round pen and arena from runoff off the slope above; now also takes the covered stalls’ ditch, about 0.5 acre in all, well within its size.','Protege el corral redondo y la pista oval del escurrimiento de la pendiente; ahora recibe también la zanja de las caballerizas, unas 0.2 ha en total, holgada para su tamaño.'),
  ('Existing watering station','Bebedero existente','Round stone trough, kept and filled.','Bebedero redondo de piedra, se conserva y se llena.'),
+ ('Covered stalls','Caballerizas techadas','The butterfly roof (132 × 28 ft) sheds about 2,300 gal per inch of rain down its valley and an open chute into the round trough (about 500 gal full). A ditch above the stalls and the trough’s overflow pipe run to the ditch above the barn road (9).','El techo mariposa (40 × 8.5 m) capta unos 8,700 L por cada 2.5 cm de lluvia; baja por el valle y un canalón abierto al bebedero redondo (unos 1,900 L lleno). Una zanja arriba de las caballerizas y el tubo de demasías del bebedero van a la zanja del camino del establo (9).'),
 ]

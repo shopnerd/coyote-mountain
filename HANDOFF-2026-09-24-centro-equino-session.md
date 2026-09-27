@@ -1,4 +1,4 @@
-# Handoff · 22–24 Sep 2026 · Centro Equino, the whole session
+﻿# Handoff · 22–24 Sep 2026 · Centro Equino, the whole session
 
 Read this first for anything about Walker's Centro Equino (Chichihuas, Valle de Guadalupe). It covers one
 long session: grading the site in the topo tool, the water plan, ~45 renderings, a bilingual 11×17 print
@@ -160,3 +160,85 @@ along the whole south fence as ~8 small flows), so the crossings are now sized f
 - Water plan artifact republished (v3): new lede, watershed fact, the pond replaced by the natural low
   spot, the new D-1 sheet.
 - Method: `coyote-studio/lessons/workflow.html` step 2. Zoom out BEFORE grading.
+
+## 10. Covered stalls moved (26 Sep, Lenovo session)
+
+- The 9/24 swap json on the Surface Book's Downloads is gone; the Drive copy `2026-09-23 Centro Equino topo
+  drawing.json` already carries `walker barn 72x40`, so it IS the latest. Working copies now live in
+  `projects/` (`centro-equino-2026-09-26.json` = that + Will's yellow KML line as an ember sketch).
+- Walker's brief: 16 stalls 16 x 20 ft (8 a side), 12 ft corridor, one roof over the corridor overhanging
+  8 ft onto each stall front (back 12 ft of each stall open, palms may stay there), minimal grading.
+- `projects/covered_stalls.py` → `covered-stalls-16.obj` (128 x 52 ft, roof 28 x 132 ft, eave 9, ridge 13),
+  grading (corridor on the ground's own line ~1089.3, level across; stall floors ≤5 % from the corridor;
+  3:1 to the ground), a ditch 6 ft above the uphill row falling 1 % SW then turning downhill round the SW
+  end (records.ditches ×2), and `paddocks.py --no-shelters` → the four paddocks lose their shelters.
+  Output `projects/centro-equino-2026-09-26-stalls16.json` (+ Drive pack folder copy). This change:
+  ≈260 yd³ cut / 150 fill on the 8.8 ft grid. Clear of main road 18 ft, round pen road 34, scrub road 29.
+- Block sits 14 ft past the yellow line's open SW end (`python covered_stalls.py <T0>` slides it).
+- Open this locally: serve coyote-studio and open `topo.html?proj=projects/centro-equino-2026-09-26-stalls16.json`.
+- Not yet: pack pages / laser / print parts / renders for the stalls; palm positions only from the old Esri z18
+  photo (`stalls_0926.py` has the palm mask + A/B roof sketch).
+- **Paddock pad undone (option, 26 Sep):** `projects/undo_paddock_pad.py` → `centro-equino-2026-09-26-stalls16-nopad.json`:
+  ground back to existing under the four paddocks, then the 3 roads and 3 ditches crossing it re-run (roads then
+  ditches). Site earthwork ≈5,200/4,900 → ≈3,300/3,100 yd³. Paddocks then sit on 8–11 % median slope (Will had
+  asked for them "on flat ground" on 9/22 — decision pending). The natural sink is untouched.
+- **Field check:** Walker confirmed the low spot below the track exactly where the analysis put the natural water sink.
+- **Decided 26 Sep (Will):** paddocks REMOVED (fence object + 4 paddock gates) and their pad undone; Will's yellow sketch
+  line removed; waterers at the new stalls = 8 (one per pair, in the divider at the corridor edge) on a 6 ft level strip
+  at every stall front (`FLAT` in covered_stalls.py). Chain: `covered_stalls.py` → `undo_paddock_pad.py` →
+  `centro-equino-2026-09-26-stalls16-nopad.json` = THE current drawing (Drive: `2026-09-26 Centro Equino topo drawing,
+  16 covered stalls.json`). Site earthwork ≈3,350 cut / 3,110 fill yd³. The "paddocks to cross-fence gate" road and the
+  paddock swale : Will kept the swale, then REMOVED the road (`remove_road.py`, ground restored, its culvert mark gone); the cross-fence gate stays because people will still walk that way. Chain is now covered_stalls.py → undo_paddock_pad.py → remove_road.py; re-dug ditches sample natural ground, never their own dug bottom. Site ≈3,340 cut / 3,110 fill yd³.
+- Also removed 26 Sep: **road between track and paddocks** (`remove_road.py "road between track and paddocks"`, then
+  `fix_junction.py "road between track and paddocks" "west road, gate to gate"` to clear its 6 ft ramp at the west
+  road and re-run the west road there) + its culvert mark. The 2–3 ft fill left along the track's south edge is the
+  track's own. Full chain: covered_stalls.py → undo_paddock_pad.py → remove_road.py (×2 roads) → fix_junction.py.
+  Site ≈3,290 cut / 2,800 fill yd³.
+- **Butterfly roof on the covered stalls (26 Sep, Will):** both planes fall ~2:12 to a valley gutter over the corridor;
+  valley 11.5 ft at the NE end falling 1 % to 10.2 ft at the SW end (10 ft+ clear over the corridor); outer eaves 2.5 ft
+  higher (14 ft NE / 12.7 SW); a leader runs 8 ft past the SW end and drops into the ditch outlet. `VALLEY_NE, FALL, RISE`
+  in covered_stalls.py; rerun the whole chain after any change there.
+- **Round trough at the SW end (26 Sep, Will):** 8 ft across, 2 ft tall, on the corridor's centre line with 10 ft clear
+  between it and the building end and all round (`TROUGH_D, TROUGH_H, GAP`). No downspout: the valley gutter carries
+  on as an open chute (2 % fall, one slim post past the far rim) and pours into it. Level apron 6 ft past the rim at
+  ~1089.1 ft. Overflow = buried pipe (blue dashed stroke `stalls trough overflow pipe`) to the stalls' ditch outlet,
+  which now runs 10 ft past the trough and ends IN the `ditch above the barn road`, so roof water, overflow and hill
+  water join the water plan. No road within 60 ft of the trough. Site ≈3,320 cut / 2,800 fill yd³.
+- **Trough revised (Will: the chute post read as a downspout):** no post. The chute cantilevers 7 ft past the roof end
+  (`CHUTE`) and pours 2 ft inside the near rim; the trough moved in to 7 ft from the building end (`END_GAP`, a
+  walk-through), open sides stay clear. An assert stops the build if the chute would not end over the trough.
+- **Stalls 16 x 30 ft, roof lower + flatter (26 Sep, Will):** building now 128 x 72 ft (S0 = -8, grows 10 ft each side;
+  the extra is open sky). Roof ~1:12 (eaves 1.25 ft above the valley), valley 10.7 ft NE -> 10.0 ft SW at 0.5 %, top
+  ~12 ft (was 14). Open stall backs may fall up to 8 %, covered fronts 5 %. Clear of round pen road 24 ft, scrub-side
+  road 19 ft, main road 18 ft. Site ≈3,420 cut / 2,860 fill yd³. 1:12 needs standing-seam or a low-slope panel.
+- Stray pen line removed (26 Sep): unnamed thin ink stroke (94.0, 62.2) -> (97.8, 57.3) across the main road by the barn
+  circle, deleted from the 09-26 source and both outputs, so a chain rerun will not bring it back.
+
+## 11. Pack v6, water check, money shots (26 Sep, in progress)
+
+- `drain.py` reads `projects/centro-equino-2026-09-26-stalls16-nopad.json` and RECOMPUTES flow with `projects/flow.py`
+  (priority flood + D8; matches the app's own `__flow` on 99.8 % of cells). The export's `__flow` is stale after any
+  outside-the-app grading. D-1 now has note 11 (covered stalls: roof ≈2,300 gal/in, trough ≈500 gal, ditch +
+  overflow to the barn-road ditch), note 3 (sink: Walker confirmed on site; now ≈0.9 ac, fills at ≈½ in), note 6
+  counts culverts (5). D-2 section A = across the covered stalls.
+- Water check 26 Sep (site grid, before → after): sink 0.64 → 0.89 ac; barn-road ditch 0.23 → 0.48 ac (capacity
+  ≈14 cfs vs ≈0.5 cfs); main waterway leg 1 0.20 → 1.08 ac; crossings were already sized for the 16 ac watershed.
+  Earthwork 3,420 cut / 2,860 fill: ≈560 yd³ surplus.
+- Water plan artifact republished (v4) with the new D-1/D-2, facts and a "what changed" list; its 4 view paintings
+  are still the old ones (captioned as such).
+- Pack: `pack.py` now writes `Centro-Equino-pack-11x17-2026-09-26-v6.pdf` straight into the Drive pack folder;
+  new page 14 `stalls_page.py` (plan, butterfly section, specs); PADS, texts, operator sheet updated. Renderings
+  missing on disk show as grey placeholder frames: v6 on Drive is a DRAFT until the new money shots exist.
+  The shared `Centro-Equino-pack-11x17-2026-09-23.pdf` on Drive is untouched.
+- Money shots: `projects/renders/shoot.mjs` (headless Playwright from the global @playwright/cli, needs the
+  8791 server) saves golden-hour cumulus control views of 6 walk/drone cameras to `renders/ctl/`; `paint.py
+  [openai|google] [medium|high]` paints them. BLOCKED 26 Sep: OPENAI_API_KEY / GEMINI_API_KEY are not on the
+  Lenovo and not in the SECRETS backups (those predate 9/11); Will to copy them from the Surface Book.
+- Then: new gallery artifact, swap renders into pack pages 1, 2, 8–10, rebuild v6, email Walker (draft first).
+- **DONE 26 Sep (late):** keys now on the Lenovo (OPENAI_API_KEY user scope; Will's key notes live in
+  `G:\My Drive\Claude Private\SECRETS\note_PAD\`). 7 paintings (gpt-image-2 high) in the Drive pack folder
+  `renderings/2026-09-26 money shots` (all attempts + control views kept). Gallery artifact
+  https://claude.ai/artifact/H6EbuHWHiV7kMkznEuRF6W (private). Pack v6 final (cover = site from NE, p.2 = plan
+  painting, pp.8–10 new views, p.14 covered stalls) copied over the shared `-2026-09-23.pdf` (same link).
+  Email "Centro Equino: grading plan updated with the covered stalls" SENT to onestronghive@gmail.com
+  2026-09-27 05:18 UTC from Will's Gmail, on his "send". Known render liberties: stable roof silver, not sky blue.

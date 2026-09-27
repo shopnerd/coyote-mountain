@@ -6,7 +6,8 @@ topo.html drops it on the rectangle's centre.
 
     python paddocks.py   ->  paddocks.obj
 """
-import math, os
+import math, os, sys
+SHELTERS = '--no-shelters' not in sys.argv   # 26 Sep: the shelters moved to the covered stalls at the yellow line
 
 CENTRE = (31.9989880, -116.7642460)
 BEARING = 49.35                  # the rectangle's long axis, degrees from north
@@ -60,7 +61,7 @@ for k in range(1, BAYS):
     fence_line(x, -HD, x, HD)
 
 # one shelter per paddock, against the back fence, open to the paddock
-for k in range(BAYS):
+for k in range(BAYS if SHELTERS else 0):
     cx = -HL + (k + 0.5) * (L / BAYS)
     x0, x1 = cx - STALL_W / 2, cx + STALL_W / 2
     y1 = HD - 1.0                      # its back wall stands just inside the back fence
@@ -77,7 +78,7 @@ for k in range(BAYS):
              (x1 + ROOF_OVER, y1 + ROOF_OVER, STALL_H + ROOF_RISE + z),
              (x0 - ROOF_OVER, y1 + ROOF_OVER, STALL_H + ROOF_RISE + z))
 
-out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'paddocks.obj')
+out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'paddocks.obj' if SHELTERS else 'paddocks-no-shelters.obj')
 bay_w = L / BAYS
 with open(out, 'w', newline='\n') as f:
     f.write('# four paddocks in the %g x %g ft rectangle: each %g x %g ft with one %g x %g ft covered stall, pipe fence at %g ft\n'

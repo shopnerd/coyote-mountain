@@ -45,7 +45,7 @@ def operator_sheet():
     for s in S:
         if s.get('kind') == 'path':
             P = np.array([q[:2] for q in s['pts']]); ax.plot(P[:, 0], P[:, 1], color='#8a7a5a', lw=.8, dashes=(10, 3, 2, 3), zorder=3)
-    for nm in ('walker barn 72x40', 'four paddocks'):
+    for nm in ('walker barn 72x40', 'covered stalls 16'):
         for s in byname(nm):
             P = np.array(foot(s) + [foot(s)[0]]); ax.plot(P[:, 0], P[:, 1], color=INK, lw=1.1, zorder=4)
     for i in (1, 2):
@@ -72,7 +72,7 @@ def operator_sheet():
             ax.text(x+.5, y-.5, f'{"C" if v < 0 else "F"} {abs(v):.1f}', fontsize=6, color=col, weight='bold', zorder=6)
             ax.text(x+.5, y+1.3, f'{samp(z, x, y):.1f}', fontsize=4.8, color='#555', zorder=6)
     # pad corner stakes with finished elevation
-    for nm in ('walker barn 72x40', 'four paddocks'):
+    for nm in ('walker barn 72x40', 'covered stalls 16'):
         for s in byname(nm):
             rc = min_rect(foot(s)); cc = np.mean(rc, axis=0)
             for q in rc:
@@ -95,8 +95,8 @@ def operator_sheet():
     y -= .01
     y = para(fig, 0.745, y, f'Cuadrícula de estacas cada 50 ft (columnas A–{chr(64+len(xs))}, filas 1–{len(ys)}). {n} estacas marcadas donde el corte o relleno pasa de 0.3 ft.',
              f'Stake grid every 50 ft (columns A–{chr(64+len(xs))}, rows 1–{len(ys)}). {n} stakes marked where cut or fill exceeds 0.3 ft.', w=52, fs=7.9)
-    y = para(fig, 0.745, y, 'Revisar: los caminos junto a los corrales y al establo se nivelaron después de las plataformas y bajan sus bordes; confirmar en campo el nivel de cada plataforma.',
-             'Check: the roads beside the paddocks and the barn were graded after the pads and drop their edges; confirm each pad level on site.', w=52, fs=7.9)
+    y = para(fig, 0.745, y, 'Revisar: los caminos junto al establo se nivelaron después de las plataformas y bajan sus bordes; confirmar en campo el nivel de cada plataforma y el pasillo de las caballerizas.',
+             'Check: the roads beside the barn were graded after the pads and drop their edges; confirm each pad level and the stall corridor on site.', w=52, fs=7.9)
     y = para(fig, 0.745, y, 'Curvas continuas: rasante terminada cada 1 ft. Punteadas: terreno existente. Taludes 3:1 con bordes suaves. Descapotar y guardar la tierra vegetal antes de rellenar.',
              'Solid contours: finished grade every 1 ft. Dashed: existing ground. 3:1 side slopes with soft edges. Strip and stockpile topsoil before filling.', w=52, fs=7.9)
     tblock(fig, nxt(), 'Plano para el operador', 'Operator grading sheet'); PAGES.append(fig)

@@ -1,7 +1,7 @@
 exec(open('drain.py',encoding='utf-8').read())
 import textwrap
 # three sections through the heaviest grading
-SECS=[('A','Corrales y bajo natural','Paddocks and water sink',(46,64),(46,88)),
+SECS=[('A','Caballerizas techadas','Covered stalls',(83.7,57.4),(85.5,72.3)),
       ('B','Establo y bebedero','Barn and trough',(92,52),(126,62)),
       ('C','Pista oval y corral redondo','Arena and round pen',(88,30),(86,62))]
 def samp(Z,x,y):
@@ -32,7 +32,7 @@ for k,(s,es,en,a,bb) in enumerate(SECS):
     for side,x0 in ((s,0),(s+'′',L)): ax.text(x0,hi-1,side,fontsize=10,weight='bold',color='#b5602e',ha='left' if x0==0 else 'right')
     if k==0: ax.legend(loc='lower right',fontsize=8,frameon=False)
     ax.set_xlabel('pies desde '+s+' · ft from '+s,fontsize=8)
-notes=[('A','Los corrales quedan en una plataforma a nivel (1,082.5 ft) y junto a ellos un bajo natural recibe el agua al final de la pista.','The paddocks sit on one level pad (1,082.5 ft); beside them a natural low spot collects water at the end of the track.'),
+notes=[('A','Corte a lo ancho de las caballerizas: el pasillo a nivel (≈1,089 ft), los frentes techados a 5 % y los fondos abiertos hasta 8 %; arriba, la zanja que las protege.','Across the covered stalls: the corridor level (about 1,089 ft), the covered stall fronts at 5% and the open backs up to 8%; above them, the ditch that protects them.'),
        ('B','El establo queda en plataforma con 1 % de caída; su techo alimenta el bebedero largo de piedra.','The barn sits on a pad falling 1%; its roof feeds the long stone trough.'),
        ('C','La pista oval y el corral redondo quedan casi a nivel con cortes y rellenos menores a 2.5 ft.','The arena and round pen sit nearly level, with cut and fill under 2.5 ft.')]
 y=0.54
@@ -44,5 +44,5 @@ for s,es,en in notes:
     y=ly-.02
 fig.text(0.70,0.2,'Bordes suaves en todos los taludes, pendiente 3:1.',fontsize=8.4,color=INK)
 fig.text(0.70,0.183,'Soft edges on every bank, 3:1 side slopes.',fontsize=8.4,color='#6a655a',style='italic')
-fig.text(0.02,0.03,'31.9999 N, 116.7641 W · Hoja / Sheet D-2 · 23 sep 2026 · Terreno de 30 m, ±30–50 % · 30 m terrain, volumes ±30–50% · Diseño preliminar · Preliminary design',fontsize=8,color='#6a655a')
+fig.text(0.02,0.03,'31.9999 N, 116.7641 W · Hoja / Sheet D-2 · 26 sep 2026 · Terreno de 30 m, ±30–50 % · 30 m terrain, volumes ±30–50% · Diseño preliminar · Preliminary design',fontsize=8,color='#6a655a')
 if not globals().get('PACK'): fig.savefig('D2-sections.png',dpi=170); print('ok')
