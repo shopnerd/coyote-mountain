@@ -242,3 +242,19 @@ along the whole south fence as ~8 small flows), so the crossings are now sized f
   painting, pp.8–10 new views, p.14 covered stalls) copied over the shared `-2026-09-23.pdf` (same link).
   Email "Centro Equino: grading plan updated with the covered stalls" SENT to onestronghive@gmail.com
   2026-09-27 05:18 UTC from Will's Gmail, on his "send". Known render liberties: stable roof silver, not sky blue.
+
+## 12. Scaled back to 8 stalls (27 Sep, Will)
+- `covered_stalls.py`: PER_SIDE 4 + one NE bay (NB = 5), 80 x 72 ft, the NE (stable) end fixed at t = 114 (18 ft
+  off the main road), so the block shrank from the SW. NE bay uphill = closed alfalfa room 16 x 30 (walls 10 ft,
+  10 ft door on the corridor, own shed roof); NE bay downhill = open covered tie-up. Roof OVER 12 ft (36 ft wide,
+  84 long), RISE .75 = 1/2:12 (standing-seam minimum), valley 10.7 -> 10.3 ft. Object is now `covered stalls`
+  (`covered-stalls.obj`); drain/pack/topo_pages match by that name. Roof water ≈1,900 gal/in.
+- Rebuilt chain (the same five commands) -> site ≈3,270 cut / 2,760 fill yd³. Pack v7 `...-2026-09-27-v7.pdf` in
+  the Drive pack folder; the shared `-2026-09-23.pdf` still holds v6 (16 stalls) until the paintings are redone.
+  Drive drawing `2026-09-27 Centro Equino topo drawing, 8 covered stalls.json`. Water plan artifact v5.
+- The 26 Sep paintings + gallery still show 16 stalls; `renders/shoot.mjs` + `paint.py` redo them.
+- **Repainted 27 Sep** (cameras 1 and 2 re-aimed at the moved block; brief now says 8 stalls + alfalfa room, near-flat
+  roof): Drive `renderings/2026-09-27 money shots (8 stalls)` (all attempts + control views). Pack v8
+  `...-2026-09-27-v8.pdf` (cover 3-site-ne-3, plan 7-plan-4 cropped, pp.8-10) copied over the shared
+  `-2026-09-23.pdf`. Gallery artifact v2 and water plan artifact v6 (new views) republished. Known liberties: in
+  5-corridor-out the trough sits inside the corridor and the alfalfa room is stone, not metal.

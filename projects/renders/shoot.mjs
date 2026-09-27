@@ -13,8 +13,8 @@ const URL_ = 'http://127.0.0.1:8791/topo.html?proj=projects/centro-equino-2026-0
 // grid directions on this site (rotation 318): east ≈ (+.74, +.67), north ≈ (+.67, -.74) in (i, j)
 // orbit: the camera sits toward (sin yaw, cos yaw) from its target; walk: it looks along (sin yaw, cos yaw)
 export const VIEWS = [   // all first-person cameras (walk), some flown up to drone height, so every shot has a real horizon and sky
-  { id: '1-hero-sw', what: 'drone view from the south-west over the trough and the covered stalls toward the barn', walk: { i: 64, j: 67, h: 20 }, yaw: 1.67, pitch: 1.83 },
-  { id: '2-corridor', what: 'eye level beyond the round trough looking up the covered corridor', walk: { i: 71.5, j: 66.6, h: 1.7 }, yaw: 1.716, pitch: 1.57 },
+  { id: '1-hero-sw', what: 'drone view from the south-west over the trough and the covered stalls toward the barn', walk: { i: 67, j: 66.7, h: 20 }, yaw: 1.67, pitch: 1.83 },
+  { id: '2-corridor', what: 'eye level beyond the round trough looking up the covered corridor', walk: { i: 77.4, j: 65.8, h: 1.7 }, yaw: 1.716, pitch: 1.57 },
   { id: '3-site-ne', what: 'high drone view of the whole centre from the north-east into the sunset', walk: { i: 124, j: 53, h: 45 }, yaw: -1.52, pitch: 1.92 },
   { id: '4-hill-s', what: 'from the hillside to the south over the stalls toward the arena and the vineyard', walk: { i: 70, j: 81, h: 12 }, yaw: 2.41, pitch: 1.78 },
   { id: '5-corridor-out', what: 'eye level at the north-east end of the corridor looking down it to the trough and the sunset', walk: { i: 93.6, j: 63.6, h: 1.7 }, yaw: -1.436, pitch: 1.56 },

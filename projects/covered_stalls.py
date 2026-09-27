@@ -12,14 +12,16 @@ FT = .3048
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC, DST = os.path.join(HERE, 'centro-equino-2026-09-26.json'), os.path.join(HERE, 'centro-equino-2026-09-26-stalls16.json')
 
-PER_SIDE, STALL_W, STALL_D, CORR, OVER = 8, 16.0, 30.0, 12.0, 8.0   # stalls 30 deep (Will 26 Sep: +10 ft of open ground each)
+PER_SIDE, STALL_W, STALL_D, CORR, OVER = 4, 16.0, 30.0, 12.0, 12.0  # 27 Sep: 8 stalls (4 a side), 30 deep; roof reaches 12 ft over each stall front
+NB = PER_SIDE + 1                                       # one more bay at the NE (stable) end: alfalfa room uphill, open tie-up bay downhill
+HAY_H = 10.0                                            # alfalfa room walls
 PANEL, POST = 5.0, .5
 # butterfly roof (Will, 26 Sep): both planes fall to a valley gutter over the corridor, the valley falls 1 % to the SW end,
 # where a leader carries the water 8 ft past the roof and down into the ditch outlet
-VALLEY_NE, FALL, RISE = 10.7, .005, 1.25               # valley 10.7 ft at the NE end, 0.5 % fall (10 ft at the SW end), eaves 1.25 ft higher (~1:12; Will: lower, flatter)
+VALLEY_NE, FALL, RISE = 10.7, .005, .75                # valley 10.7 ft at the NE end, 0.5 % fall to the SW; eaves .75 ft higher = 1/2:12 over 18 ft (27 Sep: flatter)
 FLAT = 6.0                                              # level strip at every stall front: waterers + feeders (Will, 26 Sep)
-L, D = PER_SIDE * STALL_W, 2 * STALL_D + CORR          # 128 x 52 ft
-T0 = float(sys.argv[1]) if len(sys.argv) > 1 else -14.0   # block corner along the yellow line (ft from its open SW end)
+L, D = NB * STALL_W, 2 * STALL_D + CORR                # 80 x 72 ft
+T0 = float(sys.argv[1]) if len(sys.argv) > 1 else 114.0 - L   # the NE (stable) end stays where the 16-stall block ended (t = 114); the block shrinks from the SW
 S0 = -8.0                                                 # and from its NW (downhill) side: 10 ft past it, the deeper stalls grow both ways
 
 # the yellow line's frame: A = open SW end on the NW (downhill) side, t toward B (NE), s toward D (SE, uphill)
@@ -52,13 +54,14 @@ HL, HD, HC = L / 2, D / 2, CORR / 2
 RE = HC + OVER                                          # roof edge, 14 ft each side of the centre line
 RX = HL + 2                                             # the roof runs 2 ft past each end
 def roof_z(x, y): return VALLEY_NE - FALL * (RX - x) + RISE * abs(y) / RE
+XS = -HL + PER_SIDE * STALL_W                           # where the stalls end and the NE bay begins
 for sgn in (-1, 1):
     y_in, y_out = sgn * HC, sgn * HD
-    box(-HL, HL, min(y_in, y_in + sgn * .25), max(y_in, y_in + sgn * .25), 0, PANEL)          # stall fronts on the corridor
-    box(-HL, HL, min(y_out, y_out - sgn * .25), max(y_out, y_out - sgn * .25), 0, PANEL)      # back fences
+    box(-HL, XS, min(y_in, y_in + sgn * .25), max(y_in, y_in + sgn * .25), 0, PANEL)          # stall fronts on the corridor
+    box(-HL, XS, min(y_out, y_out - sgn * .25), max(y_out, y_out - sgn * .25), 0, PANEL)      # back fences
     for q in range(PER_SIDE + 1):                                                              # dividers + end panels
         x = -HL + q * STALL_W; box(x - .12, x + .12, min(y_in, y_out), max(y_in, y_out), 0, PANEL)
-    for q in range(PER_SIDE + 1):                                                              # roof posts: corridor edge + eave line
+    for q in range(NB + 1):                                                                    # roof posts: corridor edge + eave line
         x = max(-HL + POST / 2, min(HL - POST / 2, -HL + q * STALL_W))
         for yy in (y_in, sgn * RE):
             box(x - POST / 2, x + POST / 2, yy - POST / 2, yy + POST / 2, 0, roof_z(x, yy))
@@ -68,6 +71,12 @@ for q in range(1, PER_SIDE, 2):                                                 
 for zz in (0, .25):                                                                             # the butterfly roof: two planes down to the valley
     quad((-RX, -RE, roof_z(-RX, -RE) + zz), (RX, -RE, roof_z(RX, -RE) + zz), (RX, 0, roof_z(RX, 0) + zz), (-RX, 0, roof_z(-RX, 0) + zz))
     quad((-RX, 0, roof_z(-RX, 0) + zz), (RX, 0, roof_z(RX, 0) + zz), (RX, RE, roof_z(RX, RE) + zz), (-RX, RE, roof_z(-RX, RE) + zz))
+# the alfalfa room: the NE bay on the uphill side, walled to HAY_H with a 10 ft door on the corridor, under its own shed roof out to the back
+y0, y1 = HC, HD
+box(XS, HL, y1 - .4, y1, 0, HAY_H); box(XS, XS + .4, y0, y1, 0, HAY_H); box(HL - .4, HL, y0, y1, 0, HAY_H)
+box(XS, XS + 3, y0, y0 + .4, 0, HAY_H); box(HL - 3, HL, y0, y0 + .4, 0, HAY_H)
+ze = roof_z(HL, RE)
+for zz in (0, .25): quad((XS - .5, RE, ze + zz), (HL + 2, RE, ze + zz), (HL + 2, y1 + 1.5, HAY_H + .3 + zz), (XS - .5, y1 + 1.5, HAY_H + .3 + zz))
 vz = roof_z(-RX, 0)                                                                             # valley gutter
 box(-RX, RX, -.6, .6, vz - .6, vz)
 # round trough past the SW end (Will, 26 Sep): the valley carries on as an open chute and pours into it, no downspout.
@@ -90,10 +99,10 @@ CH_END = -RX - CHUTE                                     # open chute, cantileve
 assert TX + TROUGH_D / 2 - 1.5 > CH_END > TX, 'the chute must end over the trough'
 cz = lambda x: vz - .02 * (-RX - x)                      # falls 2 % from the valley
 box(CH_END, -RX, -.6, .6, cz(CH_END) - .5, vz - .1)
-OBJ = os.path.join(HERE, 'covered-stalls-16.obj')
+OBJ = os.path.join(HERE, 'covered-stalls.obj')
 with open(OBJ, 'w', newline='\n') as f:
-    f.write(f'# covered stalls: {2*PER_SIDE} stalls {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a round trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; 8 waterers on a {FLAT:g} ft level strip at the stall fronts\n')
-    f.write('# geo %.7f %.7f\n# unit ft\n# name covered stalls 16\n' % ctr)
+    f.write(f'# covered stalls: {2*PER_SIDE} stalls + alfalfa room, {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a round trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; {PER_SIDE} waterers (one per pair) on a {FLAT:g} ft level strip at the stall fronts; alfalfa room {STALL_W:g} x {STALL_D:g} ft at the NE end, uphill\n')
+    f.write('# geo %.7f %.7f\n# unit ft\n# name covered stalls\n' % ctr)
     for p in V: f.write('v %.3f %.3f %.3f\n' % p)
     for fc in F: f.write('f ' + ' '.join(map(str, fc)) + '\n')
 
@@ -202,7 +211,7 @@ d['strokes'].append(dict(color='blue', shape=True, w=1.4, a=1, dash=True, name='
 d['z'] = [round(float(q), 3) for q in z.flatten()]
 
 # ---------- objects: new stalls in, shelters out of the paddocks ----------
-d['strokes'] = [s_ for s_ in d['strokes'] if s_.get('name') != 'covered stalls 16']
+d['strokes'] = [s_ for s_ in d['strokes'] if not (s_.get('name') or '').startswith('covered stalls')]
 d['strokes'].append(obj_stroke(OBJ, site_rot))
 subprocess.run([sys.executable, os.path.join(HERE, 'paddocks.py'), '--no-shelters'], check=True, cwd=HERE)
 ip = [q for q, s_ in enumerate(d['strokes']) if s_.get('name') == 'four paddocks'][0]; old = d['strokes'][ip]

@@ -33,7 +33,7 @@ def features(ax,lw=1):
         if k=='path':
             P=np.array([q[:2] for q in s['pts']]); w=(s.get('pw',3.66)/FT)/cf
             ax.plot(P[:,0],P[:,1],color='#c9b48f',lw=max(1.2,w*5.2),solid_capstyle='round',zorder=2,alpha=.9)
-        elif k=='obj' and n in ('walker barn 72x40','covered stalls 16','trailer 8 x 40','stone trough 12x4'):
+        elif k=='obj' and n in ('walker barn 72x40','covered stalls','trailer 8 x 40','stone trough 12x4'):
             P=np.array(foot(s)+[foot(s)[0]]); ax.fill(P[:,0],P[:,1],color='white',alpha=.85,zorder=3); ax.plot(P[:,0],P[:,1],color=INK,lw=.8,zorder=4)
         elif k=='obj' and n in ('arena fence','round pen fence','site fence','cross fence'):
             pass
@@ -108,5 +108,5 @@ NOTES=[
  ('Barn roof to the stone trough','Techo del establo al bebedero','The 72 × 44 ft roof (with its overhangs) sheds about 2,000 gal per inch of rain; gutters on both long sides, a pipe feeds the long stone trough.','El techo de 22 × 13.4 m (con aleros) capta unos 7,500 L por cada 2.5 cm de lluvia; canales en ambos lados largos, un tubo alimenta el bebedero largo de piedra.'),
  ('Ditch above the barn road','Zanja arriba del camino del establo','Protects the round pen and arena from runoff off the slope above; now also takes the covered stalls’ ditch, about 0.5 acre in all, well within its size.','Protege el corral redondo y la pista oval del escurrimiento de la pendiente; ahora recibe también la zanja de las caballerizas, unas 0.2 ha en total, holgada para su tamaño.'),
  ('Existing watering station','Bebedero existente','Round stone trough, kept and filled.','Bebedero redondo de piedra, se conserva y se llena.'),
- ('Covered stalls','Caballerizas techadas','The butterfly roof (132 × 28 ft) sheds about 2,300 gal per inch of rain down its valley and an open chute into the round trough (about 500 gal full). A ditch above the stalls and the trough’s overflow pipe run to the ditch above the barn road (9).','El techo mariposa (40 × 8.5 m) capta unos 8,700 L por cada 2.5 cm de lluvia; baja por el valle y un canalón abierto al bebedero redondo (unos 1,900 L lleno). Una zanja arriba de las caballerizas y el tubo de demasías del bebedero van a la zanja del camino del establo (9).'),
+ ('Covered stalls','Caballerizas techadas','The butterfly roof (84 × 36 ft) sheds about 1,900 gal per inch of rain down its valley and an open chute into the round trough (about 500 gal full). A ditch above the stalls and the trough’s overflow pipe run to the ditch above the barn road (9).','El techo mariposa (25.6 × 11 m) capta unos 7,100 L por cada 2.5 cm de lluvia; baja por el valle y un canalón abierto al bebedero redondo (unos 1,900 L lleno). Una zanja arriba de las caballerizas y el tubo de demasías del bebedero van a la zanja del camino del establo (9).'),
 ]
