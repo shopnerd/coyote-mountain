@@ -26,6 +26,13 @@ STYLE = {   # name -> (group, body colour, roof colour, roof threshold above its
     'stone trough 12x4': ('water', '#a79f90', None, 0), 'watering station 10ft': ('water', '#a79f90', None, 0),
     'trailer 8 x 40': ('vehicle', '#f2f2f0', None, 0),
 }
+MATOBJ = {'walker barn 72x40': 'centro-equino-barn.obj', 'covered stalls': 'covered-stalls.obj'}   # tagged meshes: split by material
+def obj_labels(path):                    # one material label per triangle, in the order topo.html triangulates the faces
+    lab, cur, vn = [], 'body', 0
+    for line in open(path, encoding='utf-8'):
+        if line.startswith('usemtl '): cur = line.split()[1]
+        elif line.startswith('f '): lab += [cur] * (len(line.split()) - 3)
+    return lab
 objs = []
 for s in d['strokes']:
     if s.get('kind') != 'obj': continue
@@ -43,6 +50,11 @@ for s in d['strokes']:
         roof = (T[..., 2].min(1) > thr) & (nz > .3)
     o = dict(name=name, group=grp, color=col, body=b64(P[~roof].reshape(-1)))
     if roof.any(): o.update(roof=b64(P[roof].reshape(-1)), roofColor=rcol)
+    if name in MATOBJ:
+        lab = np.array(obj_labels(os.path.join(os.path.dirname(HERE), MATOBJ[name])))
+        if len(lab) == len(P):
+            o = dict(name=name, group=grp, parts={m_: b64(P[lab == m_].reshape(-1)) for m_ in sorted(set(lab))})
+        else: print('!! material labels do not match the mesh for', name, len(lab), len(P))
     objs.append(o)
 
 paths = [dict(name=s['name'], w=float(s.get('pw', 1.5)), pts=[[round(p[0] * cs, 2), round(p[1] * cs, 2)] for p in s['pts']])

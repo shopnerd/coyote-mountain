@@ -37,7 +37,9 @@ BEARING = math.degrees(math.atan2(u[0], u[1])) % 360    # long axis, from north
 ctr = enu2ll(ts2enu(T0 + L / 2, S0 + D / 2))
 
 # ---------- the building: feet, x along the corridor (toward NE), y across (+y = uphill SE side) ----------
-V, F = [], []
+V, F, MAT = [], [], []
+CUR = ['panel']                                         # material of the faces being made (usemtl groups, for the renders)
+def mat(m_): CUR[0] = m_
 def world(x, y, zz):                                    # building frame (ft) -> east, north (ft)
     p = u * x + v * y; return (p[0], p[1], zz)
 def box(x0, x1, y0, y1, z0, z1):
@@ -45,41 +47,55 @@ def box(x0, x1, y0, y1, z0, z1):
     i = len(V) + 1
     for zz in (z0, z1):
         for x, y in ((x0, y0), (x1, y0), (x1, y1), (x0, y1)): V.append(world(x, y, zz))
-    for f in ((0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)): F.append(tuple(i + q for q in f))
+    for f in ((0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7)): F.append(tuple(i + q for q in f)); MAT.append(CUR[0])
 def quad(a, b, c, dd):
     i = len(V) + 1
     for p in (a, b, c, dd): V.append(world(*p))
-    F.append((i, i + 1, i + 2, i + 3))
+    F.append((i, i + 1, i + 2, i + 3)); MAT.append(CUR[0])
+def rails(x0, x1, y0, y1, z0=0):                        # a pipe-panel run: posts every 8 ft and four rails (27 Sep: not solid walls)
+    along_x = (x1 - x0) >= (y1 - y0); L = (x1 - x0) if along_x else (y1 - y0); n = max(1, round(L / 8)); cy, cx = (y0 + y1) / 2, (x0 + x1) / 2
+    for k in range(n + 1):
+        t = k / n
+        if along_x: px = x0 + (x1 - x0) * t; box(px - .09, px + .09, cy - .09, cy + .09, z0, PANEL)
+        else: py = y0 + (y1 - y0) * t; box(cx - .09, cx + .09, py - .09, py + .09, z0, PANEL)
+    for h in (1.2, 2.4, 3.6, PANEL - .15):
+        if along_x: box(x0, x1, cy - .07, cy + .07, h, h + .14)
+        else: box(cx - .07, cx + .07, y0, y1, h, h + .14)
 HL, HD, HC = L / 2, D / 2, CORR / 2
 RE = HC + OVER                                          # roof edge, 14 ft each side of the centre line
 RX = HL + 2                                             # the roof runs 2 ft past each end
 def roof_z(x, y): return VALLEY_NE - FALL * (RX - x) + RISE * abs(y) / RE
 XS = -HL + PER_SIDE * STALL_W                           # where the stalls end and the NE bay begins
+mat('panel')
 for sgn in (-1, 1):
     y_in, y_out = sgn * HC, sgn * HD
-    box(-HL, XS, min(y_in, y_in + sgn * .25), max(y_in, y_in + sgn * .25), 0, PANEL)          # stall fronts on the corridor
-    box(-HL, XS, min(y_out, y_out - sgn * .25), max(y_out, y_out - sgn * .25), 0, PANEL)      # back fences
+    rails(-HL, XS, min(y_in, y_in + sgn * .25), max(y_in, y_in + sgn * .25))          # stall fronts on the corridor
+    rails(-HL, XS, min(y_out, y_out - sgn * .25), max(y_out, y_out - sgn * .25))      # back fences
     for q in range(PER_SIDE + 1):                                                              # dividers + end panels
-        x = -HL + q * STALL_W; box(x - .12, x + .12, min(y_in, y_out), max(y_in, y_out), 0, PANEL)
+        x = -HL + q * STALL_W; rails(x - .12, x + .12, min(y_in, y_out), max(y_in, y_out))
+    mat('steel')
     for q in range(NB + 1):                                                                    # roof posts: corridor edge + eave line
         x = max(-HL + POST / 2, min(HL - POST / 2, -HL + q * STALL_W))
         for yy in (y_in, sgn * RE):
             box(x - POST / 2, x + POST / 2, yy - POST / 2, yy + POST / 2, 0, roof_z(x, yy))
+    mat('panel')
+mat('galv')
 for q in range(1, PER_SIDE, 2):                                                                 # waterers: one per pair of stalls, in the divider at the corridor edge
     x = -HL + q * STALL_W
     for sgn in (-1, 1): box(x - .75, x + .75, min(sgn * (HC + .3), sgn * (HC + 1.8)), max(sgn * (HC + .3), sgn * (HC + 1.8)), 0, 3.0)
+mat('roof')
 for zz in (0, .25):                                                                             # the butterfly roof: two planes down to the valley
     quad((-RX, -RE, roof_z(-RX, -RE) + zz), (RX, -RE, roof_z(RX, -RE) + zz), (RX, 0, roof_z(RX, 0) + zz), (-RX, 0, roof_z(-RX, 0) + zz))
     quad((-RX, 0, roof_z(-RX, 0) + zz), (RX, 0, roof_z(RX, 0) + zz), (RX, RE, roof_z(RX, RE) + zz), (-RX, RE, roof_z(-RX, RE) + zz))
 # the alfalfa bay (27 Sep, Will: part of the same roof, not a separate structure): the NE end bay, the full roofed width,
 # pipe panels on three sides, a 12 ft gate on the road end for the truck; the corridor stops at it, horses can't reach the hay
-box(XS - .12, XS + .12, -RE, RE, 0, PANEL)
+mat('panel'); rails(XS - .12, XS + .12, -RE, RE)
 for sgn in (-1, 1):
-    box(XS, HL, min(sgn * RE, sgn * (RE - .25)), max(sgn * RE, sgn * (RE - .25)), 0, PANEL)
-    box(HL - .25, HL, min(sgn * 6, sgn * RE), max(sgn * 6, sgn * RE), 0, PANEL)
-box(XS + 1, HL - 1, -RE + 2, RE - 2, .4, HAY_H)                                                # the stack, on pallets
+    rails(XS, HL, min(sgn * RE, sgn * (RE - .25)), max(sgn * RE, sgn * (RE - .25)))
+    rails(HL - .25, HL, min(sgn * 6, sgn * RE), max(sgn * 6, sgn * RE))
+mat('hay'); box(XS + 1, HL - 1, -RE + 2, RE - 2, .4, HAY_H)                                                # the stack, on pallets
 vz = roof_z(-RX, 0)                                                                             # valley gutter
-box(-RX, RX, -.6, .6, vz - .6, vz)
+mat('steel'); box(-RX, RX, -.6, .6, vz - .6, vz)
 # round trough past the SW end (Will, 26 Sep): the valley carries on as an open chute and pours into it, no downspout.
 # GAP of clear ground between the building end and the trough, and all round it; overflow piped to the ditch outlet.
 TROUGH_D, TROUGH_H, GAP = 8.0, 2.0, 10.0                 # GAP: clear ground round the trough's open sides
@@ -94,8 +110,8 @@ def ring(cx, r0, r1, z0, z1, n=24):                      # an open round tank: o
         quad(P(r0, a, z1), P(r1, a, z1), P(r1, b, z1), P(r0, b, z1))
     i = len(V) + 1
     for q in range(n): V.append(world(*P(r0, 2 * math.pi * q / n, TROUGH_H * .75)))    # the water
-    F.append(tuple(range(i, i + n)))
-ring(TX, TROUGH_D / 2 - .25, TROUGH_D / 2, 0, TROUGH_H)
+    F.append(tuple(range(i, i + n))); MAT.append('water')
+mat('galv'); ring(TX, TROUGH_D / 2 - .25, TROUGH_D / 2, 0, TROUGH_H)
 CH_END = -RX - CHUTE                                     # open chute, cantilevered, pours in 2 ft inside the near rim
 assert TX + TROUGH_D / 2 - 1.5 > CH_END > TX, 'the chute must end over the trough'
 cz = lambda x: vz - .02 * (-RX - x)                      # falls 2 % from the valley
@@ -105,7 +121,10 @@ with open(OBJ, 'w', newline='\n') as f:
     f.write(f'# covered stalls: {2*PER_SIDE} stalls + alfalfa bay, {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a round trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; {PER_SIDE} waterers (one per pair) on a {FLAT:g} ft level strip at the stall fronts; alfalfa bay {STALL_W:g} x {2*RE:g} ft under the roof at the NE end\n')
     f.write('# geo %.7f %.7f\n# unit ft\n# name covered stalls\n' % ctr)
     for p in V: f.write('v %.3f %.3f %.3f\n' % p)
-    for fc in F: f.write('f ' + ' '.join(map(str, fc)) + '\n')
+    last = None
+    for fc, m_ in zip(F, MAT):
+        if m_ != last: f.write(f'usemtl {m_}\n'); last = m_
+        f.write('f ' + ' '.join(map(str, fc)) + '\n')
 
 # ---------- helpers mirroring topo.html (parseObj, objFromMesh, objPlace) ----------
 def parse_obj(path):

@@ -300,3 +300,20 @@ along the whole south fence as ~8 small flows), so the crossings are now sized f
   swap_stable.py (places centro-equino-barn.obj at stable_origin.json) -> redrape_fences.py.
 - Set v4 in Drive `2026-09-27 money shots v4 (stakes, 1-12 roof, fence)`; pack v11 (cover 3-site-ne-7) behind the
   shared link; viewer v3, gallery v5, water plan v9. Liberty: the painter copies Walker's stone trough near the stalls.
+
+## 16. Stable stalls both sides, model renders + light AI finish, phone viewer, gates (27 Sep, Will)
+- Stable SOUTH = 4 stalls + tack/feed + wash (east end); runs 12 x 40 off all 10 stalls; south runs climb 5 %
+  (`stable_runs_grade.py`, vertical rock-wall edge, max ~2 ft). Alfalfa lives only at the covered stalls.
+- Both obj builders tag faces with `usemtl` (stable: rock/stakes/steel/roof/glass/wood/fence; stalls: panel/steel/roof/
+  hay/galv/water); topo.html ignores it, `viewer/export.py` splits parts by it. Stall panels are posts + 4 rails now.
+  Stall valley gutter is dark steel (the light one read as a slot of sky = the "notch").
+- Arena and round-pen fence openings were at arbitrary stations: `pipe-fence.py` now opens them at the drawing's gate
+  marks; `swap_fences.py` (+ `fence_origins.json`, `objtools.py`) places them.
+- CHAIN: covered_stalls -> undo_paddock_pad -> remove_road (x2) -> fix_junction -> swap_stable -> swap_fences ->
+  stable_runs_grade -> redrape_fences; then viewer/export.py.
+- RENDERS NOW COME FROM THE MODEL (Will chose "model render + light AI finish"): `renders/modelshots.mjs` renders the
+  viewer (window.__shot, 8 cameras incl. 8-stable) -> `renders/model/`; `renders/finish.py` (gpt-image-2 high, strict
+  "keep everything, only materials/light/sky") -> `renders/finished/`. Drive: `2026-09-27 renders from the model`.
+  The old AI-painting path (shoot.mjs/paint.py) stays but drifted too much for Will.
+- Viewer v4: materials (canvas textures, planar UVs), phone layout (bottom sheet with a drag handle: tab / toolbar /
+  full, tap cycles), wheel zoom-to-cursor, middle-drag pan. Pack v12 behind the shared link; gallery v6; water plan v10.

@@ -4,7 +4,8 @@
 
     python pipe-fence.py   ->  arena-fence.obj, roundpen-fence.obj
 """
-import math, os
+import json, math, os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 POST_H, POST_W, SPACING = 5.5, 0.35, 8.0     # as the barn's runs: 5 ft 6 in, three rails
 RAILS, RAIL_T = (1.8, 3.6, 5.3), 0.22
@@ -79,12 +80,16 @@ class Mesh:
             for fc in self.F: f.write('f ' + ' '.join(map(str, fc)) + '\n')
 
 
-def fence(loop, spec, gate, out_path, header, name):
+def fence(loop, spec, gate, out_path, header, name, gate_at=None):
     """Posts at even stations with three rails between them; one station left open as the gate."""
     stations, total = resample(loop, SPACING)
     m = Mesh(spec.get('bearing', 0.0))
     n = len(stations)
-    skip = n // 2                              # the gate bay: the middle station of the run
+    skip = n // 2                              # the gate bay: the middle station of the run, unless a gate mark says where
+    if gate_at:                                # 27 Sep: the opening goes where the drawing's gate mark is (Will: gates were in the wrong place)
+        la, lo = gate_at; e = (lo - spec['lon']) * 111320 * math.cos(math.radians(spec['lat'])) / .3048; nn = (la - spec['lat']) * 111320 / .3048
+        r_ = math.radians(90 - spec.get('bearing', 0.0)); gx, gy = e * math.cos(r_) + nn * math.sin(r_), -e * math.sin(r_) + nn * math.cos(r_)
+        skip = min(range(n), key=lambda k: math.dist(stations[k], (gx, gy)))
     for k, (x, y) in enumerate(stations):
         if k == skip: continue                 # no post inside the gate opening
         m.box(x, y, 0, POST_H, (1.0, 0.0), POST_W, POST_W)
@@ -102,11 +107,16 @@ def fence(loop, spec, gate, out_path, header, name):
 
 
 here = os.path.dirname(os.path.abspath(__file__))
+from geo import LL
+_d = json.load(open(os.path.join(here, 'centro-equino-2026-09-26-stalls16-nopad.json'), encoding='utf-8'))
+def gate_mark(key):                           # the centre of the drawing's gate bar for this fence, as lat, lon
+    s_ = [s_ for s_ in _d['strokes'] if 'gate' in (s_.get('name') or '') and (s_.get('name') or '').endswith(key)][0]
+    c = [sum(p[0] for p in s_['pts']) / len(s_['pts']), sum(p[1] for p in s_['pts']) / len(s_['pts'])]; return LL(*c)
 a_len, a_f = fence(loop_stadium(ARENA['length'], ARENA['width']), ARENA, ARENA['gate'],
                    os.path.join(here, 'arena-fence.obj'),
-                   'arena pipe fence, three rails at 5 ft 6 in, %.0f ft around, one %.0f ft gate bay', 'arena fence')
+                   'arena pipe fence, three rails at 5 ft 6 in, %.0f ft around, one %.0f ft gate bay', 'arena fence', gate_mark('arena'))
 p_len, p_f = fence(loop_circle(PEN['diameter']), PEN, PEN['gate'],
                    os.path.join(here, 'roundpen-fence.obj'),
-                   'round pen pipe fence, three rails at 5 ft 6 in, %.0f ft around, one %.0f ft gate bay', 'round pen fence')
+                   'round pen pipe fence, three rails at 5 ft 6 in, %.0f ft around, one %.0f ft gate bay', 'round pen fence', gate_mark('round pen'))
 print('arena  %.0f ft around, %d faces' % (a_len, a_f))
 print('pen    %.0f ft around, %d faces' % (p_len, p_f))

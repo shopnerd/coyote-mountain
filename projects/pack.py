@@ -51,7 +51,7 @@ def cover(win):
 def planview(n):
     fig=newpage(); heading(fig,'Vista en planta','Plan view')
     ax=fig.add_axes([0.02,0.075,0.70,0.81]); ax.imshow(img(n)); ax.axis('off')
-    items=[('Establo principal','Main stable','72 × 40 ft · marcos de acero a la vista, piedra a 4.5 ft alrededor, varas de tomate horizontales arriba, techo oscuro con claraboya corrida · 6 caballerizas con corral de 12 × 40 ft','72 × 40 ft · exposed steel frames, rock to 4.5 ft all round, horizontal tomato stakes above, dark roof with a clerestory along the ridge · 6 stalls, each with a 12 × 40 ft run'),
+    items=[('Establo principal','Main stable','72 × 40 ft · marcos de acero a la vista, piedra a 4.5 ft alrededor, varas de tomate horizontales arriba, techo oscuro con claraboya corrida · 10 caballerizas con corral de 12 × 40 ft, 6 al norte y 4 al sur','72 × 40 ft · exposed steel frames, rock to 4.5 ft all round, horizontal tomato stakes above, dark roof with a clerestory along the ridge · 10 stalls with 12 × 40 ft runs, 6 north and 4 south'),
            ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
            ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),
@@ -186,6 +186,9 @@ def barn_plan():
     L,D,RUN,ST,AI=72,40,40,12,14; HL,HD=L/2,D/2; RD=(D-AI)/2
     for k in range(6):
         x=-HL+ST*k; ax.add_patch(Rect((x,HD),ST,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,HD+RUN/2,'corral\nrun\n12×40',ha='center',va='center',fontsize=6.5,color=MUTED)
+    for k in range(4):                     # 27 Sep: runs off the four south stalls too (climbing 5 %, low rock wall at the end)
+        x=-HL+ST*k; ax.add_patch(Rect((x,-HD-RUN),ST,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,-HD-RUN/2,'corral\nrun\n12×40',ha='center',va='center',fontsize=6.5,color=MUTED)
+    ax.plot([-HL,-HL+4*ST],[-HD-RUN,-HD-RUN],color='#8a7d66',lw=4,solid_capstyle='butt')
     ax.plot([-HL,HL,HL,-HL,-HL],[-HD-2,-HD-2,HD+2,HD+2,-HD-2],color=MUTED,lw=.7,ls=(0,(4,3)))        # roof edge, 2 ft overhang on the long sides
     ax.add_patch(Rect((-HL,-HD),L,D,fc='#b9ad97',ec=INK,lw=2.2))                                      # rock wall on the column lines
     ax.add_patch(Rect((-HL+1.3,-HD+1.3),L-2.6,D-2.6,fc='white',ec='none'))
@@ -193,7 +196,7 @@ def barn_plan():
         x=-HL+ST*k; ax.add_patch(Rect((x+(1.3 if k==0 else 0),HD-RD),ST-(1.3 if k in (0,5) else 0),RD-1.3,fc='white',ec=INK,lw=.8)); ax.text(x+6,HD-RD/2,f'{k+1}\ncaballeriza\nstall',ha='center',va='center',fontsize=6.3)
         ax.add_patch(Rect((x+4,HD-.7),4,1.4,fc=CLAY,ec='none'))                                    # stall door to its run
     x=-HL
-    for es,en,w in (('lavado','wash',12),('monturas','tack',12),('alimento','feed',12),('bodega de alfalfa','alfalfa / storage',36)):
+    for es,en,w in (('7 caballeriza','stall',12),('8 caballeriza','stall',12),('9 caballeriza','stall',12),('10 caballeriza','stall',12),('monturas y alimento','tack / feed',12),('lavado','wash',12)):
         ax.add_patch(Rect((x+(1.3 if x==-HL else 0),-HD+1.3),w-(1.3 if x==-HL or x+w==HL else 0),RD-1.3,fc='white',ec=INK,lw=.8)); ax.text(x+w/2,-HD+RD/2,f'{es}\n{en}',ha='center',va='center',fontsize=6.3)
         ax.add_patch(Rect((x+w/2-2,-HD-.7),4,1.4,fc=CLAY,ec='none')); x+=w
     ax.text(0,0,'pasillo · aisle 14 ft',ha='center',va='center',fontsize=9,color=MUTED)
@@ -201,18 +204,18 @@ def barn_plan():
     for sx in (-1,1): ax.text(sx*(HL+3),0,'entrada\nentry',ha='center',va='center',fontsize=7,color=CLAY,rotation=90)
     for x in (-36,-12,12,36):
         for y in (-HD,HD): ax.add_patch(matplotlib.patches.Circle((x,y),.9,fc='#6f7d86',ec=INK,lw=.6,zorder=5))
-    ax.annotate('',xy=(-HL,-HD-7),xytext=(HL,-HD-7),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(0,-HD-9,'72 ft (21.9 m)',ha='center',va='top',fontsize=9)
+    ax.annotate('',xy=(-HL+4*ST,-HD-4),xytext=(HL,-HD-4),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL-12,-HD-6,'72 ft (21.9 m) total',ha='center',va='top',fontsize=8)
     ax.annotate('',xy=(HL+8,-HD),xytext=(HL+8,HD),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,0,'40 ft\n(12.2 m)',va='center',fontsize=9)
-    ax.annotate('',xy=(HL+8,HD),xytext=(HL+8,HD+RUN),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,HD+RUN/2,'40 ft\ncorrales\nruns',va='center',fontsize=8)
+    ax.annotate('',xy=(HL+8,HD),xytext=(HL+8,HD+RUN),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,HD+RUN/2,'40 ft\ncorrales\nruns',va='center',fontsize=8); ax.text(-HL+2*ST,-HD-RUN-3,'muro bajo de piedra · low rock wall',ha='center',va='top',fontsize=7,color=MUTED)
     ax.text(-HL,HD+RUN+3,'N ↑',fontsize=10,weight='bold')
-    ax.set_xlim(-50,58); ax.set_ylim(-HD-14,HD+RUN+6)
+    ax.set_xlim(-50,58); ax.set_ylim(-HD-RUN-8,HD+RUN+6)
     y=0.85
     specs=[('Planta 72 × 40 ft a ejes, pasillo central de 14 ft abierto de punta a punta; una entrada grande en cada extremo, con el marco de tubo a la vista.','72 × 40 ft on the column lines, a 14 ft centre aisle open end to end; a large entry at each gable end, with the pipe frame exposed.'),
-           ('6 caballerizas de 12 × 13 ft al norte, cada una abre a su corral de 12 × 40 ft con cerca de tubo a 5.5 ft. Al sur: lavado, monturas, alimento y bodega de alfalfa.','6 stalls of 12 × 13 ft on the north, each opening to its own 12 × 40 ft run with a 5.5 ft pipe fence. On the south: wash, tack, feed and alfalfa storage.'),
+           ('10 caballerizas de 12 × 13 ft, 6 al norte y 4 al sur, cada una con su corral de 12 × 40 ft y cerca de tubo negro a 5.5 ft; los corrales del sur suben 5 % con un muro bajo de piedra al final. En el extremo este del lado sur: monturas y alimento, y lavado. La alfalfa se guarda en las caballerizas techadas.','10 stalls of 12 × 13 ft, 6 north and 4 south, each with its own 12 × 40 ft run and a 5.5 ft black pipe fence; the south runs climb 5 % with a low rock wall at their end. At the east end of the south side: tack and feed, and wash. The alfalfa is kept at the covered stalls.'),
            ('Piedra apilada, de grande a chica, hasta 4.5 ft en todo el perímetro; arriba varas de tomate horizontales, sueltas como nido de pájaro, que dejan pasar aire y luz.','Stacked rock, big to small, to 4.5 ft all the way round; above it horizontal tomato stakes, loose like a bird’s nest, that let air and light through.'),
            ('Alero a 12 ft, cumbrera a 17 ft, 2 ft de alero en los lados largos. Techo metálico gris oscuro con una claraboya corrida de 60 × 10 ft sobre el pasillo: 2½ ft de vidrio a cada lado bajo su propio techo, luz y ventilación de cumbrera.','Eave 12 ft, ridge 17 ft, 2 ft overhang on the long sides. Dark grey metal roof with a 60 × 10 ft clerestory over the aisle: 2½ ft of glazing each side under its own roof, for light and ridge ventilation.'),
-           ('En la misma plataforma, el establo se recorre 10 ft al sur para que los corrales de 40 ft queden en plano.','On the same pad, the stable moves 10 ft south so the 40 ft runs stay on the flat.')]
-    for es,en in specs: y=para(fig,0.68,y,es,en,w=58,fs=8.0)
+           ('Los corrales del norte quedan en plano sobre la plataforma; los del sur suben al cerro al 5 %.','The north runs sit flat on the pad; the south runs climb the hill at 5 %.')]
+    for es,en in specs: y=para(fig,0.68,y,es,en,w=64,fs=7.3)
     # roof plan with the clerestory (27 Sep)
     ar=fig.add_axes([0.69,0.125,0.26,0.13]); ar.set_aspect('equal'); ar.axis('off')
     ar.add_patch(Rect((-HL,-HD-2),L,D+4,fc='#6c7278',ec=INK,lw=1)); ar.plot([-HL,HL],[0,0],color=INK,lw=.8)
@@ -280,32 +283,32 @@ exec(open('topo_pages.py',encoding='utf-8').read())
 exec(open('posts_page.py',encoding='utf-8').read())
 exec(open('structure_pages.py',encoding='utf-8').read())
 exec(open('stalls_page.py',encoding='utf-8').read())
-MS=DL+'/2026-09-27 money shots v4 (stakes, 1-12 roof, fence)/'         # the 27 Sep golden-hour set (renders/shoot.mjs + paint.py)
-cover(MS+'3-site-ne-openai-7.png')
-planview(MS+'7-plan-openai-8-cropped.png')
+MS=DL+'/2026-09-27 renders from the model/'         # the 27 Sep golden-hour set (renders/shoot.mjs + paint.py)
+cover(MS+'3-site-ne-1.png')
+planview(MS+'7-plan-1-cropped.png')
 existing()
 grading()
 operator_sheet()
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('sheet2.py','Cortes de terracería','Grading sections')
-views2([(MS+'1-hero-sw-openai-7.png','Sobre las caballerizas','Over the stalls',
+views2([(MS+'1-hero-sw-1.png','Sobre las caballerizas','Over the stalls',
          'Desde el suroeste, sobre el bebedero redondo: las ocho caballerizas y su alfalfa bajo el mismo techo, junto al establo, el corral redondo y la pista.',
          'From the south-west, over the round trough: the eight stalls and their alfalfa under one roof, beside the stable, the round pen and the arena.'),
-        (MS+'4-hill-s-openai-6.png','Desde el cerro','From the hill',
-         'Las caballerizas siguen la curva de nivel al pie de la ladera, con las palmas entre los fondos abiertos.',
-         'The stalls follow the contour at the foot of the slope, with palms among the open stall backs.')],
+        (MS+'8-stable-1.png','El establo','The stable',
+         'Piedra hasta 4.5 ft, varas de tomate horizontales, techo oscuro con claraboya; caballerizas con corrales a ambos lados.',
+         'Stone to 4.5 ft, horizontal tomato stakes, dark roof with a clerestory; stalls with runs on both sides.')],
        'Otras vistas','Other views')
-views2([(MS+'5-corridor-out-openai-7.png','Bajo el techo mariposa','Under the butterfly roof',
+views2([(MS+'5-corridor-out-2.png','Bajo el techo mariposa','Under the butterfly roof',
          'El techo casi plano baja hacia el centro del pasillo y da sombra a buena parte de cada caballeriza; a la derecha, la alfalfa al final del pasillo.',
          'The nearly flat roof dips to the middle of the corridor and shades a good part of every stall; the alfalfa at the end of the corridor on the right.'),
-        (MS+'2-corridor-openai-6.png','El bebedero y el pasillo','The trough and the corridor',
+        (MS+'2-corridor-1.png','El bebedero y el pasillo','The trough and the corridor',
          'El canalón abierto vierte del valle del techo al bebedero redondo, sin bajante; hay paso libre alrededor.',
          'The open chute pours from the roof valley into the round trough, with no downspout; there is room to walk round it.')],
        'Otras vistas','Other views')
-views2([(MS+'6-west-openai-6.png','Desde el oeste','From the west',
+views2([(MS+'6-west-1.png','Desde el oeste','From the west',
          'Con el sol detrás de la cámara: el establo con su claraboya, piedra y varas de tomate, sus corrales, las caballerizas y el cerro de granito.',
          'With the sun behind the camera: the stable with its clerestory, stone and tomato stakes, its runs, the covered stalls and the granite hill.'),
-        (MS+'3-site-ne-openai-7.png','Todo el centro','The whole centre',
+        (MS+'3-site-ne-1.png','Todo el centro','The whole centre',
          'Del noreste hacia la puesta de sol: el establo con sus corrales, las caballerizas techadas, la pista oval, el corral redondo y el valle con viñedos.',
          'From the north-east into the sunset: the stable and its runs, the covered stalls, the oval arena, the round pen and the valley with its vineyards.')],
        'Otras vistas','Other views')
@@ -319,7 +322,7 @@ metal_page()
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-09-27-v11.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-09-27-v12.pdf')
 with PdfPages(out) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)
