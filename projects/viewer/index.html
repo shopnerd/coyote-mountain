@@ -132,7 +132,7 @@ body.shot{grid-template-columns:1fr}
       <tr><td>Captación del techo <span class="en">Roof catchment</span></td><td>≈2,000 gal/in</td></tr>
       <tr><td>Caballerizas, 10 (6 norte, 4 sur) <span class="en">Stalls, ten (6 north, 4 south)</span></td><td>12 × 14 ft</td></tr>
       <tr><td>Corrales, 10, a ambos lados <span class="en">Runs, ten, both sides</span></td><td>12 × 40 ft</td></tr>
-      <tr><td>Monturas y alimento · lavado, lado del camino, muro macizo (paja o cob) <span class="en">Tack and feed · wash, road end, solid straw-bale or cob infill</span></td><td>12 × 14 ft c/u</td></tr>
+      <tr><td>Lavado · monturas y alimento, lado del camino, muro macizo (paja o cob) <span class="en">Wash · tack and feed, road end, solid straw-bale or cob infill</span></td><td>12 × 14 ft c/u</td></tr>
       <tr class="head"><td colspan="2">Sitio <span class="en">Site</span></td></tr>
       <tr><td>Corte · relleno <span class="en">Cut · fill</span></td><td>3,185 · 2,714 yd³</td></tr>
       <tr><td>Cuenca arriba del sitio <span class="en">Watershed above the site</span></td><td>≈16 ac</td></tr>
@@ -372,7 +372,7 @@ body.shot{grid-template-columns:1fr}
       g += T(36, 21, 'corrales · runs 12 × 40');
       g += R(0, 40, 72, 42, 'none');
       for (let k = 0; k < 6; k++) { g += R(k * N, 40, N, 14, 'var(--panel)'); g += T(k * N + N / 2, 49, k + 1); }
-      [['mont. · alim.', 12], ['lavado', 12], ['7', 12], ['8', 12], ['9', 12], ['10', 12]].reduce((x, [n, w]) => { g += R(x, 68, w, 14, n.length > 3 ? '#cbb393' : 'var(--panel)') + T(x + w / 2, 77, n, n.length > 3 ? '#26241f' : 'currentColor', n.length > 3 ? 5.6 : 7.5); return x + w; }, 0);
+      [['lavado', 12], ['mont. · alim.', 12], ['7', 12], ['8', 12], ['9', 12], ['10', 12]].reduce((x, [n, w]) => { g += R(x, 68, w, 14, n.length > 3 ? '#cbb393' : 'var(--panel)') + T(x + w / 2, 77, n, n.length > 3 ? '#26241f' : 'currentColor', n.length > 3 ? 5.6 : 7.5); return x + w; }, 0);
       g += T(36, 62.5, 'pasillo · aisle 14 ft');
       for (let k = 0; k < 4; k++) g += R(24 + k * 12, 82, 12, 40, 'var(--chip)');             // south runs, east end
       g += T(12, 94, 'patio abierto', 'var(--muted)', 6.5) + T(12, 101, 'open apron · road', 'var(--muted)', 6.5);
