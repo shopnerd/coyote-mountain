@@ -127,6 +127,15 @@ for fn in FILES:
             m.face([bot[q], bot[q2], mid[q2], mid[q]], 'pine'); m.face([mid[q], mid[q2], top[q2], top[q]], 'pine')
         m.face(bot[::-1], 'pine'); m.face(top, 'pine')
     d['strokes'].append(stroke(m, 'pine forest', 'pine-forest.obj', z, f'pine grove between the parking and the stable: {len(trees)} round-crowned pines 14-22 ft (Will, 28 Sep)'))
+    # ---- the concrete wash pad (in the stable model, 24 x 12 ft along the solid rooms): level the ground under it to the stable
+    # floor so it reads as one clean rectangle, not poked through by the slope (Will, 28 Sep) ----
+    stb = [q for q in d['strokes'] if q.get('name') == 'walker barn 72x40'][0]
+    floor = ground(z, *stb['c']) + stb.get('lift', 0)
+    for j_ in range(H):
+        for i_ in range(W):
+            bx, by = grid2b(i_, j_)
+            if -38 <= bx <= -10 and -36 <= by <= -21.5: z[j_, i_] = floor - .02
+    d['z'] = [round(float(q), 3) for q in z.flatten()]
     # ---- the barn road comes straight into the middle of the west entry (Will, 28 Sep), not to the stable's corner ----
     rd = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road'][0]
     keep = [q for q in rd['pts'] if grid2b(q[0], q[1])[0] < -84]                   # the road as drawn, up to ~48 ft from the gable
