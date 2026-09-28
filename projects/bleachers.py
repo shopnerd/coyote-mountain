@@ -50,18 +50,29 @@ for x in FR:
             beam((x, y0 - .38, top - RISE - .07), (x, line_y(k + 1, x) + .02, top - RISE - .07), .06, 'steel', (1, 0, 0))   # footboard bearer
 for k in range(TIERS):                     # long rails tying the frames at each seat
     top = RISE * (TIERS - k); beam((X0 + .1, line_y(k, X0 + .1) - .03, top - .12), (X1 - .1, line_y(k, X1 - .1) - .03, top - .12), .05, 'steel', (0, 0, 1))
-# open steps at the narrow end: plank treads on two steel stringers
-for k in range(TIERS):
-    top = RISE * (k + 1); ya = line_y(TIERS - 1 - k, X1)
-    prism([(X1 + .05, ya), (X1 + .5, ya), (X1 + .5, ya - .3), (X1 + .05, ya - .3)], top - .04, top, 'wood')
-for xx in (X1 + .08, X1 + .47):
-    beam((xx, line_y(TIERS, X1) + .05, 0), (xx, line_y(0, X1) - .1, RISE * TIERS - .05), .07, 'steel', (1, 0, 0))
-# shade roof off the trailer over the wide half: from the trailer's top edge down to three posts
-RX0, RX1, RY, RZ0, RZ1 = X0 - .3, 3.2, line_y(TIERS, X0) + .3, 3.96, 3.2
-for x in (X0 + .1, (X0 + RX1) / 2, RX1 - .1):
-    prism([(x - .07, RY - .07), (x + .07, RY - .07), (x + .07, RY + .07), (x - .07, RY + .07)], -0.4, RZ1 - .02, 'steel')
-prism([(RX0, RY - .08), (RX1, RY - .08), (RX1, RY + .08), (RX0, RY + .08)], RZ1 - .18, RZ1 - .02, 'steel')   # beam
-for dz in (0, .03): quad((RX0, YS, RZ0 + dz), (RX1, YS, RZ0 + dz), (RX1, RY - .3, RZ1 + dz), (RX0, RY - .3, RZ1 + dz), 'roof')
+# a steel spiral stair at the narrow end (Walker, gallery note 27 Sep): centre pole, wedge plank treads turning 30 deg each,
+# a pipe handrail on the outside, arriving at the top row facing back along it
+SR, NT = .85, 10                                            # stair radius (m, ~5.6 ft across) and tread count
+SC = (X1 + SR + .15, line_y(0, X1) - .45)                 # centre, just past the narrow end, beside the top row
+STEP = RISE * TIERS / NT
+a_end = math.pi                                           # the last tread points back along the bleachers (-x)
+ang = [a_end - math.radians(30) * (NT - 1 - k) for k in range(NT)]
+beam((SC[0], SC[1], -.4), (SC[0], SC[1], RISE * TIERS + 1.0), .1, 'steel')      # centre pole
+rail = []
+for k, a in enumerate(ang):
+    z = STEP * (k + 1); a0, a1 = a - math.radians(15), a + math.radians(15)
+    P = lambda r, t: (SC[0] + r * math.cos(t), SC[1] + r * math.sin(t))
+    prism([P(.07, a0), P(SR, a0), P(SR, a1), P(.07, a1)], z - .05, z, 'wood')
+    top = (SC[0] + (SR - .05) * math.cos(a), SC[1] + (SR - .05) * math.sin(a), z + .9)
+    beam((top[0], top[1], z), top, .04, 'steel', (1, 0, 0)); rail.append(top)                       # baluster
+for a_, b_ in zip(rail, rail[1:]): beam(a_, b_, .05, 'steel')                                          # handrail
+# shade roof the full length (Will, 27 Sep): from the trailer's top edge down to a front beam that follows the fan, on four posts
+RX0, RX1, RZ0, RZ1 = X0 - .3, X1 + .3, 3.96, 3.2
+fy = lambda x: line_y(TIERS, x) + .3                      # the front beam, just inside the bleachers' front edge
+for x in [X0 + .1 + (X1 - X0 - .2) * k / 3 for k in range(4)]:
+    prism([(x - .07, fy(x) - .07), (x + .07, fy(x) - .07), (x + .07, fy(x) + .07), (x - .07, fy(x) + .07)], -0.4, RZ1 - .02, 'steel')
+beam((RX0, fy(RX0), RZ1 - .1), (RX1, fy(RX1), RZ1 - .1), .16, 'steel')                                # front beam
+for dz in (0, .03): quad((RX0, YS, RZ0 + dz), (RX1, YS, RZ0 + dz), (RX1, fy(RX1) - .3, RZ1 + dz), (RX0, fy(RX0) - .3, RZ1 + dz), 'roof')
 out = os.path.join(HERE, 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
     f.write('# bleachers in front of the trailer, facing the arena: open steel frames with plank seats and footboards (no risers), 4 rows fanning 8 -> 13 ft deep, 18 in rise, shade roof over the wide half\n# unit m\n# name bleachers\n')

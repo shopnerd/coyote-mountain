@@ -34,8 +34,9 @@ BLEACH = (' The long box is an old 40 ft semi-trailer, textured in the render wi
           'sign on its side (cream panel, red border, CENTRO EQUINO in red, CHICHIHUAS in green, small ochre stars and red scrolls) is already painted on: keep '
           'its position, size, colours and spelling exactly, just give it the look of real brush-painted enamel on corrugated metal. In front of the trailer, '
           'facing the arena, are open grandstand bleachers: galvanised steel frames and raking stringers carrying weathered wooden plank seats and footboards, '
-          'with NO solid risers, so you see through them to the ground and the shade underneath; they fan out wider toward one end, with steel steps at the '
-          'narrow end and a corrugated metal shade roof on slim steel posts off the top of the trailer over the wide end. Spectators sit on the planks watching '
+          'with NO solid risers, so you see through them to the ground and the shade underneath; they fan out wider toward one end; at the narrow end a black steel SPIRAL STAIR (centre pole, '
+          'wooden wedge treads, pipe handrail) climbs to the top row, and a corrugated metal shade roof on slim steel posts runs off the top of the trailer '
+          'along the WHOLE length of the bleachers. Spectators sit on the planks watching '
           'a rider in the arena; on the wide end a family has a picnic on a blanket.')
 RAIN = (' It is just after a rain, late afternoon: the sky clearing with broken clouds and low golden light, the ground darkened and damp, roofs wet and '
         'glinting. Standing water ONLY where the render shows blue water: a shallow pond filling the natural low spot, water running in the drainage ditches; '
@@ -50,6 +51,8 @@ STABLE = (' The stable (27 Sep design): a 5 ft stacked fieldstone wall all round
 AISLE = (' This is inside the stable, down its 14 ft aisle under exposed timber trusses: both sides are stall fronts of black steel pipe with a pipe '
          'gate each, horses looking out; the plain walls are the plastered tack room. Add NO water tank, tub or trough; the aisle floor is packed earth.')
 
+WIDE = ('1-hero-sw', '3-site-ne', '12-high-south', '9-arrival', '11-arena', '6-west', '4-hill-s')   # site views where the stable shows
+
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
     if not k: sys.exit('no key for ' + ENGINE)
@@ -58,7 +61,7 @@ if __name__ == '__main__':
         v = f[6:-4]
         if ONLY and v not in ONLY: continue
         blockv = v.startswith('b')
-        prompt = (BLOCK if blockv else BRIEF) + LIFE + (' This view looks straight down from above: keep it exactly top-down.' if v in ('7-plan', 'b5-top') else '') + (BLEACH if 'bleachers' in v else '') + (RAIN if 'rain' in v else '') + (STABLE if 'stable' in v else '') + (AISLE if v == '10-stable-aisle' else '') + (TROUGH if v in ('2-corridor', '5-corridor-out', '1-hero-sw') else '')
+        prompt = (BLOCK if blockv else BRIEF) + LIFE + (' This view looks straight down from above: keep it exactly top-down.' if v in ('7-plan', 'b5-top') else '') + (BLEACH if ('bleachers' in v or v == '19-spiral') else '') + (RAIN if 'rain' in v else '') + (STABLE if ('stable' in v or v in WIDE) else '') + (AISLE if v == '10-stable-aisle' else '') + (TROUGH if v in ('2-corridor', '5-corridor-out', '1-hero-sw') else '')
         t = time.time()
         try:
             im = openai(os.path.join(SRC, f), prompt, [], k) if ENGINE == 'openai' else google(os.path.join(SRC, f), prompt, [], k)
