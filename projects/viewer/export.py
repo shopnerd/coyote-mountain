@@ -21,8 +21,8 @@ def samp(i, j):
 STYLE = {   # name -> (group, body colour, roof colour, roof threshold above its own base in m)
     'walker barn 72x40': ('stable', '#a89c86', '#4a4f55', 3.3),
     'covered stalls': ('stalls', '#f1efe9', '#c3c7c9', 2.9),
-    'arena fence': ('fence', '#f4f2ec', None, 0), 'round pen fence': ('fence', '#f4f2ec', None, 0),
-    'site fence': ('fence', '#e9e6de', None, 0), 'cross fence': ('fence', '#e9e6de', None, 0),
+    'arena fence': ('fence', '#1f2123', None, 0), 'round pen fence': ('fence', '#1f2123', None, 0),   # all fencing black (Will, 28 Sep)
+    'site fence': ('fence', '#1f2123', None, 0), 'cross fence': ('fence', '#1f2123', None, 0),
     'stone trough 12x4': ('water', '#a79f90', None, 0), 'watering station 10ft': ('water', '#a79f90', None, 0),
     'trailer 8 x 40': ('vehicle', '#f2f2f0', None, 0), 'bleachers': ('stable', '#8a6a48', None, 0),
     'stone trough (long)': ('water', '#a79f90', None, 0), 'pine forest': ('trees', '#2f4a2c', None, 0),

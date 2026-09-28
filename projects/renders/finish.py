@@ -17,10 +17,10 @@ BRIEF = ('This image is a render of an accurate 3D architectural model of a smal
     'You may only: give the surfaces real materials, add golden-hour light, and replace the plain sky. Materials: the larger building is the stable, a stacked '
     'fieldstone base about 4.5 ft high with thin wooden tomato stakes laid HORIZONTALLY above it in loose courses with small gaps like a bird\'s nest, dark '
     'steel posts and frames, a matte dark charcoal corrugated metal roof with a glazed clerestory strip along its ridge, and black steel pipe fences around '
-    'its runs. The smaller open building is the covered stalls: white-painted steel pipe panels, slim dark steel posts, and a matte galvanised corrugated '
+    'its runs. The smaller open building is the covered stalls: black-painted steel pipe panels, slim dark steel posts, and a matte galvanised corrugated '
     'metal butterfly roof whose corrugations run down each slope toward the centre valley, not shiny, not flat sheet; golden alfalfa bales stacked in its '
     'end bay; a galvanised round trough with water. Roads are compacted pale dirt; the ground is dry golden grass, olive-green scrub and a few granite '
-    'boulders; the arena and round pen are raked sand with white pipe fences. Sky: a warm golden-hour sky with big puffy cumulus clouds lit gold and pink. '
+    'boulders; the arena and round pen are raked sand with black pipe fences. Sky: a warm golden-hour sky with big puffy cumulus clouds lit gold and pink. '
     'A few horses may stand inside the stalls and runs. Beyond the edge of the modelled ground, continue the real valley with vineyards and distant hills. '
     'Photorealistic architectural photograph, natural colour, no text.')
 if __name__ == '__main__':
