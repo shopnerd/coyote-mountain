@@ -46,6 +46,7 @@ PICNIC = (' Focus on the wooden deck and the three curved, stepped wooden platfo
 EXTRA = {   # per-view fixes from the gallery notes (28 Sep)
     '16-stable-sw': ' Behind the stable is the vineyard (rows of vines on the slope) exactly where the render shows it, NOT an arena. No fence and no shadow across the dirt road in the foreground.',
     '11-arena': ' The camera stands inside the arena looking out: keep the far buildings small and exactly where the render has them; the white trailer with its deck and steps stays a trailer, not a building.',
+    '10-stable-aisle': ' This is INSIDE the stable, down its aisle: low walls of tan stacked fieldstone between the stalls, black steel pipe stall fronts with swinging pipe gates, exposed dark STEEL trusses and a dark corrugated roof, light coming through the open clerestory and the stick panels, a plastered room with a door on the right, packed-earth aisle floor. Horses looking out over the gates, a person leading a horse down the aisle, a dog. Keep every wall, gate, truss and opening exactly where the render has it.',
     '4-hill-s': ' Keep the stable, the covered stalls and every road exactly as small and as placed as in the render.',
 }
 

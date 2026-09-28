@@ -218,7 +218,7 @@ for s in (1, -1):
     y0, y1 = sorted((s * (HD - ROCK_T / 2), s * (HD - ROW_D)))
     for a, b in zip(rr, rr[1:]):
         if a['kind'] in SOLID or b['kind'] in SOLID: mat('cob'); box(b['x0'] - .3, b['x0'] + .3, y0, y1, 0, EAVE - .3)
-        else: mat('wood'); box(b['x0'] - .2, b['x0'] + .2, y0, y1, 0, ROCK_H); rail_y(y0, y1, b['x0'])
+        else: mat('rock'); box(b['x0'] - .6, b['x0'] + .6, y0, y1, 0, ROCK_H); rail_y(y0, y1, b['x0'])   # stall partitions: 5 ft stacked rock (Will, 28 Sep)
     yi = s * (HD - ROW_D)
     for r in rr:
         if r['kind'] in SOLID:
