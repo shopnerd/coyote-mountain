@@ -127,5 +127,11 @@ for fn in FILES:
             m.face([bot[q], bot[q2], mid[q2], mid[q]], 'pine'); m.face([mid[q], mid[q2], top[q2], top[q]], 'pine')
         m.face(bot[::-1], 'pine'); m.face(top, 'pine')
     d['strokes'].append(stroke(m, 'pine forest', 'pine-forest.obj', z, f'pine grove between the parking and the stable: {len(trees)} round-crowned pines 14-22 ft (Will, 28 Sep)'))
+    # ---- the barn road comes straight into the middle of the west entry (Will, 28 Sep), not to the stable's corner ----
+    rd = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road'][0]
+    keep = [q for q in rd['pts'] if grid2b(q[0], q[1])[0] < -60]                   # the road as drawn, up to ~24 ft from the gable
+    zc_ = rd['pts'][0][2] if len(rd['pts'][0]) > 2 else .5
+    approach = [(-38.0, 0.0), (-46.0, 1.5), (-53.0, 6.0), (-58.0, 13.0), (-61.0, 20.0)]   # stable frame ft: into the entry, curving up to the old line
+    rd['pts'] = [[*b2grid(x, y), zc_] for x, y in approach] + keep
     json.dump(d, open(p, 'w', encoding='utf-8'))
     print(fn, ': long trough', round(LEN, 1), 'ft in', NS, 'sections at', [round(q[2], 2) for q in secs], 'm;', len(trees), 'pines')
