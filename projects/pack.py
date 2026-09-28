@@ -285,7 +285,7 @@ exec(open('structure_pages.py',encoding='utf-8').read())
 exec(open('stalls_page.py',encoding='utf-8').read())
 exec(open('stable_pages_0928.py',encoding='utf-8').read())   # 28 Sep stable: plan + truss structure page
 FIN=DL+'/2026-09-28 finalists/'                      # 28 Sep: the gallery finalists (will.100xbtr.com/equino, starred)
-cover(FIN+'01-stable-vineyard.png')
+cover(FIN+'07-from-arena.png')
 planview(FIN+'00-plan.png')
 existing()
 grading()
@@ -309,9 +309,9 @@ views2([(FIN+'04-stable-interior.png','Dentro del establo','Inside the stable',
 views2([(FIN+'06-bleachers-picnic.png','Las gradas','The bleachers',
          'La idea de Walker: una terraza a lo largo del tráiler y tres plataformas curvas que bajan hacia la pista, para ver y hacer día de campo.',
          'Walker’s idea: a deck along the trailer and three curved platforms stepping down toward the arena, for watching and picnics.'),
-        (FIN+'07-from-arena.png','Desde la pista','From the arena',
-         'Desde la arena: el establo, las caballerizas techadas y el tráiler con sus gradas.',
-         'From the arena: the stable, the covered stalls and the trailer with its bleachers.')],
+        (FIN+'01-stable-vineyard.png','El establo y el viñedo','The stable and the vineyard',
+         'Desde el suroeste: el establo con su bebedero largo, los corrales y el viñedo detrás.',
+         'From the south-west: the stable with its long trough, the runs and the vineyard behind.')],
        'Vistas · finalistas','Views · finalists')
 views2([(FIN+'08-from-hill.png','Desde el cerro','From the hill',
          'Del sur, desde el cerro: las caballerizas techadas, el establo y el camino.',
