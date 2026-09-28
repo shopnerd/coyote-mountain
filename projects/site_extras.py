@@ -74,7 +74,7 @@ for fn in FILES:
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
     A = np.array([-56.0, -9.0]); B = np.array([-56.0, -49.0])   # 28 Sep (Will markup 2): 20 ft off the west gable, just south of the entry's drive lanes, 40 ft running south
     u = (B - A) / np.linalg.norm(B - A); nv = np.array([-u[1], u[0]]); LEN = np.linalg.norm(B - A); TW, WT = 3.5, .8
-    m = Mesh(); NS = 2; secs = []
+    m = Mesh(); NS = 1; secs = []   # one level (Will, 28 Sep)
     for k in range(NS):
         a, b = A + u * (LEN * k / NS + (0 if k == 0 else .6)), A + u * (LEN * (k + 1) / NS)
         zc = ground(z, *b2grid(*((a + b) / 2)))
@@ -96,7 +96,7 @@ for fn in FILES:
         wl = zc + RIM - .35 * FT; c = [a + u * WT + nv * (-TW / 2 + WT), b - u * WT + nv * (-TW / 2 + WT), b - u * WT + nv * (TW / 2 - WT), a + u * WT + nv * (TW / 2 - WT)]
         m.face([(*p_, wl) for p_ in c], 'water')
     d['strokes'].append(stroke(m, 'stone trough (long)', 'stone-trough-long.obj', z,
-        'long stone water trough along the west road, 40 ft in 2 level sections stepping up the slope, rim 2 ft, ~750 gal (Will markup, 28 Sep)'))
+        'long stone water trough along the west road, 40 ft, one level on a levelled strip, rim 2 ft, ~650 gal (Will markup, 28 Sep)'))
     # roof water from the stable (Will: capture it into the trough): a gutter downpipe at the stable's south-west corner, buried pipe to the trough's north end
     tpl = [q for q in d['strokes'] if (q.get('name') or '') == 'stalls trough overflow pipe']
     if tpl:
