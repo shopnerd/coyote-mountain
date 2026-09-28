@@ -43,12 +43,18 @@ PICNIC = (' Focus on the wooden deck and the three curved, stepped wooden platfo
     'lettering): families and friends having a picnic on them, sitting on blankets and cushions on the wide steps, a basket, food and drinks, kids, '
     'someone leaning on the rail, all watching a rider in the arena. Keep the platforms exactly the shape and height the render shows.')
 
+EXTRA = {   # per-view fixes from the gallery notes (28 Sep)
+    '16-stable-sw': ' Behind the stable is the vineyard (rows of vines on the slope) exactly where the render shows it, NOT an arena. No fence and no shadow across the dirt road in the foreground.',
+    '11-arena': ' The camera stands inside the arena looking out: keep the far buildings small and exactly where the render has them; the white trailer with its deck and steps stays a trailer, not a building.',
+    '4-hill-s': ' Keep the stable, the covered stalls and every road exactly as small and as placed as in the render.',
+}
+
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
     if not k: sys.exit('no key for ' + ENGINE)
     for v in (ONLY or VIEWS):
         t = time.time()
         try:
-            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else ''), [], k)
+            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else '') + EXTRA.get(v, ''), [], k)
             im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE}: ok in {time.time() - t:.0f}s')
         except Exception as e: print(f'{v} {ENGINE}: FAILED {str(e)[:160]}')
