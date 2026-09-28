@@ -68,7 +68,7 @@ dialog p{font:500 12px "IBM Plex Mono",monospace;color:var(--muted);margin-top:1
     <div class="howto">
       <p><b>Quitar</b> las que no sirven y escribir notas en las que quedan; luego <b>Guardar</b>. Todos ven lo mismo.</p>
       <p class="en">Remove the ones you don't like and write tweak notes on the ones that stay, then Save. Everyone sees the same picks and notes.</p>
-      <p class="ro" id="ro" hidden>Solo lectura: para quitar y guardar notas, Will te da acceso de editor; mientras tanto usa «Comentar» en cada imagen · View-only: to remove images and save notes, Will gives you edit access; meanwhile use “Comment” on any image</p>
+      <p class="ro" id="ro" hidden>Aquí no se puede guardar para todos: tus selecciones y notas se quedan en este navegador. Al terminar, toca «Copiar mis notas» y pégalas en un mensaje a Will · Saving for everyone isn't available here: your picks and notes stay in this browser. When done, tap “Copy my notes” and paste them into a message to Will.</p>
     </div>
     <nav aria-label="Secciones · Sections"><a href="#gradas">Gradas · Bleachers</a><a href="#lluvia">Lluvia · Rain</a><a href="#tomas">Tomas · Money shots</a><a href="#bloque">Bloque · Block</a><button type="button" class="chip" id="showGone" aria-pressed="false">Ver quitadas · Show removed (<span id="nGone">0</span>)</button></nav>
   </header>
@@ -105,7 +105,7 @@ dialog p{font:500 12px "IBM Plex Mono",monospace;color:var(--muted);margin-top:1
     <p class="en">Preliminary design. The paintings are for mood; the dimensions and the design are in the pack.</p>
   </section>
 </main>
-<div class="bar" id="bar" hidden><span id="barMsg"></span><button type="button" class="ghost" id="discard">Descartar · Discard</button><button type="button" id="save">Guardar · Save</button></div>
+<div class="bar" id="bar" hidden><span id="barMsg"></span><textarea id="copyBox" readonly hidden style="width:min(90vw,520px);height:120px;background:var(--field);color:var(--ink);border:1px solid var(--rule);border-radius:4px;padding:8px;font:13px/1.4 Karla,sans-serif"></textarea><button type="button" class="ghost" id="discard">Descartar · Discard</button><button type="button" id="save">Guardar · Save</button></div>
 <dialog id="lb" aria-label="Vista ampliada · Enlarged view"><img id="lbImg" alt=""><p>clic o Esc para cerrar · click or Esc to close</p></dialog>
 </template>
 <script type="application/json" id="state">{"picks":{}}</script>
@@ -130,26 +130,26 @@ saved.picks = saved.picks || {};
 const picks = JSON.parse(JSON.stringify(saved.picks));       // working copy: key -> {gone: bool, note: string}
 const STASH = 'ce-gallery-pending';
 try {                                                        // unsaved changes survive a reload (or a save that lost to someone else's)
-  const st = JSON.parse(sessionStorage.getItem(STASH) || 'null');
+  const st = JSON.parse(localStorage.getItem(STASH) || 'null');
   if (st) { let left = 0; for (const [k, v] of Object.entries(st)) { const cur = picks[k] || {}; if (!!cur.gone !== !!v.gone || (cur.note || '') !== (v.note || '')) { picks[k] = v; left++; } }
-    if (!left) sessionStorage.removeItem(STASH); }
+    if (!left) localStorage.removeItem(STASH); }
 } catch (e) {}
 if (!document.body) document.documentElement.append(document.createElement('body'));
 document.body.append($('shell').content.cloneNode(true));
 let readOnly = false, showGone = false, art = null, dls = null, cms = null;
 const dirtyKeys = () => { const ks = new Set([...Object.keys(picks), ...Object.keys(saved.picks)]); return [...ks].filter(k => { const a = picks[k] || {}, b = saved.picks[k] || {}; return !!a.gone !== !!b.gone || (a.note || '').trim() !== (b.note || '').trim(); }); };
-function stash() { try { const d = {}; for (const k of dirtyKeys()) d[k] = picks[k] || { gone: false, note: '' }; if (Object.keys(d).length) sessionStorage.setItem(STASH, JSON.stringify(d)); else sessionStorage.removeItem(STASH); } catch (e) {} }
-function bar() { const n = dirtyKeys().length; $('bar').hidden = !n || readOnly; $('barMsg').textContent = `${n} cambio${n === 1 ? '' : 's'} sin guardar · ${n} unsaved change${n === 1 ? '' : 's'}`; }
+function stash() { try { const d = {}; for (const k of dirtyKeys()) d[k] = picks[k] || { gone: false, note: '' }; if (Object.keys(d).length) localStorage.setItem(STASH, JSON.stringify(d)); else localStorage.removeItem(STASH); } catch (e) {} }
+function bar() { const n = dirtyKeys().length; $('bar').hidden = !n; $('save').textContent = readOnly ? 'Copiar mis notas · Copy my notes' : 'Guardar · Save'; $('barMsg').textContent = `${n} cambio${n === 1 ? '' : 's'} sin guardar · ${n} unsaved change${n === 1 ? '' : 's'}`; }
 function counts() { $('nGone').textContent = Object.values(picks).filter(p => p.gone).length; }
 const lb = $('lb'), li = $('lbImg'); lb.addEventListener('click', () => lb.close());
-const views = [];
+const views = [], titles = {};
 for (const [box, list] of Object.entries(V)) {
   const host = $(box);
   for (const [id, es, en, meta, eng = ['openai', 'google']] of list) {
     const v = document.createElement('div'); v.className = 'view';
     const pair = document.createElement('div'); pair.className = 'pair';
     const figs = eng.map(e => {
-      const key = `${id}-${e}`, f = document.createElement('figure'); f.dataset.key = key;
+      const key = `${id}-${e}`, f = document.createElement('figure'); f.dataset.key = key; titles[key] = `${es} · ${en} (${NM[e]})`;
       f.innerHTML = `<div class="shot"><button type="button" aria-label="Ampliar · Enlarge"><img loading="lazy" src="${key}.jpg" alt=""></button><span class="tag"></span></div>
         <div class="ctl"><button type="button" class="rm"></button><button type="button" class="rm dl" hidden>Descargar · Download</button><button type="button" class="rm cm" hidden>Comentar · Comment</button><textarea rows="2" placeholder="Notas para ajustar · Tweak notes"></textarea></div>`;
       f.querySelector('img').alt = `${en}, ${NM[e]}`; f.querySelector('.tag').textContent = NM[e];
@@ -178,7 +178,7 @@ function render() {
     for (const f of figs) {
       const gone = !!(picks[f.dataset.key] || {}).gone;
       f.classList.toggle('gone', gone); f.hidden = gone && !showGone; if (!f.hidden) shown++;
-      const rm = f.querySelector('.rm:not(.dl):not(.cm)'); rm.textContent = gone ? 'Restaurar · Restore' : 'Quitar · Remove'; rm.hidden = readOnly; const ta = f.querySelector('textarea'); ta.readOnly = readOnly; ta.hidden = readOnly && !ta.value;
+      const rm = f.querySelector('.rm:not(.dl):not(.cm)'); rm.textContent = gone ? 'Restaurar · Restore' : 'Quitar · Remove'; 
     }
     v.hidden = !shown; pair.classList.toggle('one', shown === 1);
   }
@@ -187,7 +187,7 @@ function render() {
 $('showGone').onclick = () => { showGone = !showGone; $('showGone').setAttribute('aria-pressed', showGone); render(); };
 $('discard').onclick = () => { for (const k of Object.keys(picks)) delete picks[k]; Object.assign(picks, JSON.parse(JSON.stringify(saved.picks)));
   for (const { figs } of views) for (const f of figs) f.querySelector('textarea').value = (picks[f.dataset.key] || {}).note || '';
-  try { sessionStorage.removeItem(STASH); } catch (e) {} render(); bar(); };
+  try { localStorage.removeItem(STASH); } catch (e) {} render(); bar(); };
 function page(state) {
   const json = JSON.stringify(state).replace(/</g, '\\u003c');
   const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -196,8 +196,19 @@ function page(state) {
     + '<script type="application/json" id="state">' + json + '</scr' + 'ipt><script id="app">' + SRC.app + '</scr' + 'ipt></body></html>';
 }
 function goReadOnly() { readOnly = true; $('ro').hidden = false; render(); bar(); }
+function notesText() {
+  const NL = String.fromCharCode(10), gone = [], notes = [];
+  for (const k of Object.keys(titles)) { const p = picks[k] || {}; if (p.gone) gone.push('- ' + titles[k]); else if ((p.note || '').trim()) notes.push('- ' + titles[k] + ': ' + p.note.trim()); }
+  return ['Centro Equino gallery', '', 'QUITAR / REMOVE:', ...(gone.length ? gone : ['- (none)']), '', 'NOTAS / NOTES:', ...(notes.length ? notes : ['- (none)'])].join(NL);
+}
+async function copyNotes() {
+  const t = notesText(), box = $('copyBox');
+  try { await navigator.clipboard.writeText(t); $('barMsg').textContent = 'Copiado: pégalo en un mensaje a Will · Copied: paste it into a message to Will'; box.hidden = true; }
+  catch (e) { box.value = t; box.hidden = false; box.focus(); box.select(); $('barMsg').textContent = 'Copia este texto (ya está seleccionado) · Copy this text (already selected)'; }
+}
 async function save() {
-  if (readOnly || !dirtyKeys().length) return;
+  if (readOnly) { copyNotes(); return; }
+  if (!dirtyKeys().length) return;
   if (!art) { goReadOnly(); return; }
   const clean = {}; for (const [k, p] of Object.entries(picks)) { const note = (p.note || '').trim(); if (p.gone || note) clean[k] = { gone: !!p.gone, note }; }
   stash(); $('save').disabled = true; $('barMsg').textContent = 'Guardando… · Saving…';
