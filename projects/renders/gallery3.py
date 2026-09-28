@@ -23,7 +23,7 @@ BRIEF = (
     'horizontal wooden branches in dark steel frames up to the eave, a dark charcoal corrugated roof with an open clerestory along the ridge, and '
     'two plastered rooms at one end. The open shed with the butterfly (V) roof is the covered stalls: matte galvanised corrugated roof, dark steel '
     'posts, black pipe panels, and a round fieldstone water trough at its end. All fences and gates everywhere are BLACK steel pipe. The long low box '
-    'by the stable is a tan fieldstone water trough. The old white semi-trailer keeps its photo texture and its hand-painted sign, with wooden '
+    'by the stable is a tan fieldstone water trough. The old white semi-trailer keeps its photo texture exactly, with NO sign or lettering on it, with wooden '
     'steps and a deck in front of it under a corrugated shade roof. The oval with the fence is a sand riding arena; the small circle a sand round pen. '
     'The round trees are modest pines. The small boxes in the parking area are cars and pickups.\n'
     'Life, at true scale and only on the ground: plenty of horses (bay, chestnut, grey, a paint) in the runs, stalls, arena and being led along the '

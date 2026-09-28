@@ -226,7 +226,8 @@ body.shot{grid-template-columns:1fr}
     for (let k = 0; k < 1400; k++) { x.globalAlpha = .15 + rr() * .45; x.fillRect(cx - w / 2 + rr() * w, top + rr() * (bot - top), 2 + rr() * 9, 1 + rr() * 3); } x.restore();
     x.save(); x.globalCompositeOperation = 'destination-over'; x.drawImage(sideImg, 0, 0, W, H); x.restore();   // the photo shows through the flakes
   }
-  const PHOTO = { tsideA: photoTex(sideImg, paintSign), tsideB: photoTex(sideImg), tend: photoTex(endImg) };
+  const PHOTO = { tsideA: photoTex(sideImg),   // sign removed (Will, 28 Sep); paintSign kept for later
+    tsideB: photoTex(sideImg), tend: photoTex(endImg) };
   function photoUV(g, ctr) {             // each flat face gets the whole photo, read from outside (not mirrored)
     const p = g.attributes.position, n = p.count, uv = new Float32Array(n * 2), raw = [], key = [], box = {}, a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3(), nv = new THREE.Vector3();
     for (let k = 0; k < n; k += 3) { a.fromBufferAttribute(p, k); b.fromBufferAttribute(p, k + 1); c.fromBufferAttribute(p, k + 2); nv.subVectors(b, a).cross(c.clone().sub(a)); nv.y = 0; nv.normalize();
