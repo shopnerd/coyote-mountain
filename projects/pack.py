@@ -285,7 +285,7 @@ exec(open('structure_pages.py',encoding='utf-8').read())
 exec(open('stalls_page.py',encoding='utf-8').read())
 exec(open('stable_pages_0928.py',encoding='utf-8').read())   # 28 Sep stable: plan + truss structure page
 FIN=DL+'/2026-09-28 finalists/'                      # 28 Sep: the gallery finalists (will.100xbtr.com/equino, starred)
-cover(FIN+'13-cover-current-model.png')
+cover(FIN+'14-cover-original-site-ne.png')
 planview(FIN+'00-plan.png')
 existing()
 grading()
