@@ -68,49 +68,64 @@ def road_y(x):
 
 for fn in FILES:
     p = os.path.join(HERE, fn); d = json.load(open(p, encoding='utf-8')); z = np.array(d['z'], float).reshape(H, W)
-    d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'pine forest', 'forest trail')]
-    # ---- long stone trough ----
-    TX, Y0, Y1, TW = -56.0, -21.0, 16.0, 3.5                       # centre line 20 ft off the gable (x = -36), 37 ft long, 3.5 ft wide
-    zc = ground(z, *b2grid(TX, (Y0 + Y1) / 2))
-    for j in range(H):                                            # level the ground under it (and 5 ft round) at its centre height
-        for i in range(W):
-            bx, by = grid2b(i, j)
-            if TX - TW / 2 - 5 <= bx <= TX + TW / 2 + 5 and Y0 - 5 <= by <= min(Y1 + 1, 17.0): z[j, i] = zc
+    d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'pine forest', 'forest trail', 'stable roof water to the long trough (buried pipe)')]
+    # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
+    # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
+    # so it is three level stone sections stepping up the slope, each on its own levelled strip.
+    A = np.array([-109.0, 8.0]); B = A + (np.array([-78.0, -88.0]) - A) / np.linalg.norm(np.array([-78.0, -88.0]) - A) * 40.0   # 40 ft from the old trough spot along the west road (Will: 100 was too long)
+    u = (B - A) / np.linalg.norm(B - A); nv = np.array([-u[1], u[0]]); LEN = np.linalg.norm(B - A); TW, WT = 3.5, .8
+    m = Mesh(); NS = 2; secs = []
+    for k in range(NS):
+        a, b = A + u * (LEN * k / NS + (0 if k == 0 else .6)), A + u * (LEN * (k + 1) / NS)
+        zc = ground(z, *b2grid(*((a + b) / 2)))
+        for j_ in range(H):                                        # level a strip 5 ft round this section at its middle height
+            for i_ in range(W):
+                q = np.array(grid2b(i_, j_)) - a; t = q @ u; w = abs(q @ nv)
+                if -3 <= t <= np.linalg.norm(b - a) + 3 and w <= TW / 2 + 5: z[j_, i_] = zc
+        secs.append((a, b, zc))
     d['z'] = [round(float(q), 3) for q in z.flatten()]
-    m = Mesh(); RIM, WT, BASE = 2.0 * FT, .8, -1.5 * FT
-    x0, x1 = TX - TW / 2, TX + TW / 2
-    m.box(x0, x1, Y0, Y1, zc + BASE, zc + .5 * FT, 'rock')                           # the stone base and floor
-    for a, b, c0, c1 in ((x0, x0 + WT, Y0, Y1), (x1 - WT, x1, Y0, Y1), (x0 + WT, x1 - WT, Y0, Y0 + WT), (x0 + WT, x1 - WT, Y1 - WT, Y1)):
-        m.box(a, b, c0, c1, zc + .5 * FT, zc + RIM, 'rock')                          # the four walls
-    m.face([(x0 + WT, Y0 + WT, zc + RIM - .35 * FT), (x1 - WT, Y0 + WT, zc + RIM - .35 * FT), (x1 - WT, Y1 - WT, zc + RIM - .35 * FT), (x0 + WT, Y1 - WT, zc + RIM - .35 * FT)], 'water')
+    def obox(a, b, w0, w1, z0, z1, mat_):                          # a box between a and b along u, from w0 to w1 across (ft)
+        c = [a + nv * w0, b + nv * w0, b + nv * w1, a + nv * w1]
+        m.face([(*p_, z1) for p_ in c], mat_); m.face([(*p_, z0) for p_ in c[::-1]], mat_)
+        for p1, p2 in zip(c, c[1:] + c[:1]): m.face([(*p1, z0), (*p2, z0), (*p2, z1), (*p1, z1)], mat_)
+    RIM, BASE = 2.0 * FT, -1.5 * FT
+    for a, b, zc in secs:
+        obox(a, b, -TW / 2, TW / 2, zc + BASE, zc + .5 * FT, 'rock')                                   # base and floor
+        obox(a, b, -TW / 2, -TW / 2 + WT, zc + .5 * FT, zc + RIM, 'rock'); obox(a, b, TW / 2 - WT, TW / 2, zc + .5 * FT, zc + RIM, 'rock')
+        obox(a, a + u * WT, -TW / 2 + WT, TW / 2 - WT, zc + .5 * FT, zc + RIM, 'rock'); obox(b - u * WT, b, -TW / 2 + WT, TW / 2 - WT, zc + .5 * FT, zc + RIM, 'rock')
+        wl = zc + RIM - .35 * FT; c = [a + u * WT + nv * (-TW / 2 + WT), b - u * WT + nv * (-TW / 2 + WT), b - u * WT + nv * (TW / 2 - WT), a + u * WT + nv * (TW / 2 - WT)]
+        m.face([(*p_, wl) for p_ in c], 'water')
     d['strokes'].append(stroke(m, 'stone trough (long)', 'stone-trough-long.obj', z,
-        'long stone water trough in front of the stable, 37 x 3.5 ft, rim 2 ft, 20 ft off the west gable (Will + Walker, 28 Sep)'))
-    # ---- pine forest past the scrub-side road, with a winding trail ----
-    rnd = random.Random(7)
-    trail = []
-    for k in range(15):
-        t = k / 14; x = 40 + 28 * math.sin(t * 2.4) + 9 * math.sin(t * 7.1); y = road_y(40) - 4 - t * 210
-        trail.append((x, y))
-    def near_trail(x, y): return min(math.hypot(x - a, y - b) for a, b in trail) < 9
-    trees = []
-    for _ in range(4000):
-        x = rnd.uniform(-170, 270); y = road_y(x) - rnd.uniform(18, 240)
-        i, j = b2grid(x, y)
-        if not (1 <= i <= W - 2 and 1 <= j <= H - 2) or near_trail(x, y): continue
-        if all(math.hypot(x - a, y - b) > 17 for a, b, _h in trees): trees.append((x, y, rnd.uniform(22, 34)))
-        if len(trees) >= 240: break
-    m = Mesh()
+        'long stone water trough along the west road, 40 ft in 2 level sections stepping up the slope, rim 2 ft, ~750 gal (Will markup, 28 Sep)'))
+    # roof water from the stable (Will: capture it into the trough): a gutter downpipe at the stable's north-west corner, buried pipe to the north end
+    tpl = [q for q in d['strokes'] if (q.get('name') or '') == 'stalls trough overflow pipe']
+    if tpl:
+        rp = dict(tpl[0]); rp.update(name='stable roof water to the long trough (buried pipe)', pts=[[*b2grid(-37.0, 22.0), .5], [*b2grid(*(A + u * 2)), .5]])
+        d['strokes'].append(rp)
+    # ---- the pine grove between the parking and the stable (Will, 28 Sep: a small outcrop of modest, round-crowned pines),
+    # placed where the aerial photo shows dark tree cover, clear of the walking path ----
+    from PIL import Image
+    AER = np.array(Image.open(os.path.join(HERE, 'viewer', 'aerial-src.jpg')).convert('RGB')).astype(int)
+    sx, sy = AER.shape[1] / (W - 1), AER.shape[0] / (H - 1)
+    WALK = [(140, 43), (125, 37), (121, 34), (118, 31), (111, 28), (104, 25), (96, 22), (89, 19), (81, 17), (72, 16), (68, 16), (64, 15), (47, 13)]
+    def near_walk(x, y): return min(math.hypot(x - a, y - b) for a, b in WALK) < 8
+    rnd = random.Random(11); trees = []
+    for _ in range(3000):
+        x, y = rnd.uniform(42, 160), rnd.uniform(-25, 85)
+        i_, j_ = b2grid(x, y); px = AER[min(int(j_ * sy), AER.shape[0] - 1), min(int(i_ * sx), AER.shape[1] - 1)]
+        if not (px[1] >= px[0] and px.sum() < 300) or near_walk(x, y) or (x < 40 and y > -25): continue
+        if all(math.hypot(x - a, y - b) > 13 for a, b, _h in trees): trees.append((x, y, rnd.uniform(14, 22)))
+        if len(trees) >= 45: break
+    m = Mesh(); n = 8
     for x, y, h in trees:
-        zg = ground(z, *b2grid(x, y)); n = 7
-        tw = .45; m.box(x - tw, x + tw, y - tw, y + tw, zg - .2, zg + h * .35 * FT, 'trunk')
-        for lo, hi, rad in ((.22, .75, .30), (.45, 1.0, .21)):                        # two stacked cones
-            base = [(x + rad * h * math.cos(2 * math.pi * q / n), y + rad * h * math.sin(2 * math.pi * q / n)) for q in range(n)]
-            apex = (x, y, zg + h * hi * FT)
-            for q in range(n): m.face([(*base[q], zg + h * lo * FT), (*base[(q + 1) % n], zg + h * lo * FT), apex], 'pine')
-            m.face([(*b, zg + h * lo * FT) for b in base[::-1]], 'pine')
-    d['strokes'].append(stroke(m, 'pine forest', 'pine-forest.obj', z, f'pine forest behind the stable: {len(trees)} pines 22-34 ft (Will, 28 Sep)'))
-    tmpl = [s for s in d['strokes'] if s.get('kind') == 'path'][0]
-    tp = dict(tmpl); tp.update(name='forest trail', pw=1.2, pts=[[*b2grid(x, y), .5] for x, y in trail])
-    d['strokes'].append(tp)
+        zg = ground(z, *b2grid(x, y)); tw = .35; m.box(x - tw, x + tw, y - tw, y + tw, zg - .2, zg + h * .45 * FT, 'trunk')
+        R_ = h * .36; zc = zg + h * .68 * FT; hz = h * .3 * FT                          # a rounded crown: two stacked octagonal rings
+        ring = lambda rr, zz: [(x + rr * math.cos(2 * math.pi * q / n), y + rr * math.sin(2 * math.pi * q / n), zz) for q in range(n)]
+        bot, mid, top = ring(R_ * .55, zc - hz), ring(R_, zc), ring(R_ * .6, zc + hz * .8)
+        for q in range(n):
+            q2 = (q + 1) % n
+            m.face([bot[q], bot[q2], mid[q2], mid[q]], 'pine'); m.face([mid[q], mid[q2], top[q2], top[q]], 'pine')
+        m.face(bot[::-1], 'pine'); m.face(top, 'pine')
+    d['strokes'].append(stroke(m, 'pine forest', 'pine-forest.obj', z, f'pine grove between the parking and the stable: {len(trees)} round-crowned pines 14-22 ft (Will, 28 Sep)'))
     json.dump(d, open(p, 'w', encoding='utf-8'))
-    print(fn, ': long trough at', round(zc, 2), 'm;', len(trees), 'pines; trail', len(trail), 'pts')
+    print(fn, ': long trough', round(LEN, 1), 'ft in', NS, 'sections at', [round(q[2], 2) for q in secs], 'm;', len(trees), 'pines')

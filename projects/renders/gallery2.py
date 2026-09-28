@@ -33,11 +33,10 @@ BLEACH = (' The long box is an old 40 ft semi-trailer, textured in the render wi
           'horizontally corrugated aluminium sides with a weathered ochre stripe near the top, rusty ochre ends with a boarded wooden hatch. The hand-painted '
           'sign on its side (cream panel, red border, CENTRO EQUINO in red, CHICHIHUAS in green, small ochre stars and red scrolls) is already painted on: keep '
           'its position, size, colours and spelling exactly, just give it the look of real brush-painted enamel on corrugated metal. In front of the trailer, '
-          'facing the arena, are open grandstand bleachers: galvanised steel frames and raking stringers carrying weathered wooden plank seats and footboards, '
-          'with NO solid risers, so you see through them to the ground and the shade underneath; they fan out wider toward one end; at the narrow end a black steel SPIRAL STAIR (centre pole, '
-          'wooden wedge treads, pipe handrail) climbs to the top row, and a corrugated metal shade roof on slim steel posts runs off the top of the trailer '
-          'along the WHOLE length of the bleachers. Spectators sit on the planks watching '
-          'a rider in the arena; on the wide end a family has a picnic on a blanket.')
+          'facing the arena: a flat weathered-wood deck about 4 ft high and 6 ft deep running the full length of the trailer, and stepping down from it toward '
+          'the arena three CURVED, FANNED sections of wide wooden terrace steps, like overlapping fan blades or a spiral of scallops, each with a curved front '
+          'edge, set on slim steel legs; NO spiral staircase. A corrugated metal shade roof on slim steel posts runs off the top of the trailer over the deck '
+          'along its whole length. People sit and lounge on the wide steps watching a rider in the arena; a family has a picnic on one of the wide curved steps.')
 RAIN = (' It is just after a rain, late afternoon: the sky clearing with broken clouds and low golden light, the ground darkened and damp, roofs wet and '
         'glinting. Standing water ONLY where the render shows blue water: a shallow pond filling the natural low spot, water running in the drainage ditches; '
         'besides that only small puddles in road ruts. Keep every building, road, fence and ditch exactly where the render has it.')
