@@ -39,12 +39,16 @@ BLOCK3 = ('This render is an exact 3D model: ONE rectangular block of land cut o
     'wooden deck and steps. Tiny horses, riders and people at true scale. The four cut sides are smooth plain light grey, no soil or texture. The '
     'background is pure white with a soft shadow under the block.')
 
+PICNIC = (' Focus on the wooden deck and the three curved, stepped wooden platforms in front of the white trailer (plain weathered white, no sign, no '
+    'lettering): families and friends having a picnic on them, sitting on blankets and cushions on the wide steps, a basket, food and drinks, kids, '
+    'someone leaning on the rail, all watching a rider in the arena. Keep the platforms exactly the shape and height the render shows.')
+
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
     if not k: sys.exit('no key for ' + ENGINE)
     for v in (ONLY or VIEWS):
         t = time.time()
         try:
-            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF, [], k)
+            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else ''), [], k)
             im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE}: ok in {time.time() - t:.0f}s')
         except Exception as e: print(f'{v} {ENGINE}: FAILED {str(e)[:160]}')
