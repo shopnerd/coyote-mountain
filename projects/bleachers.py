@@ -84,49 +84,37 @@ def clip(poly, y_hi, y_lo):                                      # keep the part
         return out
     pts = cut(poly, lambda y: y <= y_hi, y_hi)
     return cut(pts, lambda y: y >= y_lo, y_lo) if pts else []
-# ---- the seating (28 Sep, rebuilt): ONE set of terrace steps whose front follows the scalloped outline of Walker's three
-# fan sections (their envelope), each step a continuous board with a solid wooden face down to the next, so they nest cleanly ----
-def envelope(n=90):                                        # depth past the deck front at each x along the trailer (the union of the fans)
-    xs = np.linspace(X0, X1, n); D = np.zeros(n)
-    for b, sc in zip(BLADES, SCS):
-        poly = blade_pts(place(b), sc, 24); P = np.array(poly)
-        for k, x in enumerate(xs):                           # deepest point of this fan on the vertical line at x
-            ys = []
-            for (xa, ya), (xb, yb) in zip(poly, poly[1:] + poly[:1]):
-                if (xa - x) * (xb - x) <= 0 and xa != xb: ys.append(ya + (yb - ya) * (x - xa) / (xb - xa))
-            if ys: D[k] = max(D[k], YD - min(ys))
-    return xs, D
-XS, DE = envelope()
-DE = np.convolve(np.pad(DE, 2, mode='edge'), np.ones(5) / 5, mode='valid')     # soften the scallops a touch
-for t in range(NT):                                       # step t: from t/NT to (t+1)/NT of the depth, top one rise below the step above
-    top = H - (t + 1) * RISE; below = top - RISE if t < NT - 1 else -0.1
-    din, dout = DE * t / NT, DE * (t + 1) / NT
-    for k in range(len(XS) - 1):
-        x1_, x2_ = XS[k], XS[k + 1]
-        if dout[k] < .05 and dout[k + 1] < .05: continue
-        a1, a2, b1, b2 = (x1_, YD - din[k]), (x2_, YD - din[k + 1]), (x1_, YD - dout[k]), (x2_, YD - dout[k + 1])
-        face([(*a1, top), (*b1, top), (*b2, top), (*a2, top)], 'wood')                                  # the tread
-        face([(*b1, below), (*b2, below), (*b2, top), (*b1, top)], 'wood')                              # its face, down to the next step
-for x_end, k in ((X0, 0), (X1, -1)):                      # close the two ends
-    for t in range(NT):
-        top = H - (t + 1) * RISE; y1_, y2_ = YD - DE[k] * t / NT, YD - DE[k] * (t + 1) / NT
-        if y1_ - y2_ > .02: face([(x_end, y1_, -0.1), (x_end, y2_, -0.1), (x_end, y2_, top), (x_end, y1_, top)], 'wood')
-# ---- the top deck along the trailer, on steel legs, with a front beam ----
-prism([(X0, YS), (X1, YS), (X1, YD), (X0, YD)], H - .12, H, 'wood')
-face([(X0, YD, H - RISE), (X1, YD, H - RISE), (X1, YD, H), (X0, YD, H)], 'wood')   # the deck's face down to the first step
-for x in np.linspace(X0 + .1, X1 - .1, 8):
-    for y in (YS - .1, YD + .1): beam((x, y, -.3), (x, y, H - .12), .08, 'steel')
-beam((X0, YD + .05, H - .2), (X1, YD + .05, H - .2), .1, 'steel')
+# ---- the seating, exactly as Walker drew it (28 Sep, third pass): three flat curved "blades" tiled like a pinwheel below the
+# deck, each one rise lower than the last (deck -> blade 3 -> blade 2 -> blade 1), solid wooden sides to the ground.
+# Points measured off her grid paper: (ft along the trailer from its left end, ft out from the deck front).
+def arc(p, q, inside, n=14, bulge=.2):                    # a curve from p to q bulging AWAY from the point `inside`
+    p, q, c = np.array(p, float), np.array(q, float), np.array(inside, float)
+    m_ = (p + q) / 2; nv = np.array([-(q - p)[1], (q - p)[0]]); nv /= np.linalg.norm(nv)
+    if np.dot(nv, m_ - c) < 0: nv = -nv
+    k_ = m_ + nv * bulge * np.linalg.norm(q - p)
+    return [tuple((1 - t) ** 2 * p + 2 * (1 - t) * t * k_ + t * t * q) for t in np.linspace(0, 1, n)]
+DR = 37.3                                                   # the right outline crosses the deck front here, then runs to the trailer's end
+B1 = arc((1.2, 0), (8.9, 12.0), (12, 3)) + [(29.1, 0)]
+B2 = [(29.1, 0), (12.3, 10.0)] + arc((12.3, 10.0), (20.5, 16.1), (24, 8)) + [(33.5, 0)]
+B3 = [(33.5, 0), (24.4, 11.3)] + arc((24.4, 11.3), (33.3, 15.9), (32, 8)) + [(DR, 0)]
+toM = lambda pt: (X0 + pt[0] * FT, YD - pt[1] * FT)
+def platform(poly, top):                                   # a flat polygon top (fanned from its centroid) with solid sides to the ground
+    P = [toM(q) for q in poly]; cx = sum(x for x, _ in P) / len(P); cy = sum(y for _, y in P) / len(P)
+    for (xa, ya), (xb, yb) in zip(P, P[1:] + P[:1]):
+        face([(cx, cy, top), (xa, ya, top), (xb, yb, top)], 'wood')
+        face([(xa, ya, -0.1), (xb, yb, -0.1), (xb, yb, top), (xa, ya, top)], 'wood')
+for poly, k in ((B3, 1), (B2, 2), (B1, 3)): platform(poly, H - k * RISE)
+prism([(X0, YS), (X1, YS), (X0 + DR * FT, YD), (X0, YD)], -0.1, H, 'wood')          # the 6 ft deck, solid to the ground, right end slanted as drawn
 # ---- shade roof the full length over the deck: from the trailer's top edge down to a front beam on four posts at the deck front ----
 RX0, RX1, RZ0, RZ1 = X0 - .3, X1 + .3, 3.96, 3.2
 fy = lambda x: YD + .15
 for x in [X0 + .1 + (X1 - X0 - .2) * k / 3 for k in range(4)]:
-    prism([(x - .07, fy(x) - .07), (x + .07, fy(x) - .07), (x + .07, fy(x) + .07), (x - .07, fy(x) + .07)], H, RZ1 - .02, 'steel')
+    prism([(x - .07, fy(x) - .07), (x + .07, fy(x) - .07), (x + .07, fy(x) + .07), (x - .07, fy(x) + .07)], H, RZ1 - .02, 'steel') if x < X0 + (DR - .5) * FT else None
 beam((RX0, fy(RX0), RZ1 - .1), (RX1, fy(RX1), RZ1 - .1), .16, 'steel')
 for dz in (0, .03): quad((RX0, YS, RZ0 + dz), (RX1, YS, RZ0 + dz), (RX1, fy(RX1) - .4, RZ1 + dz), (RX0, fy(RX0) - .4, RZ1 + dz), 'roof')
 out = os.path.join(HERE, 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
-    f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved fan sections of seating stepping down toward the arena, scaled to clear the ring road, shade roof over the deck\n# unit m\n# name bleachers\n')
+    f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved blades tiled like a pinwheel, each one step lower (exactly per her sketch), shade roof over the deck\n# unit m\n# name bleachers\n')
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
     last = None
     for fc, m in zip(F, MAT):
@@ -147,4 +135,4 @@ for fn in ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.j
               tris=[round(float(v), 3) for v in Tz.flatten()], foot=[[float(xy[:, 0].min()), float(xy[:, 1].min())], [float(xy[:, 0].max()), float(xy[:, 1].min())], [float(xy[:, 0].max()), float(xy[:, 1].max())], [float(xy[:, 0].min()), float(xy[:, 1].max())]],
               h=float(Tz[:, 2].max()), w=1, a=1, dash=False, pts=[list(tr['pts'][0])])
     d['strokes'].append(st); json.dump(d, open(p, 'w', encoding='utf-8'))
-print(out, len(F), 'faces; mirror', MIRROR, 'section scales', [round(v, 2) for v in SCS], 'section depths ft', [round(max(q[1] for q in b) * v, 1) for b, v in zip(BLADES, SCS)], '-> seating up to', round(DMAX / FT, 1), 'ft past the 6 ft deck;', NT, 'tiers; deck', round(H / FT, 1), 'ft high')
+print(out, len(F), 'faces; blades per sketch, deepest 16.1 ft ->', round(DMAX / FT, 1), 'ft past the 6 ft deck;', NT, 'tiers; deck', round(H / FT, 1), 'ft high')
