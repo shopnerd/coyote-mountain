@@ -40,6 +40,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: 'r2-sink-rain', water: true, orbit: { ti: 66, tj: 72, az: -70, el: 42, dist: 170 } },
   { id: 'r3-stable-rain', water: true, orbit: { ti: 104, tj: 62, az: 95, el: 48, dist: 150 } },
   { id: 'r4-top-rain', water: true, contours: true, orbit: { ti: 88, tj: 62, az: 0, el: 90, dist: 330 } },
+  { id: 'b7-plan', white: true, block: true, top: { i: 85, j: 53, w: 400 } },
   { id: 'b6-low', white: true, block: true, orbit: { ti: 85, tj: 55, az: 115, el: 16, dist: 450 } },
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

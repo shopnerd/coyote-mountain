@@ -30,12 +30,21 @@ BRIEF = (
     'roads; people working, riding and watching; one ranch dog. Nothing oversized.\n'
     'Light: warm low golden-hour sun, long soft shadows, a sky with big lit cumulus clouds. Photoreal, like a high-end architectural photograph.')
 
+BLOCK3 = ('This render is an exact 3D model: ONE rectangular block of land cut out of the ground, floating on a plain white background, like a '
+    'high-end architectural presentation model photographed in a studio. Show exactly one block, once, exactly where it is: no copy, no second block. '
+    'Keep the block outline, the camera, the terrain on top and every building, roof, road, fence, trough, tree and vehicle exactly where it is, with '
+    'the same size, shape and count; add or move nothing built. The top is photoreal at golden hour: dry golden grass, sage scrub and granite '
+    'boulders, pale dirt roads, the tan stone stable with its dark charcoal roof, the covered stalls with a galvanised butterfly roof, BLACK pipe '
+    'fences everywhere, sand arena and round pen, a small grove of round pines, vineyard rows where shown, the white trailer (no sign) with its '
+    'wooden deck and steps. Tiny horses, riders and people at true scale. The four cut sides are smooth plain light grey, no soil or texture. The '
+    'background is pure white with a soft shadow under the block.')
+
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
     if not k: sys.exit('no key for ' + ENGINE)
     for v in (ONLY or VIEWS):
         t = time.time()
         try:
-            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), BRIEF, [], k)
+            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF, [], k)
             im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE}: ok in {time.time() - t:.0f}s')
         except Exception as e: print(f'{v} {ENGINE}: FAILED {str(e)[:160]}')
