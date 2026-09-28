@@ -84,19 +84,36 @@ def clip(poly, y_hi, y_lo):                                      # keep the part
         return out
     pts = cut(poly, lambda y: y <= y_hi, y_hi)
     return cut(pts, lambda y: y >= y_lo, y_lo) if pts else []
-# ---- the seating: each fan section cut into tiers by distance from the deck; plank tops on steel legs, open underneath ----
-band = DMAX / NT if NT else 1
-for b, sc in zip(BLADES, SCS):
-    poly = blade_pts(place(b), sc)
+# ---- the seating (28 Sep, rebuilt): ONE set of terrace steps whose front follows the scalloped outline of Walker's three
+# fan sections (their envelope), each step a continuous board with a solid wooden face down to the next, so they nest cleanly ----
+def envelope(n=90):                                        # depth past the deck front at each x along the trailer (the union of the fans)
+    xs = np.linspace(X0, X1, n); D = np.zeros(n)
+    for b, sc in zip(BLADES, SCS):
+        poly = blade_pts(place(b), sc, 24); P = np.array(poly)
+        for k, x in enumerate(xs):                           # deepest point of this fan on the vertical line at x
+            ys = []
+            for (xa, ya), (xb, yb) in zip(poly, poly[1:] + poly[:1]):
+                if (xa - x) * (xb - x) <= 0 and xa != xb: ys.append(ya + (yb - ya) * (x - xa) / (xb - xa))
+            if ys: D[k] = max(D[k], YD - min(ys))
+    return xs, D
+XS, DE = envelope()
+DE = np.convolve(np.pad(DE, 2, mode='edge'), np.ones(5) / 5, mode='valid')     # soften the scallops a touch
+for t in range(NT):                                       # step t: from t/NT to (t+1)/NT of the depth, top one rise below the step above
+    top = H - (t + 1) * RISE; below = top - RISE if t < NT - 1 else -0.1
+    din, dout = DE * t / NT, DE * (t + 1) / NT
+    for k in range(len(XS) - 1):
+        x1_, x2_ = XS[k], XS[k + 1]
+        if dout[k] < .05 and dout[k + 1] < .05: continue
+        a1, a2, b1, b2 = (x1_, YD - din[k]), (x2_, YD - din[k + 1]), (x1_, YD - dout[k]), (x2_, YD - dout[k + 1])
+        face([(*a1, top), (*b1, top), (*b2, top), (*a2, top)], 'wood')                                  # the tread
+        face([(*b1, below), (*b2, below), (*b2, top), (*b1, top)], 'wood')                              # its face, down to the next step
+for x_end, k in ((X0, 0), (X1, -1)):                      # close the two ends
     for t in range(NT):
-        piece = clip(poly, YD - t * band + 1e-6, YD - (t + 1) * band - 1e-6)
-        if len(piece) < 3: continue
-        top = H - (t + 1) * RISE
-        prism(piece, top - .09, top, 'wood')
-        for k in range(0, len(piece), 3):                        # steel legs under the tier's corners
-            x, y = piece[k]; beam((x, y, -.3), (x, y, top - .09), .07, 'steel')
+        top = H - (t + 1) * RISE; y1_, y2_ = YD - DE[k] * t / NT, YD - DE[k] * (t + 1) / NT
+        if y1_ - y2_ > .02: face([(x_end, y1_, -0.1), (x_end, y2_, -0.1), (x_end, y2_, top), (x_end, y1_, top)], 'wood')
 # ---- the top deck along the trailer, on steel legs, with a front beam ----
 prism([(X0, YS), (X1, YS), (X1, YD), (X0, YD)], H - .12, H, 'wood')
+face([(X0, YD, H - RISE), (X1, YD, H - RISE), (X1, YD, H), (X0, YD, H)], 'wood')   # the deck's face down to the first step
 for x in np.linspace(X0 + .1, X1 - .1, 8):
     for y in (YS - .1, YD + .1): beam((x, y, -.3), (x, y, H - .12), .08, 'steel')
 beam((X0, YD + .05, H - .2), (X1, YD + .05, H - .2), .1, 'steel')

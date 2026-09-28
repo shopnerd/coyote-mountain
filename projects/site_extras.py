@@ -129,9 +129,12 @@ for fn in FILES:
     d['strokes'].append(stroke(m, 'pine forest', 'pine-forest.obj', z, f'pine grove between the parking and the stable: {len(trees)} round-crowned pines 14-22 ft (Will, 28 Sep)'))
     # ---- the barn road comes straight into the middle of the west entry (Will, 28 Sep), not to the stable's corner ----
     rd = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road'][0]
-    keep = [q for q in rd['pts'] if grid2b(q[0], q[1])[0] < -60]                   # the road as drawn, up to ~24 ft from the gable
+    keep = [q for q in rd['pts'] if grid2b(q[0], q[1])[0] < -84]                   # the road as drawn, up to ~48 ft from the gable
     zc_ = rd['pts'][0][2] if len(rd['pts'][0]) > 2 else .5
-    approach = [(-38.0, 0.0), (-46.0, 1.5), (-53.0, 6.0), (-58.0, 13.0), (-61.0, 20.0)]   # stable frame ft: into the entry, curving up to the old line
+    P0 = np.array(grid2b(*keep[0][:2])); P1b = np.array(grid2b(*keep[1][:2]))       # join smoothly: leave the old line along its own heading
+    t0 = (P0 - P1b) / np.linalg.norm(P0 - P1b)
+    P3 = np.array([-38.0, 0.0]); c1 = P0 + t0 * 20; c2 = P3 - np.array([16.0, 0.0])  # and arrive square to the entry
+    approach = [tuple((1 - s_) ** 3 * P3 + 3 * (1 - s_) ** 2 * s_ * c2 + 3 * (1 - s_) * s_ ** 2 * c1 + s_ ** 3 * P0) for s_ in np.linspace(0, 1, 14)[:-1]]
     rd['pts'] = [[*b2grid(x, y), zc_] for x, y in approach] + keep
     json.dump(d, open(p, 'w', encoding='utf-8'))
     print(fn, ': long trough', round(LEN, 1), 'ft in', NS, 'sections at', [round(q[2], 2) for q in secs], 'm;', len(trees), 'pines')
