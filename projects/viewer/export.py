@@ -77,6 +77,13 @@ for es, en, nm in LABELS:
     if c is None: c = centre(nm.replace('·', '·')) or next((centre(s['name']) for s in d['strokes'] if (s.get('name') or '').startswith('parked car 3')), None)
     if c: labels.append(dict(es=es, en=en, x=c[0], z=c[1]))
 
+# the stable's two closed rooms (28 Sep): wash room at the west corner, tack room next to it, both on the south side
+_O = json.load(open(os.path.join(os.path.dirname(HERE), 'stable_origin.json'))); _g, _r = _O['grid'], math.radians(_O['rot']); _R = math.radians(90 - 65.84)
+def _b2grid(bx, by):
+    x, y = (bx * math.cos(_R) - by * math.sin(_R)) * .3048, (bx * math.sin(_R) + by * math.cos(_R)) * .3048
+    return _g[0] + (x * math.cos(_r) - y * math.sin(_r)) / cs, _g[1] - (x * math.sin(_r) + y * math.cos(_r)) / cs
+for es, en, bx in (('Lavado', 'Wash room', -30.0), ('Monturas', 'Tack room', -18.0)):
+    gi, gj = _b2grid(bx, -14.0); labels.append(dict(es=es, en=en, x=round(gi * cs, 1), z=round(gj * cs, 1), h=4))
 # north in this frame: the site grid is turned 318 deg; grid (i, j) of true north and east
 t = math.radians(float(d['sliders']['rot']))
 north = [round(math.sin(t) * -1 * -1, 4), 0]

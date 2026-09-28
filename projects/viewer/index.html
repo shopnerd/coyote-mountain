@@ -300,7 +300,7 @@ body.shot{grid-template-columns:1fr}
   const contours = (() => { if (!D.contours) return null; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(f32(D.contours), 3));
     const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x2a1d10, transparent: true, opacity: .95 })); m.visible = false; scene.add(m); return m; })();   // 1 m contours (28 Sep)
   // labels
-  const labBox = $('labels'), labs = D.labels.map(l => { const e = document.createElement('div'); e.className = 'lab'; e.innerHTML = `${l.es}<i>${l.en}</i>`; labBox.appendChild(e); return { e, p: new THREE.Vector3(l.x, hAt(l.x, l.z) + 7, l.z) }; });
+  const labBox = $('labels'), labs = D.labels.map(l => { const e = document.createElement('div'); e.className = 'lab'; e.innerHTML = `${l.es}<i>${l.en}</i>`; labBox.appendChild(e); return { e, p: new THREE.Vector3(l.x, hAt(l.x, l.z) + (l.h || 7), l.z) }; });
 
   // sun on 27 Sep at this latitude, solar time
   const lat = D.lat * Math.PI / 180, decl = 23.44 * Math.PI / 180 * Math.sin(2 * Math.PI * (284 + 270) / 365);
