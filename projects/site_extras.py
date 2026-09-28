@@ -136,6 +136,13 @@ for fn in FILES:
             bx, by = grid2b(i_, j_)
             if -38 <= bx <= -10 and -36 <= by <= -21.5: z[j_, i_] = floor - .02
     d['z'] = [round(float(q), 3) for q in z.flatten()]
+    # ---- the stable pad (Will, 28 Sep: a corner of ground poked through the floor): cut the ground under the whole footprint
+    # (+2 ft) down to the stable floor so the hillside never shows inside ----
+    for j_ in range(H):
+        for i_ in range(W):
+            bx, by = grid2b(i_, j_)
+            if -38.5 <= bx <= 38.5 and -23.5 <= by <= 23.5 and z[j_, i_] > floor: z[j_, i_] = floor
+    d['z'] = [round(float(q), 3) for q in z.flatten()]
     # ---- the barn road comes straight into the middle of the west entry (Will, 28 Sep), not to the stable's corner ----
     rd = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road'][0]
     keep = [q for q in rd['pts'] if grid2b(q[0], q[1])[0] < -84]                   # the road as drawn, up to ~48 ft from the gable
