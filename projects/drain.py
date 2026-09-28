@@ -33,7 +33,7 @@ def features(ax,lw=1):
         if k=='path':
             P=np.array([q[:2] for q in s['pts']]); w=(s.get('pw',3.66)/FT)/cf
             ax.plot(P[:,0],P[:,1],color='#c9b48f',lw=max(1.2,w*5.2),solid_capstyle='round',zorder=2,alpha=.9)
-        elif k=='obj' and n in ('walker barn 72x40','covered stalls','trailer 8 x 40','stone trough 12x4'):
+        elif k=='obj' and n in ('walker barn 72x40','covered stalls','trailer 8 x 40','stone trough (long)','bleachers'):
             P=np.array(foot(s)+[foot(s)[0]]); ax.fill(P[:,0],P[:,1],color='white',alpha=.85,zorder=3); ax.plot(P[:,0],P[:,1],color=INK,lw=.8,zorder=4)
         elif k=='obj' and n in ('arena fence','round pen fence','site fence','cross fence'):
             pass
