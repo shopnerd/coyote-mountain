@@ -72,7 +72,7 @@ for fn in FILES:
     # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
     # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
-    A = np.array([-109.0, 8.0]); B = A + (np.array([-78.0, -88.0]) - A) / np.linalg.norm(np.array([-78.0, -88.0]) - A) * 40.0   # 40 ft from the old trough spot along the west road (Will: 100 was too long)
+    A = np.array([-56.0, -9.0]); B = np.array([-56.0, -49.0])   # 28 Sep (Will markup 2): 20 ft off the west gable, just south of the entry's drive lanes, 40 ft running south
     u = (B - A) / np.linalg.norm(B - A); nv = np.array([-u[1], u[0]]); LEN = np.linalg.norm(B - A); TW, WT = 3.5, .8
     m = Mesh(); NS = 2; secs = []
     for k in range(NS):
@@ -97,10 +97,10 @@ for fn in FILES:
         m.face([(*p_, wl) for p_ in c], 'water')
     d['strokes'].append(stroke(m, 'stone trough (long)', 'stone-trough-long.obj', z,
         'long stone water trough along the west road, 40 ft in 2 level sections stepping up the slope, rim 2 ft, ~750 gal (Will markup, 28 Sep)'))
-    # roof water from the stable (Will: capture it into the trough): a gutter downpipe at the stable's north-west corner, buried pipe to the north end
+    # roof water from the stable (Will: capture it into the trough): a gutter downpipe at the stable's south-west corner, buried pipe to the trough's north end
     tpl = [q for q in d['strokes'] if (q.get('name') or '') == 'stalls trough overflow pipe']
     if tpl:
-        rp = dict(tpl[0]); rp.update(name='stable roof water to the long trough (buried pipe)', pts=[[*b2grid(-37.0, 22.0), .5], [*b2grid(*(A + u * 2)), .5]])
+        rp = dict(tpl[0]); rp.update(name='stable roof water to the long trough (buried pipe)', pts=[[*b2grid(-37.0, -22.0), .5], [*b2grid(*(A + u * 2)), .5]])
         d['strokes'].append(rp)
     # ---- the pine grove between the parking and the stable (Will, 28 Sep: a small outcrop of modest, round-crowned pines),
     # placed where the aerial photo shows dark tree cover, clear of the walking path ----

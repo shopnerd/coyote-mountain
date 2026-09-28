@@ -53,11 +53,9 @@ AISLE = (' This is inside the stable, down its 14 ft aisle under exposed timber 
 WIDE = ('1-hero-sw', '3-site-ne', '12-high-south', '9-arrival', '11-arena', '6-west', '4-hill-s', 'r2-sink-rain', 'r3-stable-rain', '8-stable', '18-stable-west-elev', '2-corridor', '5-corridor-out')   # views where the stable shows
 # 28 Sep: fixes from Will's and Walker's gallery notes, for every view
 NOTES = (' Keep to the render: add NO building, arena, fence, tank, machinery or vehicle that it does not show (people and animals only). The small '
-         'boxes in the parking area are parked cars and pickups, nothing else; no car next to the stable. The dark green cone-shaped trees on the hillside '
-         'behind the stable are a real PINE FOREST, pines up to 30 ft tall, dense, with a narrow winding dirt walking trail through it. The large '
+         'boxes in the parking area are parked cars and pickups, nothing else; no car next to the stable. The few round green trees between the parking area and the stable are a SMALL grove of modest, round-crowned pines (15-22 ft), the walking path running through it; there is NO big forest anywhere. The large '
          'rounded-rectangle dirt track in the west is a riding trail around NATURAL ground: keep its inside natural, dry grass, scrub and oaks as the photo '
-         'shows, never a sand arena; the blue patch below it is the natural low spot where rain water pools. In front of the road end of the stable is a long, '
-         'low rectangular water trough of the same tan fieldstone as the stable wall, about 37 ft long, with open ground between it and the stable. The '
+         'shows, never a sand arena; the blue patch below it is the natural low spot where rain water pools. The long, low rectangular stone water trough (same tan fieldstone as the stable wall, about 40 ft, in two level sections stepping up the slope) stands along the inside of the west road, well away from the stable front, which stays open so you can drive right up to the stable. The '
          'round stone trough at the end of the covered stalls sits right under the end of the butterfly roof gutter chute. The covered stalls have a '
          'butterfly (V) roof, white pipe panels, and stand where the render puts them. The old white semi-trailer, when it shows, is the photographed one '
          'with the hand-painted sign, with the wooden bleachers, spiral stair and shade roof in front of it. People and horses at true scale (a horse is '
