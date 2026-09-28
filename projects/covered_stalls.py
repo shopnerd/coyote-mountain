@@ -100,8 +100,8 @@ mat('steel'); box(-RX, RX, -.6, .6, vz - .6, vz)
 # GAP of clear ground between the building end and the trough, and all round it; overflow piped to the ditch outlet.
 TROUGH_D, TROUGH_H, GAP = 8.0, 1.75, 10.0                # 27 Sep (Will): a low round ROCK trough, wall ROCK_T thick, iron tie rings set in it
 ROCK_T = 1.1                                              # GAP: clear ground round the trough's open sides
-END_GAP, CHUTE = 7.0, 7.0                                # 7 ft walk-through at the building end; chute cantilevers 7 ft past the roof, no post (Will)
-TX = -HL - END_GAP - TROUGH_D / 2                        # trough centre on the corridor's centre line
+END_GAP, CHUTE = 6.0, 8.0                                # 6 ft walk-around between the stall ends and the rim; chute cantilevers 8 ft past the roof, no post, pours into the trough centre
+TX = -RX - CHUTE                                         # 28 Sep (Walker): trough centred right under the chute's end; END_GAP = walk-around to the rim
 def ring(cx, r0, r1, z0, z1, n=24):                      # an open round tank: outer + inner wall, rim, bottom
     P = lambda r, a, zz: (cx + r * math.cos(a), r * math.sin(a), zz)
     for q in range(n):
@@ -122,7 +122,7 @@ for a in (math.radians(d_) for d_ in (60, 120, 180, 240, 300)):
         pt = lambda b, r: (c0[0] + tx_ * r * math.cos(b), c0[1] + ty_ * r * math.cos(b), c0[2] + r * math.sin(b))
         quad(pt(b0, rr), pt(b1, rr), pt(b1, rr - .06), pt(b0, rr - .06))
 CH_END = -RX - CHUTE                                     # open chute, cantilevered, pours in 2 ft inside the near rim
-assert TX + TROUGH_D / 2 - 1.5 > CH_END > TX, 'the chute must end over the trough'
+assert abs(CH_END - TX) < .01, 'the chute must end over the trough centre'
 cz = lambda x: vz - .02 * (-RX - x)                      # falls 2 % from the valley
 box(CH_END, -RX, -.6, .6, cz(CH_END) - .5, vz - .1)
 OBJ = os.path.join(HERE, 'covered-stalls.obj')

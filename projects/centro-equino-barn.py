@@ -117,7 +117,8 @@ def gate_x(xa, xb, y, h=RAIL_Z):              # a pipe gate across an opening al
     mat('fence')
     for xx in (xa, xb): box(xx - PIPE / 2, xx + PIPE / 2, y - PIPE / 2, y + PIPE / 2, .4, h)
     for zz in (.6, 2.4, 4.2, h - PIPE): box(xa, xb, y - PIPE / 2, y + PIPE / 2, zz, zz + PIPE)
-TACK_DOOR = (4.0, 8.0)
+TACK_DOOR = (4.0, 8.0)                        # inside doors to the aisle
+WASH_DOOR = (6.0, 9.0)                        # the one outside door, into the wash room (Walker, gallery note 28 Sep)
 for s in (1, -1):
     y = s * HD; holes, solid = [], []
     for r in rooms:
@@ -125,7 +126,7 @@ for s in (1, -1):
         if r['kind'] == 'stall': holes.append((r['c'] - DOOR[0] / 2, r['c'] + DOOR[0] / 2, 99))           # open doorway to the run
         elif r['kind'] in SOLID:
             solid.append((r['x0'], r['x1']))
-            if r['kind'] == 'tack / feed': holes.append((r['c'] - TACK_DOOR[0] / 2, r['c'] + TACK_DOOR[0] / 2, TACK_DOOR[1]))   # one outside door (Walker's sketch); the wash room opens to the aisle
+            if r['kind'] == 'wash': holes.append((r['c'] - WASH_DOOR[0] / 2, r['c'] + WASH_DOOR[0] / 2, WASH_DOOR[1]))   # the one outside door: 6 x 9 ft into the wash room
     mat('rock'); wall_x(-HL, HL, y, ROCK_T, 0, ROCK_H, [(a, b, t if t != 99 else ROCK_H) for a, b, t in holes])
     for a, b, t in holes:
         if t == 99: mat('steel'); box(a, b, y - .12, y + .12, DOOR[1], DOOR[1] + .25)                   # lintel over the doorway
@@ -229,6 +230,11 @@ for s in (1, -1):
             for xa, xb in ((r['x0'] + .2, ga), (gb, r['x1'] - .2)):
                 for zz in (.6, 2.4, 4.2, RAIL_Z - PIPE): box(xa, xb, yi - PIPE / 2, yi + PIPE / 2, zz, zz + PIPE)
             gate_x(ga, gb, yi)
+
+# ---- concrete wash pad (Walker, 28 Sep): 12 x 24 ft running parallel to the barn outside the wash-room door, on the south side ----
+mat('concrete')
+wr = [r for r in rooms if r['kind'] == 'wash'][0]
+box(-HL, -HL + 24, -HD - ROCK_T / 2 - 12, -HD - ROCK_T / 2, 0.0, 0.35)          # along the two rooms, clear of the first run; the wash door opens onto it
 
 # ---- runs: 12 x 40 ft off every stall on both sides, three-rail black pipe fence at 5 ft 6 in; the south ones climb at RUN_FALL ----
 mat('fence')

@@ -51,7 +51,20 @@ STABLE = (' The stable (27 Sep design): a 5 ft stacked fieldstone wall all round
 AISLE = (' This is inside the stable, down its 14 ft aisle under exposed timber trusses: both sides are stall fronts of black steel pipe with a pipe '
          'gate each, horses looking out; the plain walls are the plastered tack room. Add NO water tank, tub or trough; the aisle floor is packed earth.')
 
-WIDE = ('1-hero-sw', '3-site-ne', '12-high-south', '9-arrival', '11-arena', '6-west', '4-hill-s')   # site views where the stable shows
+WIDE = ('1-hero-sw', '3-site-ne', '12-high-south', '9-arrival', '11-arena', '6-west', '4-hill-s', 'r2-sink-rain', 'r3-stable-rain', '8-stable', '18-stable-west-elev', '2-corridor', '5-corridor-out')   # views where the stable shows
+# 28 Sep: fixes from Will's and Walker's gallery notes, for every view
+NOTES = (' Keep to the render: add NO building, arena, fence, tank, machinery or vehicle that it does not show (people and animals only). The small '
+         'boxes in the parking area are parked cars and pickups, nothing else; no car next to the stable. The dark green cone-shaped trees on the hillside '
+         'behind the stable are a real PINE FOREST, pines up to 30 ft tall, dense, with a narrow winding dirt walking trail through it. The large '
+         'rounded-rectangle dirt track in the west is a riding trail around NATURAL ground: keep its inside natural, dry grass, scrub and oaks as the photo '
+         'shows, never a sand arena; the blue patch below it is the natural low spot where rain water pools. In front of the road end of the stable is a long, '
+         'low rectangular water trough of the same tan fieldstone as the stable wall, about 37 ft long, with open ground between it and the stable. The '
+         'round stone trough at the end of the covered stalls sits right under the end of the butterfly roof gutter chute. The covered stalls have a '
+         'butterfly (V) roof, white pipe panels, and stand where the render puts them. The old white semi-trailer, when it shows, is the photographed one '
+         'with the hand-painted sign, with the wooden bleachers, spiral stair and shade roof in front of it. People and horses at true scale (a horse is '
+         'about 5 ft at the withers); nothing oversized.')
+WASH = (' At the road end of the stable, the south wall of the plastered rooms has one wide wooden door, 6 ft wide and 9 ft tall, into the wash room, opening '
+        'onto a 12 x 24 ft concrete pad along the wall.')
 
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
@@ -61,7 +74,7 @@ if __name__ == '__main__':
         v = f[6:-4]
         if ONLY and v not in ONLY: continue
         blockv = v.startswith('b')
-        prompt = (BLOCK if blockv else BRIEF) + LIFE + (' This view looks straight down from above: keep it exactly top-down.' if v in ('7-plan', 'b5-top') else '') + (BLEACH if ('bleachers' in v or v == '19-spiral') else '') + (RAIN if 'rain' in v else '') + (STABLE if ('stable' in v or v in WIDE) else '') + (AISLE if v == '10-stable-aisle' else '') + (TROUGH if v in ('2-corridor', '5-corridor-out', '1-hero-sw') else '')
+        prompt = (BLOCK if blockv else BRIEF) + LIFE + (' This view looks straight down from above: keep it exactly top-down.' if v in ('7-plan', 'b5-top') else '') + (BLEACH if ('bleachers' in v or v == '19-spiral') else '') + (RAIN if 'rain' in v else '') + (STABLE if ('stable' in v or v in WIDE) else '') + (AISLE if v == '10-stable-aisle' else '') + (TROUGH if v in ('2-corridor', '5-corridor-out', '1-hero-sw') else '') + NOTES + (WASH if v in ('18-stable-west-elev', '16-stable-sw', 'r3-stable-rain') else '')
         t = time.time()
         try:
             im = openai(os.path.join(SRC, f), prompt, [], k) if ENGINE == 'openai' else google(os.path.join(SRC, f), prompt, [], k)

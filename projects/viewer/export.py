@@ -25,8 +25,9 @@ STYLE = {   # name -> (group, body colour, roof colour, roof threshold above its
     'site fence': ('fence', '#e9e6de', None, 0), 'cross fence': ('fence', '#e9e6de', None, 0),
     'stone trough 12x4': ('water', '#a79f90', None, 0), 'watering station 10ft': ('water', '#a79f90', None, 0),
     'trailer 8 x 40': ('vehicle', '#f2f2f0', None, 0), 'bleachers': ('stable', '#8a6a48', None, 0),
+    'stone trough (long)': ('water', '#a79f90', None, 0), 'pine forest': ('trees', '#2f4a2c', None, 0),
 }
-MATOBJ = {'walker barn 72x40': 'centro-equino-barn.obj', 'covered stalls': 'covered-stalls.obj', 'bleachers': 'bleachers.obj', 'trailer 8 x 40': 'trailer-8x40.obj'}   # tagged meshes: split by material
+MATOBJ = {'walker barn 72x40': 'centro-equino-barn.obj', 'covered stalls': 'covered-stalls.obj', 'bleachers': 'bleachers.obj', 'trailer 8 x 40': 'trailer-8x40.obj', 'stone trough (long)': 'stone-trough-long.obj', 'pine forest': 'pine-forest.obj'}   # tagged meshes: split by material
 def obj_labels(path):                    # one material label per triangle, in the order topo.html triangulates the faces
     lab, cur, vn = [], 'body', 0
     for line in open(path, encoding='utf-8'):
@@ -68,7 +69,7 @@ def centre(name):
         if s.get('name') == name: c = s.get('c') or s['pts'][0]; return [round(c[0] * cs, 1), round(c[1] * cs, 1)]
 LABELS = [('Establo', 'Stable', 'walker barn 72x40'), ('Caballerizas techadas', 'Covered stalls', 'covered stalls'),
           ('Pista oval', 'Arena', 'arena fence'), ('Corral redondo', 'Round pen', 'round pen fence'),
-          ('Bebedero de piedra', 'Stone trough', 'stone trough 12x4'), ('Bajo natural', 'Natural sink', 'natural water sink'),
+          ('Bebedero de piedra', 'Stone trough', 'stone trough (long)'), ('Bajo natural', 'Natural sink', 'natural water sink'),
           ('Bebedero existente', 'Watering station', 'watering station 10ft'), ('Estacionamiento', 'Parking', 'parked car 3 · dark grey')]
 labels = []
 for es, en, nm in LABELS:
@@ -83,7 +84,19 @@ n_ij = (-math.sin(t), -math.cos(t)); e_ij = (math.cos(t), -math.sin(t))         
 from ponds import ponds as _ponds                                      # standing water after a rain: filled low spots (27 Sep)
 dep, zf = _ponds(d); pc = np.argwhere(dep > .04)
 ponds = [[int(i), int(j), round(float(zf[j, i] - Y0), 3)] for j, i in pc]
-data = dict(ponds=ponds, grid=[W, H], cs=cs, y0=Y0, z=b64(z.reshape(-1) - Y0), objects=objs, paths=paths, ditches=ditches, sink=sink, labels=labels,
+# contour lines every 1 m (marching squares on the graded ground), as segments in viewer coords, 28 Sep
+seg = []
+for L in np.arange(np.ceil(z.min()), np.floor(z.max()) + 1, 1.0):
+    for j in range(H - 1):
+        for i in range(W - 1):
+            q = [(i, j, z[j, i]), (i + 1, j, z[j, i + 1]), (i + 1, j + 1, z[j + 1, i + 1]), (i, j + 1, z[j + 1, i])]
+            pts = []
+            for a, b in zip(q, q[1:] + q[:1]):
+                if (a[2] - L) * (b[2] - L) < 0:
+                    t = (L - a[2]) / (b[2] - a[2]); pts.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
+            for k in range(0, len(pts) - 1, 2):
+                (i1, j1), (i2, j2) = pts[k], pts[k + 1]; seg += [i1 * cs, L - Y0 + .12, j1 * cs, i2 * cs, L - Y0 + .12, j2 * cs]
+data = dict(contours=b64(seg), ponds=ponds, grid=[W, H], cs=cs, y0=Y0, z=b64(z.reshape(-1) - Y0), objects=objs, paths=paths, ditches=ditches, sink=sink, labels=labels,
             north=[round(n_ij[0], 4), round(-(-math.cos(t)) * -1, 4)], lat=float(d['world']['lat']),
             n_ij=[round(v, 4) for v in n_ij], e_ij=[round(v, 4) for v in e_ij])
 # check the directions against the conversion itself

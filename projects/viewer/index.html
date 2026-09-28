@@ -97,6 +97,7 @@ body.shot{grid-template-columns:1fr}
       <label class="tog"><input type="checkbox" id="sPhoto" checked> Foto · Photo</label>
       <label class="tog"><input type="checkbox" id="sRoads" checked> Caminos · Roads</label>
       <label class="tog"><input type="checkbox" id="sWater" checked> Agua · Water</label>
+      <label class="tog"><input type="checkbox" id="sContours"> Curvas · Contours</label>
       <label class="tog"><input type="checkbox" id="sFence" checked> Cercas · Fences</label>
       <label class="tog"><input type="checkbox" id="sLabels" checked> Nombres · Labels</label>
     </div>
@@ -236,7 +237,7 @@ body.shot{grid-template-columns:1fr}
     g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
   }
   const MATS = {
-    cob: { color: 0xcbb393 }, troof: { color: 0xb9bab4 }, chassis: { color: 0x4a3526 }, tsideA: { color: 0xf2f2f0, photo: 'tsideA' }, tsideB: { color: 0xf2f2f0, photo: 'tsideB' }, tend: { color: 0xa9793e, photo: 'tend' },
+    cob: { color: 0xcbb393 }, concrete: { color: 0xcfcac0 }, pine: { color: 0x2c4a2e }, trunk: { color: 0x5a4030 }, troof: { color: 0xb9bab4 }, chassis: { color: 0x4a3526 }, tsideA: { color: 0xf2f2f0, photo: 'tsideA' }, tsideB: { color: 0xf2f2f0, photo: 'tsideB' }, tend: { color: 0xa9793e, photo: 'tend' },
     rock: { map: TEX.rock }, stakes: { map: TEX.stakes }, steel: { color: 0x2c2f33 }, glass: { color: 0xcfdde5, transparent: true, opacity: .6 }, wood: { color: 0x6a4e33 },
     fence: { color: 0x1d1f21 }, panel: { color: 0xefede8 }, galv: { color: 0xb4b9bd }, water: { color: 0x5b87a6 }, hay: { map: TEX.hay },
   };
@@ -293,6 +294,8 @@ body.shot{grid-template-columns:1fr}
       v.push(x - h, y, z - h, x + h, y, z - h, x + h, y, z + h, x - h, y, z - h, x + h, y, z + h, x - h, y, z + h); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(v, 3)); g.computeVertexNormals();
     const pm = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: 0x4f86b8, transparent: true, opacity: .72, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3 })); scene.add(pm); water.push(pm); }
+  const contours = (() => { if (!D.contours) return null; const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(f32(D.contours), 3));
+    const m = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0x2a1d10, transparent: true, opacity: .95 })); m.visible = false; scene.add(m); return m; })();   // 1 m contours (28 Sep)
   // labels
   const labBox = $('labels'), labs = D.labels.map(l => { const e = document.createElement('div'); e.className = 'lab'; e.innerHTML = `${l.es}<i>${l.en}</i>`; labBox.appendChild(e); return { e, p: new THREE.Vector3(l.x, hAt(l.x, l.z) + 7, l.z) }; });
 
@@ -341,7 +344,7 @@ body.shot{grid-template-columns:1fr}
   $('moreBtn').onclick = () => setSheet(aside.classList.contains('open') ? 128 : STOPS()[2], true);
   // switches
   const vis = (list, on) => list.forEach(m => m.visible = on);
-  const sw = { sRoof: on => vis(groups.roof, on), sPhoto: on => terrain.material = on ? photoMat : plain, sRoads: on => vis(roads, on), sWater: on => vis(water, on), sFence: on => vis(groups.fence, on), sLabels: on => labBox.hidden = !on };
+  const sw = { sContours: on => { if (contours) contours.visible = on; }, sRoof: on => vis(groups.roof, on), sPhoto: on => terrain.material = on ? photoMat : plain, sRoads: on => vis(roads, on), sWater: on => vis(water, on), sFence: on => vis(groups.fence, on), sLabels: on => labBox.hidden = !on };
   for (const id in sw) $(id).onchange = e => { sw[id](e.target.checked); draw(); };
   addEventListener('keydown', e => { if ((e.key === 'r' || e.key === 'R') && !e.target.closest('input')) { const c = $('sRoof'); c.checked = !c.checked; c.onchange({ target: c }); } });
   $('hour').oninput = e => setSun(+e.target.value);
@@ -441,7 +444,7 @@ body.shot{grid-template-columns:1fr}
     document.body.classList.add('shot'); labBox.hidden = true; anim = null; controls.enabled = false; resize();
     if (o.hour) setSun(o.hour);
     whiteModel(!!o.white); if (o.white) { vis(roads, true); labBox.hidden = true; }
-    vis(water, o.water === true);          // the drainage lines are engineering marks: off in the money shots
+    vis(water, o.water === true); if (contours) contours.visible = !!o.contours;          // the drainage lines are engineering marks: off in the money shots
     if (o.orbit) {                        // {ti, tj, az (deg, grid), el (deg), dist (m), fov}: looking at a target from around it
       const q = o.orbit, tx = q.ti * cs, tz = q.tj * cs, ty = hAt(tx, tz), az = q.az * Math.PI / 180, el = q.el * Math.PI / 180;
       camera.fov = q.fov || 30; camera.up.set(0, 1, 0);
