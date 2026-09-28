@@ -103,7 +103,7 @@ def platform(poly, top):                                   # a flat polygon top 
     for (xa, ya), (xb, yb) in zip(P, P[1:] + P[:1]):
         face([(cx, cy, top), (xa, ya, top), (xb, yb, top)], 'wood')
         face([(xa, ya, -0.1), (xb, yb, -0.1), (xb, yb, top), (xa, ya, top)], 'wood')
-for poly, k in ((B3, 1), (B2, 2), (B1, 3)): platform(poly, H - k * RISE)
+for poly, k in ((B1, 1), (B2, 2), (B3, 3)): platform(poly, H - k * RISE)   # largest (blade 1) just below the deck, smallest (blade 3) lowest (Will)
 prism([(X0, YS), (X1, YS), (X0 + DR * FT, YD), (X0, YD)], -0.1, H, 'wood')          # the 6 ft deck, solid to the ground, right end slanted as drawn
 # ---- shade roof the full length over the deck: from the trailer's top edge down to a front beam on four posts at the deck front ----
 RX0, RX1, RZ0, RZ1 = X0 - .3, X1 + .3, 3.96, 3.2
