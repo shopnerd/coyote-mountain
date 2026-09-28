@@ -236,10 +236,13 @@ mat('concrete')
 wr = [r for r in rooms if r['kind'] == 'wash'][0]
 box(-HL, -HL + 24, -HD - ROCK_T / 2 - 12, -HD - ROCK_T / 2, 0.0, 0.35)          # along the two rooms, clear of the first run; the wash door opens onto it
 
+# ---- tan dirt floor over the whole stable inside the walls (Will, 28 Sep); the rooms get concrete on top of it ----
+mat('dirt'); box(-HL + ROCK_T / 2, HL - ROCK_T / 2, -HD + ROCK_T / 2, HD - ROCK_T / 2, 0.0, 0.12)
+
 # ---- concrete floors in the two closed rooms (Will, 28 Sep) ----
 mat('concrete')
 for r in rooms:
-    if r['kind'] in SOLID: box(r['x0'] + .3, r['x1'] - .3, -HD + ROCK_T / 2, -HD + ROW_D - .3, 0.0, 0.25)
+    if r['kind'] in SOLID: box(r['x0'] + .3, r['x1'] - .3, -HD + ROCK_T / 2, -HD + ROW_D - .3, 0.0, 0.28)
 
 # ---- runs: 12 x 40 ft off every stall on both sides, three-rail black pipe fence at 5 ft 6 in; the south ones climb at RUN_FALL ----
 mat('fence')
