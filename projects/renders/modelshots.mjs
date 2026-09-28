@@ -39,6 +39,8 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: '22-picnic', orbit: { ti: 99.77, tj: 42.65, az: 225, el: 18, dist: 14, fov: 55 } },
   { id: '23-picnic-side', orbit: { ti: 99.77, tj: 42.65, az: 190, el: 14, dist: 13, fov: 55 } },
   { id: '24-stable-east-roofless', noroof: true, orbit: { ti: 110.5, tj: 60.5, az: -60, el: 50, dist: 30, fov: 55 } },
+  { id: '25-cover', orbit: { ti: 90, tj: 63, az: 185, el: 24, dist: 48, fov: 55 } },
+  { id: '25b-cover', orbit: { ti: 92, tj: 62, az: 200, el: 26, dist: 58, fov: 55 } },
   { id: 'r1-plan-rain', water: true, top: { i: 88, j: 60, w: 420 } },
   { id: 'r2-sink-rain', water: true, orbit: { ti: 66, tj: 72, az: -70, el: 42, dist: 170 } },
   { id: 'r3-stable-rain', water: true, orbit: { ti: 104, tj: 62, az: 95, el: 48, dist: 150 } },
