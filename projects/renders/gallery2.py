@@ -23,7 +23,7 @@ BLOCK = ('This image is a render of an accurate 3D model: a rectangular block of
          'roads, the stone-and-tomato-stake stable with its dark corrugated roof and clerestory and black-fenced runs on both sides, the covered stalls with '
          'their white pipe panels and matte corrugated butterfly roof, the sand arena and round pen with white fences, vineyard rows where the render shows '
          'them. The four cut sides are smooth, plain light grey, like the base of an '
-         'architectural presentation model: no soil, no layers, no texture (Will, 27 Sep). The background stays pure, empty white with only a soft shadow directly under the block.')
+         'architectural presentation model: no soil, no layers, no texture (Will, 27 Sep). The background stays pure, empty white with only a soft shadow directly under the block. Show exactly ONE single block, once, exactly where the render has it: never a second copy, never a stacked or offset duplicate.')
 def gemini_key():
     k = os.environ.get('GEMINI_API_KEY') or key('GEMINI_API_KEY')
     if k: return k
@@ -55,7 +55,7 @@ WIDE = ('1-hero-sw', '3-site-ne', '12-high-south', '9-arrival', '11-arena', '6-w
 NOTES = (' Keep to the render: add NO building, arena, fence, tank, machinery or vehicle that it does not show (people and animals only). The small '
          'boxes in the parking area are parked cars and pickups, nothing else; no car next to the stable. The few round green trees between the parking area and the stable are a SMALL grove of modest, round-crowned pines (15-22 ft), the walking path running through it; there is NO big forest anywhere. The large '
          'rounded-rectangle dirt track in the west is a riding trail around NATURAL ground: keep its inside natural, dry grass, scrub and oaks as the photo '
-         'shows, never a sand arena; the blue patch below it is the natural low spot where rain water pools. The long, low rectangular stone water trough (same tan fieldstone as the stable wall, about 40 ft, in two level sections stepping up the slope) stands along the inside of the west road, well away from the stable front, which stays open so you can drive right up to the stable. The '
+         'shows, never a sand arena; the blue patch below it is the natural low spot where rain water pools. The long, low rectangular stone water trough (same tan fieldstone as the stable wall, about 40 ft, one level) stands about 20 ft out from the road end of the stable, beside the drive-in; the dirt road curves straight into the big entry door of the stable and the front stays open so you can drive right up. The wash room and tack room have concrete floors and a concrete pad along their wall. The '
          'round stone trough at the end of the covered stalls sits right under the end of the butterfly roof gutter chute. The covered stalls have a '
          'butterfly (V) roof, white pipe panels, and stand where the render puts them. The old white semi-trailer, when it shows, is the photographed one '
          'with the hand-painted sign, with the wooden bleachers, spiral stair and shade roof in front of it. People and horses at true scale (a horse is '
