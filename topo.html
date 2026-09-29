@@ -1175,7 +1175,6 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   flushLines(); if (rawPass) return;   /* the height pass wants the ground alone */
   if (cutSide) drawCutFace(c, proj, cutSide, lo, hi);
   nightInk = night ? 'rgba(214,226,238,.5)' : null; drawRoads(c, (i, j) => proj(i, j, sample(zv, i, j) + .03), mini ? .7 : 1, true); nightInk = null;
-  if (window.__lake3 && !mini) window.__lake3(c, proj);   /* the dam tool's lake at full water, over the ground */
   if (window.__sdDraw3 && !mini) window.__sdDraw3(c, proj, R);   /* 3d shapes: their visible edges, the picked one in the accent colour */
   drawStrokes(c, (i, j, zz) => proj(i, j, (zz == null ? sample(zv, i, j) : zz) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
   if (S.an.dam && damAt() && !mini && !(window.__dam3Own && window.__dam3Own())) drawDam3D(c, proj);   // the dam tool, when it has a wall here, draws its own in 3d
@@ -8622,8 +8621,9 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     c.restore(); };
   let sdHideC = { key: '' };
   window.__sdHideTiles = step => {        // ground tiles (at the drawn step) whose corners are all inside a shape's outline and below its top
-    const list = sdList(); if (!list.length) return null; const key = [S.strokeVer, S.terrainVer, step, W, S.waterVer].join('|'); if (sdHideC.key === key) return sdHideC.m;
+    const list = sdList(); window.__derived3d(); const lk = d3C.lake; if (!list.length && !lk) return null; const key = [S.strokeVer, S.terrainVer, step, W, S.waterVer, d3C.key].join('|'); if (sdHideC.key === key) return sdHideC.m;
     const m = new Uint8Array((W - 1) * (H - 1)); let any = false;
+    if (lk) for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) { const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step); let ok = true; for (const [a, b] of [[i, j], [i2, j], [i2, j2], [i, j2]]) { const n = idx(a, b); if (!lk.cells.has(n) || zv[n] >= lk.lv) { ok = false; break; } } if (ok) { m[j * (W - 1) + i] = 1; any = true; } }   // ground under the lake
     for (const st of list) { const P = objFoot(st), top = gAt(st.c[0], st.c[1]) + st.lift + st.solid.h; let i0 = W, i1 = 0, j0 = H, j1 = 0; for (const q of P) { i0 = Math.min(i0, q[0]); i1 = Math.max(i1, q[0]); j0 = Math.min(j0, q[1]); j1 = Math.max(j1, q[1]); }
       for (let j = Math.max(0, Math.floor(j0 / step) * step); j <= Math.min(H - 2, j1); j += step) for (let i = Math.max(0, Math.floor(i0 / step) * step); i <= Math.min(W - 2, i1); i += step) { const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step); let ok = true;
         for (const [a, b] of [[i, j], [i2, j], [i2, j2], [i, j2]]) if (!inPolyXY(a, b, P) || zv[idx(a, b)] >= top) { ok = false; break; } if (ok) { m[j * (W - 1) + i] = 1; any = true; } } }
@@ -8705,11 +8705,13 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
         const S2 = r.st.filter((q, n) => n % step === 0 || n === r.st.length - 1);
         for (let n = 0; n + 1 < S2.length; n++) { if (S2[n].h <= 0 && S2[n + 1].h <= 0) continue; const A = prof(S2[n]), B = prof(S2[n + 1]); for (let m = 0; m < 3; m++) { const Tt = m === 1 ? K : T; Tt.push(A[m], B[m], B[m + 1], A[m], B[m + 1], A[m + 1]); } }
         const cc = [r.gi, r.gj]; if (T.length) list.push(obj(cc, T, [178, 152, 114], 'dam wall')); if (K.length) list.push(obj(cc, K, [206, 190, 160], 'dam crest'));
-        const lv = r.pool.crest, L2 = r.pool.cells.length ? poolLoops(r.pool.cells, lv) : [];   // the lake at full water: its shoreline, filled over the ground after the model is drawn
-        lake = L2.length ? { loops: L2, lv } : null; } }
+        const lv = r.pool.crest, L2 = r.pool.cells.length ? poolLoops(r.pool.cells, lv) : [], Wt = [];   // the lake at full water: its shoreline outline as flat faces; the flooded ground under it is hidden (__sdHideTiles)
+        for (const loop of L2) { if (!loop || loop.length < 3) continue; const P = loop.map(q => [q[0], -q[1]]); if (polyAreaS(P) < 0) P.reverse(); for (const [x, y, w2] of earcut2(P)) Wt.push([P[x][0], -P[x][1], lv], [P[y][0], -P[y][1], lv], [P[w2][0], -P[w2][1], lv]); }
+        if (Wt.length) list.push(obj([r.pool.ci, r.pool.cj], Wt, [104, 146, 184], 'lake'));
+        lake = r.pool.cells.length ? { cells: new Set(r.pool.cells), lv } : null; } }
     d3C = { key, list, lake }; return list; };
   window.__dam3Own = () => { window.__derived3d(); return !!(d3C.list.some(o => o.name === 'dam wall')); };
-  window.__lake3 = (c, proj) => { window.__derived3d(); const lk = d3C.lake; if (!lk) return; c.save(); c.fillStyle = 'rgba(96,138,176,.85)'; fillPool(c, lk.loops, proj, lk.lv); c.strokeStyle = 'rgba(40,70,100,.6)'; c.lineWidth = 1; c.stroke(); c.restore(); };
+
   { const st2 = make('style'); st2.textContent = '.sdrow{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--ink2);margin:4px 0}.sdrow input{width:7em;font:inherit;padding:3px 5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:3px}'; document.head.append(st2); }
 
   /* connect AI: the user's own assistant (Claude or any app that takes MCP connectors) drives this page through the coyote-mcp relay. the page asks the relay for commands and runs only the fixed set below; every change is undoable */
