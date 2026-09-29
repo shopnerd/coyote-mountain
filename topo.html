@@ -8514,6 +8514,166 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   head.insertBefore(learnDet, findWrap.nextSibling);
   window.__ui2learn = () => { learnMenu(); learnDet.open = true; };
   side.addEventListener('scroll', () => tourPlace());
+  /* connect AI: the user's own assistant (Claude or any app that takes MCP connectors) drives this page through the coyote-mcp relay. the page asks the relay for commands and runs only the fixed set below; every change is undoable */
+  {
+    const RELAY = (() => { try { return new URLSearchParams(location.search).get('relay') || localStorage.getItem('coyote-ai-relay') || 'https://coyote-mcp.netlify.app'; } catch (_) { return 'https://coyote-mcp.netlify.app'; } })().replace(/\/+$/, '');
+    const IDLE_MS = 45 * 60000, ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    const newCode = () => { const a = new Uint8Array(10); crypto.getRandomValues(a); return Array.from(a, v => ABC[v % ABC.length]).join(''); };
+    let code = ''; try { code = localStorage.getItem('coyote-ai-code') || ''; } catch (_) {} if (!/^[A-Z0-9]{10}$/.test(code)) { code = newCode(); try { localStorage.setItem('coyote-ai-code', code); } catch (_) {} }
+    const AI = { on: false, last: 0, lastName: '', err: '', worker: null, queue: Promise.resolve(), n: 0 };
+    const addr = () => `${RELAY}/mcp/${code}`;
+    const det = make('details', { id: 'u2aiDet' }), pop = make('div', { id: 'u2aiPop' }), sum = make('summary', { cls: 'u2b', text: 'connect AI' }); det.append(sum, pop);
+    const st = make('style'); st.textContent = '#u2aiPop{position:absolute;top:28px;right:0;z-index:40;background:var(--panel);border:1px solid var(--ink2);padding:10px;width:320px;max-width:calc(100vw - 16px);box-shadow:0 8px 24px rgba(0,0,0,.14);display:flex;flex-direction:column;gap:8px}#u2aiPop input{font:inherit;font-size:11px;width:100%;box-sizing:border-box;padding:5px 6px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:3px}#u2aiPop .row{display:flex;gap:6px;align-items:center}#u2aiPop .aist{font-size:11px;color:var(--ink2)}#u2aiPop .aist b{color:var(--ink)}#u2aiDet summary.live{border-color:#d9895d;background:#fdf3ea;color:var(--ink)}:root[data-theme=dark] #u2aiDet summary.live{background:#4a2a1b;color:#ffe3d1}';
+    document.head.append(st);
+    const onBtn = make('button', { cls: 'u2b', type: 'button' }), addrIn = make('input', { type: 'text', readonly: '', 'aria-label': 'connector address' }), copyBtn = make('button', { cls: 'u2b', type: 'button', text: 'copy' }), statEl = make('div', { cls: 'aist' }), codeBtn = make('button', { cls: 'u2b', type: 'button', text: 'new code' });
+    pop.append(make('p', { cls: 'u2note', text: 'let your own AI assistant work in this page: fetch a place, grade, plant, draw, run the water, take pictures and export. its changes appear here live, and undo takes any of them back.' }),
+      make('div', { cls: 'row' }, [onBtn, statEl]), make('div', { cls: 'u2note', text: 'your connector address' }), make('div', { cls: 'row' }, [addrIn, copyBtn]),
+      make('p', { cls: 'u2note', text: 'in Claude: settings → connectors → add custom connector, paste the address, then ask it to work on your site. keep this tab open while it works. anyone with the address can drive this page while it is on; new code cuts the old address off.' }),
+      make('div', { cls: 'row' }, [codeBtn]));
+    head.insertBefore(det, learnDet);
+    const ago = t => { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? s + ' s ago' : Math.round(s / 60) + ' min ago'; };
+    function aiUI() {
+      addrIn.value = addr(); onBtn.textContent = AI.on ? 'switch off' : 'switch on'; sum.classList.toggle('live', AI.on); sum.textContent = AI.on ? 'AI on' : 'connect AI';
+      statEl.innerHTML = ''; statEl.append(AI.err ? AI.err : !AI.on ? 'off' : AI.last ? make('span', {}, ['last: ', make('b', { text: AI.lastName }), ' · ' + ago(AI.last)]) : 'listening · waiting for your AI');
+    }
+    const WSRC = `let url='',on=false,fast=0;onmessage=e=>{const d=e.data;if(d.url!==undefined)url=d.url;if(d.on!==undefined)on=d.on;if(d.fast)fast=Date.now();};
+(async()=>{for(;;){if(on&&url){try{const r=await fetch(url,{cache:'no-store'});const j=await r.json();postMessage({ok:r.ok,cmds:j.cmds||[]});if((j.cmds||[]).length)fast=Date.now();}catch(e){postMessage({ok:false,err:String(e)});}}await new Promise(r=>setTimeout(r,!on?500:Date.now()-fast<120000?700:2000));}})();`;
+    function aiSet(on) {
+      AI.on = on; AI.err = ''; if (on) AI.last = AI.last || 0; try { localStorage.setItem('coyote-ai-on', on ? '1' : ''); } catch (_) {}
+      if (on && !AI.worker) { AI.worker = new Worker(URL.createObjectURL(new Blob([WSRC], { type: 'text/javascript' }))); AI.worker.onmessage = e => { const d = e.data; if (!d.ok) { AI.err = 'cannot reach the relay · retrying'; aiUI(); return; } if (AI.err) { AI.err = ''; aiUI(); } for (const c of d.cmds) AI.queue = AI.queue.then(() => aiRun(c)); }; }
+      if (AI.worker) AI.worker.postMessage({ url: `${RELAY}/api/next?s=${code}`, on, fast: on });
+      if (!on) fetch(`${RELAY}/api/bye?s=${code}`, { cache: 'no-store' }).catch(() => {});
+      AI.since = Date.now(); aiUI();
+    }
+    onBtn.onclick = () => aiSet(!AI.on);
+    copyBtn.onclick = () => { addrIn.select(); (navigator.clipboard ? navigator.clipboard.writeText(addr()) : Promise.reject()).then(() => toast('connector address copied'), () => { document.execCommand('copy'); toast('connector address copied'); }); };
+    codeBtn.onclick = () => { if (AI.on) fetch(`${RELAY}/api/bye?s=${code}`, { cache: 'no-store' }).catch(() => {}); code = newCode(); try { localStorage.setItem('coyote-ai-code', code); } catch (_) {} if (AI.worker) AI.worker.postMessage({ url: `${RELAY}/api/next?s=${code}` }); aiUI(); toast('new code · the old address no longer works; paste the new one into your AI'); };
+    setInterval(() => { if (AI.on && Date.now() - Math.max(AI.last, AI.since || 0) > IDLE_MS) { aiSet(false); AI.err = 'paused after 45 idle minutes · switch on again'; } if (det.open || AI.on) aiUI(); }, 5000);
+    try { if (localStorage.getItem('coyote-ai-on') === '1') setTimeout(() => aiSet(true), 1500); } catch (_) {}
+    aiUI();
+
+    /* the commands */
+    const D = Math.PI / 180, uz = m => +(isFt() ? m * FT : m).toFixed(isFt() ? 1 : 2), un = () => isFt() ? 'ft' : 'm';
+    const xyToG = (x, y) => { const t = S.rot * D, sx = x * Math.cos(t) - y * Math.sin(t), sy = x * Math.sin(t) + y * Math.cos(t); return [sx / cs() + (W - 1) / 2, (H - 1) / 2 - sy / cs()]; };
+    const gToXY = (i, j) => { const t = S.rot * D, sx = (i - (W - 1) / 2) * cs(), sy = ((H - 1) / 2 - j) * cs(); return [sx * Math.cos(t) + sy * Math.sin(t), -sx * Math.sin(t) + sy * Math.cos(t)]; };
+    const toG = p => { if (!p || typeof p !== 'object') throw new Error('a point needs {lat, lon} or {x, y}'); if (isFinite(p.lat) && isFinite(p.lon)) { if (!S.world) throw new Error('this is a sketch with no real place yet: use {x, y} metres, or go_to_place first'); return latLonToGrid(+p.lat, +p.lon); } if (isFinite(p.x) && isFinite(p.y)) return xyToG(+p.x, +p.y); throw new Error('a point needs {lat, lon} or {x, y}'); };
+    const inside = g => g[0] >= 0 && g[1] >= 0 && g[0] <= W - 1 && g[1] <= H - 1;
+    const ptsG = (list, min = 1) => { if (!Array.isArray(list) || list.length < min) throw new Error(`needs at least ${min} point${min > 1 ? 's' : ''}`); const g = list.slice(0, 2000).map(toG); if (!g.some(inside)) throw new Error('every point is outside the site; get_state gives the extent'); return g; };
+    const outNote = g => { const n = g.filter(q => !inside(q)).length; return n ? ` (${n} point${n > 1 ? 's' : ''} outside the site)` : ''; };
+    const where = (i, j) => { const [x, y] = gToXY(i, j), o = { x: +x.toFixed(1), y: +y.toFixed(1) }; if (S.world) { const [la, lo] = nodeLatLon(i, j, S.world.lat, S.world.lon); o.lat = +la.toFixed(6); o.lon = +lo.toFixed(6); } return o; };
+    const changed = () => { S.strokeVer++; S.dirty = true; updateStats(); };
+    function drawNow() { try { zdisp(); S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel(ctx, S.w, S.h, 1)); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); } catch (_) {} }
+    const settle = async () => { drawNow(); for (let k = 0; k < 40 && anaPending; k++) await new Promise(r => setTimeout(r, 100)); await new Promise(r => setTimeout(r, 60)); drawNow(); };
+    function viewTo(v) {
+      if (v === 'analysis') { state.task = 'study'; chooseTool('water'); state.view = 'plan'; applyView(); return; }
+      if (v === 'plan' && tool().analysis) { state.task = 'site'; chooseTool('place'); }
+      state.view = v; applyView();
+    }
+    function camTo(c, persp) {
+      if (c) { if (S.mode !== 'model') viewTo('3d'); const eye = { eye: 1.47, low: 1.25, high: .95 }[c]; if (eye) { S.cam.pitch = eye; S.cam.persp = true; } else if (VIEWS[c]) { S.cam.yaw = VIEWS[c][0]; S.cam.pitch = VIEWS[c][1]; S.cam.pan.x = S.cam.pan.y = 0; } else throw new Error('unknown camera ' + c); }
+      if (persp != null) S.cam.persp = !!persp; { const b = document.getElementById('perspBtn'); if (b) b.classList.toggle('on', !!S.cam.persp); } S.dirty = true;
+    }
+    const viewName = () => S.mode === 'model' ? '3d' : S.mode;
+    const circle = (c, r, n = 48) => { const out = []; for (let t = 0; t <= n; t++) { const a = t / n * TAU; out.push([c[0] + Math.cos(a) * r, c[1] + Math.sin(a) * r, .5]); } return out; };
+    const closeRing = g => { const a = g[0], b = g[g.length - 1]; return Math.hypot(a[0] - b[0], a[1] - b[1]) < 1e-6 ? g : g.concat([a.slice()]); };
+    const p5 = g => g.map(q => [q[0], q[1], .5]);
+    const withS = (vals, fn) => { const old = {}; for (const k in vals) { old[k] = S[k]; S[k] = vals[k]; } try { return fn(); } finally { Object.assign(S, old); } };
+    const clickSeg = (row, attr, val) => { const b = document.querySelector(`#${row} button[data-${attr}="${val}"]`); if (b && !b.classList.contains('on')) b.click(); return !!b; };
+    const ANA = { flow: 'flow', catchments: 'catch', ridges: 'ridge', keypoints: 'keys', keyline: 'keyline', swales: 'swales', dam: 'dam', flood: 'flood' };
+
+    const CMD = {
+      async get_state() {
+        const c = [[0, 0], [W - 1, 0], [W - 1, H - 1], [0, H - 1]].map(q => where(q[0], q[1])); let lo = Infinity, hi = -Infinity, elo = Infinity, ehi = -Infinity; for (let n = 0; n < W * H; n++) { lo = Math.min(lo, z[n]); hi = Math.max(hi, z[n]); elo = Math.min(elo, base[n]); ehi = Math.max(ehi, base[n]); }
+        const kinds = {}; for (const s of S.strokes) { const k = s.kind || (s.shape ? 'shape' : 'line'); kinds[k] = (kinds[k] || 0) + 1; }
+        const t = tool(), ivl = (isFt() ? INTERVALS_FT : INTERVALS)[+document.getElementById('interval').value];
+        return { text: JSON.stringify({ place: S.world ? S.world.name : 'sample sketch (no real place yet)', centre: S.world ? { lat: S.world.lat, lon: S.world.lon } : null, data: S.world ? S.world.src : null,
+          site: { width_m: +S.siteW.toFixed(1), height_m: +(cs() * (H - 1)).toFixed(1), cell_m: +cs().toFixed(2), rotation_deg: S.rot, grid: [W, H], corners_nw_ne_se_sw: c, note: 'x east, y north, metres from the centre' },
+          units: S.unit, contour_interval: ivl ? uz(ivl) + ' ' + un() : null, view: viewName(), task: state.task, tool: t.id, camera: S.mode === 'model' ? { yaw: +S.cam.yaw.toFixed(2), pitch: +S.cam.pitch.toFixed(2), perspective: !!S.cam.persp } : undefined,
+          existing_ground: { low: uz(elo), high: uz(ehi) }, proposed_ground: { low: uz(lo), high: uz(hi) }, cut: document.getElementById('cut').textContent, fill: document.getElementById('fill').textContent,
+          water_layers: Object.fromEntries(Object.entries(ANA).map(([k, v]) => [k, !!S.an[v]])), aerial_photo: !!S[aeKey()], surface_color: S.colorMode, labels: S.labels, rain: S.rain,
+          drawn: kinds, sections: S.secs.length, lot_boundary: !!(S.boundary && S.boundary.length), undo_steps: undoStack.length,
+          tools: TASKS.map(tk => `${tk.id}: ` + tk.tools.map(x => `${x.id} (${x.name})`).join(', ')) }) };
+      },
+      async screenshot(a) {
+        if (a.view) viewTo(a.view); if (a.camera) camTo(a.camera); await settle();
+        const mx = Math.max(200, Math.min(2000, +a.max_px || 1200)), k = Math.min(1, mx / Math.max(cv.width, cv.height)), o = document.createElement('canvas'); o.width = Math.round(cv.width * k); o.height = Math.round(cv.height * k);
+        const g = o.getContext('2d'); g.fillStyle = '#f0f0ec'; g.fillRect(0, 0, o.width, o.height); g.drawImage(cv, 0, 0, o.width, o.height);
+        return { text: `${viewName()} view of ${S.world ? S.world.name : 'the sketch'}, ${o.width}×${o.height}`, image: { data: o.toDataURL('image/jpeg', .85).split(',')[1], mimeType: 'image/jpeg' } };
+      },
+      async go_to_place(a) {
+        if (a.width_m) setSiteW(+a.width_m, true);
+        if (a.rotation_deg != null) { const r = document.getElementById('rot'); r.value = +a.rotation_deg; r.dispatchEvent(new Event('input')); }
+        if (isFinite(a.lat) && isFinite(a.lon)) { document.getElementById('place').value = a.lat + ', ' + a.lon; await fetchWorld({ lat: +a.lat, lon: +a.lon, name: a.place || `${(+a.lat).toFixed(4)}, ${(+a.lon).toFixed(4)}` }); }
+        else if (a.place) { document.getElementById('place').value = String(a.place).slice(0, 200); await fetchWorld(); }
+        else throw new Error('give a place name or lat and lon');
+        const msg = document.getElementById('worldStatus').textContent; if (!S.world) throw new Error('the fetch did not find that place: ' + msg);
+        drawNow(); return { text: `now at ${S.world.name} (${S.world.lat.toFixed(5)}, ${S.world.lon.toFixed(5)}), ${fL(S.siteW, 0)} wide. ${msg}` };
+      },
+      async set_view(a) { viewTo(a.view); if (a.camera || a.perspective != null) camTo(a.camera, a.perspective); drawNow(); return { text: 'view: ' + viewName() + (a.camera ? ' · ' + a.camera : '') }; },
+      async set_display(a) {
+        const did = [];
+        if (a.units && a.units !== S.unit) { const u = document.getElementById('unit'); u.value = a.units; u.onchange({ target: u }); did.push('units ' + a.units); }
+        if (a.contour_interval) { const list = isFt() ? INTERVALS_FT : INTERVALS, want = +a.contour_interval / (isFt() ? FT : 1); let k = 0; for (let q = 0; q < list.length; q++) if (Math.abs(Math.log(list[q] / want)) < Math.abs(Math.log(list[k] / want))) k = q; const el = document.getElementById('interval'); el.value = k; el.dispatchEvent(new Event('input')); did.push('contours every ' + uz(list[k]) + ' ' + un()); }
+        if (a.aerial_photo != null) { clickSeg('aerialRow', 'ae', a.aerial_photo ? '1' : '0'); did.push(a.aerial_photo ? 'photo on' : 'photo off'); }
+        if (a.surface_color) { if (!clickSeg('colorRow', 'c', a.surface_color)) { S.colorMode = a.surface_color; S.dirty = true; } did.push('surface ' + a.surface_color); }
+        if (a.labels != null) { clickSeg('labelRow', 'l', a.labels ? '1' : '0'); did.push(a.labels ? 'labels' : 'no labels'); }
+        if (a.water_layers) for (const [k, v] of Object.entries(a.water_layers)) { const key = ANA[k]; if (!key || !!S.an[key] === !!v) continue; const b = document.querySelector(`#anaLayers button[data-a="${key}"]`); if (b) b.click(); else S.an[key] = !!v; did.push(`${k} ${v ? 'on' : 'off'}`); }
+        if (a.rain != null) { if (a.rain && S.mode !== 'model' && S.mode !== 'analysis') viewTo('analysis'); setRain(!!a.rain); did.push(a.rain ? 'rain' : 'rain stopped'); }
+        S.dirty = true; drawNow(); return { text: did.length ? did.join(', ') : 'nothing to change' };
+      },
+      async get_elevations(a) {
+        const g = ptsG(a.points).slice(0, 400);
+        return { text: JSON.stringify({ units: un(), points: g.map(q => { if (!inside(q)) return { ...where(q[0], q[1]), outside: true }; const [gx, gy] = grad(q[0], q[1]); return { ...where(q[0], q[1]), existing: uz(sample(base, q[0], q[1])), proposed: uz(sample(z, q[0], q[1])), slope_pct: +(Math.hypot(gx, gy) * 100).toFixed(1) }; }) }) };
+      },
+      async draw(a) {
+        const col = ['ink', 'ember', 'water'].includes(a.color) ? a.color : 'ink', sty = { color: col, w: Math.max(.4, Math.min(4, +a.width || 1)), a: 1, dash: !!a.dashed }; let g, st;
+        if (a.shape === 'note') { g = ptsG(a.points); const q = g[0]; st = { kind: 'note', color: col, text: String(a.text || '').slice(0, 200) || 'note', z3: true, at: new Date().toISOString().slice(0, 10), w: 1, a: 1, pts: [[q[0], q[1], .5, sample(zv, q[0], q[1])]] }; }
+        else if (a.shape === 'circle') { g = ptsG(a.points); if (!(+a.radius_m > 0)) throw new Error('a circle needs radius_m'); st = { ...sty, shape: true, pts: circle(g[0], +a.radius_m / cs()) }; }
+        else if (a.shape === 'rectangle') { g = ptsG(a.points, 2); const [p, q] = g; st = { ...sty, shape: true, pts: p5([[p[0], p[1]], [q[0], p[1]], [q[0], q[1]], [p[0], q[1]], [p[0], p[1]]]) }; }
+        else if (a.shape === 'polygon') { g = ptsG(a.points, 3); st = { ...sty, shape: true, pts: p5(closeRing(g)) }; }
+        else { g = ptsG(a.points, 2); st = { ...sty, shape: true, pts: p5(g) }; }
+        snapshot(); S.strokes.push(st); changed(); drawNow(); return { text: `drew a ${a.shape || 'line'}${outNote(g)}` };
+      },
+      async plant(a) {
+        const k = a.kind; let g; snapshot();
+        if (k === 'tree') { g = ptsG(a.points); const r = Math.max(.5, +a.canopy_m || 6) / 2 / cs(); for (const q of g) if (inside(q)) S.strokes.push({ kind: 'tree', color: 'ink', w: 1, a: 1, c: [q[0], q[1]], r, pts: circle(q, r) }); }
+        else if (k === 'hedge') { g = ptsG(a.points, 2); S.strokes.push({ kind: 'hedge', color: 'ink', w: 1, a: 1, pts: p5(g) }); }
+        else if (['shrub', 'gravel', 'paving'].includes(k)) { g = ptsG(a.points, 3); S.strokes.push({ kind: k, color: 'ink', w: 1, a: 1, pts: p5(closeRing(g)) }); }
+        else { undoStack.pop(); throw new Error('kind is tree, hedge, shrub, gravel or paving'); }
+        changed(); drawNow(); return { text: `planted ${k === 'tree' ? g.filter(inside).length + ' tree' + (g.length > 1 ? 's' : '') : k}${outNote(g)}` };
+      },
+      async make_pad(a) {
+        const g = ptsG(a.outline, 3).map(q => [Math.max(0, Math.min(W - 1, q[0])), Math.max(0, Math.min(H - 1, q[1]))]), drag = { p0: toSheet(g[0][0], g[0][1]), p1: toSheet(g[1][0], g[1][1]), g0: g[0].slice() };
+        snapshot(); const r = withS({ padLevel: a.level === 'first_point' ? 'ground' : 'balance', padEdge: ['slopes', 'auto', 'walls'].includes(a.edges) ? a.edges : S.padEdge, sideV: a.side_slope ? Math.max(1, Math.min(6, +a.side_slope)) : S.sideV, padGradeV: 0 }, () => applyPad(g, drag));
+        if (!r) { undoStack.pop(); throw new Error('the pad did not fit on the ground'); }
+        changed(); drawNow(); return { text: `pad ${fA(r.area)} at ${fL(r.z0, 1)} · cut ${fV(r.cut)} · fill ${fV(r.fill)}${r.wallLen ? ` · wall ${fL(r.wallLen, 0)} long, up to ${fL(r.wallMax, 1)} high` : ''}` };
+      },
+      async make_path(a) {
+        const pts = pathClean(ptsG(a.points, 2)); if (pts.length < 2) throw new Error('the path is too short'); const sf = ['gravel', 'paving'].includes(a.surface) ? a.surface : 'none', pw = a.width_m ? Math.max(.3, Math.min(20, +a.width_m)) : S.pathW, ph = a.raise_m != null ? Math.max(-1, Math.min(1, +a.raise_m)) : S.pathH;
+        snapshot(); const r = withS({ pathW: pw, pathH: ph, pathSurf: sf }, () => applyPath(pts));
+        S.strokes.push({ kind: 'path', color: 'ink', w: 1, a: 1, c: pts[0].slice(), pts: pts.map(q => [q[0], q[1], .5]), pw, ph, sf: sf === 'none' ? undefined : sf }); changed(); drawNow();
+        return { text: `path ${fL(r.len, 0)} long, ${fL(pw, 1)} wide${ph ? (ph > 0 ? ', raised ' : ', sunk ') + fL(Math.abs(ph), 2) : ''}${sf !== 'none' ? ', ' + sf : ''}` };
+      },
+      async shape_ground(a) {
+        if (!['raise', 'lower', 'smooth', 'flatten'].includes(a.action)) throw new Error('action is raise, lower, smooth or flatten'); const g = ptsG(a.points), z0 = sample(z, g[0][0], g[0][1]);
+        snapshot(); withS({ radius: a.radius_m ? Math.max(cs(), +a.radius_m) : S.radius, strength: a.strength ? Math.max(1, Math.min(100, +a.strength)) : S.strength }, () => { if (g.length === 1) dab(g[0][0], g[0][1], a.action, z0); else for (let q = 0; q + 1 < g.length; q++) strokeLine(g[q], g[q + 1], a.action, z0); });
+        S.terrainVer++; changed(); drawNow(); return { text: `${a.action} along ${g.length} point${g.length > 1 ? 's' : ''} · cut ${document.getElementById('cut').textContent} · fill ${document.getElementById('fill').textContent}` };
+      },
+      async set_section(a) { const A = toG(a.a), B = toG(a.b); snapshot(); secSet(S.secs.concat([[[A[0], A[1]], [B[0], B[1]]]])); S.dirty = true; drawNow(); return { text: `section ${S.secs.length} set, ${fL(Math.hypot(B[0] - A[0], B[1] - A[1]) * cs(), 0)} long; set_view section to see it` }; },
+      async undo(a) { const n = Math.max(1, Math.min(20, +a.steps || 1)); let k = 0; for (; k < n && undoStack.length; k++) undo(); drawNow(); return { text: `undid ${k} step${k === 1 ? '' : 's'}` }; },
+      async redo(a) { const n = Math.max(1, Math.min(20, +a.steps || 1)); let k = 0; for (; k < n && redoStack.length; k++) redo(); drawNow(); return { text: `redid ${k} step${k === 1 ? '' : 's'}` }; },
+      async open_tool(a) { const tk = TASKS.find(x => (!a.task || x.id === a.task) && x.tools.some(t => t.id === a.tool || t.name === a.tool)); if (!tk) throw new Error('no tool ' + a.tool + '; get_state lists them'); const t = tk.tools.find(x => x.id === a.tool || x.name === a.tool); state.task = tk.id; chooseTool(t.id); drawNow(); return { text: `opened ${tk.name} · ${t.name}${t.note ? ': ' + t.note : ''}` }; },
+      async export(a) { const map = { project: () => saveProject(), png: () => press('#png'), drawing_sheet: () => press('#sheetBtn'), stl: () => press('#stl'), laser_svg: () => press('#laser') }; if (!map[a.what]) throw new Error('what is project, png, drawing_sheet, stl or laser_svg'); map[a.what](); return { text: `${a.what} is saving on the user's device (their downloads)` }; },
+    };
+    async function aiRun(c) {
+      let res; AI.last = Date.now(); AI.lastName = c.name; aiUI();
+      try { const f = CMD[c.name]; if (!f) throw new Error('this page does not know ' + c.name); res = await f(c.args || {}); if (c.name !== 'get_state' && c.name !== 'screenshot') toast('AI · ' + c.name.replace(/_/g, ' ')); }
+      catch (e) { res = { text: String(e && e.message || e), isError: true }; }
+      AI.n++; AI.last = Date.now(); aiUI();
+      try { await fetch(`${RELAY}/api/result`, { method: 'POST', body: JSON.stringify({ s: code, id: c.id, result: res }) }); } catch (_) { AI.err = 'could not send a result back'; aiUI(); }
+    }
+    window.__ai = { CMD, run: (name, args) => CMD[name](args || {}), code: () => code };   // for the tests
+  }
   /* start: every control shown (no global simple/deep; "more" folds instead), the remembered task and tool, the size of the new frame */
   setTimeout(() => { document.documentElement.dataset.depth = 'deep'; { let v = 0; try { v = +localStorage.getItem('rail3') || Math.round(+localStorage.getItem('rail2') * 220 / 300); } catch (_) {} setRail(v >= 150 && innerWidth > 760 ? v : 220); } state.view = S.mode === 'model' ? '3d' : S.mode === 'section' ? 'section' : 'plan'; renderTasks(); renderTool(); applyView(); resize(); }, 0);
   window.__ui2 = { state, chooseTask, chooseTool, TASKS, catalogue, applyView }; window.__ui2probe = (gx, gy) => toSheet(gx, gy);   // for the tests
