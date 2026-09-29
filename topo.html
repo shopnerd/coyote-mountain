@@ -8574,6 +8574,14 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
       if (persp != null) S.cam.persp = !!persp; { const b = document.getElementById('perspBtn'); if (b) b.classList.toggle('on', !!S.cam.persp); } S.dirty = true;
     }
     const viewName = () => S.mode === 'model' ? '3d' : S.mode;
+    function aimAt(a) {                    // the 3d camera on one spot: target in the middle, width_m across the screen, heading = the way it looks (0 north), look_down_deg = 90 straight down
+      if (S.mode !== 'model') viewTo('3d'); const g = toG(a.target); if (!inside(g)) throw new Error('the target is outside the site');
+      if (a.heading_deg != null) S.cam.yaw = -(+a.heading_deg) * D;
+      if (a.look_down_deg != null) S.cam.pitch = Math.max(0, Math.min(1.55, (90 - Math.max(0, Math.min(90, +a.look_down_deg))) * D));
+      if (a.perspective == null) S.cam.persp = true; { const b = document.getElementById('perspBtn'); if (b) b.classList.toggle('on', !!S.cam.persp); }
+      const vw = Math.max(20, +a.width_m || S.siteW / 3); S.cam.zoom = Math.max(.4, Math.min(24, S.w * viewFrame().fitW * 1.25 / (vw * Math.min(S.w, S.h))));
+      S.cam.pan = { x: 0, y: 0 }; const m = camera().proj(g[0], g[1], sample(zv, g[0], g[1])); S.cam.pan = { x: S.w / 2 - m[0], y: S.h / 2 - m[1] }; S.dirty = true;
+    }
     /* any tool's panel, read as text plus its controls; refs point at the controls of the last read */
     const vis = el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
     const squash = s => String(s || '').replace(/\s+/g, ' ').trim();
@@ -8638,7 +8646,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
         const msg = document.getElementById('worldStatus').textContent; if (!S.world) throw new Error('the fetch did not find that place: ' + msg);
         drawNow(); return { text: `now at ${S.world.name} (${S.world.lat.toFixed(5)}, ${S.world.lon.toFixed(5)}), ${fL(S.siteW, 0)} wide. ${msg}` };
       },
-      async set_view(a) { viewTo(a.view); if (a.camera || a.perspective != null) camTo(a.camera, a.perspective); drawNow(); return { text: 'view: ' + viewName() + (a.camera ? ' · ' + a.camera : '') }; },
+      async set_view(a) { viewTo(a.view); if (a.camera || a.perspective != null) camTo(a.camera, a.perspective); if (a.target) aimAt(a); drawNow(); return { text: 'view: ' + viewName() + (a.camera ? ' · ' + a.camera : '') + (a.target ? ` · aimed at the target, ${Math.round(a.width_m || S.siteW / 3)} m across, looking ${Math.round(((-S.cam.yaw / D) % 360 + 360) % 360)}° from north, ${Math.round(90 - S.cam.pitch / D)}° down` : '') }; },
       async set_display(a) {
         const did = [];
         if (a.units && a.units !== S.unit) { const u = document.getElementById('unit'); u.value = a.units; u.onchange({ target: u }); did.push('units ' + a.units); }
