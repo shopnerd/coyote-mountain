@@ -851,7 +851,7 @@ const FIRE = { show: true, wind: 45, cover: 'chaparral', ver: 0, key: '', img: n
 const NAT = { inat: [], total: 0, ver: 0, show: true, off: {}, quality: 'any', status: '', hl: null, busy: false };   /* nature records: iNaturalist observations plus imported bird lists */
 const CHG = { before: null, after: null, pick: 'after', align: true, lod: .15, show: true, ver: 0, key: '', diff: null, stats: null, img: null };   /* ground change: two surveys of the same ground, compared cell by cell */
 function drawPlan() {                     // cached picture + live overlay; the picture is redrawn only when something on it changes
-  const key = [window.__pvKey ? window.__pvKey() : '', window.__fmKey ? window.__fmKey() : '', window.__sgKey ? window.__sgKey() : '', window.__slKey ? window.__slKey() : '', window.__pcKey ? window.__pcKey() : '', window.__wnKey ? window.__wnKey() : '', window.__irKey ? window.__irKey() : '', window.__xgKey ? window.__xgKey() : '', window.__vwKey ? window.__vwKey() : '', window.__rtKey ? window.__rtKey() : '', window.__dbKey ? window.__dbKey() : '', window.__laKey ? window.__laKey() : '', window.__dwKey ? window.__dwKey() : '', window.__ckKey ? window.__ckKey() : '', window.__suitKey ? window.__suitKey() : '', window.__stepsKey ? window.__stepsKey() : '', window.__stakesKey ? window.__stakesKey() : '', window.__visKey ? window.__visKey() : '', window.__fitKey ? window.__fitKey() : '', window.__recKey ? window.__recKey() : '', window.__bioKey ? window.__bioKey() : '', window.__grazeKey ? window.__grazeKey() : '', window.__obsKey ? window.__obsKey() : '', window.__stakeKey ? window.__stakeKey() : '', AGRO.ver, window.__agroActive ? window.__agroActive() : 0, FIRE.ver, FIRE.show, window.__fireActive ? window.__fireActive() : 0, NAT.ver, NAT.show, NAT.hl, CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
+  const key = [window.__sdKey ? window.__sdKey() : '', window.__pvKey ? window.__pvKey() : '', window.__fmKey ? window.__fmKey() : '', window.__sgKey ? window.__sgKey() : '', window.__slKey ? window.__slKey() : '', window.__pcKey ? window.__pcKey() : '', window.__wnKey ? window.__wnKey() : '', window.__irKey ? window.__irKey() : '', window.__xgKey ? window.__xgKey() : '', window.__vwKey ? window.__vwKey() : '', window.__rtKey ? window.__rtKey() : '', window.__dbKey ? window.__dbKey() : '', window.__laKey ? window.__laKey() : '', window.__dwKey ? window.__dwKey() : '', window.__ckKey ? window.__ckKey() : '', window.__suitKey ? window.__suitKey() : '', window.__stepsKey ? window.__stepsKey() : '', window.__stakesKey ? window.__stakesKey() : '', window.__visKey ? window.__visKey() : '', window.__fitKey ? window.__fitKey() : '', window.__recKey ? window.__recKey() : '', window.__bioKey ? window.__bioKey() : '', window.__grazeKey ? window.__grazeKey() : '', window.__obsKey ? window.__obsKey() : '', window.__stakeKey ? window.__stakeKey() : '', AGRO.ver, window.__agroActive ? window.__agroActive() : 0, FIRE.ver, FIRE.show, window.__fireActive ? window.__fireActive() : 0, NAT.ver, NAT.show, NAT.hl, CHG.ver, CHG.show, S.terrainVer, S.strokeVer, S.seaClip, S.waterVer, S.overlayOn && !!(S.overlay && S.overlay.img), sheet.x, sheet.y, sheet.k, S.w, S.h, dpr, S.labels, S.ivl, S.hach, S.unit, S.aerial, S.aop, aerialCache.status, S.brush === 'section', JSON.stringify(S.sec), S.boundary ? S.boundary.length : 0, S.world && S.world.name, S.noFoot, fontScale, PV.zoom, S.rot, S.labelUp, S.showBase, S.showCF, HIST.on].join('|');
   if (planShot.key === key && planShot.canvas) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.drawImage(planShot.canvas, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
   else { drawPlanBase(); if (!drag) { const off = document.createElement('canvas'); off.width = cv.width; off.height = cv.height; off.getContext('2d').drawImage(cv, 0, 0); planShot = { key, canvas: off }; } }
   const k = sheet.k;
@@ -932,6 +932,7 @@ function drawPlanBase() {
   if (window.__stepsDraw) window.__stepsDraw(ctx);   /* flights of steps: part of the design, so drawn whichever tool is open */
   if (window.__dbDraw) window.__dbDraw(ctx);   /* ditches and berms: part of the design */
   if (window.__pvDraw) window.__pvDraw(ctx);   /* solar arrays: the rows of panels */
+  if (window.__sdDraw) window.__sdDraw(ctx);   /* 3d shapes: the picked one's handles and sizes, and a shape being drawn */
   if (window.__rtDraw) window.__rtDraw(ctx);   /* best routes, until built as paths */
   if (window.__xgDraw) window.__xgDraw(ctx);   /* stream crossings, while their tool is open */
   // sheet frame, north, scale bar
@@ -1039,8 +1040,9 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   rend3D = R ? { proj, s } : null; if (night) drawNightSky(c, w, h);
   const eG = Math.max(1, Math.round(W / 150)), gradM = eG === 1 ? grad : (fx, fy) => [(sample(z, fx + eG, fy) - sample(z, fx - eG, fy)) / (2 * eG * s), (sample(z, fx, fy + eG) - sample(z, fx, fy - eG)) / (2 * eG * s)];   // at detail 2x the slope for shading spans the height data's own pixel, or its steps show as stripes
   const texSrc = MT ? MT.canvas : groundPainted() ? paintedCache.canvas : (S.aerialM && aerialCache.canvas) ? aerialCache.canvas : null, baked = mode === 'aerial' && texSrc && !cfR && !ovR && !R && !night ? (rawPass ? texSrc : shadeTex(texSrc, lx, ly, lz)) : null; const bakedPat = baked ? c.createPattern(baked, 'no-repeat') : null;
+  const sdHide = window.__sdHideTiles ? window.__sdHideTiles(step) : null;   // ground wholly inside a 3d shape and below its top is never seen; skipping it keeps it from poking through
   for (let j = 0; j < H - 1; j += step) for (let i = 0; i < W - 1; i += step) {
-    if (tm && !tin(i, j)) continue;
+    if (tm && !tin(i, j)) continue; if (sdHide && sdHide[j * (W - 1) + i]) continue;
     const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step);
     if (cutSide && onCamSide(i, j) && onCamSide(i2, j) && onCamSide(i2, j2) && onCamSide(i, j2)) continue;   // the earth in front of the cut is gone
     const za = zv[idx(i, j)], zb = zv[idx(i2, j)], zc = zv[idx(i2, j2)], zd = zv[idx(i, j2)];
@@ -1112,13 +1114,14 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
       const R = b.pts.map(q => proj(q[0], q[1], bc.top)); if (px < roofPx) { items.push({ d: c0[2] + 1e-3, bld: { R, G: null, small: true }, lines: [] }); continue; }
       const G = b.pts.map((q, t) => proj(q[0], q[1], bc.g[t])); let d = -1e9; for (const p of G) d = Math.max(d, p[2]);
       items.push({ d: d + 1e-3, bld: { R, G }, lines: [] }); } }
-  for (const st of S.strokes) { if (st.kind !== 'obj' || !st.c) continue; const v = objPlace(st), sz = cs();   // imported objects: each face a lit triangle in the painter's sort
+  for (const st of (window.__derived3d ? S.strokes.concat(window.__derived3d()) : S.strokes)) { if (st.kind !== 'obj' || !st.c) continue; const v = objPlace(st), sz = cs();   // imported objects (and the design tools' solar tables, dam wall and lake): each face a lit triangle in the painter's sort
     for (let k = 0; k < v.length; k += 9) { if (cutSide && onCamSide(v[k], v[k + 1]) && onCamSide(v[k + 3], v[k + 4]) && onCamSide(v[k + 6], v[k + 7])) continue; if (tm && !inTrim(v[k], v[k + 1])) continue;
       const P = [proj(v[k], v[k + 1], v[k + 2]), proj(v[k + 3], v[k + 4], v[k + 5]), proj(v[k + 6], v[k + 7], v[k + 8])];
+      if (st.solid && (P[1][0] - P[0][0]) * (P[2][1] - P[0][1]) - (P[1][1] - P[0][1]) * (P[2][0] - P[0][0]) >= 0) continue;   // a 3d shape is closed and wound outward: faces turned away are never seen, and dropping them keeps the painter's sort clean
       const ax = (v[k + 3] - v[k]) * sz, ay = (v[k + 4] - v[k + 1]) * sz, az = (v[k + 5] - v[k + 2]) * S.ve, bx = (v[k + 6] - v[k]) * sz, by = (v[k + 7] - v[k + 1]) * sz, bz = (v[k + 8] - v[k + 2]) * S.ve; let nx = ay * bz - az * by, ny = az * bx - ax * bz, nz = ax * by - ay * bx; const nl = Math.hypot(nx, ny, nz) || 1;
       const dot = -(nx * lx + ny * ly + nz * lz) / nl, light = .3 + .7 * Math.max(0, dot);   // outward normal in east, south, up: the sheet's j runs south, which mirrors the file's handedness
       const ci = (v[k] + v[k + 3] + v[k + 6]) / 3, cj = (v[k + 1] + v[k + 4] + v[k + 7]) / 3, litv = lit ? lit[idx(Math.max(0, Math.min(W - 1, Math.round(ci))), Math.max(0, Math.min(H - 1, Math.round(cj))))] : 1, m2 = .7 + .3 * light;   // pale card: shaded, but never as dark as the ground in shadow
-      let tone = `rgb(${(232 * m2) | 0},${(229 * m2) | 0},${(220 * m2) | 0})`; if (R) tone = rendTone(tone, .6 + .4 * light, .5 + .5 * litv, 'paper');
+      const fb = st.fill || [232, 229, 220]; let tone = `rgb(${(fb[0] * m2) | 0},${(fb[1] * m2) | 0},${(fb[2] * m2) | 0})`; if (R) tone = rendTone(tone, .6 + .4 * light, .5 + .5 * litv, 'paper');
       if (groundPainted() && paintedCache.proj) { const pc = paintedCache, q = pc.proj(ci, cj, (v[k + 2] + v[k + 5] + v[k + 8]) / 3); if (!isNaN(q[0])) { const x = Math.round(q[0]), y = Math.round(q[1]); if (x >= 0 && y >= 0 && x < pc.W2 && y < pc.H2) { const di = (y * pc.W2 + x) * 4, dep = -q[2], bd = (pc.dd[di] * 256 + pc.dd[di + 1]) / 4; if (!bd || dep <= bd + 1.5 + dep * .03) tone = `rgb(${pc.pd[di]},${pc.pd[di + 1]},${pc.pd[di + 2]})`; } } }   // a face the painting saw takes the painting's colour
       items.push({ d: Math.max(P[0][2], P[1][2], P[2][2]) + 2e-3, tri: P, tone, lines: [] }); } }
   items.sort((a, b) => a.d - b.d);
@@ -1131,6 +1134,7 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   let run = 0;
   for (const it of items) {
     if (it.wall) { c.fillStyle = rawPass ? '#0000ff' : night ? '#090c12' : TONES[3]; c.strokeStyle = night ? 'rgba(63,224,207,.3)' : INK2; c.lineWidth = .7; c.lineJoin = 'round'; c.beginPath(); it.wall.forEach((p, k) => k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.fill(); c.stroke(); continue; }
+    if (it.tri && run) { flushLines(); run = 0; }   // the lines of the ground behind go down before an object's face covers them
     if (it.tri) { const P = it.tri, cxt = (P[0][0] + P[1][0] + P[2][0]) / 3, cyt = (P[0][1] + P[1][1] + P[2][1]) / 3; c.fillStyle = it.tone; c.beginPath(); for (let k = 0; k < 3; k++) { const p = P[k], dx = p[0] - cxt, dy = p[1] - cyt, d = Math.hypot(dx, dy) || 1; const x = p[0] + dx / d * .35, y = p[1] + dy / d * .35; k ? c.lineTo(x, y) : c.moveTo(x, y); } c.closePath(); c.fill(); continue; }
     if (it.bld) { const { R, G, small } = it.bld, n = R.length, roofC = rawPass ? '#0000ff' : night ? '#171c26' : '#e2dfd5', trace = P => { c.moveTo(P[0][0], P[0][1]); for (let t = 1; t < P.length; t++) c.lineTo(P[t][0], P[t][1]); c.closePath(); };
       if (small) { c.fillStyle = roofC; c.beginPath(); trace(R); c.fill(); continue; }
@@ -1171,8 +1175,10 @@ function drawModel0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
   flushLines(); if (rawPass) return;   /* the height pass wants the ground alone */
   if (cutSide) drawCutFace(c, proj, cutSide, lo, hi);
   nightInk = night ? 'rgba(214,226,238,.5)' : null; drawRoads(c, (i, j) => proj(i, j, sample(zv, i, j) + .03), mini ? .7 : 1, true); nightInk = null;
+  if (window.__lake3 && !mini) window.__lake3(c, proj);   /* the dam tool's lake at full water, over the ground */
+  if (window.__sdDraw3 && !mini) window.__sdDraw3(c, proj, R);   /* 3d shapes: their visible edges, the picked one in the accent colour */
   drawStrokes(c, (i, j, zz) => proj(i, j, (zz == null ? sample(zv, i, j) : zz) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
-  if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
+  if (S.an.dam && damAt() && !mini && !(window.__dam3Own && window.__dam3Own())) drawDam3D(c, proj);   // the dam tool, when it has a wall here, draws its own in 3d
   if (S.cloud && CLOUD.buf && !mini) drawCloud(c, proj, w, h, fast, cutSide ? onCamSide : null, night);
   if (S.labels && !mini && !fast && !R && !night) {
     const groups = new Map(), dmed = items.length ? items[Math.floor(items.length * .45)].d : 0;
@@ -1298,8 +1304,9 @@ function drawStepped0(c = ctx, w = S.w, h = S.h, step = 2, mini = false) {
     for (const loop of L.loops) loop.forEach(([i, j], k) => { const p = proj(i, j, L.top); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }), c.closePath();
     c.fillStyle = TONES[0]; c.fill('evenodd'); c.strokeStyle = INK; c.lineWidth = .7; c.globalAlpha = .8; c.stroke(); c.globalAlpha = 1;
   }
+  if (window.__sdDraw3 && !mini) window.__sdDraw3(c, proj, false);   /* 3d shapes: their visible edges */
   drawStrokes(c, (i, j, zz) => proj(i, j, (zz == null ? sample(zv, i, j) : zz) + .04), mini ? .7 : 1, true); if (!S.hideStrokes) drawBoundary(c, (i, j) => proj(i, j, sample(zv, i, j) + .05), mini ? .7 : 1, true);
-  if (S.an.dam && damAt() && !mini) drawDam3D(c, proj);
+  if (S.an.dam && damAt() && !mini && !(window.__dam3Own && window.__dam3Own())) drawDam3D(c, proj);
   c.fillStyle = INK2; c.font = font(11); c.textAlign = 'left'; c.textBaseline = 'bottom';
   if (S.sculpt && S.pick && !mini) {   // the brush ring draped on the ground around the pick
     const { proj } = camera(w, h), R = S.radius / cs(); c.strokeStyle = ACC; c.lineWidth = 1.3; c.setLineDash([4, 3]); c.beginPath();
@@ -1930,7 +1937,7 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot(keepRedo) { if (!keepRedo) redoStack.length = 0; undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, secs: S.secs.map(q => [q[0].slice(), q[1].slice()]), secI: S.secI, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, z3: st.z3 || undefined, by: st.by, text: st.text, at: st.at, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot(keepRedo) { if (!keepRedo) redoStack.length = 0; undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, secs: S.secs.map(q => [q[0].slice(), q[1].slice()]), secI: S.secI, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, solid: st.solid ? JSON.parse(JSON.stringify(st.solid)) : undefined, fill: st.fill, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, z3: st.z3 || undefined, by: st.by, text: st.text, at: st.at, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function setGrid(f, quiet) {              // rebuild the ground at 150f × 100f; everything in grid coords is rescaled; terrain refetches
   const nw = Math.round(150 * f), nh = Math.round(100 * f); if (nw === W && nh === H) return; const k = nw / W;
   W = nw; H = nh; base = new Float32Array(W * H); z = new Float32Array(W * H); zv = z; zvKey = ''; rawBase = null; waterMask = null; waterLevel = null; wF = null; S.hasSea = S.hasWater = false; S.coast = null;
@@ -2588,8 +2595,49 @@ function objFromMesh(tris, name, unit) {  // centred on its footprint, lowest po
   const xy = [], stride = Math.max(3, Math.floor(t.length / 3 / 4000) * 3); for (let k = 0; k < t.length; k += stride) xy.push([t[k], t[k + 1]]); let hz = 0; for (let k = 2; k < t.length; k += 3) hz = Math.max(hz, t[k]);
   return { kind: 'obj', name, unit, rot: 0, sc: 1, lift: 0, tris: t, foot: hull2(xy), h: hz, color: 'ink', w: 1, a: 1, pts: [], o: [sx * f, sy * f] };   // o: where the file's own origin went, in metres
 }
+/* ---------- solids: a shape kept as its outline and height, so any face can be pulled; its triangles are rebuilt after every change and it is placed, drawn, picked and printed as any object ---------- */
+function polyAreaS(P) { let a = 0; for (let i = 0, j = P.length - 1; i < P.length; j = i++) a += P[j][0] * P[i][1] - P[i][0] * P[j][1]; return a / 2; }   // + = counter-clockwise, x east, y north
+function polyCentroid(P) { let a = 0, cx = 0, cy = 0; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const f = P[j][0] * P[i][1] - P[i][0] * P[j][1]; a += f; cx += (P[j][0] + P[i][0]) * f; cy += (P[j][1] + P[i][1]) * f; } return Math.abs(a) < 1e-9 ? [P.reduce((s, q) => s + q[0], 0) / P.length, P.reduce((s, q) => s + q[1], 0) / P.length] : [cx / (3 * a), cy / (3 * a)]; }
+function earcut2(P) {                      // ear clipping for a simple counter-clockwise outline; index triples
+  const V = P.map((_, i) => i), out = [], cr = (a, b, c) => (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]); let guard = 0;
+  while (V.length > 3 && guard++ < 5000) { let cut = false;
+    for (let k = 0; k < V.length; k++) { const ia = V[(k + V.length - 1) % V.length], ib = V[k], ic = V[(k + 1) % V.length], a = P[ia], b = P[ib], c = P[ic]; if (cr(a, b, c) <= 1e-12) continue;
+      let ear = true; for (const m of V) { if (m === ia || m === ib || m === ic) continue; const p = P[m]; if (cr(a, b, p) >= 0 && cr(b, c, p) >= 0 && cr(c, a, p) >= 0) { ear = false; break; } }
+      if (ear) { out.push([ia, ib, ic]); V.splice(k, 1); cut = true; break; } }
+    if (!cut) break; }
+  for (let k = 1; k + 1 < V.length; k++) out.push([V[0], V[k], V[k + 1]]); return out;
+}
+function solidTris(foot, h) {              // the outline from 0 up to h: top, bottom and a wall per edge, wound outward like an obj file (x east, y north, z up)
+  const P = polyAreaS(foot) < 0 ? foot.slice().reverse() : foot, t = [];
+  for (const [a, b, c] of earcut2(P)) t.push(P[a][0], P[a][1], h, P[b][0], P[b][1], h, P[c][0], P[c][1], h, P[a][0], P[a][1], 0, P[c][0], P[c][1], 0, P[b][0], P[b][1], 0);
+  for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; t.push(a[0], a[1], 0, b[0], b[1], 0, b[0], b[1], h, a[0], a[1], 0, b[0], b[1], h, a[0], a[1], h); }
+  return t.map(v => Math.round(v * 1000) / 1000);
+}
+const gAt = (i, j) => sample(zv, Math.max(0, Math.min(W - 1, i)), Math.max(0, Math.min(H - 1, j)));
+function solidGround(st) {                 // on the ground: the base at the lowest ground under the outline so no corner floats, plus any raise; or held at a set elevation
+  const s = st.solid, g0 = gAt(st.c[0], st.c[1]); if (s.zb != null) { st.lift = s.zb - g0; return; }
+  let lo = g0; for (const q of objFoot(st)) lo = Math.min(lo, gAt(q[0], q[1])); st.lift = lo - g0 + (s.raise || 0);
+}
+function solidSync(st) {                   // after an edit: centre the outline on its centroid (moving the object so nothing shifts on the ground), rebuild the triangles, sit it down
+  const s = st.solid; if (polyAreaS(s.foot) < 0) s.foot.reverse(); const [mx, my] = polyCentroid(s.foot);
+  if (Math.hypot(mx, my) > 1e-6) { s.foot = s.foot.map(q => [q[0] - mx, q[1] - my]); const sz = cs(), r = (st.rot || 0) * D2R; st.c = [st.c[0] + (mx * Math.cos(r) - my * Math.sin(r)) / sz, st.c[1] - (mx * Math.sin(r) + my * Math.cos(r)) / sz]; }
+  s.h = Math.max(.05, s.h); st.sc = 1; st.pts = [[st.c[0], st.c[1], .5]]; st.tris = solidTris(s.foot, s.h); st.foot = s.foot.map(q => q.slice()); st.h = s.h; if ('_k' in st) st._k = ''; solidGround(st); return st;
+}
+function solidMake(g, foot, h, o = {}) { return solidSync({ kind: 'obj', name: o.name || 'shape', unit: 'm', rot: o.rot || 0, sc: 1, lift: 0, color: 'ink', w: 1, a: 1, c: [g[0], g[1]], pts: [], o: [0, 0], fill: o.fill, solid: { id: o.id || Math.random().toString(36).slice(2, 7), shape: o.shape || 'outline', foot, h, zb: o.zb == null ? null : o.zb, raise: o.raise || 0 } }); }
+const solidBox = (w, d) => [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]];
+const solidCircle = (r, n = 32) => Array.from({ length: n }, (_, k) => [r * Math.cos(k / n * TAU), r * Math.sin(k / n * TAU)]);
+function solidPull(st, e, d) {             // push or pull one face by d metres: 'top' changes the height, 'bottom' the base, an edge number moves that side along its outward normal (a cylinder's side changes its radius)
+  const s = st.solid;
+  if (e === 'top') s.h = Math.max(.05, s.h + d);
+  else if (e === 'bottom') { const nh = Math.max(.05, s.h - d); if (s.zb != null) s.zb += s.h - nh; else s.raise = (s.raise || 0) + (s.h - nh); s.h = nh; }
+  else if (s.shape === 'cylinder') { const r = Math.hypot(s.foot[0][0], s.foot[0][1]), k = Math.max(.05, r + d) / r; s.foot = s.foot.map(q => [q[0] * k, q[1] * k]); }
+  else { const n = s.foot.length, a = s.foot[e], b = s.foot[(e + 1) % n], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = (b[1] - a[1]) / L, ny = -(b[0] - a[0]) / L;   // counter-clockwise: outward is to the right of a→b
+    s.foot[e] = [a[0] + nx * d, a[1] + ny * d]; s.foot[(e + 1) % n] = [b[0] + nx * d, b[1] + ny * d]; if (polyAreaS(s.foot) < .01) { s.foot[e] = a; s.foot[(e + 1) % n] = b; } }
+  return solidSync(st);
+}
 function objSel() { return S.objSel != null && S.strokes[S.objSel] && S.strokes[S.objSel].kind === 'obj' ? S.strokes[S.objSel] : null; }
 function objPlace(st) {                   // local metres -> grid coordinates and absolute elevation, cached per placement
+  if (st.solid) solidGround(st);   // a solid moved on sloping ground sits down again
   const key = [st.c[0], st.c[1], st.rot, st.sc, st.lift, S.terrainVer, cs(), st.tris.length].join('|'); if (st._k === key) return st._v;
   const sz = cs(), r = st.rot * D2R, cr = Math.cos(r), sr = Math.sin(r), z0 = sample(zv, Math.max(0, Math.min(W - 1, st.c[0])), Math.max(0, Math.min(H - 1, st.c[1]))) + st.lift, t = st.tris, v = new Float32Array(t.length);
   for (let k = 0; k < t.length; k += 3) { const x = t[k] * st.sc, y = t[k + 1] * st.sc; v[k] = st.c[0] + (x * cr - y * sr) / sz; v[k + 1] = st.c[1] - (x * sr + y * cr) / sz; v[k + 2] = z0 + t[k + 2] * st.sc; }
@@ -4760,7 +4808,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise', 'grade', 'strip', 'swell', 'runoff', 'side', 'padGrade', 'pathW', 'pathH', 'bldMM', 'boxW', 'sandGain'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, secs: S.secs, secI: S.secI, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, z3: st.z3 || undefined, by: st.by, text: st.text, at: st.at, pts: st.pts.map(q => q.length > 3 ? [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100, Math.round(q[3] * 1000) / 1000] : [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, bldMode: S.bldMode, rendOn: S.rendOn, rendCut: S.rendCut, rendSky: S.rendSky, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, hideSketch: S.hideSketch || undefined, labelUp: S.labelUp, showBase: S.showBase, showCF: S.showCF, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, secs: S.secs, secI: S.secI, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, solid: st.solid ? JSON.parse(JSON.stringify(st.solid)) : undefined, fill: st.fill, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, z3: st.z3 || undefined, by: st.by, text: st.text, at: st.at, pts: st.pts.map(q => q.length > 3 ? [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100, Math.round(q[3] * 1000) / 1000] : [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, bldMode: S.bldMode, rendOn: S.rendOn, rendCut: S.rendCut, rendSky: S.rendSky, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, hideSketch: S.hideSketch || undefined, labelUp: S.labelUp, showBase: S.showBase, showCF: S.showCF, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value, records: S.rec || {} };
 }
 function loadProject(pr, fromHome) {
@@ -4947,6 +4995,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'graze', name: 'grazing', view: 'plan', planLabel: 'see it in plan', panel: box => grazePanel(box), note: 'paddocks, the herd, grazing days and rest, and the next moves as plants recover' },
       { id: 'visit', name: 'visitor walks', view: 'plan', planLabel: 'see them in plan', panel: box => visitPanel(box), note: 'walks and stops for visitors: how hard, where they need care, seasons, limits, and what they cost and bring in' },
       { id: 'budget', name: 'earthwork budget', panel: box => budgetPanel(box), note: 'the grading and planting on this plan, priced with your rates: a likely range, truck trips and diesel' },
+      { id: 'solid', name: '3d shapes', panel: box => sdPanel(box), note: 'boxes, cylinders, outlines and walls you can reshape: pull a side on the plan or any face in 3d' },
       { id: 'object', name: 'object', pick: '#brushes button[data-b=obj]', view: 'plan', rows: ['#objRow'], more: ['#objUnitRow', '#objRotRow', '#objScaleRow', '#objLiftRow'] },
     ] },
     { id: 'study', name: 'Study', tools: [
@@ -8365,7 +8414,8 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   }
   function scaleSel(k) {                   // grow or shrink about the middle; an object keeps its own scale, a tree its crown
     const st = S.strokes[SEL.i]; if (!st || !(k > 0)) return; snapshot();
-    if (st.kind === 'obj' && st.c) st.sc = Math.round((st.sc || 1) * k * 1e4) / 1e4;
+    if (st.kind === 'obj' && st.solid) { st.solid.foot = st.solid.foot.map(q => [q[0] * k, q[1] * k]); st.solid.h *= k; solidSync(st); }   // a solid keeps real sizes: its outline and height grow, not a scale factor
+    else if (st.kind === 'obj' && st.c) st.sc = Math.round((st.sc || 1) * k * 1e4) / 1e4;
     else { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const q of st.pts) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
       const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, sc = q => [cx + (q[0] - cx) * k, cy + (q[1] - cy) * k];
       st.pts = st.pts.map(q => [...sc(q), ...q.slice(2)]); if (st.c) st.c = sc(st.c); if (st.r) st.r *= k; }
@@ -8514,6 +8564,154 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   head.insertBefore(learnDet, findWrap.nextSibling);
   window.__ui2learn = () => { learnMenu(); learnDet.open = true; };
   side.addEventListener('scroll', () => tourPlace());
+  /* ---------- 3d shapes: boxes, cylinders, outlines and walls kept as outline + height (see solidMake). draw them on the plan; pull any face on the plan (the sides) or in 3d (sides and top); they print, render and move like any object ---------- */
+  const SD = { mode: 'box', h: 3, wallH: 1.5, thick: .3, sel: null, draw: null, drag: null, ver: 0 };
+  const SD_FILL = { card: null, concrete: [205, 203, 196], dark: [120, 118, 112], wood: [196, 160, 118], leaf: [150, 176, 128], water: [128, 164, 196] };
+  let sdBoxEl = null;
+  window.__sdActive = () => state.task === 'shape' && tool().id === 'solid';
+  const sdList = () => S.strokes.filter(st => st.kind === 'obj' && st.solid);
+  const sdCur = () => (SD.sel && S.strokes.includes(SD.sel) ? SD.sel : (SD.sel = null));
+  const sdToGrid = (st, x, y) => { const sz = cs(), r = (st.rot || 0) * D2R, cr = Math.cos(r), sr = Math.sin(r); return [st.c[0] + (x * cr - y * sr) / sz, st.c[1] - (x * sr + y * cr) / sz]; };
+  const sdNormG = (st, nx, ny) => { const r = (st.rot || 0) * D2R, X = nx * Math.cos(r) - ny * Math.sin(r), Y = nx * Math.sin(r) + ny * Math.cos(r); return [X, -Y]; };   // a local direction as a grid direction (per metre)
+  const sdEdges = st => { const P = st.solid.foot, out = []; for (let k = 0; k < P.length; k++) { const a = P[k], b = P[(k + 1) % P.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; out.push({ k, a, b, L, mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], n: [(b[1] - a[1]) / L, -(b[0] - a[0]) / L] }); } return out; };
+  const sdHandles = st => st.solid.shape === 'cylinder' ? [{ k: 0, mid: [Math.hypot(st.solid.foot[0][0], st.solid.foot[0][1]), 0], n: [1, 0] }] : sdEdges(st);
+  const sdChanged = () => { S.strokeVer++; SD.ver++; S.dirty = true; updateStats(); if (sdBoxEl && sdBoxEl.isConnected) sdRender(); };
+  const inPolyXY = (x, y, Q) => { let ins = false; for (let a = 0, b = Q.length - 1; a < Q.length; b = a++) if ((Q[a][1] > y) !== (Q[b][1] > y) && x < (Q[b][0] - Q[a][0]) * (y - Q[a][1]) / (Q[b][1] - Q[a][1]) + Q[a][0]) ins = !ins; return ins; };
+  function sdHit(g) { let best = null; for (const st of sdList()) { const P = objFoot(st); if (inPolyXY(g[0], g[1], P) && (!best || st.solid.h < best.solid.h)) best = st; } return best; }
+  function sdHandleAt(st, px, py) { for (const hd of sdHandles(st)) { const q = sdToGrid(st, hd.mid[0], hd.mid[1]), p = toSheet(q[0], q[1]); if (Math.hypot(p[0] - px, p[1] - py) < 9) return hd; } return null; }
+  function sdFaces(st) { const s = st.solid, z0 = gAt(st.c[0], st.c[1]) + st.lift, W3 = (x, y, zz) => { const q = sdToGrid(st, x, y); return [q[0], q[1], z0 + zz]; }, out = [{ e: 'top', P: s.foot.map(q => W3(q[0], q[1], s.h)), C: W3(0, 0, s.h), n: null }];
+    for (const ed of sdEdges(st)) out.push({ e: ed.k, P: [W3(ed.a[0], ed.a[1], 0), W3(ed.b[0], ed.b[1], 0), W3(ed.b[0], ed.b[1], s.h), W3(ed.a[0], ed.a[1], s.h)], C: W3(ed.mid[0], ed.mid[1], s.h / 2), n: ed.n }); return out; }
+  function sdPick3(px, py) { const cam = camera(); let best = null; for (const st of sdList()) for (const f of sdFaces(st)) { const Q = f.P.map(p => cam.proj(p[0], p[1], p[2])); if (!inPolyXY(px, py, Q)) continue; const d = Q.reduce((a, q) => a + q[2], 0) / Q.length; if (!best || d > best.d) best = { st, f, d }; } return best; }
+  function sdScreenVec(st, f) { const cam = camera(), C = f.C, a = cam.proj(C[0], C[1], C[2]); let b; if (!f.n) b = cam.proj(C[0], C[1], C[2] + 1); else { const d = sdNormG(st, f.n[0], f.n[1]), sz = cs(); b = cam.proj(C[0] + d[0] / sz, C[1] + d[1] / sz, C[2]); } return [b[0] - a[0], b[1] - a[1]]; }   // pixels per metre along the face's normal
+  function sdNew(kind, g0, g1) {         // a finished drag on the plan: box from corner to corner, cylinder from its centre, wall along the line
+    const sz = cs(), dx = (g1[0] - g0[0]) * sz, dy = -(g1[1] - g0[1]) * sz, L = Math.hypot(dx, dy), tiny = L < 1.5;
+    if (kind === 'box') { const w = tiny ? 4 : Math.max(.3, Math.abs(dx)), d = tiny ? 4 : Math.max(.3, Math.abs(dy)), c = tiny ? g0 : [(g0[0] + g1[0]) / 2, (g0[1] + g1[1]) / 2]; return solidMake(c, solidBox(w, d), SD.h, { shape: 'box', name: 'box' }); }
+    if (kind === 'cylinder') return solidMake(g0, solidCircle(tiny ? 2 : L), SD.h, { shape: 'cylinder', name: 'cylinder' });
+    if (kind === 'wall') { if (tiny) return null; return solidMake([(g0[0] + g1[0]) / 2, (g0[1] + g1[1]) / 2], solidBox(L, SD.thick), SD.wallH, { shape: 'wall', name: 'wall', rot: Math.atan2(dy, dx) / D2R }); }
+    return null;
+  }
+  function sdOutline(G) {                // tapped corners (grid) -> an outline solid centred on them
+    const sz = cs(), c = [G.reduce((a, q) => a + q[0], 0) / G.length, G.reduce((a, q) => a + q[1], 0) / G.length]; return solidMake(c, G.map(q => [(q[0] - c[0]) * sz, -(q[1] - c[1]) * sz]), SD.h, { shape: 'outline', name: 'outline' }); }
+  function sdAdd(st) { if (!st) return; snapshot(); S.strokes.push(st); SD.sel = st; sdChanged(); }
+  function sdFinishOutline() { const P = SD.draw && SD.draw.pts; SD.draw = null; if (P && P.length >= 3) sdAdd(sdOutline(P)); else { SD.ver++; S.dirty = true; } }
+  window.__sdKey = () => window.__sdActive() ? [SD.ver, S.strokeVer, S.unit].join('|') : '';
+  window.__sdDraw = c => { if (!window.__sdActive()) return; c.save();
+    const cur = sdCur(); if (cur) { const P = objFoot(cur).map(q => toSheet(q[0], q[1])); c.strokeStyle = ACC; c.lineWidth = 1.6; c.setLineDash([5, 3]); c.beginPath(); P.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.stroke(); c.setLineDash([]);
+      c.font = font(10); c.textAlign = 'center'; c.textBaseline = 'middle';
+      for (const hd of sdHandles(cur)) { const q = sdToGrid(cur, hd.mid[0], hd.mid[1]), p = toSheet(q[0], q[1]); c.fillStyle = PAPER; c.strokeStyle = ACC; c.lineWidth = 1.4; c.fillRect(p[0] - 4, p[1] - 4, 8, 8); c.strokeRect(p[0] - 4, p[1] - 4, 8, 8);
+        if (cur.solid.shape !== 'outline' || cur.solid.foot.length <= 12) { const lab = cur.solid.shape === 'cylinder' ? 'r ' + fL(hd.mid[0], 2) : fL(hd.L, 2), o = sdToGrid(cur, hd.mid[0] + hd.n[0] * 12 / sheet.k * cs(), hd.mid[1] + hd.n[1] * 12 / sheet.k * cs()), po = toSheet(o[0], o[1]); haloText(c, lab, po[0], po[1], ACC); } }
+      const m = toSheet(cur.c[0], cur.c[1]); haloText(c, `${cur.name} · ${fL(cur.solid.h, 2)} high`, m[0], m[1] + 14, INK); }
+    if (SD.draw) { c.strokeStyle = ACC; c.fillStyle = 'rgba(201,107,58,.12)'; c.lineWidth = 1.4; c.setLineDash([4, 3]); c.beginPath();
+      if (SD.draw.kind === 'outline') { SD.draw.pts.forEach((q, i) => { const p = toSheet(q[0], q[1]); i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }); if (SD.draw.hover) { const p = toSheet(SD.draw.hover[0], SD.draw.hover[1]); c.lineTo(p[0], p[1]); } }
+      else { const a = toSheet(SD.draw.g0[0], SD.draw.g0[1]), b = toSheet(SD.draw.g1[0], SD.draw.g1[1]);
+        if (SD.draw.kind === 'box') c.rect(Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1]));
+        else if (SD.draw.kind === 'cylinder') c.arc(a[0], a[1], Math.hypot(b[0] - a[0], b[1] - a[1]), 0, TAU); else { c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); } }
+      c.fill(); c.stroke(); c.setLineDash([]); }
+    c.restore(); };
+  window.__sdDraw3 = (c, proj, rend) => {   // the edges a viewer would see: outlines of faces turned toward the eye, and creases between them (a cylinder's facets stay smooth)
+    const list = sdList(); if (!list.length) return; const cur = sdCur(), area = Q => { let a = 0; for (let i = 0, j = Q.length - 1; i < Q.length; j = i++) a += Q[j][0] * Q[i][1] - Q[i][0] * Q[j][1]; return a; };
+    c.save(); c.lineJoin = 'round'; c.setLineDash([]);
+    for (const st of list) { const s = st.solid, P = polyAreaS(s.foot) < 0 ? s.foot.slice().reverse() : s.foot, n = P.length, z0 = gAt(st.c[0], st.c[1]) + st.lift, sel = st === cur && window.__sdActive();
+      const pb = P.map(q => { const g = sdToGrid(st, q[0], q[1]); return proj(g[0], g[1], z0); }), pt = P.map(q => { const g = sdToGrid(st, q[0], q[1]); return proj(g[0], g[1], z0 + s.h); });
+      const topV = area(pt) < 0, botV = area(pb.slice().reverse()) < 0, sideV = P.map((_, k) => area([pb[k], pb[(k + 1) % n], pt[(k + 1) % n], pt[k]]) < 0);
+      const segs = []; for (let k = 0; k < n; k++) { const k1 = (k + 1) % n, kp = (k + n - 1) % n;
+        if (topV || sideV[k]) segs.push([pt[k], pt[k1]]); if (sideV[k] !== botV) segs.push([pb[k], pb[k1]]);
+        const e0 = [P[k][0] - P[kp][0], P[k][1] - P[kp][1]], e1 = [P[k1][0] - P[k][0], P[k1][1] - P[k][1]], crease = Math.abs(Math.atan2(e0[0] * e1[1] - e0[1] * e1[0], e0[0] * e1[0] + e0[1] * e1[1])) > .45;
+        if (sideV[kp] !== sideV[k] || (sideV[k] && crease && s.shape !== 'cylinder')) segs.push([pb[k], pt[k]]); }
+      c.strokeStyle = sel ? ACC : rend ? 'rgba(40,40,36,.45)' : 'rgba(42,42,40,.8)'; c.lineWidth = sel ? 1.8 : 1; c.beginPath(); for (const [a, b] of segs) { c.moveTo(a[0], a[1]); c.lineTo(b[0], b[1]); } c.stroke(); }
+    c.restore(); };
+  let sdHideC = { key: '' };
+  window.__sdHideTiles = step => {        // ground tiles (at the drawn step) whose corners are all inside a shape's outline and below its top
+    const list = sdList(); if (!list.length) return null; const key = [S.strokeVer, S.terrainVer, step, W, S.waterVer].join('|'); if (sdHideC.key === key) return sdHideC.m;
+    const m = new Uint8Array((W - 1) * (H - 1)); let any = false;
+    for (const st of list) { const P = objFoot(st), top = gAt(st.c[0], st.c[1]) + st.lift + st.solid.h; let i0 = W, i1 = 0, j0 = H, j1 = 0; for (const q of P) { i0 = Math.min(i0, q[0]); i1 = Math.max(i1, q[0]); j0 = Math.min(j0, q[1]); j1 = Math.max(j1, q[1]); }
+      for (let j = Math.max(0, Math.floor(j0 / step) * step); j <= Math.min(H - 2, j1); j += step) for (let i = Math.max(0, Math.floor(i0 / step) * step); i <= Math.min(W - 2, i1); i += step) { const i2 = Math.min(W - 1, i + step), j2 = Math.min(H - 1, j + step); let ok = true;
+        for (const [a, b] of [[i, j], [i2, j], [i2, j2], [i, j2]]) if (!inPolyXY(a, b, P) || zv[idx(a, b)] >= top) { ok = false; break; } if (ok) { m[j * (W - 1) + i] = 1; any = true; } } }
+    sdHideC = { key, m: any ? m : null }; return sdHideC.m; };
+  const sdPt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  cv.addEventListener('pointerdown', e => {
+    if (!window.__sdActive() || e.button !== 0) return;
+    const [px, py] = sdPt(e);
+    if (S.mode === 'model') { const hit = sdPick3(px, py); if (!hit) return; e.stopImmediatePropagation(); e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+      SD.sel = hit.st; snapshot(); SD.drag = { kind: 'pull3', st: hit.st, e: hit.f.e, p0: [px, py], v: sdScreenVec(hit.st, hit.f), done: 0 }; S.lowQ = true; sdChanged(); return; }
+    if (S.mode !== 'plan') return;
+    const g = ghGrid(e); e.stopImmediatePropagation(); e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+    if (SD.draw && SD.draw.kind === 'outline') { const P = SD.draw.pts, f = toSheet(P[0][0], P[0][1]); if (P.length >= 3 && Math.hypot(f[0] - px, f[1] - py) < 10) sdFinishOutline(); else { P.push(g); SD.ver++; S.dirty = true; } return; }
+    const cur = sdCur(), hd = cur && sdHandleAt(cur, px, py);
+    if (hd) { snapshot(); SD.drag = { kind: 'pull', st: cur, e: hd.k, n: sdNormG(cur, hd.n[0], hd.n[1]), g0: g, done: 0 }; return; }
+    const hit = sdHit(g); if (hit) { SD.sel = hit; snapshot(); SD.drag = { kind: 'move', st: hit, g0: g, c0: hit.c.slice() }; sdChanged(); return; }
+    SD.sel = null; if (SD.mode === 'outline') { SD.draw = { kind: 'outline', pts: [g] }; } else SD.draw = { kind: SD.mode, g0: g, g1: g }; SD.ver++; S.dirty = true; sdRender();
+  }, true);
+  cv.addEventListener('pointermove', e => {
+    if (!window.__sdActive()) return; const dr = SD.drag;
+    if (SD.draw && SD.draw.kind === 'outline' && S.mode === 'plan') { SD.draw.hover = ghGrid(e); SD.ver++; S.dirty = true; return; }
+    if (!dr && !(SD.draw && e.buttons)) return; e.stopImmediatePropagation();
+    if (SD.draw && !dr) { SD.draw.g1 = ghGrid(e); SD.ver++; S.dirty = true; return; }
+    if (dr.kind === 'move') { const g = ghGrid(e); dr.st.c = [dr.c0[0] + g[0] - dr.g0[0], dr.c0[1] + g[1] - dr.g0[1]]; dr.st.pts = [[dr.st.c[0], dr.st.c[1], .5]]; S.strokeVer++; SD.ver++; S.dirty = true; return; }
+    let d; if (dr.kind === 'pull') { const g = ghGrid(e); d = ((g[0] - dr.g0[0]) * dr.n[0] + (g[1] - dr.g0[1]) * dr.n[1]) * cs(); }
+    else { const [px, py] = sdPt(e), vx = dr.v[0], vy = dr.v[1], vv = vx * vx + vy * vy || 1; d = ((px - dr.p0[0]) * vx + (py - dr.p0[1]) * vy) / vv; }
+    d = Math.round(d * 20) / 20; if (d !== dr.done) { solidPull(dr.st, dr.e, d - dr.done); dr.done = d; S.strokeVer++; SD.ver++; S.dirty = true; }
+  }, true);
+  const sdUp = e => { if (!window.__sdActive()) return;
+    if (SD.draw && SD.draw.kind !== 'outline') { e.stopImmediatePropagation(); const d = SD.draw; SD.draw = null; sdAdd(sdNew(d.kind, d.g0, d.g1)); return; }
+    if (SD.drag) { e.stopImmediatePropagation(); SD.drag = null; S.lowQ = false; sdChanged(); } };
+  cv.addEventListener('pointerup', sdUp, true); cv.addEventListener('pointercancel', sdUp, true);
+  cv.addEventListener('dblclick', e => { if (window.__sdActive() && SD.draw && SD.draw.kind === 'outline') { e.stopImmediatePropagation(); SD.draw.pts.pop(); sdFinishOutline(); } }, true);
+  addEventListener('keydown', e => { if (!window.__sdActive() || e.target.tagName === 'INPUT') return;
+    if (e.key === 'Enter' && SD.draw && SD.draw.kind === 'outline') { e.preventDefault(); sdFinishOutline(); }
+    else if (e.key === 'Escape' && (SD.draw || SD.sel)) { SD.draw = null; SD.sel = null; SD.ver++; S.dirty = true; sdRender(); }
+    else if ((e.key === 'Delete' || e.key === 'Backspace') && sdCur() && !SD.draw) { e.preventDefault(); snapshot(); S.strokes.splice(S.strokes.indexOf(SD.sel), 1); SD.sel = null; sdChanged(); } });
+  function sdNumRow(label, getM, setM, isLen = true) {   // a typed number in the chosen units (lengths) or as is (degrees)
+    const row = make('div', { cls: 'sdrow' }), inp = make('input', { type: 'number', step: 'any', 'aria-label': label }), f = isLen && isFt() ? FT : 1; inp.value = String(+(getM() * f).toFixed(2));
+    inp.onkeydown = e => e.stopPropagation(); inp.onchange = () => { const v = +inp.value; if (!isFinite(v)) return; snapshot(); setM(v / f); sdChanged(); };
+    row.append(make('span', { text: label + (isLen ? ' · ' + (isFt() ? 'ft' : 'm') : '') }), inp); return row; }
+  function sdRender() { const w = sdBoxEl; if (!w || !w.isConnected) return; w.textContent = ''; const cur = sdCur();
+    const modes = make('div', { cls: 'seg' }); for (const [m, t] of [['box', 'box'], ['cylinder', 'cylinder'], ['outline', 'outline'], ['wall', 'wall']]) { const b = make('button', { type: 'button', cls: SD.mode === m ? 'on' : '', text: t }); b.onclick = () => { SD.mode = m; SD.draw = null; SD.ver++; S.dirty = true; sdRender(); }; modes.append(b); } w.append(modes);
+    w.append(make('p', { cls: 'u2note', text: { box: 'drag corner to corner on the plan; a click makes a 4 m box', cylinder: 'drag from the centre out; a click makes a 2 m radius', outline: 'tap the corners; tap the first one again, double-click or enter to close', wall: 'drag along the line of the wall' }[SD.mode] + '. click a shape to pick it; drag its square handles to push or pull a side; in 3d, drag any side or the top.' }));
+    if (SD.mode === 'wall') { w.append(sdNumRow('new wall height', () => SD.wallH, v => { SD.wallH = Math.max(.05, v); }), sdNumRow('wall thickness', () => SD.thick, v => { SD.thick = Math.max(.02, v); })); }
+    else w.append(sdNumRow('new shape height', () => SD.h, v => { SD.h = Math.max(.05, v); }));
+    if (!cur) { const n = sdList().length; w.append(make('p', { cls: 'u2note', text: n ? `${n} shape${n > 1 ? 's' : ''} on this plan. nothing picked.` : 'no shapes yet.' })); return; }
+    const s = cur.solid; w.append(make('div', { cls: 'u2group', text: 'picked · ' + cur.name }));
+    { const row = make('div', { cls: 'sdrow' }), inp = make('input', { type: 'text', 'aria-label': 'name', value: cur.name }); inp.onkeydown = e => e.stopPropagation(); inp.onchange = () => { snapshot(); cur.name = inp.value.trim().slice(0, 40) || 'shape'; sdChanged(); }; row.append(make('span', { text: 'name' }), inp); w.append(row); }
+    const xs = s.foot.map(q => q[0]), ys = s.foot.map(q => q[1]), bw = Math.max(...xs) - Math.min(...xs), bd = Math.max(...ys) - Math.min(...ys);
+    if (s.shape === 'cylinder') w.append(sdNumRow('radius', () => bw / 2, v => { const k = Math.max(.05, v) / (bw / 2); s.foot = s.foot.map(q => [q[0] * k, q[1] * k]); solidSync(cur); }));
+    else if (s.shape === 'box' || s.shape === 'wall') { w.append(sdNumRow(s.shape === 'wall' ? 'length' : 'width', () => bw, v => { s.foot = solidBox(Math.max(.02, v), bd); solidSync(cur); }), sdNumRow(s.shape === 'wall' ? 'thickness' : 'depth', () => bd, v => { s.foot = solidBox(bw, Math.max(.02, v)); solidSync(cur); })); }
+    w.append(sdNumRow('height', () => s.h, v => { s.h = Math.max(.05, v); solidSync(cur); }));
+    const base = make('div', { cls: 'seg' }); for (const [m, t] of [['ground', 'on the ground'], ['level', 'at an elevation']]) { const b = make('button', { type: 'button', cls: (s.zb == null) === (m === 'ground') ? 'on' : '', text: t }); b.onclick = () => { snapshot(); if (m === 'ground') s.zb = null; else if (s.zb == null) s.zb = gAt(cur.c[0], cur.c[1]) + cur.lift; solidSync(cur); sdChanged(); }; base.append(b); } w.append(base);
+    if (s.zb == null) w.append(sdNumRow('raise above the ground', () => s.raise || 0, v => { s.raise = v; solidSync(cur); })); else w.append(sdNumRow('base elevation', () => s.zb, v => { s.zb = v; solidSync(cur); }));
+    w.append(sdNumRow('turn', () => cur.rot || 0, v => { cur.rot = ((v % 360) + 360) % 360; solidSync(cur); }, false));
+    const col = make('div', { cls: 'seg wrap' }); for (const k of Object.keys(SD_FILL)) { const on = JSON.stringify(cur.fill || null) === JSON.stringify(SD_FILL[k]); const b = make('button', { type: 'button', cls: on ? 'on' : '', text: k }); b.onclick = () => { snapshot(); cur.fill = SD_FILL[k] || undefined; sdChanged(); }; col.append(b); } w.append(col);
+    const acts = make('div', { cls: 'u2acts' });
+    acts.append(ghBtn('duplicate', 'a copy beside it', () => { const c2 = JSON.parse(JSON.stringify({ ...cur, _k: undefined, _v: undefined })); c2.c = [cur.c[0] + (bw + 2) / cs(), cur.c[1]]; c2.solid.id = Math.random().toString(36).slice(2, 7); sdAdd(solidSync(c2)); }), ghBtn('delete', 'remove this shape (delete key too)', () => { snapshot(); S.strokes.splice(S.strokes.indexOf(cur), 1); SD.sel = null; sdChanged(); }), ghBtn('done', 'put it down (esc)', () => { SD.sel = null; SD.ver++; S.dirty = true; sdRender(); }));
+    w.append(acts); w.append(make('p', { cls: 'u2note', text: `footprint ${fA(Math.abs(polyAreaS(s.foot)))} · volume ${fV(Math.abs(polyAreaS(s.foot)) * s.h)}` }));
+  }
+  function sdPanel(box) { sdBoxEl = box; sdRender(); }
+  /* the design tools in 3d: solar tables and the dam's wall and lake, built from the tools' own layouts as objects that are drawn but never saved or printed (the tools keep the real data) */
+  let d3C = { key: '', list: [] };
+  window.__derived3d = () => {
+    const dam = S.world && S.rec && S.rec.dam && S.damPt ? S.rec.dam : null, arrays = S.world && S.rec && Array.isArray(S.rec.arrays) ? S.rec.arrays : [];
+    if (!dam && !arrays.length) { d3C = { key: '', list: [], lake: null }; return d3C.list; } const key = [S.terrainVer, cs(), W, S.damPt ? S.damPt.join() : '', S.damH, JSON.stringify(dam || null), JSON.stringify(arrays), S.runoff].join('|'); if (d3C.key === key) return d3C.list;
+    let lake = null; const s = cs(), list = [], obj = (c, pts, fill, name) => { const g0 = gAt(c[0], c[1]), t = []; for (const q of pts) t.push((q[0] - c[0]) * s, -(q[1] - c[1]) * s, q[2] - g0); return { kind: 'obj', c, rot: 0, sc: 1, lift: 0, tris: t, fill, name, _derived: true }; };
+    for (const a of arrays) { let lay; try { lay = pvLayout(a); } catch (_) { lay = null; } if (!lay || !lay.tables.length) continue;
+      const tl = a.tilt * D2R, [, L, Wm] = PV_MOD[a.mod], Ls = a.stack * (a.orient === 'portrait' ? L : Wm), Hh = Ls * Math.sin(tl), clr = a.clear == null ? .5 : a.clear, T = [];
+      const at = (u, v) => { const E = lay.f[0] * u + lay.r[0] * v, N = lay.f[1] * u + lay.r[1] * v, gv = worldToGrid(E / s, N / s); return [lay.gx + gv[0], lay.gy + gv[1]]; };
+      for (const tb of lay.tables) { const n = Math.max(1, Math.ceil((tb.to - tb.from) / 8));   // tables in pieces of 8 m or less so they follow the ground
+        for (let k = 0; k < n; k++) { const v0 = tb.from + (tb.to - tb.from) * k / n, v1 = tb.from + (tb.to - tb.from) * (k + 1) / n, P = [at(tb.front, v0), at(tb.front, v1), at(tb.back, v1), at(tb.back, v0)];
+          const Z = P.map((q, m) => gAt(q[0], q[1]) + clr + (m >= 2 ? Hh : 0)); T.push([...P[0], Z[0]], [...P[1], Z[1]], [...P[2], Z[2]], [...P[0], Z[0]], [...P[2], Z[2]], [...P[3], Z[3]]); } }
+      list.push(obj([lay.gx, lay.gy], T, [52, 70, 102], 'solar array')); }
+    if (dam) { let r = null; try { r = dwCalc(); } catch (_) { r = null; }
+      if (r && !r.open && r.st && r.st.length > 1) { const zc = r.pool.zk + r.Hb, T = [], K = [], step = Math.max(1, Math.round(1 / .25));   // the wall: upstream batter 3:1, the crest, downstream 2:1, station by station
+        const prof = q => { const up = r.cw / 2 + 3 * q.h, dn = r.cw / 2 + 2 * q.h, pt = o => [q.x + r.ux * o / s, q.y + r.uy * o / s]; const a = pt(-up), b = pt(-r.cw / 2), c2 = pt(r.cw / 2), d = pt(dn); return [[...a, gAt(a[0], a[1])], [...b, zc], [...c2, zc], [...d, gAt(d[0], d[1])]]; };
+        const S2 = r.st.filter((q, n) => n % step === 0 || n === r.st.length - 1);
+        for (let n = 0; n + 1 < S2.length; n++) { if (S2[n].h <= 0 && S2[n + 1].h <= 0) continue; const A = prof(S2[n]), B = prof(S2[n + 1]); for (let m = 0; m < 3; m++) { const Tt = m === 1 ? K : T; Tt.push(A[m], B[m], B[m + 1], A[m], B[m + 1], A[m + 1]); } }
+        const cc = [r.gi, r.gj]; if (T.length) list.push(obj(cc, T, [178, 152, 114], 'dam wall')); if (K.length) list.push(obj(cc, K, [206, 190, 160], 'dam crest'));
+        const lv = r.pool.crest, L2 = r.pool.cells.length ? poolLoops(r.pool.cells, lv) : [];   // the lake at full water: its shoreline, filled over the ground after the model is drawn
+        lake = L2.length ? { loops: L2, lv } : null; } }
+    d3C = { key, list, lake }; return list; };
+  window.__dam3Own = () => { window.__derived3d(); return !!(d3C.list.some(o => o.name === 'dam wall')); };
+  window.__lake3 = (c, proj) => { window.__derived3d(); const lk = d3C.lake; if (!lk) return; c.save(); c.fillStyle = 'rgba(96,138,176,.85)'; fillPool(c, lk.loops, proj, lk.lv); c.strokeStyle = 'rgba(40,70,100,.6)'; c.lineWidth = 1; c.stroke(); c.restore(); };
+  { const st2 = make('style'); st2.textContent = '.sdrow{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--ink2);margin:4px 0}.sdrow input{width:7em;font:inherit;padding:3px 5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:3px}'; document.head.append(st2); }
+
   /* connect AI: the user's own assistant (Claude or any app that takes MCP connectors) drives this page through the coyote-mcp relay. the page asks the relay for commands and runs only the fixed set below; every change is undoable */
   {
     const RELAY = (() => { try { return new URLSearchParams(location.search).get('relay') || localStorage.getItem('coyote-ai-relay') || 'https://coyote-mcp.netlify.app'; } catch (_) { return 'https://coyote-mcp.netlify.app'; } })().replace(/\/+$/, '');
@@ -8574,6 +8772,8 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
       if (persp != null) S.cam.persp = !!persp; { const b = document.getElementById('perspBtn'); if (b) b.classList.toggle('on', !!S.cam.persp); } S.dirty = true;
     }
     const viewName = () => S.mode === 'model' ? '3d' : S.mode;
+    function sdDesc(st) { const s = st.solid, xs = s.foot.map(q => q[0]), ys = s.foot.map(q => q[1]), b = gAt(st.c[0], st.c[1]) + st.lift, r2 = v => +v.toFixed(2);
+      return `${st.name} [id ${s.id}] ${s.shape}${s.shape === 'cylinder' ? ` radius ${r2((Math.max(...xs) - Math.min(...xs)) / 2)} m` : ` ${r2(Math.max(...xs) - Math.min(...xs))} × ${r2(Math.max(...ys) - Math.min(...ys))} m`}, ${r2(s.h)} m high, turned ${r2(st.rot || 0)}°, base at ${r2(b)} m${s.zb == null ? ' (on the ground)' : ''}, centre ${JSON.stringify(where(st.c[0], st.c[1]))}`; }
     function aimAt(a) {                    // the 3d camera on one spot: target in the middle, width_m across the screen, heading = the way it looks (0 north), look_down_deg = 90 straight down
       if (S.mode !== 'model') viewTo('3d'); const g = toG(a.target); if (!inside(g)) throw new Error('the target is outside the site');
       if (a.heading_deg != null) S.cam.yaw = -(+a.heading_deg) * D;
@@ -8628,7 +8828,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
           units: S.unit, contour_interval: ivl ? uz(ivl) + ' ' + un() : null, view: viewName(), task: state.task, tool: t.id, camera: S.mode === 'model' ? { yaw: +S.cam.yaw.toFixed(2), pitch: +S.cam.pitch.toFixed(2), perspective: !!S.cam.persp } : undefined,
           existing_ground: { low: uz(elo), high: uz(ehi) }, proposed_ground: { low: uz(lo), high: uz(hi) }, cut: document.getElementById('cut').textContent, fill: document.getElementById('fill').textContent,
           water_layers: Object.fromEntries(Object.entries(ANA).map(([k, v]) => [k, !!S.an[v]])), aerial_photo: !!S[aeKey()], surface_color: S.colorMode, labels: S.labels, rain: S.rain,
-          drawn: kinds, sections: S.secs.length, lot_boundary: !!(S.boundary && S.boundary.length), undo_steps: undoStack.length,
+          drawn: kinds, shapes: sdList().map(sdDesc), sections: S.secs.length, lot_boundary: !!(S.boundary && S.boundary.length), undo_steps: undoStack.length,
           tools: TASKS.map(tk => `${tk.id}: ` + tk.tools.map(x => `${x.id} (${x.name})`).join(', ')) }) };
       },
       async screenshot(a) {
@@ -8699,6 +8899,39 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
       async set_section(a) { const A = toG(a.a), B = toG(a.b); snapshot(); secSet(S.secs.concat([[[A[0], A[1]], [B[0], B[1]]]])); S.dirty = true; drawNow(); return { text: `section ${S.secs.length} set, ${fL(Math.hypot(B[0] - A[0], B[1] - A[1]) * cs(), 0)} long; set_view section to see it` }; },
       async undo(a) { const n = Math.max(1, Math.min(20, +a.steps || 1)); let k = 0; for (; k < n && undoStack.length; k++) undo(); drawNow(); return { text: `undid ${k} step${k === 1 ? '' : 's'}` }; },
       async redo(a) { const n = Math.max(1, Math.min(20, +a.steps || 1)); let k = 0; for (; k < n && redoStack.length; k++) redo(); drawNow(); return { text: `redid ${k} step${k === 1 ? '' : 's'}` }; },
+      async add_shape(a) {
+        const kind = a.shape; if (!['box', 'cylinder', 'outline', 'wall'].includes(kind)) throw new Error('shape is box, cylinder, outline or wall');
+        const h = a.height_m != null ? Math.max(.05, +a.height_m) : kind === 'wall' ? 1.5 : 3, name = String(a.name || kind).slice(0, 40), made = [];
+        const opt = x => ({ name, fill: SD_FILL[a.color] || undefined, zb: a.base_elevation_m != null ? +a.base_elevation_m : null, raise: +a.raise_m || 0, rot: +a.rotation_deg || 0, shape: kind, ...x });
+        if (kind === 'box') { let c, w, d; if (a.points && a.points.length >= 2 && !a.width_m) { const [p, q] = ptsG(a.points, 2); c = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2]; w = Math.abs(q[0] - p[0]) * cs(); d = Math.abs(q[1] - p[1]) * cs(); } else { c = ptsG(a.points)[0]; w = +a.width_m || 4; d = +a.depth_m || w; } made.push(solidMake(c, solidBox(Math.max(.02, w), Math.max(.02, d)), h, opt())); }
+        else if (kind === 'cylinder') made.push(solidMake(ptsG(a.points)[0], solidCircle(Math.max(.05, +a.radius_m || 2)), h, opt({ rot: 0 })));
+        else if (kind === 'outline') { const G = ptsG(a.points, 3), c = [G.reduce((s2, q) => s2 + q[0], 0) / G.length, G.reduce((s2, q) => s2 + q[1], 0) / G.length]; made.push(solidMake(c, G.map(q => [(q[0] - c[0]) * cs(), -(q[1] - c[1]) * cs()]), h, opt({ rot: 0 }))); }
+        else { const G = ptsG(a.points, 2), t = Math.max(.02, +a.thickness_m || .3);   // a wall per segment, each run past its ends by half the thickness so the corners close
+          for (let k = 0; k + 1 < G.length; k++) { const dx = (G[k + 1][0] - G[k][0]) * cs(), dy = -(G[k + 1][1] - G[k][1]) * cs(), L = Math.hypot(dx, dy); if (L < .05) continue; made.push(solidMake([(G[k][0] + G[k + 1][0]) / 2, (G[k][1] + G[k + 1][1]) / 2], solidBox(L + (G.length > 2 ? t : 0), t), h, opt({ rot: Math.atan2(dy, dx) / D, name: G.length > 2 ? `${name} ${k + 1}` : name }))); } }
+        if (!made.length) throw new Error('nothing to make from those points');
+        snapshot(); for (const st of made) S.strokes.push(st); SD.sel = made[made.length - 1]; sdChanged(); drawNow(); return { text: 'made ' + made.map(sdDesc).join('; ') };
+      },
+      async edit_shape(a) {
+        const want = String(a.id || a.name || ''), st = sdList().find(x => x.solid.id === want) || sdList().find(x => x.name === want); if (!st) throw new Error('no shape ' + want + '; get_state lists them');
+        const s = st.solid, did = []; snapshot();
+        if (a.delete) { S.strokes.splice(S.strokes.indexOf(st), 1); if (SD.sel === st) SD.sel = null; sdChanged(); drawNow(); return { text: `deleted ${st.name}` }; }
+        let T = st; if (a.duplicate) { T = JSON.parse(JSON.stringify(st)); T.solid.id = Math.random().toString(36).slice(2, 7); { const xs0 = st.solid.foot.map(q => q[0]); T.c = [st.c[0] + (Math.max(...xs0) - Math.min(...xs0) + 2) / cs(), st.c[1]]; } S.strokes.push(T); did.push('duplicated'); }
+        const ts = T.solid;
+        if (a.name) T.name = String(a.name).slice(0, 40);
+        if (a.move_to) { const g = toG(a.move_to); T.c = [g[0], g[1]]; did.push('moved'); }
+        if (a.move_by_m) { const [x, y] = gToXY(T.c[0], T.c[1]); T.c = xyToG(x + (+a.move_by_m.x || 0), y + (+a.move_by_m.y || 0)); did.push('moved'); }
+        if (a.rotation_deg != null) T.rot = ((+a.rotation_deg % 360) + 360) % 360; if (a.turn_by_deg) T.rot = (((T.rot || 0) + +a.turn_by_deg) % 360 + 360) % 360;
+        const xs = ts.foot.map(q => q[0]), ys = ts.foot.map(q => q[1]), bw = Math.max(...xs) - Math.min(...xs), bd = Math.max(...ys) - Math.min(...ys);
+        if ((a.width_m || a.depth_m) && (ts.shape === 'box' || ts.shape === 'wall')) ts.foot = solidBox(Math.max(.02, +a.width_m || bw), Math.max(.02, +a.depth_m || bd));
+        if (a.radius_m && ts.shape === 'cylinder') ts.foot = solidCircle(Math.max(.05, +a.radius_m));
+        if (a.height_m) ts.h = Math.max(.05, +a.height_m);
+        if (a.color) T.fill = SD_FILL[a.color] || undefined;
+        if (a.base_elevation_m != null) ts.zb = a.base_elevation_m === 'ground' ? null : +a.base_elevation_m; if (a.raise_m != null) ts.raise = +a.raise_m;
+        solidSync(T);
+        for (const p of [].concat(a.pull || [])) { let e = p.side; if (['north', 'south', 'east', 'west'].includes(e)) { const v = { north: [0, 1], south: [0, -1], east: [1, 0], west: [-1, 0] }[e], o0 = xyToG(0, 0), o1 = xyToG(v[0], v[1]), dir = [o1[0] - o0[0], o1[1] - o0[1]]; let best = -Infinity; for (const ed of sdEdges(T)) { const gn = sdNormG(T, ed.n[0], ed.n[1]), dt = gn[0] * dir[0] + gn[1] * dir[1]; if (dt > best) { best = dt; e = ed.k; } } }
+          if (e !== 'top' && e !== 'bottom' && !(Number.isInteger(+e) && +e >= 0 && +e < ts.foot.length)) throw new Error('pull side is top, bottom, north, south, east, west or an edge number'); solidPull(T, e === 'top' || e === 'bottom' ? e : +e, +p.by_m || 0); did.push(`pulled ${p.side} ${p.by_m} m`); }
+        SD.sel = T; sdChanged(); drawNow(); return { text: `${did.length ? did.join(', ') + ' · ' : ''}${sdDesc(T)}` };
+      },
       async open_tool(a) { const tk = TASKS.find(x => (!a.task || x.id === a.task) && x.tools.some(t => t.id === a.tool || t.name === a.tool)); if (!tk) throw new Error('no tool ' + a.tool + '; get_state lists them'); const t = tk.tools.find(x => x.id === a.tool || x.name === a.tool); state.task = tk.id; chooseTool(t.id); await settle(); return { text: panelRead(panelEl, `${tk.name} · ${t.name}`) }; },
       async read_panel(a) { if (a.which === 'layers') { layPanel.classList.add('show'); mountLayers(); return { text: panelRead(layPanel, 'layers & look') }; } return { text: panelRead(panelEl, `${task().name} · ${tool().name}`) }; },
       async use_control(a) {
