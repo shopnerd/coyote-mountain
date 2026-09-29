@@ -8720,6 +8720,8 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     const IDLE_MS = 45 * 60000, ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     const newCode = () => { const a = new Uint8Array(10); crypto.getRandomValues(a); return Array.from(a, v => ABC[v % ABC.length]).join(''); };
     let code = ''; try { code = localStorage.getItem('coyote-ai-code') || ''; } catch (_) {} if (!/^[A-Z0-9]{10}$/.test(code)) { code = newCode(); try { localStorage.setItem('coyote-ai-code', code); } catch (_) {} }
+    const naps = new Map(); let napN = 0;   // short waits kept on the worker: a page in the background has its own timers slowed to once a minute
+    const nap = ms => AI.worker && AI.on ? new Promise(r => { const id = ++napN; naps.set(id, r); AI.worker.postMessage({ nap: id, ms }); }) : new Promise(r => setTimeout(r, ms));
     const AI = { on: false, last: 0, lastName: '', err: '', worker: null, queue: Promise.resolve(), n: 0, refs: [] };
     const addr = () => `${RELAY}/mcp/${code}`;
     const det = make('details', { id: 'u2aiDet' }), pop = make('div', { id: 'u2aiPop' }), sum = make('summary', { cls: 'u2b', text: 'connect AI' }); det.append(sum, pop);
@@ -8736,11 +8738,11 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
       addrIn.value = addr(); onBtn.textContent = AI.on ? 'switch off' : 'switch on'; sum.classList.toggle('live', AI.on); sum.textContent = AI.on ? 'AI on' : 'connect AI';
       statEl.innerHTML = ''; statEl.append(AI.err ? AI.err : !AI.on ? 'off' : AI.last ? make('span', {}, ['last: ', make('b', { text: AI.lastName }), ' · ' + ago(AI.last)]) : 'listening · waiting for your AI');
     }
-    const WSRC = `let url='',on=false,fast=0;onmessage=e=>{const d=e.data;if(d.url!==undefined)url=d.url;if(d.on!==undefined)on=d.on;if(d.fast)fast=Date.now();};
+    const WSRC = `let url='',on=false,fast=0;onmessage=e=>{const d=e.data;if(d.nap){setTimeout(()=>postMessage({woke:d.nap}),d.ms);return;}if(d.url!==undefined)url=d.url;if(d.on!==undefined)on=d.on;if(d.fast)fast=Date.now();};
 (async()=>{for(;;){if(on&&url){try{const r=await fetch(url,{cache:'no-store'});const j=await r.json();postMessage({ok:r.ok,cmds:j.cmds||[]});if((j.cmds||[]).length)fast=Date.now();}catch(e){postMessage({ok:false,err:String(e)});}}await new Promise(r=>setTimeout(r,!on?500:Date.now()-fast<120000?700:2000));}})();`;
     function aiSet(on) {
       AI.on = on; AI.err = ''; if (on) AI.last = AI.last || 0; try { localStorage.setItem('coyote-ai-on', on ? '1' : ''); } catch (_) {}
-      if (on && !AI.worker) { AI.worker = new Worker(URL.createObjectURL(new Blob([WSRC], { type: 'text/javascript' }))); AI.worker.onmessage = e => { const d = e.data; if (!d.ok) { AI.err = 'cannot reach the relay · retrying'; aiUI(); return; } if (AI.err) { AI.err = ''; aiUI(); } for (const c of d.cmds) AI.queue = AI.queue.then(() => aiRun(c)); }; }
+      if (on && !AI.worker) { AI.worker = new Worker(URL.createObjectURL(new Blob([WSRC], { type: 'text/javascript' }))); AI.worker.onmessage = e => { const d = e.data; if (d.woke) { const f = naps.get(d.woke); naps.delete(d.woke); if (f) f(); return; } if (!d.ok) { AI.err = 'cannot reach the relay · retrying'; aiUI(); return; } if (AI.err) { AI.err = ''; aiUI(); } for (const c of d.cmds) AI.queue = AI.queue.then(() => aiRun(c)); }; }
       if (AI.worker) AI.worker.postMessage({ url: `${RELAY}/api/next?s=${code}`, on, fast: on });
       if (!on) fetch(`${RELAY}/api/bye?s=${code}`, { cache: 'no-store' }).catch(() => {});
       AI.since = Date.now(); aiUI();
@@ -8763,7 +8765,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     const where = (i, j) => { const [x, y] = gToXY(i, j), o = { x: +x.toFixed(1), y: +y.toFixed(1) }; if (S.world) { const [la, lo] = nodeLatLon(i, j, S.world.lat, S.world.lon); o.lat = +la.toFixed(6); o.lon = +lo.toFixed(6); } return o; };
     const changed = () => { S.strokeVer++; S.dirty = true; updateStats(); };
     function drawNow() { try { zdisp(); S.dirty = false; if (S.mode === 'plan') drawPlan(); else if (S.mode === 'model') (S.modelStyle === 'stepped' ? drawStepped() : drawModel(ctx, S.w, S.h, 1)); else if (S.mode === 'analysis') drawAnalysis(); else drawSection(); drawPip(); } catch (_) {} }
-    const settle = async () => { drawNow(); for (let k = 0; k < 40 && anaPending; k++) await new Promise(r => setTimeout(r, 100)); await new Promise(r => setTimeout(r, 60)); drawNow(); };
+    const settle = async () => { drawNow(); for (let k = 0; k < 40 && anaPending; k++) await nap(100); await nap(60); drawNow(); };
     function viewTo(v) {
       if (v === 'analysis') { state.task = 'study'; chooseTool('water'); state.view = 'plan'; applyView(); return; }
       if (v === 'plan' && tool().analysis) { state.task = 'site'; chooseTool('place'); }
@@ -8776,6 +8778,10 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     const viewName = () => S.mode === 'model' ? '3d' : S.mode;
     function sdDesc(st) { const s = st.solid, xs = s.foot.map(q => q[0]), ys = s.foot.map(q => q[1]), b = gAt(st.c[0], st.c[1]) + st.lift, r2 = v => +v.toFixed(2);
       return `${st.name} [id ${s.id}] ${s.shape}${s.shape === 'cylinder' ? ` radius ${r2((Math.max(...xs) - Math.min(...xs)) / 2)} m` : ` ${r2(Math.max(...xs) - Math.min(...xs))} × ${r2(Math.max(...ys) - Math.min(...ys))} m`}, ${r2(s.h)} m high, turned ${r2(st.rot || 0)}°, base at ${r2(b)} m${s.zb == null ? ' (on the ground)' : ''}, centre ${JSON.stringify(where(st.c[0], st.c[1]))}`; }
+    function standAt(a) {                 // first person: stand at the eye point, eye_height_m up (default 1.7), heading and look_down as for aimAt (negative looks up)
+      if (S.mode !== 'model') viewTo('3d'); const g = toG(a.eye); if (!inside(g)) throw new Error('the eye point is outside the site'); walkStart(); S.walk = { i: g[0], j: g[1], h: Math.max(.3, +a.eye_height_m || 1.7) };
+      if (a.heading_deg != null) S.cam.yaw = -(+a.heading_deg + 180) * D;   /* on foot the camera looks along +forward, the opposite way to the orbit camera's eye for the same yaw */ S.cam.pitch = Math.max(.7, Math.min(1.95, (90 - (a.look_down_deg == null ? 2 : +a.look_down_deg)) * D)); S.dirty = true;
+    }
     function aimAt(a) {                    // the 3d camera on one spot: target in the middle, width_m across the screen, heading = the way it looks (0 north), look_down_deg = 90 straight down
       if (S.mode !== 'model') viewTo('3d'); const g = toG(a.target); if (!inside(g)) throw new Error('the target is outside the site');
       if (a.heading_deg != null) S.cam.yaw = -(+a.heading_deg) * D;
@@ -8848,7 +8854,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
         const msg = document.getElementById('worldStatus').textContent; if (!S.world) throw new Error('the fetch did not find that place: ' + msg);
         drawNow(); return { text: `now at ${S.world.name} (${S.world.lat.toFixed(5)}, ${S.world.lon.toFixed(5)}), ${fL(S.siteW, 0)} wide. ${msg}` };
       },
-      async set_view(a) { viewTo(a.view); if (a.camera || a.perspective != null) camTo(a.camera, a.perspective); if (a.target) aimAt(a); drawNow(); return { text: 'view: ' + viewName() + (a.camera ? ' · ' + a.camera : '') + (a.target ? ` · aimed at the target, ${Math.round(a.width_m || S.siteW / 3)} m across, looking ${Math.round(((-S.cam.yaw / D) % 360 + 360) % 360)}° from north, ${Math.round(90 - S.cam.pitch / D)}° down` : '') }; },
+      async set_view(a) { viewTo(a.view); if (a.camera || a.target || a.eye) walkStop(); if (a.camera || a.perspective != null) camTo(a.camera, a.perspective); if (a.target) aimAt(a); if (a.eye) standAt(a); drawNow(); if (a.eye) return { text: `standing at ${JSON.stringify(where(S.walk.i, S.walk.j))}, eye ${S.walk.h} m above the ground, looking ${Math.round(((-S.cam.yaw / D - 180) % 360 + 360) % 360)}° from north, ${Math.round(90 - S.cam.pitch / D)}° down (render mode is on)` }; return { text: 'view: ' + viewName() + (a.camera ? ' · ' + a.camera : '') + (a.target ? ` · aimed at the target, ${Math.round(a.width_m || S.siteW / 3)} m across, looking ${Math.round(((-S.cam.yaw / D) % 360 + 360) % 360)}° from north, ${Math.round(90 - S.cam.pitch / D)}° down` : '') }; },
       async set_display(a) {
         const did = [];
         if (a.units && a.units !== S.unit) { const u = document.getElementById('unit'); u.value = a.units; u.onchange({ target: u }); did.push('units ' + a.units); }
@@ -8960,7 +8966,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
         const fire = (type, xy, buttons, Ctor = PointerEvent) => cv.dispatchEvent(new Ctor(type, { clientX: xy[0], clientY: xy[1], pointerId: 91, pointerType: 'mouse', isPrimary: true, button: 0, buttons, bubbles: true, cancelable: true, composed: true, detail: type === 'dblclick' ? 2 : 1 }));
         cv.setPointerCapture = () => {}; cv.releasePointerCapture = () => {}; cv.hasPointerCapture = () => true;   // synthetic pointers have no capture to take
         try {
-          if (mode === 'taps') for (const q of g) { const xy = at(q); fire('pointermove', xy, 0); fire('pointerdown', xy, 1); fire('pointerup', xy, 0); fire('click', xy, 0, MouseEvent); await new Promise(res => setTimeout(res, 30)); }
+          if (mode === 'taps') for (const q of g) { const xy = at(q); fire('pointermove', xy, 0); fire('pointerdown', xy, 1); fire('pointerup', xy, 0); fire('click', xy, 0, MouseEvent); await nap(30); }
           else { const path = [at(g[0])]; for (let k = 1; k < g.length; k++) { const A = at(g[k - 1]), B = at(g[k]), n = Math.max(1, Math.ceil(Math.hypot(B[0] - A[0], B[1] - A[1]) / 3)); for (let s = 1; s <= n; s++) path.push([A[0] + (B[0] - A[0]) * s / n, A[1] + (B[1] - A[1]) * s / n]); }
             fire('pointerdown', path[0], 1); for (const xy of path.slice(1)) fire('pointermove', xy, 1); fire('pointerup', path[path.length - 1], 0); }
           if (a.finish === 'double_click') { const xy = at(g[g.length - 1]); fire('dblclick', xy, 0, MouseEvent); }
