@@ -72,6 +72,7 @@ for fn in FILES:
     # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
     # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
+    Z_PRE = z.copy()                                                # 3 Oct: ground before the trough, so the road can keep its own smooth grade
     TXW = -93.0                                                     # 3 Oct, Will moved it again: 57 ft off the west gable
     A = np.array([TXW, -22.0]); B = np.array([TXW, 22.0])   # 3 Oct (Will placed it in the app): 49 ft off the west gable, across the front, centred on the stable, 44 ft; retaining wall, stable side held at the rim
     u = (B - A) / np.linalg.norm(B - A); nv = np.array([-u[1], u[0]]); LEN = np.linalg.norm(B - A); TW, WT = 3.5, .8
@@ -80,13 +81,15 @@ for fn in FILES:
         a, b = A + u * (LEN * k / NS + (0 if k == 0 else .6)), A + u * (LEN * (k + 1) / NS)
         zc = ground(z, *b2grid(*((a + b) / 2 + nv * (TW / 2 + 1))))      # floor level = the low (road, north) side
         RW = 2.0 * FT                                               # retaining: the high (south) side is held up level with the rim
+        Lk = np.linalg.norm(b - a)
         for j_ in range(H):
             for i_ in range(W):
                 q = np.array(grid2b(i_, j_)) - a; t = q @ u; w = q @ nv
-                if not (-3 <= t <= np.linalg.norm(b - a) + 3): continue
-                if -TW / 2 <= w <= TW / 2 + 5: z[j_, i_] = zc                                   # under the trough and the low side
-                elif -(TW / 2 + 10) <= w < -TW / 2:                                              # uphill: flat at the rim for 4 ft, then back to natural
-                    f = min(1.0, max(0.0, (-w - TW / 2 - 4) / 6)); z[j_, i_] = (zc + RW) * (1 - f) + z[j_, i_] * f
+                tgt = zc + RW if w < -TW / 2 else zc                              # held at the rim on the high side, floor level under and on the low side
+                ot = max(-t, 0, t - Lk); ow = max(w - (TW / 2 + 5), 0, -(TW / 2 + 4) - w)
+                o = math.hypot(ot, ow)                                            # ft outside the levelled area
+                if o >= 10: continue
+                f = o / 10; z[j_, i_] = tgt * (1 - f) + z[j_, i_] * f            # eases back to natural over 10 ft all round (3 Oct: no steps at the ends)
         secs.append((a, b, zc))
     d['z'] = [round(float(q), 3) for q in z.flatten()]
     def obox(a, b, w0, w1, z0, z1, mat_):                          # a box between a and b along u, from w0 to w1 across (ft)
@@ -163,13 +166,25 @@ for fn in FILES:
     d['z'] = [round(float(q), 3) for q in z.flatten()]
     # ---- the barn road comes straight into the middle of the west entry (Will, 28 Sep), not to the stable's corner ----
     rd = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road'][0]
-    keep = [q for q in rd['pts'] if grid2b(q[0], q[1])[0] < -84]                   # the road as drawn, up to ~48 ft from the gable
+    keep = [q for q in rd['pts'] if grid2b(q[0], q[1])[0] < -118]   # 3 Oct: one long direct sweep from further out (Will)                   # the road as drawn, up to ~48 ft from the gable
     zc_ = rd['pts'][0][2] if len(rd['pts'][0]) > 2 else .5
     P0 = np.array(grid2b(*keep[0][:2])); P1b = np.array(grid2b(*keep[1][:2]))       # join smoothly: leave the old line along its own heading
     t0 = (P0 - P1b) / np.linalg.norm(P0 - P1b)
-    P3 = np.array([-38.0, 0.0]); c1 = P0 + t0 * 20; c2 = P3 - np.array([16.0, 0.0])  # and arrive square to the entry
+    P3 = np.array([-38.0, 0.0]); Lb = np.linalg.norm(P3 - P0); c1 = P0 + t0 * Lb * .35; c2 = P3 - np.array([Lb * .3, 0.0])  # and arrive square to the entry
     approach = [tuple((1 - s_) ** 3 * P3 + 3 * (1 - s_) ** 2 * s_ * c2 + 3 * (1 - s_) * s_ ** 2 * c1 + s_ ** 3 * P0) for s_ in np.linspace(0, 1, 14)[:-1]]
-    approach = [(x, max(y, 33.0) if abs(x - TXW) < 12 else y) for x, y in approach]   # 3 Oct: swing round the trough's north end (10 ft clear)
     rd['pts'] = [[*b2grid(x, y), zc_] for x, y in approach] + keep
+    # the road keeps a smooth even grade past the trough (3 Oct, Will: no glitch): along the new curve, take the pre-trough
+    # ground, smooth it, and lay it under the road (7 ft each side), easing out over 4 ft more
+    C_ = np.array([grid2b(*q[:2]) for q in rd['pts']])
+    D_ = np.r_[0, np.cumsum(np.hypot(*np.diff(C_, axis=0).T))]
+    prof = np.array([ground(Z_PRE, *b2grid(x, y)) for x, y in C_]); prof = np.convolve(np.pad(prof, 3, mode='edge'), np.ones(7) / 7, mode='valid')
+    sel = (C_[:, 0] > -135) & (C_[:, 0] < -55)
+    for j_ in range(H):
+        for i_ in range(W):
+            P_ = np.array(grid2b(i_, j_)); dd = np.hypot(*(C_[sel] - P_).T); k_ = int(np.argmin(dd)); dmin = dd[k_]
+            if dmin > 11: continue
+            zr = prof[sel][k_]; f = 0 if dmin <= 7 else (dmin - 7) / 4
+            z[j_, i_] = zr * (1 - f) + z[j_, i_] * f
+    d['z'] = [round(float(q), 3) for q in z.flatten()]
     json.dump(d, open(p, 'w', encoding='utf-8'))
     print(fn, ': long trough', round(LEN, 1), 'ft in', NS, 'sections at', [round(q[2], 2) for q in secs], 'm;', len(trees), 'pines')

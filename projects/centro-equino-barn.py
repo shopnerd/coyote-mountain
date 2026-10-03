@@ -80,16 +80,15 @@ x = -HL
 for kind, w in SOUTH: rooms.append(dict(kind=kind, x0=x, x1=x + w, side=-1)); x += w
 for r in rooms: r['c'] = (r['x0'] + r['x1']) / 2
 
-def sticks_x(xa, xb, y, z0, z1, holes):      # tomato stakes laid HORIZONTAL, bird's-nest style (Will, 27 Sep): loose courses with gaps,
-    zz, k = z0 + .25, 0                           # each stake a little in or out and a little long or short, on light verticals every 4 ft
+def sticks_x(xa, xb, y, z0, z1, holes):      # 3 Oct (Will + Walker): sticks cut to ONE common length, laid horizontal in 3 ft
+    n = max(1, round((xb - xa) / 3))               # steel-framed panels; each course is a row of panel-length sticks, a little in/out
+    edges = [xa + (xb - xa) * q / n for q in range(n + 1)]
+    zz, k = z0 + .25, 0
     while zz < z1 - .1:
-        w = .08 * (1, -1, .5, -.5)[k % 4]; xs = xa
-        segs = []
-        for a, b, top in sorted(holes):
-            if zz < top: segs.append((xs, a)); xs = b
-        segs.append((xs, xb))
-        for a, b in segs:
-            if b - a > .3: box(a - (.3 if k % 3 == 0 else 0), b + (.3 if k % 3 == 1 else 0), y - STAKE_T / 2 + w, y + STAKE_T / 2 + w, zz, zz + STAKE_H)
+        w = .06 * (1, -1, .5, -.5)[k % 4]
+        for pa, pb in zip(edges, edges[1:]):
+            if any(ha < (pa + pb) / 2 < hb and zz < top for ha, hb, top in holes): continue
+            box(pa + .12, pb - .12, y - STAKE_T / 2 + w, y + STAKE_T / 2 + w, zz, zz + STAKE_H)
         zz += STAKE_P; k += 1
     keep = CUR[0]; mat('steel')                     # dark steel frame: posts every ~4 ft, top and bottom members
     n = max(1, round((xb - xa) / 3))                # stake panels 3 ft wide (Walker)
@@ -151,18 +150,43 @@ for sx in (-1, 1):
         else:
             rail_y(y0, y1, x)
             if STAKES:                         # framed stakes on the gable bays too, up to the eave
-                mat('stakes'); zz, k = RAIL_Z + .25, 0
+                mat('stakes'); zz, k = RAIL_Z + .25, 0; n = max(1, round((y1 - y0) / 3)); E = [y0 + (y1 - y0) * q / n for q in range(n + 1)]
                 while zz < EAVE - .4:
-                    w = .08 * (1, -1, .5, -.5)[k % 4]; box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, y0, y1, zz, zz + STAKE_H); zz += STAKE_P; k += 1
-                mat('steel'); n = max(1, round((y1 - y0) / 3))
+                    w = .06 * (1, -1, .5, -.5)[k % 4]
+                    for pa, pb in zip(E, E[1:]): box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, pa + .12, pb - .12, zz, zz + STAKE_H)
+                    zz += STAKE_P; k += 1
+                mat('steel')
                 for q in range(n + 1): yv = y0 + (y1 - y0) * q / n; box(x - .12, x + .12, yv - .1, yv + .1, RAIL_Z, EAVE - .3)
                 for zz in (RAIL_Z, EAVE - .45): box(x - .12, x + .12, y0, y1, zz, zz + .15)
     xo = x + sx * (ROCK_T / 2 + .35)
     mat('steel'); box(min(xo, xo + sx * .2), max(xo, xo + sx * .2), -HD + 1, HD - 1, EAVE - .2, EAVE + .2)          # the door track
-    mat('wood')
-    for s in (-1, 1):                          # leaves 7.5 x 11.5 ft
+    for s in (-1, 1):                          # leaves 7.5 x 11.5 ft: a steel frame clad in the same common-length sticks (3 Oct)
         ya, yb = sorted((s * (ENTRY_W / 2 + .3), s * (ENTRY_W / 2 + 7.8)))
-        box(min(xo, xo + sx * .3), max(xo, xo + sx * .3), ya, yb, .3, EAVE - .2)
+        xa_, xb_ = min(xo, xo + sx * .3), max(xo, xo + sx * .3); xm = (xa_ + xb_) / 2
+        mat('steel')
+        for yy in (ya, (ya + yb) / 2, yb): box(xa_, xb_, yy - .12, yy + .12, .3, EAVE - .2)          # stiles + a centre stile
+        for zz in (.3, (EAVE - .2 + .3) / 2, EAVE - .35): box(xa_, xb_, ya, yb, zz, zz + .15)        # rails
+        mat('stakes'); zz, k = .55, 0; E = [ya, (ya + yb) / 2, yb]
+        while zz < EAVE - .5:
+            w = .05 * (1, -1)[k % 2]
+            for pa, pb in zip(E, E[1:]): box(xm - STAKE_T / 2 + w, xm + STAKE_T / 2 + w, pa + .12, pb - .12, zz, zz + STAKE_H)
+            zz += STAKE_P; k += 1
+
+# ---- gable triangles above the end trusses (3 Oct): closed with the same framed stick panels, eave to ridge ----
+for sx in (-1, 1):
+    x = sx * HL; xi = x - sx * .3                                            # just inside the end truss
+    n = round(2 * HD / 3); E = [-HD + 2 * HD * q / n for q in range(n + 1)]
+    zz, k = EAVE + .25, 0
+    mat('stakes')
+    while zz < RIDGE - .3:
+        lim = HD - (zz + STAKE_H - EAVE) / slope                             # half-width under the rafters at this height
+        w = .06 * (1, -1, .5, -.5)[k % 4]
+        for pa, pb in zip(E, E[1:]):
+            a, b = max(pa + .12, -lim), min(pb - .12, lim)
+            if b - a > .4: box(xi - STAKE_T / 2 + w, xi + STAKE_T / 2 + w, a, b, zz, zz + STAKE_H)
+        zz += STAKE_P; k += 1
+    mat('steel')
+    for yv in E[1:-1]: box(xi - .1, xi + .1, yv - .1, yv + .1, EAVE, roof_z(yv))      # frame verticals up to the rafter
 
 # ---- structure (27 Sep, Will): steel trusses on 6 in steel pipe posts instead of the pipe portal frames, one at every
 # north stall line (7 lines, 12.7 ft apart): top chords, a bottom chord at the eave, king post, verticals and webs ----
