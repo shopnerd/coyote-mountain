@@ -25,9 +25,9 @@ STYLE = {   # name -> (group, body colour, roof colour, roof threshold above its
     'site fence': ('fence', '#1f2123', None, 0), 'cross fence': ('fence', '#1f2123', None, 0),
     'stone trough 12x4': ('water', '#a79f90', None, 0), 'watering station 10ft': ('water', '#a79f90', None, 0),
     'trailer 8 x 40': ('vehicle', '#f2f2f0', None, 0), 'bleachers': ('stable', '#8a6a48', None, 0),
-    'stone trough (long)': ('water', '#a79f90', None, 0), 'wash pad trough': ('water', '#a79f90', None, 0), 'pine forest': ('trees', '#2f4a2c', None, 0),
+    'stone trough (long)': ('water', '#a79f90', None, 0), 'wash pad trough': ('water', '#a79f90', None, 0), 'native planting': ('trees', '#7f8f5f', None, 0), 'pine forest': ('trees', '#2f4a2c', None, 0),
 }
-MATOBJ = {'wash pad trough': 'wash-pad-trough.obj', 'walker barn 72x40': 'centro-equino-barn.obj', 'covered stalls': 'covered-stalls.obj', 'bleachers': 'bleachers.obj', 'trailer 8 x 40': 'trailer-8x40.obj', 'stone trough (long)': 'stone-trough-long.obj', 'pine forest': 'pine-forest.obj'}   # tagged meshes: split by material
+MATOBJ = {'wash pad trough': 'wash-pad-trough.obj', 'native planting': 'native-planting.obj', 'walker barn 72x40': 'centro-equino-barn.obj', 'covered stalls': 'covered-stalls.obj', 'bleachers': 'bleachers.obj', 'trailer 8 x 40': 'trailer-8x40.obj', 'stone trough (long)': 'stone-trough-long.obj', 'pine forest': 'pine-forest.obj'}   # tagged meshes: split by material
 def obj_labels(path):                    # one material label per triangle, in the order topo.html triangulates the faces
     lab, cur, vn = [], 'body', 0
     for line in open(path, encoding='utf-8'):

@@ -68,7 +68,7 @@ def road_y(x):
 
 for fn in FILES:
     p = os.path.join(HERE, fn); d = json.load(open(p, encoding='utf-8')); z = np.array(d['z'], float).reshape(H, W)
-    d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'pine forest', 'forest trail', 'stable roof water to the long trough (buried pipe)', 'wash pad trough')]
+    d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'pine forest', 'forest trail', 'stable roof water to the long trough (buried pipe)', 'wash pad trough', 'native planting')]
     # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
     # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
@@ -135,6 +135,28 @@ for fn in FILES:
             m.face([bot[q], bot[q2], mid[q2], mid[q]], 'pine'); m.face([mid[q], mid[q2], top[q2], top[q]], 'pine')
         m.face(bot[::-1], 'pine'); m.face(top, 'pine')
     d['strokes'].append(stroke(m, 'pine forest', 'pine-forest.obj', z, f'pine grove between the parking and the stable: {len(trees)} round-crowned pines 14-22 ft (Will, 28 Sep)'))
+    # ---- minimal native planting (Will, 3 Oct, red markup on the west elevation): two low beds flanking the drive-in between the
+    # long trough and the west gable: sage / buckwheat / brittlebush mounds 1.5-3.5 ft, kept 9 ft off the road, 6 ft apart ----
+    rd_ = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road']
+    RP = [grid2b(*q[:2]) for q in rd_[0]['pts']] if rd_ else []
+    def near_road(x, y): return RP and min(math.hypot(x - a, y - b) for a, b in RP) < 9.5
+    rnd2 = random.Random(7); shrubs = []
+    for side in (-1, 1):
+        tries = 0
+        while len([q for q in shrubs if q[3] == side]) < 14 and tries < 4000:
+            tries += 1; x, y = rnd2.uniform(-86, -44), side * rnd2.uniform(6, 26)
+            if near_road(x, y) or any(math.hypot(x - a, y - b) < 6 for a, b, _r, _s in shrubs): continue
+            shrubs.append((x, y, rnd2.uniform(1.5, 3.4), side))
+    m = Mesh(); n = 8
+    for x, y, R_, _side in shrubs:
+        zg = ground(z, *b2grid(x, y)); h = R_ * .9 * FT
+        ring = lambda rr, zz: [(x + rr * math.cos(2 * math.pi * q / n + .3), y + rr * math.sin(2 * math.pi * q / n + .3), zz) for q in range(n)]
+        bot, mid, top = ring(R_ * .9, zg - .05), ring(R_, zg + h * .45), ring(R_ * .5, zg + h)
+        for q in range(n):
+            q2 = (q + 1) % n
+            m.face([bot[q], bot[q2], mid[q2], mid[q]], 'sage'); m.face([mid[q], mid[q2], top[q2], top[q]], 'sage')
+        m.face(top, 'sage')
+    d['strokes'].append(stroke(m, 'native planting', 'native-planting.obj', z, f'minimal native planting: {len(shrubs)} low sage/buckwheat mounds in two beds flanking the stable drive-in (Will, 3 Oct)'))
     # ---- the concrete wash pad (in the stable model, 24 x 12 ft along the solid rooms): level the ground under it to the stable
     # floor so it reads as one clean rectangle, not poked through by the slope (Will, 28 Sep) ----
     stb = [q for q in d['strokes'] if q.get('name') == 'walker barn 72x40'][0]
