@@ -20,7 +20,8 @@ PANEL, POST = 5.0, .5
 # where a leader carries the water 8 ft past the roof and down into the ditch outlet
 VALLEY_NE, FALL, RISE = 10.7, .005, 1.5                # valley 10.7 ft at the NE end, 0.5 % fall to the SW; eaves 1.5 ft higher = 1:12 over 18 ft (27 Sep: 1/2:12 was too flat)
 FLAT = 6.0                                              # level strip at every stall front: waterers + feeders (Will, 26 Sep)
-L, D = NB * STALL_W, 2 * STALL_D + CORR                # 80 x 52 ft
+ALF_L = 24.0                                            # 3 Oct (Walker): the corridor runs through the alfalfa bay, hay split either side; bay 24 ft long to keep the hay volume
+L, D = PER_SIDE * STALL_W + ALF_L, 2 * STALL_D + CORR   # 88 x 52 ft
 T0 = float(sys.argv[1]) if len(sys.argv) > 1 else 114.0 - L   # the NE (stable) end stays where the 16-stall block ended (t = 114); the block shrinks from the SW
 S0 = 2.0                                                  # and 2 ft in from its NW (downhill) side
 
@@ -74,8 +75,8 @@ for sgn in (-1, 1):
     for q in range(PER_SIDE + 1):                                                              # dividers + end panels
         x = -HL + q * STALL_W; rails(x - .12, x + .12, min(y_in, y_out), max(y_in, y_out))
     mat('steel')
-    for q in range(NB + 1):                                                                    # roof posts: corridor edge + eave line
-        x = max(-HL + POST / 2, min(HL - POST / 2, -HL + q * STALL_W))
+    for x0 in [-HL + q * STALL_W for q in range(PER_SIDE + 1)] + [XS + ALF_L / 2, HL]:            # roof posts: corridor edge + eave line
+        x = max(-HL + POST / 2, min(HL - POST / 2, x0))
         for yy in (y_in, sgn * RE):
             box(x - POST / 2, x + POST / 2, yy - POST / 2, yy + POST / 2, 0, roof_z(x, yy))
     mat('panel')
@@ -89,11 +90,14 @@ for zz in (0, .25):                                                             
     quad((-RX, 0, roof_z(-RX, 0) + zz), (RX, 0, roof_z(RX, 0) + zz), (RX, RE, roof_z(RX, RE) + zz), (-RX, RE, roof_z(-RX, RE) + zz))
 # the alfalfa bay (27 Sep, Will: part of the same roof, not a separate structure): the NE end bay, the full roofed width,
 # pipe panels on three sides, a 12 ft gate on the road end for the truck; the corridor stops at it, horses can't reach the hay
-mat('panel'); rails(XS - .12, XS + .12, -RE, RE)
-for sgn in (-1, 1):
-    rails(XS, HL, min(sgn * RE, sgn * (RE - .25)), max(sgn * RE, sgn * (RE - .25)))
-    rails(HL - .25, HL, min(sgn * 6, sgn * RE), max(sgn * 6, sgn * RE))
-mat('hay'); box(XS + 1, HL - 1, -RE + 2, RE - 2, .4, HAY_H)                                                # the stack, on pallets
+for sgn in (-1, 1):                                                                             # two hay stores, one each side of the through corridor
+    y0, y1 = sorted((sgn * HC, sgn * RE))
+    mat('panel')
+    rails(XS - .12, XS + .12, y0, y1)                                                           # against the last stall
+    rails(XS, HL, min(sgn * HC, sgn * (HC + .25)), max(sgn * HC, sgn * (HC + .25)))           # corridor side: panels the horses can't reach through
+    rails(XS, HL, min(sgn * RE, sgn * (RE - .25)), max(sgn * RE, sgn * (RE - .25)))           # outer side
+    rails(HL - .25, HL, min(sgn * (HC + 4), sgn * RE), max(sgn * (HC + 4), sgn * RE))         # NE end, leaving a 4 ft gap to load from the corridor end
+    mat('hay'); box(XS + 1, HL - 1, min(sgn * (HC + 1), sgn * (RE - 1.5)), max(sgn * (HC + 1), sgn * (RE - 1.5)), .4, HAY_H)
 vz = roof_z(-RX, 0)                                                                             # valley gutter
 mat('steel'); box(-RX, RX, -.6, .6, vz - .6, vz)
 # round trough past the SW end (Will, 26 Sep): the valley carries on as an open chute and pours into it, no downspout.
@@ -127,7 +131,7 @@ cz = lambda x: vz - .02 * (-RX - x)                      # falls 2 % from the va
 box(CH_END, -RX, -.6, .6, cz(CH_END) - .5, vz - .1)
 OBJ = os.path.join(HERE, 'covered-stalls.obj')
 with open(OBJ, 'w', newline='\n') as f:
-    f.write(f'# covered stalls: {2*PER_SIDE} stalls + alfalfa bay, {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a low round rock trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {ROCK_T:g} ft stone wall with 5 iron tie rings, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; {PER_SIDE} waterers (one per pair) on a {FLAT:g} ft level strip at the stall fronts; alfalfa bay {STALL_W:g} x {2*RE:g} ft under the roof at the NE end\n')
+    f.write(f'# covered stalls: {2*PER_SIDE} stalls + alfalfa bay, {STALL_W:g} x {STALL_D:g} ft, {PER_SIDE} a side, {CORR:g} ft corridor, roof {2*RE:g} ft wide ({OVER:g} ft over each stall front), butterfly: valley over the corridor {VALLEY_NE:g} ft at the NE end falling {FALL*100:g} % to {vz:.1f} ft at the SW end, outer eaves {RISE:g} ft higher; the valley pours down an open chute into a low round rock trough {TROUGH_D:g} ft across, {TROUGH_H:g} ft tall, {ROCK_T:g} ft stone wall with 5 iron tie rings, {END_GAP:g} ft from the SW end, {GAP:g} ft clear on its open sides, chute cantilevered {CHUTE:g} ft, no post; {PER_SIDE} waterers (one per pair) on a {FLAT:g} ft level strip at the stall fronts; alfalfa bay {ALF_L:g} ft long at the NE end, the corridor running through it, hay stored either side\n')
     f.write('# geo %.7f %.7f\n# unit ft\n# name covered stalls\n' % ctr)
     for p in V: f.write('v %.3f %.3f %.3f\n' % p)
     last = None

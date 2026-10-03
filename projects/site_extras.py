@@ -72,7 +72,8 @@ for fn in FILES:
     # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
     # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
-    A = np.array([-85.0, -22.0]); B = np.array([-85.0, 22.0])   # 3 Oct (Will placed it in the app): 49 ft off the west gable, across the front, centred on the stable, 44 ft; retaining wall, stable side held at the rim
+    TXW = -93.0                                                     # 3 Oct, Will moved it again: 57 ft off the west gable
+    A = np.array([TXW, -22.0]); B = np.array([TXW, 22.0])   # 3 Oct (Will placed it in the app): 49 ft off the west gable, across the front, centred on the stable, 44 ft; retaining wall, stable side held at the rim
     u = (B - A) / np.linalg.norm(B - A); nv = np.array([-u[1], u[0]]); LEN = np.linalg.norm(B - A); TW, WT = 3.5, .8
     m = Mesh(); NS = 1; secs = []   # one level (Will, 28 Sep)
     for k in range(NS):
@@ -140,6 +141,19 @@ for fn in FILES:
             bx, by = grid2b(i_, j_)
             if -38 <= bx <= -10 and -36 <= by <= -21.5: z[j_, i_] = floor - .02
     d['z'] = [round(float(q), 3) for q in z.flatten()]
+    # ---- the covered stalls' pad (3 Oct: the building grew 8 ft for the through-hallway alfalfa bay): level the ground under its
+    # footprint (+3 ft) to its floor, easing back to natural over 8 ft ----
+    cvl = [q for q in d['strokes'] if q.get('name') == 'covered stalls']
+    cvs = cvl[0] if cvl else None
+    if cvs: cfl = ground(z, *cvs['c']) + cvs.get('lift', 0); cr_ = math.radians(cvs['rot']); Fp = np.array(cvs['foot']); fx0, fy0 = Fp.min(0); fx1, fy1 = Fp.max(0)
+    for j_ in (range(H) if cvs else []):
+        for i_ in range(W):
+            dx, dy = (i_ - cvs['c'][0]) * cs, -(j_ - cvs['c'][1]) * cs
+            lx, ly = dx * math.cos(cr_) + dy * math.sin(cr_), -dx * math.sin(cr_) + dy * math.cos(cr_)
+            ox = max(fx0 - lx, 0, lx - fx1); oy = max(fy0 - ly, 0, ly - fy1); o = math.hypot(ox, oy) / FT
+            if o <= 3: z[j_, i_] = cfl
+            elif o <= 11: f = (o - 3) / 8; z[j_, i_] = cfl * (1 - f) + z[j_, i_] * f
+    d['z'] = [round(float(q), 3) for q in z.flatten()]
     # ---- the stable pad (Will, 28 Sep: a corner of ground poked through the floor): cut the ground under the whole footprint
     # (+2 ft) down to the stable floor so the hillside never shows inside ----
     for j_ in range(H):
@@ -155,7 +169,7 @@ for fn in FILES:
     t0 = (P0 - P1b) / np.linalg.norm(P0 - P1b)
     P3 = np.array([-38.0, 0.0]); c1 = P0 + t0 * 20; c2 = P3 - np.array([16.0, 0.0])  # and arrive square to the entry
     approach = [tuple((1 - s_) ** 3 * P3 + 3 * (1 - s_) ** 2 * s_ * c2 + 3 * (1 - s_) * s_ ** 2 * c1 + s_ ** 3 * P0) for s_ in np.linspace(0, 1, 14)[:-1]]
-    approach = [(x, max(y, 33.0) if abs(x + 85) < 12 else y) for x, y in approach]   # 3 Oct: swing round the trough's north end (10 ft clear)
+    approach = [(x, max(y, 33.0) if abs(x - TXW) < 12 else y) for x, y in approach]   # 3 Oct: swing round the trough's north end (10 ft clear)
     rd['pts'] = [[*b2grid(x, y), zc_] for x, y in approach] + keep
     json.dump(d, open(p, 'w', encoding='utf-8'))
     print(fn, ': long trough', round(LEN, 1), 'ft in', NS, 'sections at', [round(q[2], 2) for q in secs], 'm;', len(trees), 'pines')
