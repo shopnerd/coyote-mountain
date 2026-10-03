@@ -143,21 +143,21 @@ for fn in FILES:
         for i_ in range(W):
             bx, by = grid2b(i_, j_)
             if -38 <= bx <= -10 and -36 <= by <= -21.5: z[j_, i_] = floor - .02
-            # 3 Oct: the slope is cut back for the trough at the pad's edge: level to 6 ft past it, easing to natural over 10 ft
-            o = math.hypot(max(-40 - bx, 0, bx + 16), max(-43 - by, 0, by + 21.5))
+            # 3 Oct: the ground is levelled a little past the pad and the trough on its west edge, easing to natural over 10 ft
+            o = math.hypot(max(-42 - bx, 0, bx + 10), max(-37 - by, 0, by + 21.5))
             if o < 10 and by < -21.5: f = o / 10; z[j_, i_] = (floor - .02) * (1 - f) + z[j_, i_] * f
     d['z'] = [round(float(q), 3) for q in z.flatten()]
-    # ---- a fieldstone trough along the wash pad's outer (south) edge at the wash-room end (Will + Walker, 3 Oct, from the
-    # Gemini south elevation): 12 x 3 ft, rim 2 ft above the pad, so a horse standing on the pad drinks over it ----
+    # ---- a fieldstone trough along the wash pad's WEST edge, running out from the stable's south-west corner (Will, 3 Oct, from
+    # the 28 Sep 'stable from the road' painting he liked): 14 x 3 ft just outside the gable line, rim 2 ft above the pad ----
     PAD_S = -21.0 - .75 - 12.0                                      # the pad's south edge (stable: HD 21, ROCK_T/2 .75, pad 12 ft deep)
-    TX0, TX1, TW2, WT2 = -34.0, -22.0, 3.0, .7
-    ty0, ty1 = PAD_S - TW2, PAD_S
-    m = Mesh(); fz = floor - .02
-    m.box(TX0, TX1, ty0, ty1, fz - .3, fz + .4 * FT, 'rock')                                            # base and floor
-    m.box(TX0, TX1, ty0, ty0 + WT2, fz + .4 * FT, fz + 2.0 * FT, 'rock'); m.box(TX0, TX1, ty1 - WT2, ty1, fz + .4 * FT, fz + 2.0 * FT, 'rock')
-    m.box(TX0, TX0 + WT2, ty0 + WT2, ty1 - WT2, fz + .4 * FT, fz + 2.0 * FT, 'rock'); m.box(TX1 - WT2, TX1, ty0 + WT2, ty1 - WT2, fz + .4 * FT, fz + 2.0 * FT, 'rock')
-    wl = fz + 1.65 * FT; m.face([(TX0 + WT2, ty0 + WT2, wl), (TX1 - WT2, ty0 + WT2, wl), (TX1 - WT2, ty1 - WT2, wl), (TX0 + WT2, ty1 - WT2, wl)], 'water')
-    d['strokes'].append(stroke(m, 'wash pad trough', 'wash-pad-trough.obj', z, 'fieldstone trough 12 x 3 ft along the outer edge of the wash pad, rim 2 ft (Will + Walker, 3 Oct)'))
+    TW2, WT2 = 3.0, .7
+    x0, x1, y0, y1 = -36.0 - TW2, -36.0, PAD_S - 1.5, -21.75          # west of the pad (x -36 is the gable line), wall to 1.5 ft past the pad
+    m = Mesh(); fz = floor - .02; top = fz + 2.0 * FT; lip = fz + .4 * FT
+    m.box(x0, x1, y0, y1, fz - .3, lip, 'rock')                                                  # base and floor
+    m.box(x0, x0 + WT2, y0, y1, lip, top, 'rock'); m.box(x1 - WT2, x1, y0, y1, lip, top, 'rock')   # long walls
+    m.box(x0, x1, y0, y0 + WT2, lip, top, 'rock'); m.box(x0, x1, y1 - WT2, y1, lip, top, 'rock')   # end walls
+    wl = fz + 1.65 * FT; m.face([(x0 + WT2, y0 + WT2, wl), (x1 - WT2, y0 + WT2, wl), (x1 - WT2, y1 - WT2, wl), (x0 + WT2, y1 - WT2, wl)], 'water')
+    d['strokes'].append(stroke(m, 'wash pad trough', 'wash-pad-trough.obj', z, 'fieldstone trough 14 x 3 ft along the west edge of the wash pad, out from the SW corner, rim 2 ft (Will, 3 Oct)'))
     # ---- the covered stalls' pad (3 Oct: the building grew 8 ft for the through-hallway alfalfa bay): level the ground under its
     # footprint (+3 ft) to its floor, easing back to natural over 8 ft ----
     cvl = [q for q in d['strokes'] if q.get('name') == 'covered stalls']

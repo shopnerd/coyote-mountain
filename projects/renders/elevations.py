@@ -25,6 +25,9 @@ BRIEF = ('Turn the FIRST image, an exact 3D model render, into an architectural 
  'ground and grass tips among golden dry grass, not lush. Golden hour, warm low sun, long soft shadows, a sky of big lit cumulus clouds. '
  'Two or three horses in the runs or being led, one person, maybe a ranch dog, all at true scale. Photoreal, high-end architectural photography.')
 REFS = [os.path.join(HERE, 'site-ref-0576.jpg'), os.path.join(HERE, 'site-ref-0577.jpg')]
+EXTRA = {   # per-view fixes from the gallery notes
+ 'el-east': ' Two pine trees stand in the foreground, one at the LEFT edge and one at the RIGHT edge of the frame, exactly where the render shows their trunks and crowns: keep BOTH pines, framing the stable (Will, 3 Oct: "I liked when it had two pine trees in the front").',
+}
 if __name__ == '__main__':
     eng = sys.argv[1]; views = sys.argv[2:] or list(SIDE)
     k = key('OPENAI_API_KEY') if eng == 'openai' else gemini_key()
@@ -32,6 +35,6 @@ if __name__ == '__main__':
     for v in views:
         t = time.time()
         try:
-            im = (openai if eng == 'openai' else google)(os.path.join(HERE, 'model', f'model-{v}.png'), BRIEF.format(side=SIDE[v]), REFS, k)
+            im = (openai if eng == 'openai' else google)(os.path.join(HERE, 'model', f'model-{v}.png'), BRIEF.format(side=SIDE[v]) + EXTRA.get(v, ''), REFS, k)
             im.save(os.path.join(EL_OUT, f'{v}-{eng}.png')); print(v, eng, 'ok', round(time.time() - t))
         except Exception as e: print(v, eng, 'FAILED', str(e)[:200])
