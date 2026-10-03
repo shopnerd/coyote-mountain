@@ -22,7 +22,8 @@ def tblock(fig,num,es,en,dark=False):
     if not dark: fig.add_artist(matplotlib.lines.Line2D([0.02,0.98],[0.055,0.055],color=INK,lw=.8))
     fig.text(0.02,0.025,'CENTRO EQUINO · CHICHIHUAS',fontsize=10,weight='bold',color=c)
     fig.text(0.215,0.025,f'{es}  ·  {en}',fontsize=10,color=c)
-    fig.text(0.70,0.025,'Diseño preliminar · Preliminary design · 28 sep 2026',fontsize=8.5,color=m)
+    fig.text(0.627,0.025,'GIANT NATURE',fontsize=9.5,weight='bold',color='#4f6b3a' if not dark else 'white')   # Walker's v14 branding
+    fig.text(0.70,0.025,'Diseño preliminar · Preliminary design · oct 2026',fontsize=8.5,color=m)
     fig.text(0.98,0.022,f'{num:02d}',fontsize=18,weight='bold',color=CLAY,ha='right')
 def heading(fig,es,en,y=0.945):
     fig.text(0.02,y,es,fontsize=24,weight='bold',color=INK); fig.text(0.02,y-0.033,en,fontsize=14,color=MUTED,style='italic')
@@ -152,7 +153,7 @@ def views(items,es,en):
         ax=fig.add_axes([x,y,cw,rh-0.03]); a=img(num_); ax.imshow(a); ax.set_aspect('auto') if False else None; ax.axis('off')
         fig.text(x,y-0.018,tes,fontsize=9.5,weight='bold',color=INK); fig.text(x,y-0.034,ten,fontsize=8.5,color=MUTED,style='italic')
     tblock(fig,nxt(),es,en); PAGES.append(fig)
-def placeholder(es,en,goes_es,goes_en,boxes):
+def placeholder(es,en,goes_es,goes_en,boxes,notes=None):
     fig=newpage(); heading(fig,es,en)
     y=para(fig,0.02,0.85,goes_es,goes_en,w=150,fs=11)
     n=len(boxes); cols=min(3,n); rows=math.ceil(n/cols); cw=(0.96-(cols-1)*0.02)/cols; top=y-0.01; rh=(top-0.09-(rows-1)*0.03)/rows
@@ -160,7 +161,10 @@ def placeholder(es,en,goes_es,goes_en,boxes):
         r,c=divmod(k,cols); x=0.02+c*(cw+.02); yy=top-(r+1)*rh-r*.03
         fig.add_artist(matplotlib.patches.FancyBboxPatch((x,yy),cw,rh,boxstyle='round,pad=0,rounding_size=0.006',transform=fig.transFigure,fc='#f4f1ea',ec='#cfc7b5',lw=1,ls=(0,(4,3))))
         fig.text(x+cw/2,yy+rh/2+.012,bes,fontsize=12,color=INK,ha='center',weight='bold'); fig.text(x+cw/2,yy+rh/2-.014,ben,fontsize=10,color=MUTED,ha='center',style='italic')
-        fig.text(x+cw/2,yy+rh/2-.04,'por agregar · to come',fontsize=8,color=CLAY,ha='center')
+        if notes and k in notes:                       # filled box: the note sits under the heading
+            fig.texts[-2].set_y(yy+rh-.04); fig.texts[-1].set_y(yy+rh-.064); ty=yy+rh-.105
+            for es_,en_ in notes[k]: ty=para(fig,x+.012,ty,es_,en_,w=int(cw*190),fs=9)
+        else: fig.text(x+cw/2,yy+rh/2-.04,'por agregar · to come',fontsize=8,color=CLAY,ha='center')
     tblock(fig,nxt(),es,en); PAGES.append(fig)
 def text_refs():
     fig=newpage(); heading(fig,'Texto y referencias','Text and references')
@@ -284,59 +288,42 @@ exec(open('posts_page.py',encoding='utf-8').read())
 exec(open('structure_pages.py',encoding='utf-8').read())
 exec(open('stalls_page.py',encoding='utf-8').read())
 exec(open('stable_pages_0928.py',encoding='utf-8').read())   # 28 Sep stable: plan + truss structure page
-FIN=DL+'/2026-09-28 finalists/'                      # 28 Sep: the gallery finalists (will.100xbtr.com/equino, starred)
-cover(FIN+'14-cover-original-site-ne.png')
+exec(open('walker_pages.py',encoding='utf-8').read())    # 3 Oct: Walker's v14 photo pages (Giant Nature), photos at native resolution
+FIN=DL+'/2026-09-28 finalists/'
+w_cover()
+w_renders(2,[(1,'El establo y el jardín','The stable and its garden'),(2,'El lado norte y sus corrales','The north side and its runs'),
+             (3,'El establo desde el camino','The stable from the road'),(4,'Dentro del establo','Inside the stable')])
+w_renders(3,[(5,'Las gradas y el día de campo','The bleachers and a picnic'),(6,'El establo, las caballerizas y las gradas','The stable, covered stalls and bleachers'),
+             (7,'Bajo el techo mariposa','Under the butterfly roof'),(8,'El techo mariposa y el bebedero, desde el oeste','The butterfly roof and round trough, from the west')])
+w_site()
 planview(FIN+'00-plan.png')
+w_text_refs()
+w_site_materials()
+w_inspirations()
+barn_plan()
+import qrcode                                             # Walker added a QR to the 3D model; point it at the public copy
+_qr=qrcode.QRCode(border=0,box_size=10); _qr.add_data('https://will.100xbtr.com/equino/model/'); _qr.make(fit=True)
+_fig=PAGES[-1]; _ax=_fig.add_axes([0.03,0.115,0.05,0.077]); _ax.imshow(np.asarray(_qr.make_image(fill_color='black',back_color='white').convert('L')),cmap='gray',interpolation='nearest'); _ax.axis('off')
+_fig.text(0.085,0.168,'Modelo 3D del establo · 3D model of the stable',fontsize=10,weight='bold',color=INK)
+_fig.text(0.085,0.150,'Gírelo y explórelo en línea · Turn it and explore it online',fontsize=8.5,color=MUTED)
+_fig.text(0.085,0.133,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
+stalls_page()
+truss_page()
 existing()
 grading()
 operator_sheet()
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('sheet2.py','Cortes de terracería','Grading sections')
-views2([(FIN+'02-stable-from-road.png','El establo desde el camino','The stable from the road',
-         'El camino llega directo a la puerta grande; a un lado el bebedero largo de piedra, que además sostiene el talud. El lavado y monturas cierran la esquina.',
-         'The road comes straight to the big door; beside it the long stone trough, which also holds the slope. The wash and tack rooms close the corner.'),
-        (FIN+'03-north-side-runs.png','El lado norte y sus corrales','The north side and its runs',
-         'Seis caballerizas con sus corrales de 12 × 40 ft y cerca de tubo negro; piedra, tubo y varas horizontales en el muro.',
-         'Six stalls with their 12 × 40 ft runs and black pipe fence; rock, pipe rail and horizontal sticks in the wall.')],
-       'Vistas · finalistas','Views · finalists')
-views2([(FIN+'04-stable-interior.png','Dentro del establo','Inside the stable',
-         'Muros de piedra entre caballerizas, frentes y puertas de tubo negro, cerchas de acero a la vista, piso de tierra.',
-         'Rock walls between the stalls, black pipe fronts and gates, exposed steel trusses, a dirt floor.'),
-        (FIN+'05-butterfly-roof.png','Bajo el techo mariposa','Under the butterfly roof',
-         'Las ocho caballerizas techadas: el techo baja al centro del pasillo y vierte por el canalón al bebedero redondo de piedra.',
-         'The eight covered stalls: the roof dips to the middle of the corridor and pours down its chute into the round stone trough.')],
-       'Vistas · finalistas','Views · finalists')
-views2([(FIN+'06-bleachers-picnic.png','Las gradas','The bleachers',
-         'La idea de Walker: una terraza a lo largo del tráiler y tres plataformas curvas que bajan hacia la pista, para ver y hacer día de campo.',
-         'Walker’s idea: a deck along the trailer and three curved platforms stepping down toward the arena, for watching and picnics.'),
-        (FIN+'01-stable-vineyard.png','El establo y el viñedo','The stable and the vineyard',
-         'Desde el suroeste: el establo con su bebedero largo, los corrales y el viñedo detrás.',
-         'From the south-west: the stable with its long trough, the runs and the vineyard behind.')],
-       'Vistas · finalistas','Views · finalists')
-views2([(FIN+'08-from-hill.png','Desde el cerro','From the hill',
-         'Del sur, desde el cerro: las caballerizas techadas, el establo y el camino.',
-         'From the hill to the south: the covered stalls, the stable and the road.'),
-        (FIN+'09-model-ne.png','La maqueta · noreste','The site model · north-east',
-         'Todo el sitio como maqueta: establo, bebedero, gradas, cercas negras y la arboleda de pinos.',
-         'The whole site as a model: stable, trough, bleachers, black fences and the pine grove.')],
-       'Vistas · finalistas','Views · finalists')
-views2([(FIN+'10-model-sw.png','La maqueta · suroeste','The site model · south-west',
-         'Desde el suroeste: la pista de trote alrededor del terreno natural, la pista oval y el corral redondo.',
-         'From the south-west: the riding track around natural ground, the oval arena and the round pen.'),
-        (FIN+'11-model-top.png','La maqueta · desde arriba','The site model · from above',
-         'El sitio completo visto desde arriba en ángulo.',
-         'The whole site seen from above at an angle.')],
-       'Vistas · finalistas','Views · finalists')
-text_refs()
-placeholder('Inspiraciones','Inspirations','Imágenes que muestran el ambiente que buscamos: establos de piedra y madera, centros ecuestres del valle, cercas, sombras y paisaje.','Images that show the feeling we are after: stone-and-timber stables, equestrian centres in the valley, fencing, shade and landscape.',[('Establos','Stables'),('Corrales y cercas','Paddocks and fencing'),('Pistas y arena','Arenas and footing'),('Paisaje y agua','Landscape and water'),('Señalética','Signage'),('Detalles','Details')])
-barn_plan()
-stalls_page()
-truss_page()
 placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
-placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')])
+placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
+            notes={1:[('Caballerizas del establo: en la v14 Walker puso 12 × 12 ft con corrales de 12 × 30 ft; el modelo y estos planos siguen con 12 × 14 ft y corrales de 12 × 40 ft. ¿Cuál queda?','Stable stalls: in v14 Walker wrote 12 × 12 ft with 12 × 30 ft runs; the model and these drawings still have 12 × 14 ft and 12 × 40 ft runs. Which one stays?')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-09-28-v13.pdf')
-with PdfPages(out) as pdf:
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-03-v15.pdf')
+tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
+with PdfPages(tmp) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
+rep=place_photos(tmp,out)
+with open('pack_photo_report.txt','w',encoding='utf-8') as fh:
+    for pg,src,px,dpi in rep: fh.write(f'p{pg:02d}  {dpi:4d} dpi  {px:>11}  {src}'+chr(10))
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)
 print(out,len(PAGES))

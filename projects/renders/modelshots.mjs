@@ -12,6 +12,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: '1-hero-sw', i: 67, j: 66.7, h: 20, yaw: 1.67, pitch: 1.83 },
   { id: '2-corridor', i: 77.4, j: 65.8, h: 1.7, yaw: 1.716, pitch: 1.57 },
   { id: '3-site-ne', i: 124, j: 53, h: 45, yaw: -1.52, pitch: 1.92 },
+  { id: 'p4-site-ne', i: 124, j: 53, h: 45, yaw: -1.52, pitch: 1.92 },   // 3 Oct: pack p4 slot (Walker's crop of 3-site-ne), run with SHOT_W=1376 SHOT_H=1203 SHOT_DSF=2
   { id: '4-hill-s', i: 76, j: 76, h: 10, yaw: 2.41, pitch: 1.72 },
   { id: '5-corridor-out', i: 89.6, j: 64.2, h: 1.7, yaw: -1.436, pitch: 1.56 },
   { id: '6-west', i: 64.5, j: 46.5, h: 18, yaw: 0.838, pitch: 1.82 },
@@ -32,6 +33,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: '15-stable-south', orbit: { ti: 107.3, tj: 58.6, az: 75, el: 24, dist: 48, fov: 55 } },
   { id: '16-stable-sw', orbit: { ti: 107.3, tj: 58.6, az: 140, el: 22, dist: 48, fov: 55 } },
   { id: '18-stable-west-elev', orbit: { ti: 107.3, tj: 58.6, az: 138, el: 6, dist: 36, fov: 50 } },
+  { id: 'p2-road', orbit: { ti: 107.3, tj: 58.6, az: 138, el: 6, dist: 36, fov: 50 } },   // 3 Oct: pack p2 #3 = Walker's crop of 18-stable-west-elev; run with SHOT_DSF=3.6, crop in p2crop
   { id: '19-spiral', orbit: { ti: 97.7, tj: 45.7, az: 180, el: 18, dist: 16, fov: 55 } },
   { id: '20-front-yard', orbit: { ti: 102.04, tj: 58.36, az: 176.8
 , el: 30, dist: 40, fov: 55 } },
@@ -53,7 +55,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: 'b6-low', white: true, block: true, orbit: { ti: 85, tj: 55, az: 115, el: 16, dist: 450 } },
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const page = await browser.newPage({ viewport: { width: 1536, height: 864 }, deviceScaleFactor: 1 });
+const page = await browser.newPage({ viewport: { width: +(process.env.SHOT_W || 1536), height: +(process.env.SHOT_H || 864) }, deviceScaleFactor: +(process.env.SHOT_DSF || 1) });
 page.on('pageerror', e => console.log('page error:', e.message));
 await page.goto(URL_); await page.waitForFunction(() => window.__shot && !document.getElementById('load'), null, { timeout: 90000 });
 await page.waitForTimeout(1500);                                                   // the photo texture
