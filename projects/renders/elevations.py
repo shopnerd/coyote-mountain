@@ -10,14 +10,14 @@ paint.QUAL = 'high'
 SIDE = {
  'el-north': 'the long NORTH side of the stable: six stalls, each opening through a 6 x 9 ft open doorway to its own 12 x 40 ft run fenced in black steel pipe, the runs in front of the camera',
  'el-south': 'the long SOUTH side of the stable: at the left end the two plastered rooms (wash room with one wide wooden door onto a concrete pad), then four stalls opening to their runs that climb the slope toward the camera, fenced in black steel pipe; the long low tan fieldstone water trough at far left',
- 'el-west': 'the WEST end of the stable, its main entry: a big open gable with a large wooden sliding door slid aside, the dirt road running straight into the aisle, the steel truss visible in the gable, and the long low tan fieldstone water trough running along the front on the right',
- 'el-east': 'the EAST end of the stable from the parking path: the open gable entry with its sliding door slid aside, looking down the aisle, the steel truss in the gable, black pipe runs on both sides',
+ 'el-west': 'the WEST end of the stable, its main entry: the open gable entry with its stick-clad sliding doors slid aside, the dirt road sweeping in from the left into the aisle, the plastered rooms at the right end, and in the foreground the long low tan fieldstone water trough running across the whole view, acting as a low retaining wall',
+ 'el-east': 'the EAST end of the stable from the parking path, framed by two pines: the open gable entry with its stick-clad sliding doors, looking straight down the aisle, black pipe runs on both sides',
 }
-BRIEF = ('Turn the FIRST image, an exact 3D model render, into an architectural photograph taken at standing eye level. It shows {side}. '
+BRIEF = ('Turn the FIRST image, an exact 3D model render, into an architectural photograph taken at standing eye level, perfectly STRAIGHT ON: the camera is level and square to the facade, verticals stay vertical, the roof line stays horizontal and centred, a true frontal elevation. It shows {side}. '
  'STRICT: keep the camera, the horizon, the terrain and every wall, roof, truss, opening, fence, gate, trough and tree exactly where they are, '
  'same size, shape and count; add no building. The stable: walls of light tan stacked fieldstone to 5 ft, a black steel pipe rail floating 1 ft above '
  'the stone, then up to the eave panels of thin HORIZONTAL wooden branches (bird nest style) in slim dark steel frames, 3 ft wide; 6 in black steel '
- 'pipe posts; dark charcoal corrugated metal roof; a small raised open clerestory roof along the ridge; the plastered rooms are warm lime-washed '
+ 'pipe posts; the big sliding doors and the gable triangles above the trusses are clad in the same horizontal sticks in steel frames, every stick cut to the same length; dark charcoal corrugated metal roof; a small raised open clerestory roof along the ridge; the plastered rooms are warm lime-washed '
  'straw bale. All fences and gates are black steel pipe. '
  'The OTHER images are real photos of this exact site in Baja California: use them ONLY for the landscape, light and colour: the rounded granite '
  'hills, the soil, the shrubs, the vineyards. Do not copy any building from them. Season: late spring, a little green: fresh green in the low '
