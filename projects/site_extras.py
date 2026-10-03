@@ -72,16 +72,20 @@ for fn in FILES:
     # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
     # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
-    A = np.array([-56.0, -9.0]); B = np.array([-56.0, -49.0])   # 28 Sep (Will markup 2): 20 ft off the west gable, just south of the entry's drive lanes, 40 ft running south
+    A = np.array([-98.7, -20.25]); B = np.array([-56.4, -6.65])   # 3 Oct (Will's red rectangle): between the west gable and the main road, along the south side of the barn road, ~44 ft; works as a retaining wall
     u = (B - A) / np.linalg.norm(B - A); nv = np.array([-u[1], u[0]]); LEN = np.linalg.norm(B - A); TW, WT = 3.5, .8
     m = Mesh(); NS = 1; secs = []   # one level (Will, 28 Sep)
     for k in range(NS):
         a, b = A + u * (LEN * k / NS + (0 if k == 0 else .6)), A + u * (LEN * (k + 1) / NS)
-        zc = ground(z, *b2grid(*((a + b) / 2)))
-        for j_ in range(H):                                        # level a strip 5 ft round this section at its middle height
+        zc = ground(z, *b2grid(*((a + b) / 2 + nv * (TW / 2 + 1))))      # floor level = the low (road, north) side
+        RW = 2.0 * FT                                               # retaining: the high (south) side is held up level with the rim
+        for j_ in range(H):
             for i_ in range(W):
-                q = np.array(grid2b(i_, j_)) - a; t = q @ u; w = abs(q @ nv)
-                if -3 <= t <= np.linalg.norm(b - a) + 3 and w <= TW / 2 + 5: z[j_, i_] = zc
+                q = np.array(grid2b(i_, j_)) - a; t = q @ u; w = q @ nv
+                if not (-3 <= t <= np.linalg.norm(b - a) + 3): continue
+                if -TW / 2 <= w <= TW / 2 + 5: z[j_, i_] = zc                                   # under the trough and the low side
+                elif -(TW / 2 + 10) <= w < -TW / 2:                                              # uphill: flat at the rim for 4 ft, then back to natural
+                    f = min(1.0, max(0.0, (-w - TW / 2 - 4) / 6)); z[j_, i_] = (zc + RW) * (1 - f) + z[j_, i_] * f
         secs.append((a, b, zc))
     d['z'] = [round(float(q), 3) for q in z.flatten()]
     def obox(a, b, w0, w1, z0, z1, mat_):                          # a box between a and b along u, from w0 to w1 across (ft)
@@ -96,11 +100,11 @@ for fn in FILES:
         wl = zc + RIM - .35 * FT; c = [a + u * WT + nv * (-TW / 2 + WT), b - u * WT + nv * (-TW / 2 + WT), b - u * WT + nv * (TW / 2 - WT), a + u * WT + nv * (TW / 2 - WT)]
         m.face([(*p_, wl) for p_ in c], 'water')
     d['strokes'].append(stroke(m, 'stone trough (long)', 'stone-trough-long.obj', z,
-        'long stone water trough along the west road, 40 ft, one level on a levelled strip, rim 2 ft, ~650 gal (Will markup, 28 Sep)'))
+        'long stone water trough as a retaining wall between the stable and the main road, 44 ft, one level, rim 2 ft, uphill side backfilled to the rim (Will + Walker, 3 Oct)'))
     # roof water from the stable (Will: capture it into the trough): a gutter downpipe at the stable's south-west corner, buried pipe to the trough's north end
     tpl = [q for q in d['strokes'] if (q.get('name') or '') == 'stalls trough overflow pipe']
     if tpl:
-        rp = dict(tpl[0]); rp.update(name='stable roof water to the long trough (buried pipe)', pts=[[*b2grid(-37.0, -22.0), .5], [*b2grid(*(A + u * 2)), .5]])
+        rp = dict(tpl[0]); rp.update(name='stable roof water to the long trough (buried pipe)', pts=[[*b2grid(-37.0, -22.0), .5], [*b2grid(*(B - u * 2)), .5]])
         d['strokes'].append(rp)
     # ---- the pine grove between the parking and the stable (Will, 28 Sep: a small outcrop of modest, round-crowned pines),
     # placed where the aerial photo shows dark tree cover, clear of the walking path ----
