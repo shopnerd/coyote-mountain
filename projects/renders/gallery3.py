@@ -9,7 +9,7 @@ import paint
 from paint import openai, google, key
 from gallery2 import gemini_key
 paint.QUAL = 'high'
-SRC, OUT = os.path.join(HERE, 'model'), os.path.join(HERE, 'gallery3'); os.makedirs(OUT, exist_ok=True)
+SRC, OUT = os.path.join(HERE, 'model'), os.path.join(HERE, os.environ.get('GAL_OUT', 'gallery3')); os.makedirs(OUT, exist_ok=True)   # 3 Oct: GAL_OUT=gallery4 keeps earlier rounds
 ENGINE = sys.argv[1]; ONLY = sys.argv[2:]
 VIEWS = ['1-hero-sw', '3-site-ne', '20-front-yard', '16-stable-sw', '18-stable-west-elev', '8-stable', '14-bleachers-high', '13-bleachers',
          '11-arena', '5-corridor-out', '4-hill-s', '9-arrival']
@@ -45,9 +45,14 @@ PICNIC = (' Focus on the wooden deck and the three curved, stepped wooden platfo
 
 EXTRA = {   # per-view fixes from the gallery notes (28 Sep)
     '16-stable-sw': ' Behind the stable is the vineyard (rows of vines on the slope) exactly where the render shows it, NOT an arena. No fence and no shadow across the dirt road in the foreground.',
-    '11-arena': ' The camera stands inside the arena looking out: keep the far buildings small and exactly where the render has them; the white trailer with its deck and steps stays a trailer, not a building.',
+    '11-arena': ' The camera stands inside the arena looking out: keep the far buildings small and exactly where the render has them; the white trailer with its deck and steps stays a trailer, not a building. The two plastered rooms (wash and tack) sit at the WEST end of the stable’s south side, by the road, exactly where the render has them.',
     '10-stable-aisle': ' This is INSIDE the stable, down its aisle: low walls of tan stacked fieldstone between the stalls, black steel pipe stall fronts with swinging pipe gates, exposed dark STEEL trusses and a dark corrugated roof, light coming through the open clerestory and the stick panels, a plastered room with a door on the right, packed-earth aisle floor. Horses looking out over the gates, a person leading a horse down the aisle, a dog. Keep every wall, gate, truss and opening exactly where the render has it.',
-    '4-hill-s': ' Keep the stable, the covered stalls and every road exactly as small and as placed as in the render.',
+    '4-hill-s': ' Keep the stable, the covered stalls and every road exactly as small and as placed as in the render. The two plastered rooms (wash and tack) sit at the WEST end of the stable’s south side, by the road, exactly where the render has them.',
+    # 3 Oct gallery notes (Will)
+    '18-stable-west-elev': ' At this corner the plastered wash room has ONE outside door 6 ft wide and 9 ft tall, opening onto a flat concrete pad 12 ft by 24 ft that runs along the stable wall, exactly as the render shows. There is NO metal roof, canopy or shed on this side. The long low fieldstone trough in front also holds up the slope like a retaining wall: keep it.',
+    'b3-sw': ' The small boxes in the parking strip are CARS and PICKUPS, never tanks or farm machinery. The riding track and its infield are well vegetated with sage scrub and grasses. The blue area in the low spot below the track is shallow standing water in a natural sink: paint it as water.',
+    '5-corridor-out': ' The camera is under the butterfly roof at eye level looking down the corridor, which runs straight through to the far open end; the alfalfa bales sit behind pipe panels on BOTH sides of the far bay, never across the corridor.',
+
 }
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-p01   150 dpi    1289x1650  C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-1-0.png
+p01   204 dpi    1754x2245  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/cover-horses-portrait.jpg
 p02   309 dpi    2017x1094  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-27 big gallery (OpenAI + Gemini)/v7 28 Sep current model (Gemini + 4 OpenAI)/16-stable-sw-google.png
 p02   400 dpi    2619x1419  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png
 p02   400 dpi    2616x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/p2-road-crop-hi-4.png
@@ -20,12 +20,12 @@ p06   400 dpi     1520x851  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equi
 p06   400 dpi     1520x851  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/72AD092E-E646-458E-877D-399A7BEAE50B.JPG
 p07   400 dpi    1517x1354  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/A9E16894-0AF7-4FA3-9824-B84DED500296.JPG
 p07   400 dpi    1515x1352  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/A39FD7FF-D32A-4D27-B4CE-858BDD950E3F.JPG
-p07   150 dpi      570x507  C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-2.png
+p07   351 dpi    1333x1186  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/stone-cobble-paving.jpg
 p07   400 dpi    1520x1352  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/97C73138-3D20-401F-8477-5381FA3AA71D.JPG
-p07   150 dpi      569x510  C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-4.png
-p07   150 dpi      568x511  C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-5.png
-p07   150 dpi      570x510  C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-6.png
-p07   150 dpi      569x510  C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-7.png
+p07   167 dpi      632x567  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/wood-log-pile.jpg
+p07   167 dpi      632x568  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/wood-fallen-oak.jpg
+p07   248 dpi      943x844  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/steel-roof-skylight.jpg
+p07   266 dpi     1010x906  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/fence-black-posts-wire.jpg
 p08   240 dpi      918x793  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DF6ECC64-DBC1-4E02-AC67-81714C435793.JPG
 p08   248 dpi      943x818  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DA2B0734-8C87-42DF-A3D6-0734C4EE1D6B.JPG
 p08   209 dpi      798x691  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/F861117E-1180-4342-B1F9-E107BAAA4698.JPG

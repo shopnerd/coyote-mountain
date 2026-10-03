@@ -27,7 +27,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   // white study model, floating on white (27 Sep): orbit views around the site centre
   { id: 'b1-ne', white: true, block: true, orbit: { ti: 85, tj: 53, az: -40, el: 32, dist: 560 } },
   { id: 'b2-se', white: true, block: true, orbit: { ti: 85, tj: 53, az: 50, el: 32, dist: 560 } },
-  { id: 'b3-sw', white: true, block: true, orbit: { ti: 85, tj: 53, az: 140, el: 32, dist: 560 } },
+  { id: 'b3-sw', white: true, block: true, water: true, orbit: { ti: 85, tj: 53, az: 140, el: 32, dist: 560 } },   // 3 Oct: water in the sink (Will's note)
   { id: 'b4-nw', white: true, block: true, orbit: { ti: 85, tj: 53, az: 230, el: 32, dist: 560 } },
   { id: 'b5-top', white: true, block: true, orbit: { ti: 85, tj: 53, az: 0, el: 90, dist: 500 } },
   { id: '15-stable-south', orbit: { ti: 107.3, tj: 58.6, az: 75, el: 24, dist: 48, fov: 55 } },
@@ -46,6 +46,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: 'el-south', i: 103.423, j: 70.729, h: 1.70, yaw: 2.8302, pitch: 1.5708, fov: 58 },
   { id: 'el-west', i: 94.565, j: 54.520, h: 3.25, yaw: 1.2594, pitch: 1.5708, fov: 48 },
   { id: 'el-north', i: 110.658, j: 48.249, h: 4.66, yaw: -0.3114, pitch: 1.5708, fov: 58 },
+  { id: 'el-south-wash', i: 102.131, j: 67.332, h: 1.70, yaw: 2.8302, pitch: 1.5708, fov: 45 },   // 3 Oct: square to the south wall, centred on the wash door, pad and trough, 66 ft out (the fence is at ~90)
   { id: 'el-east', i: 115.316, j: 61.199, h: 1.70, yaw: -1.8822, pitch: 1.5708, fov: 58 },
   { id: 'r1-plan-rain', water: true, top: { i: 88, j: 60, w: 420 } },
   { id: 'r2-sink-rain', water: true, orbit: { ti: 66, tj: 72, az: -70, el: 42, dist: 170 } },

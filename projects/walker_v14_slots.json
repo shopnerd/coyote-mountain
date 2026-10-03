@@ -6,14 +6,15 @@
    2550,
    1650
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-1-0.png",
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/cover-horses-portrait.jpg",
   "crop": [
-   0,
-   0,
-   1,
-   1
+   -0.002464507184534358,
+   0.00031319078401725246,
+   1.0003392262771895,
+   0.9998520518634659
   ],
-  "note": "crop of Walker v14 page, 150 dpi; original not found"
+  "inliers": 1274,
+  "note": "Walker original via Adobe share, 3 Oct"
  },
  "2-0": {
   "rect": [
@@ -358,14 +359,15 @@
    1864,
    794
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-2.png",
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/stone-cobble-paving.jpg",
   "crop": [
-   0,
-   0,
-   1,
-   1
+   0.0031864836175106003,
+   -0.0018633912037847797,
+   0.9982587868268001,
+   1.0045204000769474
   ],
-  "note": "crop of Walker v14 page, 150 dpi; original not found"
+  "inliers": 1292,
+  "note": "Walker original via Adobe share, 3 Oct"
  },
  "7-3": {
   "rect": [
@@ -390,14 +392,15 @@
    649,
    1447
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-4.png",
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/wood-log-pile.jpg",
   "crop": [
-   0,
-   0,
-   1,
-   1
+   -0.004850022082061212,
+   0.16034983533298733,
+   1.0032499611787302,
+   0.836863846301018
   ],
-  "note": "crop of Walker v14 page, 150 dpi; original not found"
+  "inliers": 747,
+  "note": "Walker original via Adobe share, 3 Oct"
  },
  "7-5": {
   "rect": [
@@ -406,14 +409,15 @@
    1256,
    1448
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-5.png",
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/wood-fallen-oak.jpg",
   "crop": [
-   0,
-   0,
-   1,
-   1
+   -0.002649544069082933,
+   0.19365140044223353,
+   1.0038073599745065,
+   0.8719038988094141
   ],
-  "note": "crop of Walker v14 page, 150 dpi; original not found"
+  "inliers": 581,
+  "note": "Walker original via Adobe share, 3 Oct"
  },
  "7-6": {
   "rect": [
@@ -422,14 +426,15 @@
    1864,
    1448
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-6.png",
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/steel-roof-skylight.jpg",
   "crop": [
-   0,
-   0,
-   1,
-   1
+   0.07690100553612324,
+   -0.0048791891041352845,
+   0.9248137105576625,
+   1.0069646345668914
   ],
-  "note": "crop of Walker v14 page, 150 dpi; original not found"
+  "inliers": 435,
+  "note": "Walker original via Adobe share, 3 Oct"
  },
  "7-7": {
   "rect": [
@@ -438,14 +443,15 @@
    2470,
    1448
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/walker_v14_crops/v14-7-7.png",
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/fence-black-posts-wire.jpg",
   "crop": [
-   0,
-   0,
-   1,
-   1
+   0.15913382316217042,
+   -0.005196390919228771,
+   0.8408643069698897,
+   1.0068170604912834
   ],
-  "note": "crop of Walker v14 page, 150 dpi; original not found"
+  "inliers": 629,
+  "note": "Walker original via Adobe share, 3 Oct"
  },
  "8-0": {
   "rect": [

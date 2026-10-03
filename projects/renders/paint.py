@@ -56,10 +56,10 @@ def openai(png_path, prompt, refs, k):
     out = Image.open(io.BytesIO(base64.b64decode(j['data'][0]['b64_json']))); s = out.height / H2
     return out.crop((0, int(pad * s), out.width, int((pad + 864) * s))).resize((1536, 864), Image.LANCZOS)
 
-def google(png_path, prompt, refs, k, model='gemini-3-pro-image', aspect='16:9', size='2K'):
+def google(png_path, prompt, refs, k, model='gemini-3-pro-image', aspect='16:9', size=None):
     parts = [{'text': prompt}, {'inlineData': {'mimeType': 'image/png', 'data': base64.b64encode(open(png_path, 'rb').read()).decode()}}] + \
             [{'inlineData': {'mimeType': 'image/jpeg', 'data': base64.b64encode(open(r, 'rb').read()).decode()}} for r in refs]
-    body = {'contents': [{'parts': parts}], 'generationConfig': {'responseModalities': ['IMAGE'], 'imageConfig': {'aspectRatio': aspect, 'imageSize': size}}}
+    body = {'contents': [{'parts': parts}], 'generationConfig': {'responseModalities': ['IMAGE'], 'imageConfig': {'aspectRatio': aspect, 'imageSize': size or os.environ.get('GEMINI_SIZE', '2K')}}}
     r = requests.post(f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent', headers={'x-goog-api-key': k, 'Content-Type': 'application/json'}, json=body, timeout=600)
     j = r.json()
     for c in j.get('candidates', []):
