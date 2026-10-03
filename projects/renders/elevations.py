@@ -9,7 +9,7 @@ from gallery2 import gemini_key
 paint.QUAL = 'high'
 SIDE = {
  'el-north': 'the long NORTH side of the stable: six stalls, each opening through a 6 x 9 ft open doorway to its own 12 x 40 ft run fenced in black steel pipe, the runs in front of the camera',
- 'el-south': 'the long SOUTH side of the stable: at the left end the two plastered rooms (wash room with one wide wooden door onto a concrete pad), then four stalls opening to their runs that climb the slope toward the camera, fenced in black steel pipe; the long low tan fieldstone water trough at far left',
+ 'el-south': 'the long SOUTH side of the stable: at the left end the two plastered rooms (wash room with a wooden sliding door beside its opening, onto a concrete pad), then four stalls opening to their runs that climb the slope toward the camera, fenced in black steel pipe; the long low tan fieldstone water trough at far left',
  'el-west': 'the WEST end of the stable, its main entry: the open gable entry with its stick-clad sliding doors slid aside, the dirt road sweeping in from the left into the aisle, the plastered rooms at the right end, and in the foreground the long low tan fieldstone water trough running across the whole view, acting as a low retaining wall',
  'el-south-wash': 'the WEST end of the stable’s long SOUTH side, square on, centred on the plastered wash room: its one wide 6 x 9 ft doorway opening onto a flat concrete pad 12 x 24 ft that runs along the wall, a low tan fieldstone water trough 12 ft long along the outer edge of that pad (a horse drinks from it), the tack room wall beside it, and to the right the stalls with their black pipe runs climbing the slope; the white trailer far off on the left',
  'el-east': 'the EAST end of the stable from the parking path, framed by two pines: the open gable entry with its stick-clad sliding doors, looking straight down the aisle, black pipe runs on both sides. The ridge carries only the long low open clerestory strip that runs along the roof; there is NO cupola, lantern or raised box at the gable peak',
@@ -26,6 +26,8 @@ BRIEF = ('Turn the FIRST image, an exact 3D model render, into an architectural 
  'Two or three horses in the runs or being led, one person, maybe a ranch dog, all at true scale. Photoreal, high-end architectural photography.')
 REFS = [os.path.join(HERE, 'site-ref-0576.jpg'), os.path.join(HERE, 'site-ref-0577.jpg')]
 EXTRA = {   # per-view fixes from the gallery notes
+ 'el-south-wash': ' The wash room’s 6 x 9 ft opening has a WOODEN PLANK SLIDING DOOR on a steel track above it, slid open to the right (east) of the opening over the plastered wall, exactly where the render shows it; a horse drinks from the low fieldstone trough along the west edge of the concrete pad (Will, 3 Oct).',
+ 'el-south': ' The wash room at the left end has a WOODEN PLANK SLIDING DOOR on a steel track above its opening, slid open to the right of the opening, exactly where the render shows it; the low fieldstone trough runs along the west edge of the concrete pad, out from the building corner (Will, 3 Oct).',
  'el-east': ' Two pine trees stand in the foreground, one at the LEFT edge and one at the RIGHT edge of the frame, exactly where the render shows their trunks and crowns: keep BOTH pines, framing the stable (Will, 3 Oct: "I liked when it had two pine trees in the front").',
 }
 if __name__ == '__main__':

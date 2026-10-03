@@ -28,7 +28,7 @@ def barn_plan():
         if x > -HL: ax.add_patch(Rect((x - .6, -HD + W5), 1.2, RD - W5, fc='#cbb393' if kind == 'room' or x == -HL + 24 else STONE2, ec=INK, lw=.5))
         if kind == 's': ax.add_patch(Rect((x + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.plot([x + 3.5, x + 8.5], [-HD + RD, -HD + RD], color=CLAY, lw=2.2)
         x += ST
-    ax.add_patch(Rect((-HL + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(-HL + 6, -HD - 3, 'puerta 6×9', ha='center', va='top', fontsize=6, color=CLAY)
+    ax.add_patch(Rect((-HL + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(-HL + 6, -HD - 3, 'puerta corrediza 7×9 · sliding door', ha='center', va='top', fontsize=5.5, color=CLAY); ax.add_patch(Rect((-HL + 9.3, -HD - 1.4), 7, .5, fc='#8a6a42', ec='none'))   # 3 Oct: wooden sliding door, parked east of the opening
     ax.text(0, 0, 'pasillo · aisle 14 ft  (piso de tierra · dirt floor)', ha='center', va='center', fontsize=8.5, color=MUTED)
     for sx in (-1, 1):
         xg = sx * HL; ax.add_patch(Rect((xg - 1, -AI / 2), 2, AI, fc='white', ec='none'))
@@ -48,8 +48,8 @@ def barn_plan():
               '72 × 42 ft on a 12 ft grid: 6 bays, steel trusses every 12 ft. A 14 ft centre aisle open end to end with a big sliding door at each end; the road comes straight into the west door.'),
              ('10 caballerizas de 12 × 14 ft, 6 al norte y 4 al sur, separadas por muros de piedra de 5 ft con un tubo arriba; frentes de tubo negro con puerta hacia el pasillo; cada una sale por una abertura libre de 6 × 9 ft a su corral de 12 × 40 ft. Piso de tierra color arena.',
               '10 stalls of 12 × 14 ft, 6 north and 4 south, divided by 5 ft rock walls with a pipe on top; black pipe fronts with a gate to the aisle; each opens through a 6 × 9 ft open doorway to its 12 × 40 ft run. Tan dirt floor.'),
-             ('En la esquina oeste del lado sur, junto al camino: el lavado (puerta exterior de 6 × 9 ft sobre una losa de concreto de 12 × 24 ft) y monturas y alimento; los dos cerrados con paca de paja o cob aplanado, y con piso de concreto.',
-              'At the west corner of the south side, by the road: the wash room (a 6 × 9 ft outside door onto a 12 × 24 ft concrete pad) and tack and feed; both closed in straw bale or plastered cob, with concrete floors.'),
+             ('En la esquina oeste del lado sur, junto al camino: el lavado (abertura de 6 × 9 ft con puerta corrediza de madera sobre riel, hacia una losa de concreto de 12 × 24 ft con un bebedero de piedra en su borde oeste) y monturas y alimento; los dos cerrados con paca de paja o cob aplanado, y con piso de concreto.',
+              'At the west corner of the south side, by the road: the wash room (a 6 × 9 ft opening with a wooden sliding door on a track, onto a 12 × 24 ft concrete pad with a stone trough along its west edge) and tack and feed; both closed in straw bale or plastered cob, with concrete floors.'),
              ('Muro de piedra de 5 ft en todo el perímetro, un tubo negro que flota 1 ft arriba (6 ft en total) y, hasta el alero, paneles de 3 ft de varas horizontales en marco de acero oscuro.',
               'A 5 ft rock wall all round, a black pipe floating 1 ft above it (6 ft overall) and, up to the eave, 3 ft panels of horizontal sticks in dark steel frames.'),
              ('Alero a 12 ft, cumbrera a 17 ft. Techo metálico gris oscuro con una claraboya abierta de 48 × 10 ft sobre el pasillo (sin vidrio) para luz y ventilación.',

@@ -27,7 +27,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   // white study model, floating on white (27 Sep): orbit views around the site centre
   { id: 'b1-ne', white: true, block: true, orbit: { ti: 85, tj: 53, az: -40, el: 32, dist: 560 } },
   { id: 'b2-se', white: true, block: true, orbit: { ti: 85, tj: 53, az: 50, el: 32, dist: 560 } },
-  { id: 'b3-sw', white: true, block: true, water: true, orbit: { ti: 85, tj: 53, az: 140, el: 32, dist: 560 } },   // 3 Oct: water in the sink (Will's note)
+  { id: 'b3-sw', white: true, block: true, water: true, orbit: { ti: 85, tj: 53, az: 140, el: 32, dist: 660 } },   // 3 Oct: more margin so OpenAI's letterbox crop keeps the whole block (Will: 'wish it wasn't cropped')   // 3 Oct: water in the sink (Will's note)
   { id: 'b4-nw', white: true, block: true, orbit: { ti: 85, tj: 53, az: 230, el: 32, dist: 560 } },
   { id: 'b5-top', white: true, block: true, orbit: { ti: 85, tj: 53, az: 0, el: 90, dist: 500 } },
   { id: '15-stable-south', orbit: { ti: 107.3, tj: 58.6, az: 75, el: 24, dist: 48, fov: 55 } },
@@ -52,7 +52,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: 'r2-sink-rain', water: true, orbit: { ti: 66, tj: 72, az: -70, el: 42, dist: 170 } },
   { id: 'r3-stable-rain', water: true, orbit: { ti: 104, tj: 62, az: 95, el: 48, dist: 150 } },
   { id: 'r4-top-rain', water: true, contours: true, orbit: { ti: 88, tj: 62, az: 0, el: 90, dist: 330 } },
-  { id: 'b7-plan', white: true, block: true, top: { i: 85, j: 53, w: 400 } },
+  { id: 'b7-plan', white: true, block: true, top: { i: 85, j: 53, w: 470 } },   // 3 Oct: wider so the whole block fits (Will: a perfect rectangular plan view)
   { id: 'b6-low', white: true, block: true, orbit: { ti: 85, tj: 55, az: 115, el: 16, dist: 450 } },
 ];
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

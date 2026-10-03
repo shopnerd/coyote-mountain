@@ -139,6 +139,16 @@ for s in (1, -1):
         xs = b
 
 # ---- gable ends: rock and rail either side of the big entry; the tack room's gable bay solid up to the truss;
+# ---- wooden sliding door on the wash room's outside opening (Will, 3 Oct, from the 28 Sep 'stable from the road' painting):
+# a 7 x 9.3 ft plank leaf hung on a steel track above the 6 x 9 opening, parked open to the EAST of it over the plastered wall ----
+wr_ = [r for r in rooms if r['kind'] == 'wash'][0]
+yd = -HD - ROCK_T / 2 - .3                                                                  # just outside the south wall face
+da, db = wr_['c'] - WASH_DOOR[0] / 2, wr_['c'] + WASH_DOOR[0] / 2
+mat('steel'); box(da - .5, db + 7.6, yd - .15, yd + .15, WASH_DOOR[1] + .6, WASH_DOOR[1] + .9)      # the track (wash pad sliding door)
+for xx in (db + .9, db + 6.7): box(xx - .1, xx + .1, yd - .1, yd + .1, WASH_DOOR[1] + .3, WASH_DOOR[1] + .6)   # hangers
+mat('wood')
+for k in range(7): xk = db + .3 + k * 1.0; box(xk + .03, xk + .97, yd - .12, yd + .12, .15, WASH_DOOR[1] + .3)   # vertical planks
+for zz in (.6, WASH_DOOR[1] / 2 - .25, WASH_DOOR[1] - .6): box(db + .3, db + 7.3, yd - .24, yd - .12, zz, zz + .5)   # ledges on the outside face
 # a big sliding door at each end (two leaves on a track above the entry, shown parked open over the rock) ----
 for sx in (-1, 1):
     x = sx * HL
