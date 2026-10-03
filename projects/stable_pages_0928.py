@@ -29,6 +29,8 @@ def barn_plan():
         if kind == 's': ax.add_patch(Rect((x + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.plot([x + 3.5, x + 8.5], [-HD + RD, -HD + RD], color=CLAY, lw=2.2)
         x += ST
     ax.add_patch(Rect((-HL + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(-HL + 6, -HD - 3, 'puerta corrediza 7×9 · sliding door', ha='center', va='top', fontsize=5.5, color=CLAY); ax.add_patch(Rect((-HL + 9.3, -HD - 1.4), 7, .5, fc='#8a6a42', ec='none'))   # 3 Oct: wooden sliding door, parked east of the opening
+    ax.add_patch(Rect((-HL - 3, -HD - ROCK_T / 2 - 13.5), 3, 13.5, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((-HL - 2.4, -HD - ROCK_T / 2 - 12.9), 1.8, 12.3, fc='#8fb3c7', ec='none'))   # 3 Oct: 14 x 3 ft stone trough on the pad's west edge
+    ax.text(-HL - 4, -HD - ROCK_T / 2 - 6.75, 'bebedero · trough 14×3', ha='right', va='center', fontsize=5.5, color=CLAY, rotation=90)
     ax.text(0, 0, 'pasillo · aisle 14 ft  (piso de tierra · dirt floor)', ha='center', va='center', fontsize=8.5, color=MUTED)
     for sx in (-1, 1):
         xg = sx * HL; ax.add_patch(Rect((xg - 1, -AI / 2), 2, AI, fc='white', ec='none'))
