@@ -72,7 +72,7 @@ for fn in FILES:
     # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
     # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
-    A = np.array([-98.7, -20.25]); B = np.array([-56.4, -6.65])   # 3 Oct (Will's red rectangle): between the west gable and the main road, along the south side of the barn road, ~44 ft; works as a retaining wall
+    A = np.array([-85.0, -22.0]); B = np.array([-85.0, 22.0])   # 3 Oct (Will placed it in the app): 49 ft off the west gable, across the front, centred on the stable, 44 ft; retaining wall, stable side held at the rim
     u = (B - A) / np.linalg.norm(B - A); nv = np.array([-u[1], u[0]]); LEN = np.linalg.norm(B - A); TW, WT = 3.5, .8
     m = Mesh(); NS = 1; secs = []   # one level (Will, 28 Sep)
     for k in range(NS):
@@ -155,6 +155,7 @@ for fn in FILES:
     t0 = (P0 - P1b) / np.linalg.norm(P0 - P1b)
     P3 = np.array([-38.0, 0.0]); c1 = P0 + t0 * 20; c2 = P3 - np.array([16.0, 0.0])  # and arrive square to the entry
     approach = [tuple((1 - s_) ** 3 * P3 + 3 * (1 - s_) ** 2 * s_ * c2 + 3 * (1 - s_) * s_ ** 2 * c1 + s_ ** 3 * P0) for s_ in np.linspace(0, 1, 14)[:-1]]
+    approach = [(x, max(y, 33.0) if abs(x + 85) < 12 else y) for x, y in approach]   # 3 Oct: swing round the trough's north end (10 ft clear)
     rd['pts'] = [[*b2grid(x, y), zc_] for x, y in approach] + keep
     json.dump(d, open(p, 'w', encoding='utf-8'))
     print(fn, ': long trough', round(LEN, 1), 'ft in', NS, 'sections at', [round(q[2], 2) for q in secs], 'm;', len(trees), 'pines')
