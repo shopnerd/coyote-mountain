@@ -247,22 +247,6 @@ for sgn in (-1, 1):
 for xm in (-MON_X, MON_X):
     mat('roof'); quad((xm, -MON_HW, zb + MON_H), (xm, MON_HW, zb + MON_H), (xm, 0, zb + MON_H + slope * MON_HW), (xm, 0, zb + MON_H + slope * MON_HW))
 
-# ---- 4 Oct (Will): solar, phase 1 (sheet E-1): 16 all-black 435 W panels (1722 x 1134 mm), 4 rows x 4 in landscape, in the
-# middle of the SOUTH roof half (y < 0 = south), 1.5 ft up from the eave edge, on low rails 4 in above the sheets. Its own
-# material so the viewer can switch it ('Solar'); model shots leave it off unless asked (renders unchanged by default).
-SOLAR_PH1 = True
-PNL_L, PNL_W, PNL_T = 5.64, 3.71, .13
-if SOLAR_PH1:
-    mat('solar'); _cr = math.cos(math.atan(slope)); _zo = zr + T + .33
-    for r_ in range(4):
-        ya = -(HD + OH) + 1.5 + r_ * PNL_W * _cr; yb = ya + PNL_W * _cr - .08
-        for c_ in range(4):
-            xa = -2 * PNL_L + c_ * PNL_L + .04; xb = xa + PNL_L - .08; za, zb_ = roof_z(ya) + _zo, roof_z(yb) + _zo
-            quad((xa, ya, za), (xb, ya, za), (xb, yb, zb_), (xa, yb, zb_))
-            quad((xa, yb, zb_ - PNL_T), (xb, yb, zb_ - PNL_T), (xb, ya, za - PNL_T), (xa, ya, za - PNL_T))
-            for (p0, p1, z0_, z1_) in (((xa, ya), (xb, ya), za, za), ((xb, yb), (xa, yb), zb_, zb_), ((xb, ya), (xb, yb), za, zb_), ((xa, yb), (xa, ya), zb_, za)):
-                quad((*p0, z0_ - PNL_T), (*p1, z1_ - PNL_T), (*p1, z1_), (*p0, z0_))
-
 # ---- inside (27 Sep): stall partitions 5 ft wood with the floating pipe above (6 ft), pipe fronts with a pipe gate
 # to the aisle; the tack room walled to the eave with a door; the wash bay open to the aisle ----
 for s in (1, -1):

@@ -87,7 +87,7 @@ def spill_basin(m, x0, x1, y_end, sgn, floor_z, rim_z):
 
 for fn in FILES:
     p = os.path.join(HERE, fn); d = json.load(open(p, encoding='utf-8')); z = np.array(d['z'], float).reshape(H, W)
-    d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'east trough', 'pine forest', 'forest trail', 'stable roof water to the long trough (buried pipe)', 'wash pad trough', 'native planting', 'electrical room')]
+    d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'east trough', 'pine forest', 'forest trail', 'stable roof water to the long trough (buried pipe)', 'wash pad trough', 'native planting')]
     # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
     # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
@@ -200,27 +200,6 @@ for fn in FILES:
     wl = fz + 1.65 * FT; m.face([(x0 + WT2, y0 + WT2, wl), (x1 - WT2, y0 + WT2, wl), (x1 - WT2, y1 - WT2, wl), (x0 + WT2, y1 - WT2, wl)], 'water')
     spill_basin(m, x0, x1, y0, -1, lip, top)                                     # 4 Oct: spill basin at the south end, away from the wall
     d['strokes'].append(stroke(m, 'wash pad trough', 'wash-pad-trough.obj', z, 'fieldstone trough 14 x 3 ft along the west edge of the wash pad, out from the SW corner, rim 2 ft (Will, 3 Oct)'))
-    # ---- 4 Oct (Will): the electrical room (sheet E-1), 10 x 8 ft just south of cistern C1 and west of the pad trough, away from
-    # all hay: fieldstone base to 3 ft, plastered cob above, a dark metal shed roof falling south, a plank door facing the pad
-    # (east), the shut-off + PV rapid-shutdown box on the wall beside it ----
-    rx0, rx1, ry0, ry1 = -56.0, -46.0, -41.0, -33.0
-    rfz = ground(z, *m2grid(*b2m((rx0 + rx1) / 2, (ry0 + ry1) / 2)))
-    m = Mesh(); WT3 = 1.0; zr0 = rfz - .3; zst = rfz + 3 * FT; zs, zn = rfz + 8.0 * FT, rfz + 8.8 * FT
-    dy0, dy1, zdt = -38.5, -35.5, rfz + 7.0 * FT                                                  # the door, 3 x 7 ft in the east wall
-    for (a0, a1, b0, b1) in ((rx0, rx1, ry0, ry0 + WT3), (rx0, rx1, ry1 - WT3, ry1), (rx0, rx0 + WT3, ry0 + WT3, ry1 - WT3)):
-        m.box(a0, a1, b0, b1, zr0, zst, 'rock'); m.box(a0, a1, b0, b1, zst, zs, 'cob')
-    m.box(rx0, rx1, ry1 - WT3, ry1, zs, zn, 'cob')                                                  # the taller north wall
-    for (b0, b1) in ((ry0 + WT3, dy0), (dy1, ry1 - WT3)):
-        m.box(rx1 - WT3, rx1, b0, b1, zr0, zst, 'rock'); m.box(rx1 - WT3, rx1, b0, b1, zst, zs, 'cob')
-    m.box(rx1 - WT3, rx1, dy0, dy1, zdt, zs, 'cob')                                                 # over the door
-    m.box(rx1 - .55, rx1 - .4, dy0 + .05, dy1 - .05, rfz, zdt - .05, 'wood')                         # plank door
-    for xg in (rx0, rx1):                                                                           # gable infill under the sloping roof
-        m.face([(xg, ry0, zs), (xg, ry1, zs), (xg, ry1, zn)], 'cob')
-    zroof = lambda y: zs + (zn - zs) * (y - ry0) / (ry1 - ry0) + .1
-    for dz in (0, .08):
-        m.face([(rx0 - 1, ry0 - 1, zroof(ry0 - 1) + dz), (rx1 + 1, ry0 - 1, zroof(ry0 - 1) + dz), (rx1 + 1, ry1 + 1, zroof(ry1 + 1) + dz), (rx0 - 1, ry1 + 1, zroof(ry1 + 1) + dz)], 'roof')
-    m.box(rx1, rx1 + .35, -40.4, -39.2, rfz + 4 * FT, rfz + 5.6 * FT, 'steel')                      # shut-off + rapid shutdown
-    d['strokes'].append(stroke(m, 'electrical room', 'electrical-room.obj', z, 'electrical room 10 x 8 ft: main panel, solar inverter + battery, C1 pump control; stone base, cob walls, shed roof (Will, 4 Oct, sheet E-1)'))
     # ---- 4 Oct (Will, revised that night: red lines on the plan shot): a third stone trough ALONG THE EAST RUN FENCE, just outside
     # the north-east run's east fence (x = 36), 32 x 3.5 ft, from 4 ft past the wall line out along the run; the horse in that run
     # drinks through the rails, arrivals from the parking drink from the outside. Fed by the NORTH gutter's east downspout; the

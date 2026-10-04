@@ -5,7 +5,7 @@ import math
 from matplotlib.patches import Circle
 # Stable pages for the pack, 28 Sep 2026 design (exec'd by pack.py after its own helpers; replaces barn_plan() and the
 # pipe-portal structure pages). 72 x 42 ft on a 12 ft grid; wash room at the west corner, tack next to it; steel trusses
-# on 6 in pipe posts; 5 ft rock + pipe rail to 6 ft + 3 ft framed stake panels; open clerestory; tan dirt floor.
+# on 12 in tube posts (4 Oct; were 6 in pipe); 5 ft rock + pipe rail to 6 ft + 3 ft framed stake panels; open clerestory; tan dirt floor.
 Rect = matplotlib.patches.Rectangle
 STONE2, STAKE2, STEEL2, CONC2, DIRT2 = '#cdb892', '#8a6a48', '#3a3f44', '#d7d3cb', '#e7d8bd'
 
@@ -88,7 +88,7 @@ def truss_page():
     for sx in (-1, 1):
         x = sx * HD
         lw_stones(ax, x - .75, x + .75, 0, 5, rng, big=1.4, small=.8, lw=.5)                          # the rock wall, cut
-        lw_box(ax, x - POSTR, -3, x + POSTR, EAVE, lw=.8)                                                    # 6 in pipe post
+        lw_box(ax, x - POSTR, -3, x + POSTR, EAVE, lw=.8)                                                    # 12 in tube post (12 3/4 in OD)
         lw_box(ax, x - 1.2, -3.8, x + 1.2, -2.9, lw=.6)                                                # footing
         for k in range(5): lw_line(ax, [x - 1.1 + k * .5, x - .85 + k * .5], [-3.8, -2.9], lw=.25)
         lw_line(ax, [x - .6, x + .6], [6, 6], lw=2.0)                                                  # the floating pipe, in section
