@@ -57,6 +57,8 @@ EXTRA = {   # per-view fixes from the gallery notes (28 Sep)
     'b5-top': ' This is a straight-down plan of the floating block: keep it exactly top-down, square to the frame, the whole rectangle visible with white margin all round; nothing cropped.',
     'b3-sw': ' The small boxes in the parking strip are CARS and PICKUPS, never tanks or farm machinery. The riding track and its infield are well vegetated with sage scrub and grasses. The blue area in the low spot below the track is shallow standing water in a natural sink: paint it as water.',
     'wash-farrier': ' THE SCENE: the concrete wash pad beside the stable under a steel pipe pergola covered by a living GRAPEVINE: broad green vine leaves overhead and ripe pale GREEN grape bunches (white wine grapes, no purple) hanging down through the pipes, dappled golden light on the concrete. On the pad a calm bay horse stands on all four legs, its whole body side-on to the camera and parallel to the stable wall, its head tied short to the bent black steel pipe hoop. The farrier works at its hind end the real way: he stands beside the hind leg facing the horse’s tail, bent forward with his back flat, the horse’s lower hind leg lifted and cradled across his thighs just above his knees, hoof sole up, rasp in hand; his leather apron on, his tool box on the concrete behind him. A rider stands at the horse’s head holding the lead rope. Horse and people at true scale, fully on the concrete pad, nothing floating or overlapping. At the end of the stone trough a small lower stone basin catches a thin stream of water pouring from a stone spout. Keep the plastered wash room wall, its wooden plank sliding door and every pipe exactly where the render has them.',
+    '1-hero-sw': ' The covered stalls corridor runs straight through and is OPEN at this end: no wall, block, pillar or stone mass closes it; between the last two stall posts there is only open air, with the round fieldstone trough standing free in front of the opening and the roof chute pouring into it. Pipe stall fronts and panels only, no stone walls anywhere on the covered stalls.',
+    '23-picnic-side': ' The ground inside the fenced arena is groomed riding sand, freshly raked in fine even parallel lines (harrowed footing), pale and clean, no grass and no weeds inside the fence. The old white trailer has become a small café: a serving window opened in its side with a hinged wooden awning, a few stools at a narrow wooden counter, warm light inside, and ONE small, simple, tasteful hand-painted wooden sign above the window reading CAFÉ in plain lettering, nothing else, no logos, no neon, no banners.',
     '5-corridor-out': ' The camera is under the butterfly roof at eye level looking down the corridor, which runs straight through to the far open end; the alfalfa bales sit behind pipe panels on BOTH sides of the far bay, never across the corridor.',
 
 }
@@ -83,6 +85,7 @@ STYLE = os.environ.get('GAL_STYLE', '')
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
     if not k: sys.exit('no key for ' + ENGINE)
+    CAFE = {'23-picnic-side'}   # 4 Oct (Will): the trailer is a small cafe in these views, so drop the 'no sign' lines
     for v in (ONLY or VIEWS):
         t = time.time()
         hb = HYB.get(v, HYB.get(v.split('-fan-')[0])) if STYLE == 'hybrid' else None
@@ -93,6 +96,7 @@ if __name__ == '__main__':
             except Exception as e: print(f'{v} {ENGINE} (hybrid): FAILED {str(e)[:160]}')
             continue
         try:
-            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v.split('-fan-')[0] in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else '') + EXTRA.get(v, EXTRA.get(v.split('-fan-')[0], '')), [], k)   # fans (`<base>-fan-<tag>`) use their base view's notes
+            _pr = None
+            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (lambda t_: t_.replace('The old white semi-trailer keeps its photo texture exactly, with NO sign or lettering on it,', 'The old white semi-trailer is a small café,').replace('(plain weathered white, no sign, no lettering)', '(now a small café with one simple sign)') if v in CAFE else t_)((BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v.split('-fan-')[0] in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else '') + EXTRA.get(v, EXTRA.get(v.split('-fan-')[0], ''))), [], k)   # fans (`<base>-fan-<tag>`) use their base view's notes
             im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE}: ok in {time.time() - t:.0f}s')
         except Exception as e: print(f'{v} {ENGINE}: FAILED {str(e)[:160]}')
