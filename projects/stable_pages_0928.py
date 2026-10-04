@@ -75,8 +75,8 @@ def barn_plan():
     ax.set_xlim(-52, 47); ax.set_ylim(-HD - RUN - 8, HD + RUN + 13)
     stable_elevations(fig)                                     # 4 Oct (Will): east + south elevations left of the plan
     y = 0.85
-    specs = [('Planta 84 × 42 ft sobre una retícula de 12 ft: 7 crujías, cerchas de acero cada 12 ft. Pasillo central de 14 ft abierto de punta a punta con una puerta corrediza grande en cada extremo; el camino llega directo a la puerta oeste.',
-              '84 × 42 ft on a 12 ft grid: 7 bays, steel trusses every 12 ft. A 14 ft centre aisle open end to end with a big sliding door at each end; the road comes straight into the west door.'),
+    specs = [('Planta 84 × 42 ft sobre una retícula de 12 ft: 7 crujías, cerchas de acero cada 12 ft. Pasillo central de 14 ft abierto de punta a punta con una puerta corrediza grande en cada extremo (las del oeste forradas con policarbonato translúcido como rompevientos); el camino llega directo a la puerta oeste.',
+              '84 × 42 ft on a 12 ft grid: 7 bays, steel trusses every 12 ft. A 14 ft centre aisle open end to end with a big sliding door at each end (the west ones backed with translucent polycarbonate as a windbreak); the road comes straight into the west door.'),
              ('La crujía oeste (nueva, 4 oct): al norte una cocina pequeña de 12 × 14 ft con barra en L, tarja, parrilla de inducción, refri y una ventana al camino de entrada; al sur un baño accesible con regadera (12 × 8 ft) y, en la esquina, el cuarto eléctrico (12 × 6 ft) con su propia puerta exterior en el hastial oeste.',
               'The west bay (new, 4 Oct): to the north a small 12 × 14 ft kitchen with an L counter, sink, induction top, fridge and a window down the entry drive; to the south an accessible bathroom with a shower (12 × 8 ft) and, in the corner, the electrical room (12 × 6 ft) with its own outside door in the west gable.'),
              ('10 caballerizas de 12 × 14 ft, 6 al norte y 4 al sur, separadas por muros de piedra de 5 ft con un tubo arriba; frentes de tubo negro con puerta hacia el pasillo; cada una sale por una abertura libre de 6 × 9 ft a su corral de 12 × 40 ft. Piso de tierra color arena.',
@@ -155,8 +155,8 @@ def truss_page():
               'From the pipe to the eave, 3 ft wide panels of horizontal sticks (bird’s-nest style) in dark steel frames; four panels to each 12 ft bay.'),
              ('Cada caballeriza abre a su corral por una abertura libre de 6 × 9 ft con dintel de acero; hacia el pasillo, frente de tubo negro con puerta.',
               'Each stall opens to its run through an open 6 × 9 ft doorway with a steel lintel; toward the aisle, a black pipe front with a gate.'),
-             ('Techo metálico gris oscuro, claraboya abierta de 48 × 10 ft, dos puertas corredizas de madera de 7½ × 11½ ft en cada extremo sobre riel de acero.',
-              'Dark grey metal roof, an open 48 × 10 ft clerestory, two 7½ × 11½ ft wooden sliding doors at each end on a steel track.')]
+             ('Techo metálico gris oscuro, claraboya abierta de 48 × 10 ft, dos puertas corredizas de madera de 7½ × 11½ ft en cada extremo sobre riel de acero. Las del oeste y el triángulo del hastial oeste llevan por dentro lámina corrugada translúcida de policarbonato: rompevientos contra la brisa del oeste de cada tarde, luz de día y de noche un brillo entre las varas.',
+              'Dark grey metal roof, an open 48 × 10 ft clerestory, two 7½ × 11½ ft wooden sliding doors at each end on a steel track. The west doors and the west gable triangle are backed inside with translucent corrugated polycarbonate: a windbreak against the afternoon west wind, daylight by day, a glow between the sticks at night.')]
     for es, en in specs: y = para(fig, 0.685, y, es, en, w=66, fs=10)   # 4 Oct: was 8.2
     fig.text(0.685, 0.12, 'Dimensiones de cerchas, postes y zapatas por el ingeniero estructural.', fontsize=9.5, color=CLAY)
     fig.text(0.685, 0.105, 'Truss, post and footing sizes to be set by the structural engineer.', fontsize=9.5, color=CLAY, style='italic')

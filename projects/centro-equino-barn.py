@@ -220,6 +220,18 @@ for sx in (-1, 1):
     mat('steel')
     for yv in E[1:-1]: box(xi - .1, xi + .1, yv - .1, yv + .1, EAVE, roof_z(yv))      # frame verticals up to the rafter
 
+# ---- 4 Oct (Will): the WEST windbreak. The afternoon sea breeze comes from the west most days (Open-Meteo / ERA5 at the site,
+# 2016-25: W 53 %, SW 20 %, NW 17 % of afternoon hours) and the new rooms now close both west corners, so the two west sliding
+# door leaves and the gable triangle above them are backed on the INSIDE face with translucent corrugated polycarbonate: from
+# outside still sticks, inside daylight, at night the aisle glows through. (Winter's cold wind is mostly NE: east end left open for now.)
+mat('poly')
+_xo = -HL - (ROCK_T / 2 + .35)                                                   # the west door plane, outside the wall
+for s in (-1, 1):
+    ya, yb = sorted((s * (ENTRY_W / 2 + .3), s * (ENTRY_W / 2 + 7.8)))
+    box(_xo + .02, _xo + .07, ya + .05, yb - .05, .35, EAVE - .25)              # on the leaf's inside face
+_xp = -HL + .55                                                                   # just inside the west gable's stick panels
+quad((_xp, -HD, EAVE), (_xp, HD, EAVE), (_xp, 0, RIDGE - .1), (_xp, 0, RIDGE - .1))
+
 # ---- structure (27 Sep, Will): steel trusses on steel posts (4 Oct: Andrés’ heavy 12 in tubes, see POST) instead of the pipe portal frames, one at every
 # north stall line (7 lines, 12.7 ft apart): top chords, a bottom chord at the eave, king post, verticals and webs ----
 TRUSS = [-HL + L * k / 7 for k in range(8)]   # 4 Oct: 8 truss lines, 12 ft apart
