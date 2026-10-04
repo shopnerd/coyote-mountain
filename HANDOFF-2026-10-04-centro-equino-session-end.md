@@ -4,7 +4,21 @@ Read this first, then `HANDOFF-2026-09-24-centro-equino-session.md` §18 (newest
 Walker's side: `HANDOFF-2026-10-04-for-walker.md` and `COMO-EDITAR-EL-PAQUETE.md`. Everything is pushed (coyote-studio =
 github shopnerd/coyote-mountain, will-os = shopnerd/will-os); both repos were at origin/main at the end.
 
-## 1. START HERE: what Will asked for last (not started)
+## 0. UPDATE 4 Oct (later session): §1 is DONE as sheet E-1 → pack v43 (20 pages, E-1 = p19)
+- `projects/electrical.py` (exec drain.py, like irrigation.py). Power from Andrés' main ranch buildings in the main-road water
+  trench; MD main disconnect + sub-meter at the NE gate; 10 × 8 ft electrical room (stable frame x -56..-46, y -41..-33, south
+  of C1); SP-2 at the stalls' SW end post, SP-3 at the bleachers; fixture schedule L1-L9 (dark sky, Ensenada 2006 regulation);
+  solar from PVGIS (stable S 1743, N 1390, stalls ~1600 kWh/kWp): full 216 panels 94 kWp 149 MWh/yr, phase 1 = 16 panels 7.0 kWp.
+  **The ranch already has a grid-tied system**: E-1 offers (a) tie into it or (b) own hybrid inverter + 15 kWh battery: ranch's call.
+  Two render slots `E1-0` (blue-hour hill) and `E1-1` (EMPTY: the dusk lights-on render goes here; swap via the pack editor).
+- D-3: troughs as natural pools (Walker's vetiver chamber = the lower spill basin, gravel over sand, bubbler, goldfish) and a
+  first-flush standpipe at every downspout (8 in, ~8 ft, ~80 L). Backup `irrigation-2026-10-04-pre-vetiver.py`.
+- Model: phase-1 panels on the stable's south roof (material `solar`, viewer switch "Solar, fase 1", OFF by default and OFF in
+  model shots unless a view passes `solar: true`); `electrical room` object in site_extras.py (MATOBJ in export.py). Both
+  index.html copies. Check shots: `renders/checkshot.mjs`. Open question for Will: solar ON by default in the model/renders?
+- p10 text + stale comments now say 12 in tube posts.
+
+## 1. (DONE, see §0) what Will asked for last
 **Basic electrical and lighting plan** (Will, 4 Oct, after seeing the blue-hour hill view `4-hill-s-fan-blue-google`, which he likes
 "quite a bit"):
 - Lighting and outlets in **both stables** (the main stable and the covered stalls).
