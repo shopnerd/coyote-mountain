@@ -70,11 +70,31 @@ Either way: **one generator.** If two copies exist, the pack forks and someone's
   sections · discussion. Logistics page dropped.
 - **Earthwork** now 3,344 cut / 2,844 fill yd³ (a grading bug that flattened a square up to the scrub road was fixed 4 Oct).
 
-## 7. Open questions for Walker
-1. Who edits the generator from here: Walker's Claude with repo access (§3 B), or handoffs to Will's Claude (§3 A)?
-2. Should the gallery be locked behind a sign-in? It is reachable by anyone with the address today.
-3. Discussion page (18): the "Acuerdos" box is Walker's to fill; the open stall-size question is written there.
-4. The alfalfa handoff asked where the hay unloads; the pack now says "from the road through the end gates". Confirm.
+## 7. Walker's answers (4 Oct, `HANDOFF-2026-10-04-walker-answers.md`)
+1. **Walker's Claude edits the generator** (§3 B). `onestronghive` was invited as a write collaborator on both GitHub
+   repos on 4 Oct: `shopnerd/coyote-mountain` (the generator; the local folder is `coyote-studio`) and `shopnerd/will-os`
+   (the website; Netlify publishes on every push to `main`). Walker's own `Centro-de-Equino-Chichihuas` repo and its
+   `build_all.sh` are retired; the pack comes only from `pack.py`.
+2. **Gallery stays open**, no sign-in.
+3. **Discussion page (18):** Walker fills the agreements box and makes any last edits herself, through the generator.
+4. **Alfalfa unloading confirmed:** from the main road through the end gates, truck out of the aisle.
+
+**Stable stalls settled: 12 × 14 ft with 12 × 40 ft runs.** Walker's v14 12 × 12 / 12 × 30 is withdrawn. The open
+question came off page 18 in v23 and the agreed stall and alfalfa numbers are written in the agreements box instead.
+
+### Walker's build-and-publish checklist (for her Claude)
+```
+git clone https://github.com/shopnerd/coyote-mountain coyote-studio     # once; will-os next to it
+git clone https://github.com/shopnerd/will-os
+cd coyote-studio/projects && python pack.py                             # writes the PDF to the Drive pack folder
+                                                                        # and ../../will-os/equino/pack/pNN.jpg + pages.json
+cd ../../will-os && git add equino && git commit -m "pack vNN" && git push   # Netlify publishes /equino/pack/
+```
+Before building: bump the version in the `out=` line near the bottom of `pack.py`, and after building copy the new PDF over
+`Centro-Equino-pack-11x17-2026-09-23.pdf` in the Drive pack folder so the shared link stays current. `pack.py` expects
+Python 3 with matplotlib, PyMuPDF (`fitz`), numpy, Pillow and the Plus Jakarta Sans files in `projects/fonts/`; `OUTDIR`
+near the top of `pack.py` is the Drive pack folder path and will need Walker's own Drive path. Model changes (anything in
+the 3D viewer) follow the chain in the main handoff §18; ask Will's Claude the first time.
 
 ## 8. Contacts and names
 Will: zolaray25@gmail.com (Gmail is the channel for this project). Walker: onestronghive@gmail.com. The ranch

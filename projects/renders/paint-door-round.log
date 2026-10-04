@@ -1,0 +1,14 @@
+18-stable-west-elev google: ok in 36s
+b3-sw google: ok in 31s
+b5-top google: ok in 33s
+b7-plan google: ok in 33s
+14-bleachers-high google: ok in 35s
+18-stable-west-elev openai: ok in 86s
+b3-sw openai: ok in 67s
+b5-top openai: ok in 74s
+b7-plan openai: ok in 74s
+14-bleachers-high openai: ok in 91s
+el-south-wash google ok 35
+el-south google ok 34
+el-south-wash openai ok 129
+el-south openai ok 85

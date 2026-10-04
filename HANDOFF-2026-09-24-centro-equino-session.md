@@ -346,6 +346,12 @@ along the whole south fence as ~8 small flows), so the crossings are now sized f
 5. coyotemountainfarm.com: fine; Will's router was blocking it (restart pending).
 
 ## 18. 3 Oct (afternoon): elevations gallery, Walker's v14 folded into pack.py → v15 (READ THIS FIRST)
+### 4 Oct (late): Walker now co-owns the generator · pack v23
+- Walker's answers filed as `HANDOFF-2026-10-04-walker-answers.md` (repo + Drive pack folder). Her Claude edits the generator directly: `onestronghive` invited (write) to `shopnerd/coyote-mountain` and `shopnerd/will-os` on 4 Oct; her old repo + `build_all.sh` retired. Gallery stays open. Alfalfa unloading from the road through the end gates confirmed.
+- **Stable stalls settled 12 × 14 / runs 12 × 40**; v14's 12 × 12 / 12 × 30 withdrawn. `pack.py`: discussion page `notes={0:[…]}` now seeds the Acuerdos box with the stall + alfalfa decisions; the open question (`notes={1:…}`) is gone. v23 built, copied over the shared `-2026-09-23.pdf`, web pages pushed.
+- Walker-facing handoff `HANDOFF-2026-10-04-for-walker.md` §7 now holds her answers + a clone/build/push checklist. `OUTDIR` in `pack.py` is Will's Drive path; she will need to point it at hers (or make it an env var) when she builds.
+- Both of us now push to `main` in both repos: pull before building, and keep bumping the `out=` version so PDFs never collide.
+
 - **Elevations:** all 4 sides × Gemini + OpenAI + model now in the gallery section `#alzados` (will.100xbtr.com/equino/#alzados, group `g8`, morning set under Earlier versions as tags prevg/prevo). Will picks with ☆. Drive: `renderings/2026-10-03 stable elevations (eye level)/3 Oct pm - both models/`. Gemini east adds a ridge cupola that isn't there.
 - **Walker's v14** = our pages re-footered "GIANT NATURE · oct 2026" + 7 new photo pages that she flattened to 150 dpi JPEG pages. She also relabelled stable stalls 12×12 / runs 12×30 (labels only). **Will decided: keep 12×14 / 12×40**; the question sits on the discussion page (Preguntas abiertas).
 - **pack.py now builds v15 in her order and style:** `walker_pages.py` (Plus Jakarta Sans static instances in `projects/fonts/`, cream #efe7da, her captions transcribed) for pp.1–4, 6–8; technical pages unchanged except `tblock` footer (GIANT NATURE, oct 2026). QR on the stable page → public will.100xbtr.com/equino/model/. Output `Centro-Equino-pack-11x17-2026-10-03-v15.pdf` in the Drive pack folder (~29 MB). **The shared `-2026-09-23.pdf` link is NOT overwritten** (Walker edits now; ask first).
