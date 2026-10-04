@@ -61,11 +61,37 @@ EXTRA = {   # per-view fixes from the gallery notes (28 Sep)
 
 }
 
+# 4 Oct: the hybrid brief (Will liked both halves of the A/B test): the topo app's short factual scene + the aerial photo, plus one
+# precise sentence for the posed figures. GAL_STYLE=hybrid uses it for views listed here; others keep BRIEF.
+AERIAL = os.path.join(HERE, '..', 'viewer', 'aerial-src.jpg')
+HYB = {
+ 'wash-farrier': (
+  'Make the first image a photograph of the real place. October, late afternoon golden hour before sunset, fair-weather cumulus clouds. '
+  'The place is Centro Equino, a small horse ranch in the dry granite hills of the Valle de Guadalupe, Baja California; the second image is '
+  'the aerial photo of the site, use it for the colours of the ground and scrub. '
+  'Built here, drawn as plain solids in the first image: keep each exact shape, size and place. A stone and timber horse stable 72 ft long, '
+  'its end room plastered with a wooden plank sliding door; a 12 by 24 ft concrete wash pad in front of it; over the pad a steel pipe pergola '
+  '10 ft tall covered by a grapevine with pale green grapes; a bent black pipe tie hoop in the middle of the pad; a fieldstone water trough '
+  '14 ft long along the pad edge, its water pouring from a stone spout into a small lower stone basin at its end; black steel pipe fences. '
+  'The plain pale figures on the pad are a horse, a farrier and a rider: keep each exactly where it stands and in its pose, and paint them as a '
+  'real bay horse and real people at true scale. The horse stands in the bay between the black pipe hoop and the fence, head to the wall, tied '
+  'to the hoop; the farrier is beside its lifted near hind leg facing the tail, bent forward with a flat back, the hoof across his thighs, '
+  'sole up; the rider stands at its head holding the lead rope.'),
+}
+STYLE = os.environ.get('GAL_STYLE', '')
+
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
     if not k: sys.exit('no key for ' + ENGINE)
     for v in (ONLY or VIEWS):
         t = time.time()
+        hb = HYB.get(v, HYB.get(v.split('-fan-')[0])) if STYLE == 'hybrid' else None
+        if hb:
+            try:
+                im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), hb, [AERIAL], k)
+                im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE} (hybrid): ok in {time.time() - t:.0f}s')
+            except Exception as e: print(f'{v} {ENGINE} (hybrid): FAILED {str(e)[:160]}')
+            continue
         try:
             im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v.split('-fan-')[0] in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else '') + EXTRA.get(v, EXTRA.get(v.split('-fan-')[0], '')), [], k)   # fans (`<base>-fan-<tag>`) use their base view's notes
             im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE}: ok in {time.time() - t:.0f}s')

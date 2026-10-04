@@ -334,6 +334,34 @@ for yy_, zz_ in ((HY0, 3.5), (HY1, 3.5), ((HY0 + HY1) / 2, HH - .35)):
     for sx_ in (-1, 1): tie_ring(HX + sx_ * .3, yy_, zz_, 'x')
 for yy_ in (WALL_O - .25, WALL_O - (RUN_D - ROCK_T / 2) / 4):   # E: the first two posts of run 1's west fence (x = -12), 5 ft, facing the pad
     tie_ring(-HL + 24 - .35, yy_, 5.0, 'x')
+# ---- 4 Oct (Will): pose figures for the renders, material `figure` (hidden in the viewer unless a shot asks for them). A horse
+# centred in the EAST bay of the wash pad (between the tie hoop and run 1's fence), head to the wall and tied to the hoop's ring,
+# its near (west) hind leg lifted onto the farrier's thighs; the farrier beside that leg facing the tail, back bent flat; a rider
+# at the horse's head. Plain blockout shapes: they give the painter the place, scale and pose, nothing more. ----
+mat('figure')
+HXc, HY0f = -18.0, WALL_O - 2.6                        # horse centre line, head end (the wall end)
+BL_, BW_, BZ0, BZ1 = 5.6, 1.9, 3.2, 5.3                # barrel length, width, underside, top (ft)
+by0, by1 = HY0f - 2.2, HY0f - 2.2 - BL_                # barrel front / rear (y falls away from the wall)
+box(HXc - BW_ / 2, HXc + BW_ / 2, by1, by0, BZ0, BZ1)                                         # barrel
+bar((HXc, by0 - .2, BZ1 - .3), (HXc, HY0f - .6, 6.6), 1.0, 8)                                # neck
+box(HXc - .38, HXc + .38, HY0f - .9, HY0f + .7, 5.6, 6.6)                                    # head, nose to the wall
+bar((HXc, by1, BZ1 - .2), (HXc, by1 - .6, 2.6), .35, 6)                                       # tail
+for sx in (-1, 1):
+    bar((HXc + sx * .6, by0 - .5, BZ0 + .2), (HXc + sx * .6, by0 - .45, 0), .38, 6)           # forelegs
+bar((HXc + .6, by1 + .7, BZ0 + .2), (HXc + .6, by1 + .75, 0), .42, 6)                         # far hind leg, standing
+bar((HXc - .6, by1 + .7, BZ0 + .3), (HXc - .75, by1 - .2, 2.2), .42, 6)                       # near hind: thigh to hock
+bar((HXc - .75, by1 - .2, 2.2), (HXc - .85, by1 - 1.6, 2.15), .3, 6)                          # cannon resting back across the farrier's thighs, sole up
+FX, FY = HXc - 1.6, by1 - 1.0                          # the farrier, beside the near hind leg, facing the tail (south)
+for sy in (-.35, .35): bar((FX + sy * .4, FY + .2, 0), (FX + sy * .3, FY - .2, 2.4), .45, 6)     # legs, knees bent toward the tail
+bar((FX, FY - .1, 2.5), (FX + .5, FY - 1.9, 3.3), 1.1, 8)                                     # torso bent forward, back flat
+box(FX + .25, FX + .95, FY - 2.6, FY - 1.95, 3.0, 3.7)                                       # head, down over the hoof
+for sx in (.15, .9): bar((FX + .5, FY - 1.6, 3.1), (FX + sx, FY - .9, 2.2), .28, 6)           # arms down to the hoof
+box(FX - 1.4, FX - .5, FY + .6, FY + 1.3, 0, .9)                                             # tool box on the concrete
+RX, RY = HXc - 2.1, HY0f - .4                          # a rider at the horse's head, holding the lead
+for sy in (-.3, .3): bar((RX, RY + sy, 0), (RX, RY + sy * .7, 2.9), .45, 6)
+bar((RX, RY, 2.9), (RX, RY, 5.0), 1.0, 8); box(RX - .38, RX + .38, RY - .38, RY + .38, 5.0, 5.8)
+bar((RX + .3, RY - .2, 4.4), (HXc - .4, HY0f - .3, 5.6), .1, 4)                              # lead rope
+mat('steel')
 
 # ---- tan dirt floor over the whole stable inside the walls (Will, 28 Sep); the rooms get concrete on top of it ----
 mat('dirt'); box(-HL + ROCK_T / 2, HL - ROCK_T / 2, -HD + ROCK_T / 2, HD - ROCK_T / 2, 0.0, 0.12)
