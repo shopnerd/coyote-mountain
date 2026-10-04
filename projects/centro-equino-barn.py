@@ -206,7 +206,7 @@ for x in TRUSS:
     mat('steel')
     for s in (-1, 1): bar((x, s * HD, 0), (x, s * HD, EAVE), POST, 10)
     mat('truss')                                                                                                 # 4 Oct: roof structure gets its own tag so the viewer can hide it
-    for s in (-1, 1): bar((x, s * (HD + OH), roof_z(HD + OH)), (x, 0, RIDGE), .5, 8)                            # top chords
+    for s in (-1, 1): bar((x, s * (HD + OH), roof_z(HD + OH)), (x, 0, RIDGE), .5, 12)                            # top chords
     bar((x, -HD, EAVE), (x, HD, EAVE), .4, 8)                                                                     # bottom chord
     bar((x, 0, EAVE), (x, 0, RIDGE), .3, 6)                                                                       # king post
     for k in (1, 2, 3):
@@ -216,14 +216,14 @@ for x in TRUSS:
             bar((x, yv, EAVE), (x, yw, roof_z(yw)), .22, 6)                                                        # webs toward the ridge
 mat('truss')
 # eave beams and purlins, 8 in pipe on top of the rafters, about 5 ft apart along the slope
-top = COL_D / 2 + PURL_D / 2
+top = .5 / 2 + PURL_D / 2                      # 4 Oct (Will): purlins sit ON the .5 ft top chords (COL_D was the old pipe rafter; it left a 3 in gap)
 run = HD + OH; n_p = 5
 for s in (-1, 1):
     for k in range(n_p + 1):
         y = s * run * k / n_p
         if k == 0: y = s * 0.6
-        bar((-HL, y, roof_z(y) + top), (HL, y, roof_z(y) + top), PURL_D, 6)
-    bar((-HL, s * HD, EAVE - 0.2), (HL, s * HD, EAVE - 0.2), PURL_D, 6)      # eave beam at the column heads
+        bar((-HL, y, roof_z(y) + top), (HL, y, roof_z(y) + top), PURL_D, 16)   # round, not hexagonal (Will, 4 Oct)
+    bar((-HL, s * HD, EAVE - 0.2), (HL, s * HD, EAVE - 0.2), PURL_D, 16)      # eave beam at the column heads
 
 # ---- roof: two sheets on the purlins, 2 ft past the walls on the long sides, a little thickness ----
 T, zr = .25, top + PURL_D / 2

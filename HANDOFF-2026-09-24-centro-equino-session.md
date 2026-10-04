@@ -346,6 +346,10 @@ along the whole south fence as ~8 small flows), so the crossings are now sized f
 5. coyotemountainfarm.com: fine; Will's router was blocking it (restart pending).
 
 ## 18. 3 Oct (afternoon): elevations gallery, Walker's v14 folded into pack.py → v15 (READ THIS FIRST)
+### 4 Oct (later): stable purlins seated on the top chords
+- Will: the long tubes under the roofing floated above the trusses and looked hexagonal. `centro-equino-barn.py`: `top = .5/2 + PURL_D/2` (was `COL_D/2 + PURL_D/2`, COL_D = the retired 12 in pipe rafter, a 3 in gap); purlins + eave beams 16-sided, top chords 12-sided. Roof sheets and clerestory hang off `zr = top + PURL_D/2`, so they came down with the purlins (height 20.7 ft). Tubes kept (reuse the ranch's pipe), not rectangular tube.
+- Chain run: barn.py -> swap_stable.py -> stable stroke synced into _bak_0928 (inline json copy of 'walker barn 72x40') -> cp _bak -> site_extras -> bleachers -> viewer/export.py -> will-os data.json. No ground change, earthwork unchanged. Backup `centro-equino-barn-2026-10-04-pre-purlin-fix.obj`. Pack not rebuilt (its stable pages are AI paintings + stable_pages_0928 drawings).
+
 ### 4 Oct (late): Walker now co-owns the generator · pack v23
 - Walker's answers filed as `HANDOFF-2026-10-04-walker-answers.md` (repo + Drive pack folder). Her Claude edits the generator directly: `onestronghive` invited (write) to `shopnerd/coyote-mountain` and `shopnerd/will-os` on 4 Oct; her old repo + `build_all.sh` retired. Gallery stays open. Alfalfa unloading from the road through the end gates confirmed.
 - **Stable stalls settled 12 × 14 / runs 12 × 40**; v14's 12 × 12 / 12 × 30 withdrawn. `pack.py`: discussion page `notes={0:[…]}` now seeds the Acuerdos box with the stall + alfalfa decisions; the open question (`notes={1:…}`) is gone. v23 built, copied over the shared `-2026-09-23.pdf`, web pages pushed.
