@@ -87,7 +87,7 @@ def barn_plan():
               'A 5 ft rock wall all round, a black pipe floating 1 ft above it (6 ft overall) and, up to the eave, 3 ft panels of horizontal sticks in dark steel frames.'),
              ('Alero a 12 ft, cumbrera a 17 ft. Techo metálico gris oscuro con una claraboya abierta de 48 × 10 ft sobre el pasillo (sin vidrio) para luz y ventilación.',
               'Eave 12 ft, ridge 17 ft. Dark grey metal roof with an open 48 × 10 ft clerestory over the aisle (no glass) for light and ventilation.')]
-    for es, en in specs: y = para(fig, 0.68, y, es, en, w=80, fs=7.4)   # 4 Oct: 84 ft adds a paragraph (was 70 / 8.5)
+    for es, en in specs: y = para(fig, 0.66, y, es, en, w=90, fs=7.6)   # 4 Oct: wider column, closer to the plan (Will)   # 4 Oct: 84 ft adds a paragraph (was 70 / 8.5)
     fig.text(0.68, 0.075, 'Esquema preliminar a partir del diseño de Walker; no es plano de construcción.', fontsize=8, color=MUTED)
     fig.text(0.68, 0.062, 'Preliminary diagram from Walker’s design; not a construction drawing.', fontsize=8, color=MUTED, style='italic')
     tblock(fig, nxt(), 'Planos arquitectónicos', 'Architectural drawings'); PAGES.append(fig)

@@ -21,7 +21,6 @@ plt.rcParams['axes.facecolor']='none'; plt.rcParams['figure.facecolor']=PAPER   
 def newpage():
     fig=plt.figure(figsize=(17,11),dpi=100); fig.patch.set_facecolor(PAPER); return fig
 def tblock(fig,num,es,en,dark=False):
-    if not dark and 'wfoot' in globals(): return wfoot(fig,num,es,en)   # 4 Oct (Will): one footer on every page, Walker's
     c='white' if dark else INK; m='#d8d2c4' if dark else MUTED
     if not dark: fig.add_artist(matplotlib.lines.Line2D([0.02,0.98],[0.055,0.055],color=INK,lw=.8))
     fig.text(0.02,0.025,'CENTRO EQUINO · CHICHIHUAS',fontsize=10,weight='bold',color=c)
@@ -30,14 +29,13 @@ def tblock(fig,num,es,en,dark=False):
     fig.text(0.70,0.025,'Diseño preliminar · Preliminary design · oct 2026',fontsize=8.5,color=m)
     fig.text(0.98,0.022,f'{num:02d}',fontsize=18,weight='bold',color=CLAY,ha='right')
 def heading(fig,es,en,y=0.945):
-    fig.text(PAGE_M,y,es,fontsize=30,weight='bold',color=INK,gid='pagetitle'); fig.text(PAGE_M,y-0.036,en,fontsize=17,color=MUTED,style='italic',gid='pagetitle')   # 4 Oct: Walker's left margin
+    fig.text(0.02,y,es,fontsize=30,weight='bold',color=INK); fig.text(0.02,y-0.036,en,fontsize=17,color=MUTED,style='italic')   # 4 Oct: was 24/14
 def para(fig,x,y,es,en,w=80,fs=10.5):
     es,g1=para_lines(es); en,g2=para_lines(en)
     for line in textwrap.wrap(es,w): fig.text(x,y,line,fontsize=fs,color=INK,gid=g1); y-=fs*0.0021
     y-=.004
     for line in textwrap.wrap(en,w): fig.text(x,y,line,fontsize=fs,color=MUTED,style='italic',gid=g2); y-=fs*0.0021
     return y-.012
-PAGE_M=80/2550                                   # 4 Oct (Will): every page on Walker's frame, 80 px of 2550 each side
 num=[0]
 def nxt(): num[0]+=1; return num[0]
 # ---- 1 cover
@@ -324,7 +322,7 @@ operator_sheet()
 sheet('sheet2.py','Cortes de terracería','Grading sections')   # 4 Oct (Will): sections right under the operator sheet
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('irrigation.py','Plan de riego y agua','Irrigation and water plan')
-sheet('electrical.py','Plan eléctrico','Electrical plan')   # 4 Oct (Will): E-1, power, dark-sky lighting, solar, two render slots
+sheet('electrical.py','Plan eléctrico y de iluminación','Electrical and lighting plan')   # 4 Oct (Will): E-1, power, dark-sky lighting, solar, two render slots
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={0:[('Caballerizas del establo: 12 × 14 ft con corrales de 12 × 40 ft (acordado 4 oct). Alfalfa: dos bodegas de 24 × 12 ft; se descarga desde el camino por las rejas de los extremos, el camión no entra al pasillo.','Stable stalls: 12 × 14 ft with 12 × 40 ft runs (agreed 4 Oct). Alfalfa: two 24 × 12 ft bays; unloads from the main road through the end gates, the truck stays out of the aisle.')]})
 

@@ -33,7 +33,7 @@ DAY=sum(k*h for _,k,h in LOADS); YEAR=DAY*365
 POT_KW=sum(kw(n) for _,_,n,_ in PV_ROWS); POT_MWH=sum(kw(n)*y/1000 for _,_,n,y in PV_ROWS)
 print(f'PV: stable half {N_ST} panels ({st_r}x{st_c}), stalls {N_SL}; potential {POT_KW:.1f} kWp {POT_MWH:.0f} MWh/yr; use {DAY:.1f} kWh/day {YEAR:,.0f}/yr; phase 1 {PH1_KW:.1f} kWp {PH1_MWH:.1f} MWh')
 # ---------------- figure ----------------
-fig=plt.figure(figsize=(17,11),dpi=170); fig.patch.set_facecolor(globals().get('PAPER','white'))
+fig=plt.figure(figsize=(17,11),dpi=170); fig.patch.set_facecolor(globals().get('PAPER','white')); fig._norm_single=True   # 4 Oct: the pack normaliser moves this page as one block
 ax=base_axes(fig,[0.012,0.565,0.385,0.375],alpha=.40)
 contours(ax,z); features(ax)
 ax.set_xlim(24,150); ax.set_ylim(88,14)

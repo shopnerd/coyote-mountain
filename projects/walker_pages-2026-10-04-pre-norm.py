@@ -7,10 +7,6 @@ for _f in glob.glob(os.path.join(os.path.dirname(os.path.abspath('pack.py')), 'f
 GF = 'Plus Jakarta Sans'
 BGW = PAPER; INKW = '#2a2220'; MUTEDW = '#6b6258'; GREEN = '#4f6b3a'; RULEW = '#c9b8a0'; TANW = '#a08a70'
 SLOTS = json.load(open('walker_v14_slots.json', encoding='utf-8'))
-for _k, _v in SLOTS.items():                               # 4 Oct (Will: even margins on every page): the 2 x 2 render grids span
-    if _k.split('-')[0] in ('2', '3', '3b'):               # the full 80..2470 px frame (was 271..2280), same rows, a 47 px gutter
-        _c = int(_k.split('-')[1]) % 2; _w = (2470 - 80 - 47) / 2
-        _v['rect'] = [round(80 + _c * (_w + 47)), _v['rect'][1], round(80 + _c * (_w + 47) + _w), _v['rect'][3]]
 for _k, _v in (LAYOUT.get('slots') or {}).items():          # 4 Oct: the web editor's photo moves and swaps
     if _k in SLOTS: SLOTS[_k] = {**SLOTS[_k], **_v}
 PHOTOKEYS = []
@@ -25,7 +21,7 @@ def wtext(fig, x, y, s, size, weight=400, style='normal', color=INKW, ha='left',
 def wrule(fig, x0, x1, y, color=RULEW, lw=.9):
     fig.add_artist(matplotlib.lines.Line2D([fx(x0), fx(x1)], [fy(y), fy(y)], color=color, lw=lw))
 def wpage():
-    fig = plt.figure(figsize=(17, 11), dpi=100); fig.patch.set_facecolor(BGW); fig._walker = True; return fig
+    fig = plt.figure(figsize=(17, 11), dpi=100); fig.patch.set_facecolor(BGW); return fig
 def wfoot(fig, num, es, en):
     wrule(fig, 80, 2470, 1555)
     wtext(fig, 82, 1593, 'CENTRO EQUINO · CHICHIHUAS', 10.5, 700)
