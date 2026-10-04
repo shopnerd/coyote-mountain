@@ -54,7 +54,11 @@ def orbit_fan(v):
 
 v = base_view(BASE)
 if 'top' in v: sys.exit('top-down plans are not fanned')
-fan = (orbit_fan(v) if 'orbit' in v else walk_fan(v))[:N]
+if '--light' in args:                                   # 4 Oct: same camera, other times of day and weather (gallery3.LIGHT)
+    sys.argv = [sys.argv[0], 'google']; import gallery3 as _G
+    fan = [{**{k: v[k] for k in v if k != 'id'}, 'id': f'{BASE}-fan-{tag}', 'hour': h} for tag, (h, _) in _G.LIGHT.items()][:N]
+else:
+    fan = (orbit_fan(v) if 'orbit' in v else walk_fan(v))[:N]
 FF = os.path.join(HERE, 'fan-views.json'); json.dump(fan, open(FF, 'w'))
 ids = [f['id'] for f in fan]
 print('fan:', ', '.join(ids))
@@ -81,7 +85,7 @@ for eng, lst in done.items():
 MF = os.path.join(WEB, 'fans.json')
 man = json.load(open(MF, encoding='utf-8')) if os.path.exists(MF) else []
 man = [m for m in man if m.get('base') != BASE]
-NAMES = {'left': ('a la izquierda', 'step left'), 'right': ('a la derecha', 'step right'), 'high': ('más alto', 'higher'), 'low': ('más bajo', 'lower'), 'closer': ('más cerca', 'closer'), 'wider': ('más abierto', 'wider')}
+NAMES = {'dawn': ('amanecer', 'dawn'), 'golden': ('hora dorada', 'golden hour'), 'storm': ('tormenta que se despeja', 'clearing storm'), 'blue': ('hora azul', 'blue hour'), 'fog': ('niebla de la mañana', 'morning fog'), 'left': ('a la izquierda', 'step left'), 'right': ('a la derecha', 'step right'), 'high': ('más alto', 'higher'), 'low': ('más bajo', 'lower'), 'closer': ('más cerca', 'closer'), 'wider': ('más abierto', 'wider')}
 man.insert(0, {'base': BASE, 'made': datetime.date.today().isoformat(),
                'views': [{'id': i, 'es': NAMES[i.split('-fan-')[1]][0], 'en': NAMES[i.split('-fan-')[1]][1], 'eng': [e for e in ENGINES if i in done.get(e, [])], 'old': ['model']} for i in ok]})
 json.dump(man, open(MF, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

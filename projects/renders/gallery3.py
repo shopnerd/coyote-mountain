@@ -47,7 +47,7 @@ EXTRA = {   # per-view fixes from the gallery notes (28 Sep)
     '16-stable-sw': ' Behind the stable is the vineyard (rows of vines on the slope) exactly where the render shows it, NOT an arena. No fence and no shadow across the dirt road in the foreground.',
     '11-arena': ' The camera stands inside the arena looking out: keep the far buildings small and exactly where the render has them; the white trailer with its deck and steps stays a trailer, not a building. The two plastered rooms (wash and tack) sit at the WEST end of the stable’s south side, by the road, exactly where the render has them.',
     '10-stable-aisle': ' This is INSIDE the stable, down its aisle: low walls of tan stacked fieldstone between the stalls, black steel pipe stall fronts with swinging pipe gates, exposed dark STEEL trusses and a dark corrugated roof, light coming through the open clerestory and the stick panels, a plastered room with a door on the right, packed-earth aisle floor. Horses looking out over the gates, a person leading a horse down the aisle, a dog. Keep every wall, gate, truss and opening exactly where the render has it.',
-    '4-hill-s': ' Keep the stable, the covered stalls and every road exactly as small and as placed as in the render. The two plastered rooms (wash and tack) sit at the WEST end of the stable’s south side, by the road, exactly where the render has them.',
+    '4-hill-s': ' Keep the stable, the covered stalls and every road exactly as small and as placed as in the render. The two plastered rooms (wash and tack) sit at the WEST end of the stable’s south side, by the road, exactly where the render has them. The covered stalls are the current design: a butterfly (V) roof, the corridor open straight through, the alfalfa stacked only in the two bays at the far end behind black pipe panels, and at this near end the ROUND FIELDSTONE trough (not a metal tank) with the roof chute pouring into it; no downspout pipe. The stable beyond has its plastered wash room with a grape-covered pergola over the concrete pad.',
     # 3 Oct gallery notes (Will)
     '18-stable-west-elev': ' At this corner the plastered wash room has ONE outside opening 6 ft wide and 9 ft tall with a WOODEN PLANK SLIDING DOOR hung on a steel track above it, slid open to the right (east) of the opening over the plastered wall, exactly as the render shows; the opening gives onto a flat concrete pad 12 ft by 24 ft along the stable wall, with a low fieldstone water trough along the pad’s west edge running out from the building corner. There is NO metal roof, canopy or shed on this side.',
     '8-stable': ' The stable’s runs and stalls hold horses only: NO hay, NO alfalfa bales anywhere in or around the stable (alfalfa lives only at the covered stalls far away). The ground in front is plain dry grass and dirt exactly as the render shows it: no gully, ditch, wash or draw. The old white semi-trailer stays exactly where and as the render shows it, a plain weathered white box trailer, no sign (Will, 3 Oct).',
@@ -81,13 +81,27 @@ HYB = {
   'sole up; the rider stands at its head holding the lead rope.'),
 }
 STYLE = os.environ.get('GAL_STYLE', '')
+# 4 Oct (Will: OpenAI looks flat; try other times of day and weather): the light fan. A fan view tagged with one of these keys swaps
+# the brief's light sentence; fan.py --light also moves the model's sun to the matching hour so the shadows are true.
+LIGHT_DEFAULT = 'Light: warm low golden-hour sun, long soft shadows, a sky with big lit cumulus clouds.'
+LIGHT = {
+ 'dawn':   (7.3,  'Light: just after sunrise, the low sun from the east raking across the land, long cool blue shadows, a little morning haze in the valley, a pale gold sky.'),
+ 'golden': (17.7, 'Light: deep late golden hour, the sun just above the western hills, long dramatic raking shadows, strong warm contrast, glowing rim light on the horses and people, a rich sky with lit clouds.'),
+ 'storm':  (16.4, 'Light: a winter storm clearing, dark slate clouds breaking up with shafts of low sun through them, roofs and ground wet and glistening, puddles on the dirt roads, dramatic contrast.'),
+ 'blue':   (18.9, 'Light: blue hour just after sunset, a deep blue sky with a last orange band on the horizon, warm lights glowing inside the stable and the cafe, soft light without hard shadows.'),
+ 'fog':    (8.6,  'Light: early morning marine fog lifting off the valley, soft diffused light, the far hills fading into mist, damp ground, quiet.'),
+}
 
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
     if not k: sys.exit('no key for ' + ENGINE)
     CAFE = {'23-picnic-side'}   # 4 Oct (Will): the trailer is a small cafe in these views, so drop the 'no sign' lines
+    _BRIEF0, _HYB0 = BRIEF, dict(HYB)
     for v in (ONLY or VIEWS):
         t = time.time()
+        _lt = v.split('-fan-')[1] if '-fan-' in v else ''
+        BRIEF = _BRIEF0.replace(LIGHT_DEFAULT, LIGHT[_lt][1]) if _lt in LIGHT else _BRIEF0
+        HYB = {k_: (v_.replace('October, late afternoon golden hour before sunset, fair-weather cumulus clouds.', LIGHT[_lt][1]) if _lt in LIGHT else v_) for k_, v_ in _HYB0.items()}
         hb = HYB.get(v, HYB.get(v.split('-fan-')[0])) if STYLE == 'hybrid' else None
         if hb:
             try:

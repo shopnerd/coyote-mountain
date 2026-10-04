@@ -6,7 +6,7 @@ p02   400 dpi    2619x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/rend
 p05   235 dpi     1536x836  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/1-hero-sw-openai.png
 p05   400 dpi    2619x1418  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/5-corridor-out-google.png
 p05   235 dpi     1536x836  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/2-corridor-1.png
-p05   400 dpi    2619x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/4-hill-s-google.png
+p05   400 dpi    2619x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/4-hill-s-google.png
 p07   400 dpi    2613x1420  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png
 p07   400 dpi    2619x1418  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png
 p07   400 dpi    2613x1421  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/14-bleachers-high-google.png
