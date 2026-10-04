@@ -32,8 +32,8 @@ def barn_plan():
     ax.add_patch(Rect((-HL - 3, -HD - 0.75 - 13.5), 3, 13.5, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((-HL - 2.4, -HD - 0.75 - 12.9), 1.8, 12.3, fc='#8fb3c7', ec='none'))   # 3 Oct: 14 x 3 ft stone trough on the pad's west edge
     ax.text(-HL - 4.5, -HD - 0.75 - 6.75, 'bebedero · trough 14×3', ha='center', va='center', fontsize=5.5, color=CLAY, rotation=90)
     ax.add_patch(Rect((HL + 30 - 1.75, -25), 3.5, 20, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((HL + 30 - 1.15, -24.4), 2.3, 18.8, fc='#8fb3c7', ec='none'))   # 4 Oct (Will, option B): east trough 20 x 3.5 at the gable where the path arrives
-    ax.text(HL + 33.5, -15, 'bebedero este · east trough 20×3.5', ha='center', va='center', fontsize=5.5, color=CLAY, rotation=90)
-    ax.text(HL + 30, -3.2, 'sendero del estacionamiento → · path from the parking', ha='center', va='bottom', fontsize=5.2, color=MUTED) if 'MUTED' in globals() else None
+    ax.text(HL + 26.6, -15, 'bebedero este · east trough 20×3.5', ha='center', va='center', fontsize=5.5, color=CLAY, rotation=90)
+    ax.text(HL + 31.8, -3.4, '← sendero · path', ha='right', va='bottom', fontsize=5.2, color=CLAY)
     ax.text(0, 0, 'pasillo · aisle 14 ft  (piso de tierra · dirt floor)', ha='center', va='center', fontsize=8.5, color=MUTED)
     for sx in (-1, 1):
         xg = sx * HL; ax.add_patch(Rect((xg - 1, -AI / 2), 2, AI, fc='white', ec='none'))
