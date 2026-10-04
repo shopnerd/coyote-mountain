@@ -56,6 +56,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: 'b7-plan', white: true, block: true, top: { i: 85, j: 53, w: 470 } },   // 3 Oct: wider so the whole block fits (Will: a perfect rectangular plan view)
   { id: 'b6-low', white: true, block: true, orbit: { ti: 85, tj: 55, az: 115, el: 16, dist: 450 } },
 ];
+if (process.env.FAN_FILE) VIEWS.push(...JSON.parse(fs.readFileSync(process.env.FAN_FILE, 'utf8')));   // 4 Oct: camera fans (fan.py)
 const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 const page = await browser.newPage({ viewport: { width: +(process.env.SHOT_W || 1536), height: +(process.env.SHOT_H || 864) }, deviceScaleFactor: +(process.env.SHOT_DSF || 1) });
 page.on('pageerror', e => console.log('page error:', e.message));

@@ -9,7 +9,7 @@ import paint
 from paint import openai, google, key
 from gallery2 import gemini_key
 paint.QUAL = 'high'
-SRC, OUT = os.path.join(HERE, 'model'), os.path.join(HERE, os.environ.get('GAL_OUT', 'gallery3')); os.makedirs(OUT, exist_ok=True)   # 3 Oct: GAL_OUT=gallery4 keeps earlier rounds
+SRC, OUT = os.path.join(HERE, os.environ.get('GAL_SRC', 'model')), os.path.join(HERE, os.environ.get('GAL_OUT', 'gallery3')); os.makedirs(OUT, exist_ok=True)   # 3 Oct: GAL_OUT=gallery4 keeps earlier rounds
 ENGINE = sys.argv[1]; ONLY = sys.argv[2:]
 VIEWS = ['1-hero-sw', '3-site-ne', '20-front-yard', '16-stable-sw', '18-stable-west-elev', '8-stable', '14-bleachers-high', '13-bleachers',
          '11-arena', '5-corridor-out', '4-hill-s', '9-arrival']
@@ -66,6 +66,6 @@ if __name__ == '__main__':
     for v in (ONLY or VIEWS):
         t = time.time()
         try:
-            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else '') + EXTRA.get(v, ''), [], k)
+            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v.split('-fan-')[0] in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else '') + EXTRA.get(v, EXTRA.get(v.split('-fan-')[0], '')), [], k)   # fans (`<base>-fan-<tag>`) use their base view's notes
             im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE}: ok in {time.time() - t:.0f}s')
         except Exception as e: print(f'{v} {ENGINE}: FAILED {str(e)[:160]}')
