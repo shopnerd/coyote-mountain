@@ -316,11 +316,10 @@ grading()
 operator_sheet()
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
 sheet('sheet2.py','Cortes de terracería','Grading sections')
-placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agua y luz en sitio, accesos para camiones y presupuesto.','Build sequence, machinery, materials, water and power on site, truck access and budget.',[('Secuencia de obra','Build sequence'),('Maquinaria y material','Machinery and materials'),('Presupuesto','Budget'),('Agua y luz','Water and power'),('Accesos','Access'),('Calendario','Schedule')])
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={1:[('Caballerizas del establo: en la v14 Walker puso 12 × 12 ft con corrales de 12 × 30 ft; el modelo y estos planos siguen con 12 × 14 ft y corrales de 12 × 40 ft. ¿Cuál queda?','Stable stalls: in v14 Walker wrote 12 × 12 ft with 12 × 30 ft runs; the model and these drawings still have 12 × 14 ft and 12 × 40 ft runs. Which one stays?')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v20.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v21.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 with PdfPages(tmp) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
