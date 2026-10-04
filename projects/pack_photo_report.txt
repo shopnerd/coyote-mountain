@@ -3,7 +3,7 @@ p02   235 dpi     1536x834  C:/Users/wrollins/WebDev/coyote-studio/projects/rend
 p02   400 dpi    2619x1418  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-north-google.png
 p02   400 dpi    2616x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-south-google.png
 p02   400 dpi    2619x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-east-google.png
-p05   400 dpi    2613x1420  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/1-hero-sw-google.png
+p05   235 dpi     1536x836  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/1-hero-sw-openai.png
 p05   400 dpi    2619x1418  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/5-corridor-out-google.png
 p05   235 dpi     1536x836  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/2-corridor-1.png
 p05   400 dpi    2619x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/4-hill-s-google.png
