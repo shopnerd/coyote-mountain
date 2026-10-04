@@ -157,7 +157,8 @@ def truss_page():
               'Each stall opens to its run through an open 6 × 9 ft doorway with a steel lintel; toward the aisle, a black pipe front with a gate.'),
              ('Techo metálico gris oscuro, claraboya abierta de 48 × 10 ft, dos puertas corredizas de madera de 7½ × 11½ ft en cada extremo sobre riel de acero. Las del oeste y el triángulo del hastial oeste llevan por dentro lámina corrugada translúcida de policarbonato: rompevientos contra la brisa del oeste de cada tarde, luz de día y de noche un brillo entre las varas.',
               'Dark grey metal roof, an open 48 × 10 ft clerestory, two 7½ × 11½ ft wooden sliding doors at each end on a steel track. The west doors and the west gable triangle are backed inside with translucent corrugated polycarbonate: a windbreak against the afternoon west wind, daylight by day, a glow between the sticks at night.')]
-    for es, en in specs: y = para(fig, 0.685, y, es, en, w=66, fs=10)   # 4 Oct: was 8.2
-    fig.text(0.685, 0.12, 'Dimensiones de cerchas, postes y zapatas por el ingeniero estructural.', fontsize=9.5, color=CLAY)
-    fig.text(0.685, 0.105, 'Truss, post and footing sizes to be set by the structural engineer.', fontsize=9.5, color=CLAY, style='italic')
+    for es, en in specs: y = para(fig, 0.685, y, es, en, w=70, fs=9.3)   # 4 Oct: was 8.2
+    yn = min(0.12, y - .005)                                    # 4 Oct: below the last spec, never on it
+    fig.text(0.685, yn, 'Dimensiones de cerchas, postes y zapatas por el ingeniero estructural.', fontsize=9.5, color=CLAY)
+    fig.text(0.685, yn - .015, 'Truss, post and footing sizes to be set by the structural engineer.', fontsize=9.5, color=CLAY, style='italic')
     tblock(fig, nxt(), 'Estructura', 'Structure'); PAGES.append(fig)
