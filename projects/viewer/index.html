@@ -93,7 +93,7 @@ body.shot{grid-template-columns:1fr}
 
   <section><h2>Mostrar <i>· Show</i></h2>
     <div class="row" id="show">
-      <label class="tog"><input type="checkbox" id="sRoof" checked> Techos · Roofs</label>
+      <label class="tog"><input type="checkbox" id="sRoof" checked> Techos · Roofs</label> <label class="tog"><input type="checkbox" id="sTruss" checked> Estructura del techo · Roof structure</label>
       <label class="tog"><input type="checkbox" id="sPhoto" checked> Foto · Photo</label>
       <label class="tog"><input type="checkbox" id="sRoads" checked> Caminos · Roads</label>
       <label class="tog"><input type="checkbox" id="sWater" checked> Agua · Water</label>
@@ -144,7 +144,7 @@ body.shot{grid-template-columns:1fr}
 <main>
   <div id="view" role="img" aria-label="Modelo 3D del Centro Equino · 3D model of the Centro Equino"></div>
   <div id="labels" aria-hidden="true"></div>
-  <div class="hint"><span class="desk">Arrastrar gira · la rueda acerca hacia el cursor · botón central o derecho mueve · doble clic centra · R oculta techos · Drag to rotate · scroll zooms to the cursor · middle or right drag pans · double-click centres · R hides roofs</span><span class="phone">Un dedo gira · dos dedos acercan y mueven · doble toque centra · One finger rotates · two fingers zoom and pan · double-tap centres</span></div>
+  <div class="hint"><span class="desk">Arrastrar gira · la rueda acerca hacia el cursor · botón central o derecho mueve · doble clic centra · R oculta techos · T oculta la estructura · Drag to rotate · scroll zooms to the cursor · middle or right drag pans · double-click centres · R hides roofs</span><span class="phone">Un dedo gira · dos dedos acercan y mueven · doble toque centra · One finger rotates · two fingers zoom and pan · double-tap centres</span></div>
   <div id="load">cargando el modelo · loading the model</div>
 </main>
 
@@ -186,7 +186,7 @@ body.shot{grid-template-columns:1fr}
     scene.add(new THREE.Mesh(sg, new THREE.MeshLambertMaterial({ color: 0x8a6f52, side: THREE.DoubleSide }))); }
 
   // objects: body + roof, grouped for the switches
-  const groups = { roof: [], fence: [] }, centres = {};
+  const groups = { roof: [], fence: [], truss: [] }, centres = {};
   const tex = (draw, rep = 1) => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); draw(x); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.encoding = THREE.sRGBEncoding; t.rep = rep; return t; };
   let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const TEX = {
@@ -239,7 +239,7 @@ body.shot{grid-template-columns:1fr}
   }
   const MATS = {
     cob: { color: 0xcbb393 }, dirt: { color: 0xc4a47a }, concrete: { color: 0xcfcac0 }, pine: { color: 0x2c4a2e }, trunk: { color: 0x5a4030 }, troof: { color: 0xb9bab4 }, chassis: { color: 0x4a3526 }, tsideA: { color: 0xf2f2f0, photo: 'tsideA' }, tsideB: { color: 0xf2f2f0, photo: 'tsideB' }, tend: { color: 0xa9793e, photo: 'tend' },
-    rock: { map: TEX.rock }, stakes: { map: TEX.stakes }, steel: { color: 0x2c2f33 }, glass: { color: 0xcfdde5, transparent: true, opacity: .6 }, wood: { color: 0x6a4e33 }, sage: { color: 0x7f8f5f },
+    rock: { map: TEX.rock }, stakes: { map: TEX.stakes }, steel: { color: 0x2c2f33 }, glass: { color: 0xcfdde5, transparent: true, opacity: .6 }, wood: { color: 0x6a4e33 }, sage: { color: 0x7f8f5f }, truss: { color: 0x2c2f33 },
     fence: { color: 0x1d1f21 }, panel: { color: 0x202224 }, galv: { color: 0xb4b9bd }, water: { color: 0x5b87a6 }, hay: { map: TEX.hay },
   };
   const ROOF = { 'walker barn 72x40': 0x3c4046, 'covered stalls': 0xa8adb1 };
@@ -268,7 +268,7 @@ body.shot{grid-template-columns:1fr}
     if (o.parts) {                        // the stable and the covered stalls: one mesh per material
       const arrs = Object.fromEntries(Object.entries(o.parts).map(([m, s]) => [m, f32(s)])), axis = axisOf(arrs.roof || Object.values(arrs)[0]);
       const ctr = new THREE.Vector3(); { let n = 0; for (const a of Object.values(arrs)) for (let k = 0; k < a.length; k += 3) { ctr.x += a[k]; ctr.z += a[k + 2]; n++; } ctr.multiplyScalar(1 / n); }
-      let all = []; for (const [m, arr] of Object.entries(arrs)) { const mesh = part(arr, m, axis, ROOF[o.name], ctr); if (m === 'roof' || m === 'glass') groups.roof.push(mesh); all.push(arr); }
+      let all = []; for (const [m, arr] of Object.entries(arrs)) { const mesh = part(arr, m, axis, ROOF[o.name], ctr); if (m === 'roof' || m === 'glass') groups.roof.push(mesh); if (m === 'truss') groups.truss.push(mesh); all.push(arr); }
       const b = all.reduce((acc, a) => { const c = new Float32Array(acc.length + a.length); c.set(acc); c.set(a, acc.length); return c; }, new Float32Array(0));
       let sx = 0, sz = 0, sy = 0, n = b.length / 3; for (let k = 0; k < b.length; k += 3) { sx += b[k]; sy = Math.max(sy, b[k + 1]); sz += b[k + 2]; } centres[o.name] = new THREE.Vector3(sx / n, sy, sz / n); continue;
     }
@@ -347,9 +347,9 @@ body.shot{grid-template-columns:1fr}
   $('moreBtn').onclick = () => setSheet(aside.classList.contains('open') ? 128 : STOPS()[2], true);
   // switches
   const vis = (list, on) => list.forEach(m => m.visible = on);
-  const sw = { sContours: on => { if (contours) contours.visible = on; }, sRoof: on => vis(groups.roof, on), sPhoto: on => terrain.material = on ? photoMat : plain, sRoads: on => vis(roads, on), sWater: on => vis(water, on), sFence: on => vis(groups.fence, on), sLabels: on => labBox.hidden = !on };
+  const sw = { sContours: on => { if (contours) contours.visible = on; }, sRoof: on => vis(groups.roof, on), sTruss: on => vis(groups.truss, on), sPhoto: on => terrain.material = on ? photoMat : plain, sRoads: on => vis(roads, on), sWater: on => vis(water, on), sFence: on => vis(groups.fence, on), sLabels: on => labBox.hidden = !on };
   for (const id in sw) $(id).onchange = e => { sw[id](e.target.checked); draw(); };
-  addEventListener('keydown', e => { if ((e.key === 'r' || e.key === 'R') && !e.target.closest('input')) { const c = $('sRoof'); c.checked = !c.checked; c.onchange({ target: c }); } });
+  addEventListener('keydown', e => { if (e.target.closest('input')) return; if (e.key === 'r' || e.key === 'R') { const c = $('sRoof'); c.checked = !c.checked; c.onchange({ target: c }); } if (e.key === 't' || e.key === 'T') { const c = $('sTruss'); c.checked = !c.checked; c.onchange({ target: c }); } });
   $('hour').oninput = e => setSun(+e.target.value);
 
   // plans

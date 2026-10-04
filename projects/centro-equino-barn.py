@@ -205,6 +205,7 @@ POST = 6.625 / 12                               # 6 in steel pipe posts (Will, 2
 for x in TRUSS:
     mat('steel')
     for s in (-1, 1): bar((x, s * HD, 0), (x, s * HD, EAVE), POST, 10)
+    mat('truss')                                                                                                 # 4 Oct: roof structure gets its own tag so the viewer can hide it
     for s in (-1, 1): bar((x, s * (HD + OH), roof_z(HD + OH)), (x, 0, RIDGE), .5, 8)                            # top chords
     bar((x, -HD, EAVE), (x, HD, EAVE), .4, 8)                                                                     # bottom chord
     bar((x, 0, EAVE), (x, 0, RIDGE), .3, 6)                                                                       # king post
@@ -213,7 +214,7 @@ for x in TRUSS:
             yv = s * HD * k / 4; yw = s * HD * (k - 1) / 4
             bar((x, yv, EAVE), (x, yv, roof_z(yv)), .25, 6)                                                        # verticals
             bar((x, yv, EAVE), (x, yw, roof_z(yw)), .22, 6)                                                        # webs toward the ridge
-mat('steel')
+mat('truss')
 # eave beams and purlins, 8 in pipe on top of the rafters, about 5 ft apart along the slope
 top = COL_D / 2 + PURL_D / 2
 run = HD + OH; n_p = 5
