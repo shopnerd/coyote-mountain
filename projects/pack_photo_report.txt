@@ -40,4 +40,4 @@ p12   373 dpi    1123x1232  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equi
 p12   336 dpi    1009x1109  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DE25BABB-C2AD-424F-9DC0-66AA7BA5F183.JPG
 p12   246 dpi      740x812  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/3D72CA01-024F-4217-9DEF-887D0530B23E.JPG
 p19   400 dpi     1267x693  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-blue-google.png
-p19     0 dpi      MISSING  
+p19   400 dpi     1267x693  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-dusk-google.png

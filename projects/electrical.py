@@ -218,8 +218,8 @@ fig.text(tx0,ty-.002,f'Paneles {PANEL[2]} W negros · all-black {PANEL[2]} W pan
 
 # ---------------- renderings: two slots ----------------
 R_SLOTS={'E1-0':{'rect':[30,1160,505,1420],'src':'C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-blue-google.png','crop':[0,0,1,1]},
-         'E1-1':{'rect':[525,1160,1000,1420],'src':'','crop':[0,0,1,1]}}
-R_CAP=[('Desde el cerro, hora azul (antes de las luces)','From the hill at blue hour (before the lights)'),('Al anochecer, luces encendidas (pendiente)','Just after sundown, lights on (to come)')]
+         'E1-1':{'rect':[525,1160,1000,1420],'src':'C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-dusk-google.png','crop':[0,0,1,1]}}
+R_CAP=[('Desde el cerro, hora azul (antes de las luces)','From the hill at blue hour (before the lights)'),('Al anochecer, con las luces del plan encendidas','Just after sundown, with the plan’s lights on')]
 if 'SLOTS' in globals():
     for _k,_v in R_SLOTS.items():
         if _k not in SLOTS: SLOTS[_k]={**_v,**(LAYOUT.get('slots') or {}).get(_k,{})}
