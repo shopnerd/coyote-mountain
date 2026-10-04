@@ -6,14 +6,14 @@ STONE2, STAKE2, STEEL2, CONC2, DIRT2 = '#cdb892', '#8a6a48', '#3a3f44', '#d7d3cb
 
 def barn_plan():
     fig = newpage(); heading(fig, 'Planos arquitectónicos · Establo', 'Architectural drawings · Stable')
-    ax = fig.add_axes([0.03, 0.1, 0.62, 0.76]); ax.set_aspect('equal'); ax.axis('off')
+    ax = fig.add_axes([0.03, 0.1, 0.62, 0.76]); ax.set_aspect('equal'); ax.set_anchor('E'); ax.axis('off')   # 4 Oct: pushed right so the 3D-model caption clears the runs
     L, D, RUN, ST, AI = 72, 42, 40, 12, 14; HL, HD = L / 2, D / 2; RD = (D - AI) / 2; W5 = 1.5
     for k in range(6):                                       # north runs
         x = -HL + ST * k; ax.add_patch(Rect((x, HD), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, HD + RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=6.5, color=MUTED)
     for k in range(4):                                       # south runs, east end
         x = -HL + 24 + ST * k; ax.add_patch(Rect((x, -HD - RUN), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, -HD - RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=6.5, color=MUTED)
     ax.plot([-HL + 24, HL], [-HD - RUN, -HD - RUN], color='#8a7d66', lw=4, solid_capstyle='butt')
-    ax.add_patch(Rect((-HL, -HD - W5 / 2 - 12), 24, 12, fc=CONC2, ec=INK, lw=.8)); ax.text(-HL + 12, -HD - 7, 'losa de concreto · concrete pad 12 × 24', ha='center', va='center', fontsize=6.8)
+    ax.add_patch(Rect((-HL, -HD - W5 / 2 - 12), 24, 12, fc=CONC2, ec=INK, lw=.8)); ax.text(-HL + 12, -HD - 7, 'losa de concreto\nconcrete pad 12 × 24', ha='center', va='center', fontsize=6.3)
     ax.plot([-HL, HL, HL, -HL, -HL], [-HD - 2, -HD - 2, HD + 2, HD + 2, -HD - 2], color=MUTED, lw=.7, ls=(0, (4, 3)))
     ax.add_patch(Rect((-HL, -HD), L, D, fc=STONE2, ec=INK, lw=2.2))
     ax.add_patch(Rect((-HL + W5, -HD + W5), L - 2 * W5, D - 2 * W5, fc=DIRT2, ec='none'))       # tan dirt floor
@@ -28,9 +28,9 @@ def barn_plan():
         if x > -HL: ax.add_patch(Rect((x - .6, -HD + W5), 1.2, RD - W5, fc='#cbb393' if kind == 'room' or x == -HL + 24 else STONE2, ec=INK, lw=.5))
         if kind == 's': ax.add_patch(Rect((x + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.plot([x + 3.5, x + 8.5], [-HD + RD, -HD + RD], color=CLAY, lw=2.2)
         x += ST
-    ax.add_patch(Rect((-HL + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(-HL + 6, -HD - 3, 'puerta corrediza 7×9 · sliding door', ha='center', va='top', fontsize=5.5, color=CLAY); ax.add_patch(Rect((-HL + 9.3, -HD - 1.4), 7, .5, fc='#8a6a42', ec='none'))   # 3 Oct: wooden sliding door, parked east of the opening
+    ax.add_patch(Rect((-HL + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(-HL + 1, -HD - 3, 'puerta corrediza 7×9 · sliding door', ha='left', va='top', fontsize=5.5, color=CLAY); ax.add_patch(Rect((-HL + 9.3, -HD - 1.4), 7, .5, fc='#8a6a42', ec='none'))   # 3 Oct: wooden sliding door, parked east of the opening
     ax.add_patch(Rect((-HL - 3, -HD - 0.75 - 13.5), 3, 13.5, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((-HL - 2.4, -HD - 0.75 - 12.9), 1.8, 12.3, fc='#8fb3c7', ec='none'))   # 3 Oct: 14 x 3 ft stone trough on the pad's west edge
-    ax.text(-HL - 4, -HD - 0.75 - 6.75, 'bebedero · trough 14×3', ha='right', va='center', fontsize=5.5, color=CLAY, rotation=90)
+    ax.text(-HL - 4.5, -HD - 0.75 - 6.75, 'bebedero · trough 14×3', ha='center', va='center', fontsize=5.5, color=CLAY, rotation=90)
     ax.text(0, 0, 'pasillo · aisle 14 ft  (piso de tierra · dirt floor)', ha='center', va='center', fontsize=8.5, color=MUTED)
     for sx in (-1, 1):
         xg = sx * HL; ax.add_patch(Rect((xg - 1, -AI / 2), 2, AI, fc='white', ec='none'))

@@ -5,7 +5,7 @@
 import json, matplotlib.font_manager as fm
 for _f in glob.glob(os.path.join(os.path.dirname(os.path.abspath('pack.py')), 'fonts', 'PJS-*.ttf')): fm.fontManager.addfont(_f)
 GF = 'Plus Jakarta Sans'
-BGW = '#efe7da'; INKW = '#2a2220'; MUTEDW = '#6b6258'; GREEN = '#4f6b3a'; RULEW = '#c9b8a0'; TANW = '#a08a70'
+BGW = '#ffffff'; INKW = '#2a2220'; MUTEDW = '#6b6258'; GREEN = '#4f6b3a'; RULEW = '#c9b8a0'; TANW = '#a08a70'
 SLOTS = json.load(open('walker_v14_slots.json', encoding='utf-8'))
 PX = (2550, 1650)
 MAXDPI = 400
@@ -28,10 +28,16 @@ def wfoot(fig, num, es, en):
     wtext(fig, 2457, 1595, f'{num:02d}', 15, 700, ha='right')
 def wtitle(fig, es, en):
     wtext(fig, 83, 132, es, 33, 700); wtext(fig, 83, 190, en, 19, 400, 'italic', MUTEDW)
+def wsrc(src):                    # slots hold Will's absolute paths; map them onto this machine when they aren't here
+    if not src or os.path.exists(src): return src
+    for a, b in (('G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack', OUTDIR),
+                 ('C:/Users/wrollins/WebDev/coyote-studio', os.path.dirname(os.path.dirname(os.path.abspath('pack.py'))))):
+        if src.startswith(a): return b + src[len(a):]
+    return src
 def slot(fig, key):
     s = SLOTS[key]; x0, y0, x1, y1 = s['rect']
     fig.add_artist(matplotlib.patches.Rectangle((fx(x0), fy(y1)), fx(x1 - x0), (y1 - y0) / PX[1], color='#ddd3c3', lw=0))   # shows only if a photo is missing
-    PHOTOS.append((len(PAGES), s['rect'], s['src'], s['crop']))
+    PHOTOS.append((len(PAGES), s['rect'], wsrc(s['src']), s['crop']))
     return s['rect']
 def label(fig, r, es, en, num=None, size=12.5, credit=None):
     x0, y0, x1, y1 = r; t = f'{num}  {es}' if num else es

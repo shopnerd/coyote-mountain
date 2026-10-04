@@ -1,41 +1,41 @@
-p01   204 dpi    1754x2245  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/cover-horses-portrait.jpg
-p02   235 dpi     1536x834  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/1003pm/el-west-horse-openai.png
-p02   400 dpi    2619x1418  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-north-google.png
-p02   400 dpi    2616x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-south-google.png
-p02   400 dpi    2619x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-east-google.png
-p05   400 dpi    2613x1420  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/1-hero-sw-google.png
-p05   400 dpi    2619x1418  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/5-corridor-out-google.png
-p05   235 dpi     1536x836  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/2-corridor-1.png
-p05   400 dpi    2619x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/4-hill-s-google.png
-p07   400 dpi    2613x1420  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png
-p07   400 dpi    2619x1418  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png
-p07   400 dpi    2613x1421  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/14-bleachers-high-google.png
-p07   235 dpi     1536x834  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/23-picnic-side-openai.png
-p08   400 dpi    3669x3208  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/p4-site-ne-hi-1.png
-p08   238 dpi     1530x864  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/b3-sw-openai.png
-p08   238 dpi     1526x864  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/b7-plan-openai.png
-p10   177 dpi      670x373  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/47E1503E-EBAF-4725-A2C5-7D187780ABA6.JPG
-p10   106 dpi      402x223  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/2F5955AB-675C-4DE6-9749-EA7239800A65.JPG
-p10   139 dpi      526x291  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/6DF71C9B-0B8B-4F41-9137-7ADCEEE5F613.JPG
-p10   345 dpi     1310x730  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/8A5F86F4-53BB-44DF-8483-E19DC676C7AD.JPG
-p10   400 dpi     1515x851  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/EA0ACC5C-7E0F-4594-ACDE-45F54280FC5F.JPG
-p10     0 dpi      MISSING  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/128E5435-E9BA-4E5B-9E02-5D4A57532C7F.JPG
-p10   400 dpi     1520x851  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/FDF3243C-F0A1-4B58-9DBC-DDCAE97CEBAD.JPG
-p10   400 dpi     1520x851  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/72AD092E-E646-458E-877D-399A7BEAE50B.JPG
-p11   400 dpi    1517x1354  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/A9E16894-0AF7-4FA3-9824-B84DED500296.JPG
-p11   400 dpi    1515x1352  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/A39FD7FF-D32A-4D27-B4CE-858BDD950E3F.JPG
-p11   351 dpi    1333x1186  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/stone-cobble-paving.jpg
-p11   400 dpi    1520x1352  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/97C73138-3D20-401F-8477-5381FA3AA71D.JPG
-p11   167 dpi      632x567  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/wood-log-pile.jpg
-p11   167 dpi      632x568  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/wood-fallen-oak.jpg
-p11   248 dpi      943x844  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/steel-roof-skylight.jpg
-p11   266 dpi     1010x906  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/fence-black-posts-wire.jpg
-p12   240 dpi      918x793  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DF6ECC64-DBC1-4E02-AC67-81714C435793.JPG
-p12   248 dpi      943x818  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DA2B0734-8C87-42DF-A3D6-0734C4EE1D6B.JPG
-p12   209 dpi      798x691  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/F861117E-1180-4342-B1F9-E107BAAA4698.JPG
-p12   331 dpi    1265x1095  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/D837C822-2D3D-4B19-95C6-A976B6D301DC.JPG
-p12   217 dpi      654x716  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/stick and frames.JPG
-p12   400 dpi    1205x1320  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/A74A746E-F896-4C51-A871-1CE1A51F2A1B.JPG
-p12   373 dpi    1123x1232  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/40F87D20-E2DB-4C6F-93DA-AC7F0C2EA4A6.JPG
-p12   336 dpi    1009x1109  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DE25BABB-C2AD-424F-9DC0-66AA7BA5F183.JPG
-p12   246 dpi      740x812  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/3D72CA01-024F-4217-9DEF-887D0530B23E.JPG
+p01   204 dpi    1754x2245  C:/Users/onest/code/equino-drive/renderings/Walker originals (Adobe share 3 Oct)/cover-horses-portrait.jpg
+p02   235 dpi     1536x834  C:\Users\onest\code\coyote-studio/projects/renders/elevations/1003pm/el-west-horse-openai.png
+p02   400 dpi    2619x1418  C:\Users\onest\code\coyote-studio/projects/renders/elevations/el-north-google.png
+p02   400 dpi    2616x1422  C:\Users\onest\code\coyote-studio/projects/renders/elevations/el-south-google.png
+p02   400 dpi    2619x1422  C:\Users\onest\code\coyote-studio/projects/renders/elevations/el-east-google.png
+p05   400 dpi    2613x1420  C:\Users\onest\code\coyote-studio/projects/renders/gallery3/1-hero-sw-google.png
+p05   400 dpi    2619x1418  C:\Users\onest\code\coyote-studio/projects/renders/gallery3/5-corridor-out-google.png
+p05   235 dpi     1536x836  C:\Users\onest\code\coyote-studio/projects/renders/finished/2-corridor-1.png
+p05   400 dpi    2619x1422  C:\Users\onest\code\coyote-studio/projects/renders/gallery2/4-hill-s-google.png
+p07   400 dpi    2613x1420  C:\Users\onest\code\coyote-studio/projects/renders/gallery2/8-stable-google.png
+p07   400 dpi    2619x1418  C:\Users\onest\code\coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png
+p07   400 dpi    2613x1421  C:\Users\onest\code\coyote-studio/projects/renders/gallery4/14-bleachers-high-google.png
+p07   235 dpi     1536x834  C:\Users\onest\code\coyote-studio/projects/renders/gallery3/23-picnic-side-openai.png
+p08   400 dpi    3669x3208  C:\Users\onest\code\coyote-studio/projects/renders/finished/p4-site-ne-hi-1.png
+p08   238 dpi     1530x864  C:\Users\onest\code\coyote-studio/projects/renders/gallery4/b3-sw-openai.png
+p08   238 dpi     1526x864  C:\Users\onest\code\coyote-studio/projects/renders/gallery4/b7-plan-openai.png
+p10   177 dpi      670x373  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/47E1503E-EBAF-4725-A2C5-7D187780ABA6.JPG
+p10   106 dpi      402x223  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/2F5955AB-675C-4DE6-9749-EA7239800A65.JPG
+p10   139 dpi      526x291  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/6DF71C9B-0B8B-4F41-9137-7ADCEEE5F613.JPG
+p10   345 dpi     1310x730  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/8A5F86F4-53BB-44DF-8483-E19DC676C7AD.JPG
+p10   400 dpi     1515x851  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/EA0ACC5C-7E0F-4594-ACDE-45F54280FC5F.JPG
+p10   150 dpi      568x317  walker_v14_crops/v14-6-5.png
+p10   400 dpi     1520x851  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/FDF3243C-F0A1-4B58-9DBC-DDCAE97CEBAD.JPG
+p10   400 dpi     1520x851  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/72AD092E-E646-458E-877D-399A7BEAE50B.JPG
+p11   400 dpi    1517x1354  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/A9E16894-0AF7-4FA3-9824-B84DED500296.JPG
+p11   400 dpi    1515x1352  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/A39FD7FF-D32A-4D27-B4CE-858BDD950E3F.JPG
+p11   351 dpi    1333x1186  C:/Users/onest/code/equino-drive/renderings/Walker originals (Adobe share 3 Oct)/stone-cobble-paving.jpg
+p11   400 dpi    1520x1352  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/97C73138-3D20-401F-8477-5381FA3AA71D.JPG
+p11   167 dpi      632x567  C:/Users/onest/code/equino-drive/renderings/Walker originals (Adobe share 3 Oct)/wood-log-pile.jpg
+p11   167 dpi      632x568  C:/Users/onest/code/equino-drive/renderings/Walker originals (Adobe share 3 Oct)/wood-fallen-oak.jpg
+p11   248 dpi      943x844  C:/Users/onest/code/equino-drive/renderings/Walker originals (Adobe share 3 Oct)/steel-roof-skylight.jpg
+p11   266 dpi     1010x906  C:/Users/onest/code/equino-drive/renderings/Walker originals (Adobe share 3 Oct)/fence-black-posts-wire.jpg
+p12   240 dpi      918x793  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/DF6ECC64-DBC1-4E02-AC67-81714C435793.JPG
+p12   248 dpi      943x818  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/DA2B0734-8C87-42DF-A3D6-0734C4EE1D6B.JPG
+p12   209 dpi      798x691  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/F861117E-1180-4342-B1F9-E107BAAA4698.JPG
+p12   331 dpi    1265x1095  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/D837C822-2D3D-4B19-95C6-A976B6D301DC.JPG
+p12   217 dpi      654x716  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/stick and frames.JPG
+p12   400 dpi    1205x1320  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/A74A746E-F896-4C51-A871-1CE1A51F2A1B.JPG
+p12   373 dpi    1123x1232  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/40F87D20-E2DB-4C6F-93DA-AC7F0C2EA4A6.JPG
+p12   336 dpi    1009x1109  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/DE25BABB-C2AD-424F-9DC0-66AA7BA5F183.JPG
+p12   246 dpi      740x812  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/3D72CA01-024F-4217-9DEF-887D0530B23E.JPG
