@@ -171,7 +171,7 @@ cx_.text(XS+12,-RE-3,'nada eléctrico dentro de las bodegas de alfalfa\nnothing 
 cx_.text(-HL+32,HD+1.2,'corredor 12 ft · corridor',fontsize=5.2,ha='center',color='#6a655a'); cx_.annotate('',xy=(46,21.5),xytext=(30,21.5),arrowprops=dict(arrowstyle='-|>',lw=.6)); cx_.text(38,22.5,'NE · establo',fontsize=4.8,ha='center',va='bottom')
 
 # ---------------- roof plans: solar ----------------
-rx=fig.add_axes([0.252,0.335,0.25,0.195]); rx.set_aspect('equal'); rx.axis('off'); rx.set_xlim(-40,140); rx.set_ylim(-14,62)
+rx=fig.add_axes([0.252,0.302,0.258,0.228]); rx.set_aspect('equal'); rx.axis('off'); rx.set_xlim(-48,120); rx.set_ylim(-2,100)   # 4 Oct (Will): the two roofs stacked, bigger
 fig.text(0.254,0.538,'Techos solares · Solar roofs',fontsize=10,weight='bold',color=INK)
 def panels(ax_,x0,y0,nr,nc,dy,col,alpha,lw=.3,sel=None):
     pw,ph=PANEL[0],PANEL[1]*(math.cos(math.radians(13.4)) if dy else 1)
@@ -180,18 +180,22 @@ def panels(ax_,x0,y0,nr,nc,dy,col,alpha,lw=.3,sel=None):
             on=sel is None or sel(r_,c_)
             yy=y0+(r_*ph if dy>0 else -(r_+1)*ph); ax_.add_patch(MRect((x0+c_*pw,yy),pw,ph,fc=PV if on else 'none',ec=PVF if on else PV,lw=lw if on else .35,alpha=alpha if on else .55,ls='-' if on else (0,(2,1.2))))
 # stable roof (76 x 46 with overhangs), the open clerestory, ridge; plan y up = north
-rx.add_patch(MRect((-38,0),76,46,fc='#cfcac0',ec=INK,lw=.8)); rx.plot([-38,38],[23,23],color=INK,lw=.5)
-rx.add_patch(MRect((-24,18),48,10,fc='#f7f1e3',ec=INK,lw=.6)); rx.text(0,23,'claraboya · clerestory',fontsize=4.4,ha='center',va='center',color='#6a655a')
+Y0=52                                                                                              # stable roof on top (y 52..98), stalls roof below (y 0..36)
+rx.add_patch(MRect((-38,Y0),76,46,fc='#cfcac0',ec=INK,lw=.8)); rx.plot([-38,38],[Y0+23,Y0+23],color=INK,lw=.5)
+rx.add_patch(MRect((-24,Y0+18),48,10,fc='#f7f1e3',ec=INK,lw=.6)); rx.text(0,Y0+23,'claraboya · clerestory',fontsize=4.8,ha='center',va='center',color='#6a655a')
 w0=-st_c*PANEL[0]/2
-panels(rx,w0,1.5,st_r,st_c,1,PV,.95,sel=lambda r_,c_:abs(c_+.5-st_c/2)<=2)                       # south half: phase 1 = the middle 4 x 4
-panels(rx,w0,44.5,st_r,st_c,-1,PV,.95,sel=lambda r_,c_:False)                                      # north half: optional
-rx.text(0,-2,'Establo · Stable 76 × 46',fontsize=5.4,ha='center',va='top',weight='bold'); rx.text(0,-6.5,f'{st_r}×{st_c} por mitad · per half',fontsize=4.8,ha='center',va='top')
-X2=92; rx.add_patch(MRect((X2-46,5),92,36,fc='#cfcac0',ec=INK,lw=.8)); rx.plot([X2-46,X2+46],[23,23],color='#1f78c8',lw=.8)
-s0=X2-sl_c*PANEL[0]/2; panels(rx,s0,5+1.5,sl_r,sl_c,1,PV,.95,sel=lambda r_,c_:False); panels(rx,s0,41-1.5,sl_r,sl_c,-1,PV,.95,sel=lambda r_,c_:False)
-rx.text(X2,23,'valle · valley',fontsize=4.4,ha='center',va='center',color='#1f78c8',bbox=dict(fc='#cfcac0',ec='none',pad=.6))
-rx.text(X2,3,'Caballerizas · Covered stalls 92 × 36',fontsize=5.4,ha='center',va='top',weight='bold'); rx.text(X2,-1.5,f'2 × {sl_r}×{sl_c}, a futuro · future',fontsize=4.8,ha='center',va='top')
-rx.add_patch(MRect((-38,54),5,3.4,fc=PV,ec=PVF,lw=.3)); rx.text(-31.5,55.7,f'fase 1 · phase 1: {PH1} paneles · panels, {PH1_KW:.1f} kWp',fontsize=4.9,va='center')
-rx.add_patch(MRect((50,54),5,3.4,fc='none',ec=PV,lw=.35,ls=(0,(2,1.2)))); rx.text(56.5,55.7,'después · later',fontsize=4.9,va='center')
+panels(rx,w0,Y0+1.5,st_r,st_c,1,PV,.95,sel=lambda r_,c_:abs(c_+.5-st_c/2)<=2)                    # south half: phase 1 = the middle 4 x 4
+panels(rx,w0,Y0+44.5,st_r,st_c,-1,PV,.95,sel=lambda r_,c_:False)                                   # north half: optional
+rx.text(46,Y0+40,'Establo · Stable',fontsize=6.4,weight='bold',va='center'); rx.text(46,Y0+34.5,'76 × 46 ft',fontsize=5.4,va='center')
+rx.text(46,Y0+29,f'{st_r}×{st_c} paneles por mitad · panels per half',fontsize=5.0,va='center')
+rx.text(46,Y0+15,'mitad sur (abajo), cae al SSO\nsouth half (below), falls SSW',fontsize=5.0,va='center',color='#6a655a')
+rx.add_patch(MRect((-46,0),92,36,fc='#cfcac0',ec=INK,lw=.8)); rx.plot([-46,46],[18,18],color='#1f78c8',lw=.8)
+s0=-sl_c*PANEL[0]/2; panels(rx,s0,1.5,sl_r,sl_c,1,PV,.95,sel=lambda r_,c_:False); panels(rx,s0,36-1.5,sl_r,sl_c,-1,PV,.95,sel=lambda r_,c_:False)
+rx.text(0,18,'valle · valley',fontsize=4.8,ha='center',va='center',color='#1f78c8',bbox=dict(fc='#cfcac0',ec='none',pad=.6))
+rx.text(52,28,'Caballerizas · Covered stalls',fontsize=6.4,weight='bold',va='center'); rx.text(52,22.5,'92 × 36 ft, techo mariposa · butterfly roof',fontsize=5.4,va='center')
+rx.text(52,17,f'2 × {sl_r}×{sl_c} paneles, a futuro · panels, future',fontsize=5.0,va='center')
+rx.add_patch(MRect((46,Y0+1.5),5,3.4,fc=PV,ec=PVF,lw=.3)); rx.text(53,Y0+3.2,f'fase 1 · phase 1: {PH1} paneles · panels, {PH1_KW:.1f} kWp',fontsize=5.0,va='center')
+rx.add_patch(MRect((46,Y0-5),5,3.4,fc='none',ec=PV,lw=.35,ls=(0,(2,1.2)))); rx.text(53,Y0-3.3,'después · later',fontsize=5.0,va='center')
 # ---------------- solar + load table ----------------
 tx0=0.512; ty=0.538
 fig.text(tx0,ty,'Potencial solar · Solar potential',fontsize=8.6,weight='bold',color=INK); ty-=.017
@@ -201,7 +205,7 @@ ty-=.0125
 for nm,orient,n,y in PV_ROWS:
     fig.text(tx0,ty,nm.split(' · ')[1],fontsize=6,color=INK); fig.text(tx0,ty-.0098,f'{nm.split(" · ")[0]} · {orient}',fontsize=5.0,color='#6a655a',style='italic')
     fig.text(tx0+.105,ty,f'{n}',fontsize=6.4,ha='right'); fig.text(tx0+.135,ty,f'{kw(n):.1f}',fontsize=6.4,ha='right'); fig.text(tx0+.175,ty,f'{kw(n)*y/1000:.0f}',fontsize=6.4,ha='right'); ty-=.0235
-fig.add_artist(matplotlib.lines.Line2D([tx0,tx0+.19],[ty+.0165,ty+.0165],color=INK,lw=.6))
+ty-=.005; fig.add_artist(matplotlib.lines.Line2D([tx0,tx0+.19],[ty+.0165,ty+.0165],color=INK,lw=.6))
 fig.text(tx0,ty+.003,'Todo · All',fontsize=6.4,weight='bold'); fig.text(tx0+.105,ty+.003,f'{N_ST*2+N_SL}',fontsize=6.4,ha='right',weight='bold'); fig.text(tx0+.135,ty+.003,f'{POT_KW:.0f}',fontsize=6.4,ha='right',weight='bold'); fig.text(tx0+.175,ty+.003,f'{POT_MWH:.0f}',fontsize=6.4,ha='right',weight='bold')
 ty-=.016; fig.text(tx0,ty,'Fase 1 · Phase 1',fontsize=6.4,weight='bold',color='#b5602e'); fig.text(tx0+.105,ty,f'{PH1}',fontsize=6.4,ha='right',color='#b5602e'); fig.text(tx0+.135,ty,f'{PH1_KW:.1f}',fontsize=6.4,ha='right',color='#b5602e'); fig.text(tx0+.175,ty,f'{PH1_MWH:.1f}',fontsize=6.4,ha='right',color='#b5602e')
 ty-=.02; fig.text(tx0,ty,f'Uso estimado · Est. use ≈ {DAY:.0f} kWh/día·day ≈ {YEAR/1000:.1f} MWh/año·yr',fontsize=6.6,weight='bold',color=INK); ty-=.0125
@@ -212,8 +216,8 @@ ty-=.0094*((len(LOADS)+1)//2)
 fig.text(tx0,ty-.002,f'Paneles {PANEL[2]} W negros · all-black {PANEL[2]} W panels; rendimiento PVGIS · PVGIS yields',fontsize=4.9,color='#6a655a',style='italic')
 
 # ---------------- renderings: two slots ----------------
-R_SLOTS={'E1-0':{'rect':[30,1125,505,1420],'src':'C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-blue-google.png','crop':[0,0,1,1]},
-         'E1-1':{'rect':[525,1125,1000,1420],'src':'','crop':[0,0,1,1]}}
+R_SLOTS={'E1-0':{'rect':[30,1160,505,1420],'src':'C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-blue-google.png','crop':[0,0,1,1]},
+         'E1-1':{'rect':[525,1160,1000,1420],'src':'','crop':[0,0,1,1]}}
 R_CAP=[('Desde el cerro, hora azul (antes de las luces)','From the hill at blue hour (before the lights)'),('Al anochecer, luces encendidas (pendiente)','Just after sundown, lights on (to come)')]
 if 'SLOTS' in globals():
     for _k,_v in R_SLOTS.items():
@@ -279,7 +283,7 @@ for k,(en,es,ten,tes) in enumerate(NOTES_E):
     y=ly-.0045
 print('notes end at', round(ly, 3))
 # ---------------- night section: the glow through the sticks, nothing up ----------------
-nx=fig.add_axes([px,0.062,0.265,min(.16,max(.105,y-.075))]); nx.set_xlim(-33,33); nx.set_ylim(-4.5,25); nx.set_aspect('equal'); nx.set_anchor('W'); nx.axis('off')
+nx=fig.add_axes([px,0.062,0.985-px,min(.16,max(.105,y-.075))]); nx.set_xlim(-33,33); nx.set_ylim(-4.5,25); nx.set_aspect('equal'); nx.set_anchor('C'); nx.axis('off')
 nx.add_patch(MRect((-33,-4.5),66,29.5,fc='#1f2a40',ec='none'))
 nx.add_patch(MRect((-33,-4.5),66,4.5,fc='#2b2a26',ec='none'))
 HD_,EAVE,RIDGE=21,12,17; rz=lambda yy:RIDGE-(RIDGE-EAVE)/HD_*abs(yy)
