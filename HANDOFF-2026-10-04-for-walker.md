@@ -23,7 +23,11 @@ in the right place. Written by Will's Claude; Will approved the decisions listed
   carried forward: the next build would overwrite it. The v14 edits were folded into the generator by hand once;
   from here on, changes go through the generator.
 
-## 3. How Walker makes a change (two good ways)
+## 3. How Walker makes a change
+
+**New, 4 Oct: the layout editor** https://will.100xbtr.com/equino/pack/edit/ lets you move and resize photos and drawings, swap a photo (gallery or upload) and rewrite any text, right on the pages. It saves by itself; then ask Claude to "rebuild the pack with the editor changes". Step-by-step: `COMO-EDITAR-EL-PAQUETE.md`.
+
+For anything the editor can't do (new pages, new drawings, design changes), use one of these:
 **A. Hand it off (works today, nothing to install).** Put the change where Will's Claude will find it:
 1. Drop any new files into the Drive pack folder, `renderings / 2026-09-28 finalists` (photos, marked-up pages,
    sketches). Full-size originals, not screenshots, when it's a photo for the pack.

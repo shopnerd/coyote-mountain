@@ -7,6 +7,9 @@ for _f in glob.glob(os.path.join(os.path.dirname(os.path.abspath('pack.py')), 'f
 GF = 'Plus Jakarta Sans'
 BGW = PAPER; INKW = '#2a2220'; MUTEDW = '#6b6258'; GREEN = '#4f6b3a'; RULEW = '#c9b8a0'; TANW = '#a08a70'
 SLOTS = json.load(open('walker_v14_slots.json', encoding='utf-8'))
+for _k, _v in (LAYOUT.get('slots') or {}).items():          # 4 Oct: the web editor's photo moves and swaps
+    if _k in SLOTS: SLOTS[_k] = {**SLOTS[_k], **_v}
+PHOTOKEYS = []
 PX = (2550, 1650)
 MAXDPI = 400
 PHOTOS = []                      # (page index, (x0, y0, x1, y1) page px, source file, crop fractions)
@@ -37,7 +40,7 @@ def wsrc(src):                    # slots hold Will's absolute paths; map them o
 def slot(fig, key):
     s = SLOTS[key]; x0, y0, x1, y1 = s['rect']
     fig.add_artist(matplotlib.patches.Rectangle((fx(x0), fy(y1)), fx(x1 - x0), (y1 - y0) / PX[1], color='#ddd3c3', lw=0))   # shows only if a photo is missing
-    PHOTOS.append((len(PAGES), s['rect'], wsrc(s['src']), s['crop'], s.get('paper', False)))
+    PHOTOS.append((len(PAGES), s['rect'], wsrc(s['src']), s['crop'], s.get('paper', False))); PHOTOKEYS.append(key)
     return s['rect']
 def label(fig, r, es, en, num=None, size=12.5, credit=None):
     x0, y0, x1, y1 = r; t = f'{num}  {es}' if num else es
@@ -71,9 +74,10 @@ def w_site():
         label(fig, slot(fig, f'4-{k}'), es, en, n)
     wfoot(fig, nxt(), 'Vistas del sitio', 'Site views'); PAGES.append(fig)
 def wpara(fig, x, y, es, en, w=68, size=10.5, lead=28):   # 4 Oct: was 74 / 9.8 / 26
-    for line in textwrap.wrap(es, w): wtext(fig, x, y, line, size); y += lead
+    es, g1 = para_lines(es); en, g2 = para_lines(en)
+    for line in textwrap.wrap(es, w): wtext(fig, x, y, line, size, gid=g1); y += lead
     y += 8
-    for line in textwrap.wrap(en, w): wtext(fig, x, y, line, size, style='italic', color=MUTEDW); y += lead
+    for line in textwrap.wrap(en, w): wtext(fig, x, y, line, size, style='italic', color=MUTEDW, gid=g2); y += lead
 def w_text_refs():
     fig = wpage(); wtitle(fig, 'Texto y referencias', 'Text and references')
     cols = [('La idea · The idea',

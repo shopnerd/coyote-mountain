@@ -10,7 +10,7 @@ STONE2, STAKE2, STEEL2, CONC2, DIRT2 = '#cdb892', '#8a6a48', '#3a3f44', '#d7d3cb
 
 def barn_plan():
     fig = newpage(); heading(fig, 'Planos arquitectónicos · Establo', 'Architectural drawings · Stable')
-    ax = fig.add_axes([0.03, 0.1, 0.62, 0.76]); ax.set_aspect('equal'); ax.set_anchor('E'); ax.axis('off')   # 4 Oct: pushed right so the 3D-model caption clears the runs
+    ax = fig.add_axes([0.03, 0.1, 0.62, 0.76]); ax.set_aspect('equal'); ax.set_anchor('E'); ax.axis('off'); ax.set_gid('plan')   # 4 Oct: pushed right so the 3D-model caption clears the runs
     L, D, RUN, ST, AI = 72, 42, 40, 12, 14; HL, HD = L / 2, D / 2; RD = (D - AI) / 2; W5 = 1.5
     for k in range(6):                                       # north runs
         x = -HL + ST * k; ax.add_patch(Rect((x, HD), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, HD + RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=7.5, color=MUTED)
@@ -81,7 +81,7 @@ def truss_page():
     HD, EAVE, RIDGE = 21, 12, 17; rz = lambda y: RIDGE - (RIDGE - EAVE) / HD * abs(y)
     # ---- cross-section through a truss (4 Oct, Will: line work on the paper, no fills; real sticks; field stones) ----
     import random as _r2; rng = _r2.Random(21); BG = PAPER
-    ax = fig.add_axes([0.02, 0.44, 0.44, 0.44]); ax.set_aspect('equal'); ax.axis('off'); ax.set_xlim(-27, 30); ax.set_ylim(-5, 22)
+    ax = fig.add_axes([0.02, 0.44, 0.44, 0.44]); ax.set_aspect('equal'); ax.axis('off'); ax.set_xlim(-27, 30); ax.set_ylim(-5, 22); ax.set_gid('section')
     lw_ground(ax, -27, 27, step=1.0)
     lw_line(ax, [-HD + .75, HD - .75], [.35, .35], lw=.4, color=MUTED)                                   # dirt floor
     for sx in (-1, 1):
@@ -110,7 +110,7 @@ def truss_page():
     ax.text(-8, 2.6, 'caballeriza · stall', ha='center', fontsize=7.5, color=MUTED); ax.text(8, 2.6, 'pasillo · aisle', ha='center', fontsize=7.5, color=MUTED)
     fig.text(0.02, 0.43, 'Corte por una cercha · Section through a truss', fontsize=12, weight='bold', color=INK)
     # ---- elevation of two bays: rock, the floating pipe, 3 ft frames of real sticks; the 6 x 9 doorway OPEN (Will) ----
-    ae = fig.add_axes([0.02, 0.1, 0.44, 0.28]); ae.set_aspect('equal'); ae.axis('off'); ae.set_xlim(-1, 25); ae.set_ylim(-1.8, 13.5)
+    ae = fig.add_axes([0.02, 0.1, 0.44, 0.28]); ae.set_aspect('equal'); ae.axis('off'); ae.set_gid('two-bays'); ae.set_xlim(-1, 25); ae.set_ylim(-1.8, 13.5)
     lw_ground(ae, -1, 25, tick=.35, step=.6, lw=1.0)
     DX0, DX1 = 15, 21                                                                                   # the doorway to the run
     for x0 in (0, 12):

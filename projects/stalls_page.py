@@ -4,7 +4,7 @@ def stalls_page():
     Rect=matplotlib.patches.Rectangle
     PS,SW,SD,CW,OV,AL=4,16,20,12,12,24; L=PS*SW+AL; HL=L/2; HC=CW/2; HD=HC+SD; RE=HC+OV; XS=-HL+PS*SW   # 4 Oct: corridor through, alfalfa 24 ft each side (covered_stalls.py)
     TR,TX=4,-HL-7-4; TO=TX-TR-10
-    ax=fig.add_axes([0.02,0.34,0.66,0.52]); ax.set_aspect('equal'); ax.axis('off')
+    ax=fig.add_axes([0.02,0.34,0.66,0.52]); ax.set_aspect('equal'); ax.axis('off'); ax.set_gid('stalls-plan')
     for sg in (-1,1):
         y0,y1=sorted((sg*HC,sg*HD)); ys0,ys1=sorted((sg*HC,sg*RE))
         ax.add_patch(Rect((-HL,y0),PS*SW,y1-y0,fc='#f1ead9',ec='none'))                                # open backs
@@ -45,7 +45,7 @@ def stalls_page():
         fig.add_artist(Rect((lx,ly-.006),.018,.012,transform=fig.transFigure,fc=fc,ec='#9fb6c7',hatch=hat)); fig.text(lx+.024,ly-.004,t,fontsize=7.8,color=INK); lx+=.22
     fig.add_artist(matplotlib.patches.Circle((0.028,0.301),.004,transform=fig.transFigure,fc='#1f78c8',ec=INK,lw=.5)); fig.text(0.044,0.297,'bebedero automático, uno por cada dos caballerizas · automatic waterer, one per two stalls',fontsize=7.8,color=INK)
     # cross-section through the butterfly roof
-    sx=fig.add_axes([0.03,0.085,0.62,0.19]); sx.set_aspect('equal'); sx.axis('off')
+    sx=fig.add_axes([0.03,0.085,0.62,0.19]); sx.set_aspect('equal'); sx.axis('off'); sx.set_gid('stalls-section')
     val,rise=10.5,1.5
     def g(y):
         e=abs(y)-HC-6

@@ -3,6 +3,7 @@ PACK=True
 exec(open('drain.py',encoding='utf-8').read())
 from matplotlib.backends.backend_pdf import PdfPages
 from PIL import Image
+exec(open('layout_ov.py',encoding='utf-8').read())   # 4 Oct: the web layout editor's moves, photo swaps and text edits
 OUTDIR=os.environ.get('EQUINO_PACK_DIR','G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack')   # Walker's machine sets EQUINO_PACK_DIR to its mirror
 DL=OUTDIR+'/renderings'
 CLAY='#b5602e'; MUTED='#6a655a'
@@ -30,9 +31,10 @@ def tblock(fig,num,es,en,dark=False):
 def heading(fig,es,en,y=0.945):
     fig.text(0.02,y,es,fontsize=30,weight='bold',color=INK); fig.text(0.02,y-0.036,en,fontsize=17,color=MUTED,style='italic')   # 4 Oct: was 24/14
 def para(fig,x,y,es,en,w=80,fs=10.5):
-    for line in textwrap.wrap(es,w): fig.text(x,y,line,fontsize=fs,color=INK); y-=fs*0.0021
+    es,g1=para_lines(es); en,g2=para_lines(en)
+    for line in textwrap.wrap(es,w): fig.text(x,y,line,fontsize=fs,color=INK,gid=g1); y-=fs*0.0021
     y-=.004
-    for line in textwrap.wrap(en,w): fig.text(x,y,line,fontsize=fs,color=MUTED,style='italic'); y-=fs*0.0021
+    for line in textwrap.wrap(en,w): fig.text(x,y,line,fontsize=fs,color=MUTED,style='italic',gid=g2); y-=fs*0.0021
     return y-.012
 num=[0]
 def nxt(): num[0]+=1; return num[0]
@@ -323,8 +325,9 @@ sheet('irrigation.py','Plan de riego y agua','Irrigation and water plan')
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={0:[('Caballerizas del establo: 12 × 14 ft con corrales de 12 × 40 ft (acordado 4 oct). Alfalfa: dos bodegas de 24 × 12 ft; se descarga desde el camino por las rejas de los extremos, el camión no entra al pasillo.','Stable stalls: 12 × 14 ft with 12 × 40 ft runs (agreed 4 Oct). Alfalfa: two 24 × 12 ft bays; unloads from the main road through the end gates, the truck stays out of the aisle.')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v32.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v34.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
+LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
 rep=place_photos(tmp,out)
@@ -358,7 +361,32 @@ for _pgi in sorted(ZOOMPG):
         _bx0, _by0, _bx1, _by1 = max(_b.x0, 0), max(_b.y0, 0), min(_b.x1, 1), min(_b.y1, 1)
         if (_bx1 - _bx0) * (_by1 - _by0) < .012: continue                      # skip QR codes, legends, small keys
         _crop(_pgi, _bx0 - .005, 1 - _by1 - .005, _bx1 - _bx0 + .01, _by1 - _by0 + .01)
+# 4 Oct (Will): text columns enlarge for reading too. Group the page's own text lines (not labels inside drawings) into columns:
+# same left edge, small gaps between lines; keep blocks of 3+ lines that are tall enough to be worth a tap.
+for _pgi, _f in enumerate(PAGES):
+    _f.canvas.draw(); _r = _f.canvas.get_renderer(); _ln = []
+    for _t in _f.texts:
+        _s = _t.get_text()
+        if not _t.get_visible() or not _s.strip() or _t.get_fontsize() > 13 or _t.get_fontsize() < 5: continue
+        _b = _t.get_window_extent(_r).transformed(_f.transFigure.inverted())
+        if _b.y1 < .065 or _b.y0 > .97: continue                                     # skip the footer and the page title band
+        _ln.append([_b.x0, 1 - _b.y1, _b.x1, 1 - _b.y0])
+    _ln.sort(key=lambda q: (round(q[0], 2), q[1])); _blocks = []
+    for q in sorted(_ln, key=lambda q: q[1]):
+        for g in _blocks:
+            if abs(q[0] - g['x0']) < .02 and q[1] >= g['y0'] - .005 and q[1] - g['y1'] < .03: g['y1'] = max(g['y1'], q[3]); g['x1'] = max(g['x1'], q[2]); g['n'] += 1; break
+        else: _blocks.append({'x0': q[0], 'y0': q[1], 'x1': q[2], 'y1': q[3], 'n': 1})
+    for g in _blocks:
+        if g['n'] >= 3 and g['y1'] - g['y0'] > .05: _crop(_pgi, g['x0'] - .006, g['y0'] - .006, g['x1'] - g['x0'] + .012, g['y1'] - g['y0'] + .012)
+print('zoom hotspots with text:', {f'p{k+1:02d}': len(v) for k, v in sorted(_hot.items())})
 import json as _json; _json.dump({'pages':_n,'version':os.path.basename(out),'built':__import__('datetime').date.today().isoformat(),'hot':{f'p{k+1:02d}':v for k,v in _hot.items()}},open(os.path.join(_web,'pages.json'),'w'))
 print('zoom hotspots:', {f'p{k+1:02d}': len(v) for k, v in sorted(_hot.items())})
+# 4 Oct: the layout editor's map: every photo slot, drawing and text with where it sits now (fractions, top-left origin)
+for _i, (_pgi, (_x0, _y0, _x1, _y1), _src, _cr, _paper) in enumerate(PHOTOS):
+    _key = PHOTOKEYS[_i]
+    LAYOUT_MAP.setdefault(f'p{_pgi+1:02d}', {'boxes': [], 'texts': [], 'photos': []})['photos'].append({'key': _key, 'rect': [round(_x0 / PX[0], 4), round(_y0 / PX[1], 4), round((_x1 - _x0) / PX[0], 4), round((_y1 - _y0) / PX[1], 4)], 'px': [_x0, _y0, _x1, _y1], 'src': os.path.basename(_src or ''), 'crop': _cr, 'paper': bool(_paper)})
+_lib = sorted(f for f in os.listdir(os.path.join(_web, '..', 'img')) if f.endswith('.jpg')) if os.path.isdir(os.path.join(_web, '..', 'img')) else []
+_json.dump({'pages': LAYOUT_MAP, 'library': _lib, 'version': os.path.basename(out), 'px': list(PX)}, open(os.path.join(_web, 'layout.json'), 'w', encoding='utf-8'), ensure_ascii=False)
+print('layout map:', sum(len(v['photos']) for v in LAYOUT_MAP.values()), 'photos,', sum(len(v['boxes']) for v in LAYOUT_MAP.values()), 'drawings,', sum(len(v['texts']) for v in LAYOUT_MAP.values()), 'texts')
 print('web pages:',_n)
 print(out,len(PAGES))

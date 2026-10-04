@@ -20,7 +20,7 @@ def stable_elevations(fig):
         ax.add_patch(matplotlib.patches.Rectangle((x0, z0), x1 - x0, z1 - z0, fc=BG, ec=LW_INK, lw=lw, zorder=3))
 
     # ---------------- east elevation (looking west; north is to the right) ----------------
-    ax = fig.add_axes([0.012, 0.585, 0.272, 0.235]); ax.set_aspect('equal'); ax.axis('off')
+    ax = fig.add_axes([0.012, 0.585, 0.272, 0.235]); ax.set_aspect('equal'); ax.axis('off'); ax.set_gid('elev-east')
     ax.set_xlim(-28.5, 60.5); ax.set_ylim(-4, 22)
     lw_ground(ax, -28.5, 60.5)
     W = HD + RT
@@ -49,12 +49,12 @@ def stable_elevations(fig):
     ax.text(W + 19.5, -1.4, 'bebedero 32 ft · trough', ha='center', va='top', fontsize=6.5, color=CLAY)
     ax.text(W + 20, 7.0, 'corrales norte · north runs', ha='center', fontsize=6.5, color=MUTED)
     ax.text(0, -1.4, 'pasillo 14 ft · puertas corredizas · aisle, sliding doors', ha='center', va='top', fontsize=6.5, color=INK)
-    fig.text(0.02, 0.858, 'Alzado este · East elevation', fontsize=11, weight='bold', color=INK)
-    fig.text(0.02, 0.841, 'la entrada desde el estacionamiento, mirando al oeste · the entry from the parking, looking west', fontsize=7, color=MUTED, style='italic')
-    fig.text(0.02, 0.826, 'alero 12 ft · cumbrera 17 ft · claraboya a 20.7 ft · eave 12 ft, ridge 17 ft, clerestory top 20.7 ft', fontsize=7, color=MUTED)
+    ax.text(-28.5, 33.5, 'Alzado este · East elevation', fontsize=11, weight='bold', color=INK, clip_on=False)   # titles ride with the drawing when it is moved
+    ax.text(-28.5, 31.0, 'la entrada desde el estacionamiento, mirando al oeste · the entry from the parking, looking west', fontsize=7, color=MUTED, style='italic', clip_on=False)
+    ax.text(-28.5, 28.4, 'alero 12 ft · cumbrera 17 ft · claraboya a 20.7 ft · eave 12 ft, ridge 17 ft, clerestory top 20.7 ft', fontsize=7, color=MUTED, clip_on=False)
 
     # ---------------- south elevation (looking north; west is to the left) ----------------
-    ax = fig.add_axes([0.012, 0.29, 0.272, 0.235]); ax.set_aspect('equal'); ax.axis('off')
+    ax = fig.add_axes([0.012, 0.29, 0.272, 0.235]); ax.set_aspect('equal'); ax.axis('off'); ax.set_gid('elev-south')
     ax.set_xlim(-40.5, 39.5); ax.set_ylim(-5, 22)
     lw_ground(ax, -40.5, 39.5)
     L = HL + RT
@@ -85,5 +85,5 @@ def stable_elevations(fig):
     ax.text(-24, -3.3, 'wash room · pad · trellis with grapes', ha='center', va='top', fontsize=6.5, color=MUTED, style='italic')
     ax.text(12, -1.4, 'caballerizas 7-10 · puertas a los corrales', ha='center', va='top', fontsize=6.5, color=INK)
     ax.text(12, -3.3, 'stalls 7-10 · doorways to the runs', ha='center', va='top', fontsize=6.5, color=MUTED, style='italic')
-    fig.text(0.02, 0.555, 'Alzado sur · South elevation', fontsize=11, weight='bold', color=INK)
-    fig.text(0.02, 0.538, 'el lado del camino, mirando al norte; 72 ft entre muros · the road side, looking north; 72 ft wall to wall', fontsize=7, color=MUTED, style='italic')
+    ax.text(-40.5, 26.5, 'Alzado sur · South elevation', fontsize=11, weight='bold', color=INK, clip_on=False)
+    ax.text(-40.5, 24.3, 'el lado del camino, mirando al norte; 72 ft entre muros · the road side, looking north; 72 ft wall to wall', fontsize=7, color=MUTED, style='italic', clip_on=False)
