@@ -237,7 +237,7 @@ for s in (-1, 1):
 # ---- clerestory monitor along the ridge: glazing on both long sides, its own low gable roof above (27 Sep) ----
 zb = roof_z(MON_HW) + zr
 for sgn in (-1, 1):
-    mat('steel')
+    mat('truss')   # 4 Oct: clerestory mullions are roof structure too
     for k in range(int(2 * MON_X / 6) + 1): xm = -MON_X + 6 * k; box(xm - .2, xm + .2, sgn * MON_HW - .2, sgn * MON_HW + .2, zb, zb + MON_H)   # mullions
     mat('roof')
     for dz in (0, T):
