@@ -47,6 +47,7 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: '25b-cover', orbit: { ti: 92, tj: 62, az: 200, el: 26, dist: 58, fov: 55 } },
   { id: 'el-south', i: 103.423, j: 70.729, h: 1.70, yaw: 2.8302, pitch: 1.5708, fov: 58 },
   { id: 'el-west', i: 94.565, j: 54.520, h: 3.25, yaw: 1.2594, pitch: 1.5708, fov: 48 },
+  { id: 'el-west-horse', i: 94.565, j: 54.520, h: 3.25, yaw: 1.2594, pitch: 1.5708, fov: 48 },   // 4 Oct: same camera as el-west, for fans
   { id: 'el-north', i: 110.658, j: 48.249, h: 4.66, yaw: -0.3114, pitch: 1.5708, fov: 58 },
   { id: 'el-south-wash', i: 102.131, j: 67.332, h: 1.70, yaw: 2.8302, pitch: 1.5708, fov: 45 },   // 3 Oct: square to the south wall, centred on the wash door, pad and trough, 66 ft out (the fence is at ~90)
   { id: 'el-east', i: 115.316, j: 61.199, h: 1.70, yaw: -1.8822, pitch: 1.5708, fov: 58 },

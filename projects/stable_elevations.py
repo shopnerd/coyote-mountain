@@ -36,7 +36,7 @@ def stable_elevations(fig):
     for a in (-14.6, 7.1):                                                         # both sliding leaves, parked open
         ax.add_patch(matplotlib.patches.Rectangle((a, .1), 7.5, 11.4, fc=BG, ec='none', zorder=4)); lw_planks(ax, a, .1, a + 7.5, 11.5, rng, lw=.6)
     lw_line(ax, [-15, 15], [11.85, 11.85], lw=1.2, zorder=5)
-    for p in (-HD, HD): lw_pipe(ax, p, 0, EAVE, d=.5)
+    for p in (-HD, HD): lw_pipe(ax, p, 0, EAVE, d=1.06)
     rl = rz(HD + OH)
     ax.add_patch(_LPoly([(-HD - OH, rl - .45), (0, RIDGE + .1), (HD + OH, rl - .45), (HD + OH, rl), (0, RIDGE + .6), (-HD - OH, rl)], closed=True, fc=BG, ec=LW_INK, lw=.9, zorder=5))
     zb = rz(5.0)
@@ -67,7 +67,7 @@ def stable_elevations(fig):
     opening(ax, -33, 0, -27, 9)                                                     # wash room opening
     ax.add_patch(matplotlib.patches.Rectangle((-27, .15), 7.3, 9.15, fc=BG, ec='none', zorder=4)); lw_planks(ax, -27, .15, -19.7, 9.3, rng, lw=.6)   # sliding door, parked
     lw_line(ax, [-33.5, -19.4], [9.9, 9.9], lw=1.1, zorder=5)
-    for k in range(7): lw_pipe(ax, -HL + 12 * k, 0, EAVE, d=.5)
+    for k in range(7): lw_pipe(ax, -HL + 12 * k, 0, EAVE, d=1.06)
     r0 = rz(HD + OH) - .45
     ax.add_patch(matplotlib.patches.Rectangle((-HL - OH, r0), 2 * (HL + OH), RIDGE + .6 - r0, fc=BG, ec=LW_INK, lw=.9, zorder=5))   # roof plane to the ridge
     for x in _np.arange(-HL - OH + 2, HL + OH, 2.0): lw_line(ax, [x, x], [r0 + .45, RIDGE + .6], lw=.18, color=MUTED, zorder=6)  # standing seams

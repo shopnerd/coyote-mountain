@@ -201,7 +201,7 @@ for sx in (-1, 1):
 # ---- structure (27 Sep, Will): steel trusses on 6 in steel pipe posts instead of the pipe portal frames, one at every
 # north stall line (7 lines, 12.7 ft apart): top chords, a bottom chord at the eave, king post, verticals and webs ----
 TRUSS = [-HL + L * k / 6 for k in range(7)]
-POST = 6.625 / 12                               # 6 in steel pipe posts (Will, 27 Sep); steel trusses
+POST = 12.75 / 12                               # 4 Oct (Will): back to Andrés' heavy 12 in tubes (12 3/4 in OD), as first planned; was 6 in pipe
 for x in TRUSS:
     mat('steel')
     for s in (-1, 1): bar((x, s * HD, 0), (x, s * HD, EAVE), POST, 10)
@@ -321,7 +321,7 @@ def tie_ring(cx, cy, cz, face):                          # a 5 in steel ring sta
         else: p0, p1 = (cx, cy + rr_ * math.cos(a0), cz + rr_ * math.sin(a0)), (cx, cy + rr_ * math.cos(a1), cz + rr_ * math.sin(a1))
         bar(p0, p1, .05, 5)
 WALL_O = -HD - ROCK_T / 2                                # outside face of the south wall
-tie_ring(-HL + .15, WALL_O - .35, 6.0, 'y')              # W: corner post, 6 ft
+bar((-HL, -HD - POST / 2 + .05, 6.0), (-HL, WALL_O - .45, 6.0), .1, 6); tie_ring(-HL, WALL_O - .62, 6.0, 'y')   # 4 Oct (Will): W ring on a stub welded to the corner post, 6 ft
 mat('steel'); HY0, HY1, HH, HB = WALL_O - 2.0, WALL_O - 10.0, 4.5, 1.0     # M: hoop on x = -24, from 2 ft to 10 ft off the wall
 HX = -HL + 12
 bar((HX, HY0, -.2), (HX, HY0, HH - HB), 3.5 / 12, 10); bar((HX, HY1, -.2), (HX, HY1, HH - HB), 3.5 / 12, 10)

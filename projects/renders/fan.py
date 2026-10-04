@@ -56,10 +56,13 @@ v = base_view(BASE)
 if 'top' in v: sys.exit('top-down plans are not fanned')
 if '--light' in args:                                   # 4 Oct: same camera, other times of day and weather (gallery3.LIGHT)
     sys.argv = [sys.argv[0], 'google']; import gallery3 as _G
-    fan = [{**{k: v[k] for k in v if k != 'id'}, 'id': f'{BASE}-fan-{tag}', 'hour': h} for tag, (h, _) in _G.LIGHT.items()][:N]
+    TAGS = (args[args.index('--tags') + 1].split(',') if '--tags' in args else list(_G.LIGHT))
+    fan = [{**{k: v[k] for k in v if k != 'id'}, 'id': f'{BASE}-fan-{tag}', 'hour': _G.LIGHT[tag][0]} for tag in TAGS][:N]
 else:
-    fan = (orbit_fan(v) if 'orbit' in v else walk_fan(v))[:N]
-FF = os.path.join(HERE, 'fan-views.json'); json.dump(fan, open(FF, 'w'))
+    fan = (orbit_fan(v) if 'orbit' in v else walk_fan(v))
+    if '--tags' in args: fan = [f for f in fan if f['id'].split('-fan-')[1] in args[args.index('--tags') + 1].split(',')]
+    fan = fan[:N]
+FF = os.path.join(HERE, f'fan-views-{BASE}-{os.getpid()}.json'); json.dump(fan, open(FF, 'w'))   # one per run, so fans can run side by side
 ids = [f['id'] for f in fan]
 print('fan:', ', '.join(ids))
 MD = os.path.join(HERE, 'fans', 'model'); os.makedirs(MD, exist_ok=True)
@@ -84,9 +87,16 @@ for eng, lst in done.items():
         im = Image.open(srcp).convert('RGB'); im.thumbnail((1536, 1536)); im.save(os.path.join(WEB, f'{i}-{eng}.jpg'), quality=85)
 MF = os.path.join(WEB, 'fans.json')
 man = json.load(open(MF, encoding='utf-8')) if os.path.exists(MF) else []
-man = [m for m in man if m.get('base') != BASE]
+old = next((m for m in man if m.get('base') == BASE), None); man = [m for m in man if m.get('base') != BASE]
 NAMES = {'dawn': ('amanecer', 'dawn'), 'golden': ('hora dorada', 'golden hour'), 'storm': ('tormenta que se despeja', 'clearing storm'), 'blue': ('hora azul', 'blue hour'), 'fog': ('niebla de la mañana', 'morning fog'), 'left': ('a la izquierda', 'step left'), 'right': ('a la derecha', 'step right'), 'high': ('más alto', 'higher'), 'low': ('más bajo', 'lower'), 'closer': ('más cerca', 'closer'), 'wider': ('más abierto', 'wider')}
 man.insert(0, {'base': BASE, 'made': datetime.date.today().isoformat(),
                'views': [{'id': i, 'es': NAMES[i.split('-fan-')[1]][0], 'en': NAMES[i.split('-fan-')[1]][1], 'eng': [e for e in ENGINES if i in done.get(e, [])], 'old': ['model']} for i in ok]})
+if old:                                                   # keep earlier views of this base and add engines to repeated ones
+    new = man[0]; ids = {x['id']: x for x in new['views']}
+    for ov in old['views']:
+        if ov['id'] in ids: ids[ov['id']]['eng'] = sorted(set(ids[ov['id']]['eng']) | set(ov['eng']))
+        else: new['views'].append(ov)
 json.dump(man, open(MF, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
+try: os.remove(FF)
+except OSError: pass
 print(f'published {sum(len(l) for l in done.values())} images; gallery section "Abanico de cámaras" lists {len(man)} fan(s)')

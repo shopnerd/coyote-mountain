@@ -1,4 +1,5 @@
 exec(open('linework.py', encoding='utf-8').read())
+POSTR = 12.75 / 24                                         # post radius, ft (12 3/4 in OD)
 exec(open('stable_elevations.py', encoding='utf-8').read())
 import math
 from matplotlib.patches import Circle
@@ -87,7 +88,7 @@ def truss_page():
     for sx in (-1, 1):
         x = sx * HD
         lw_stones(ax, x - .75, x + .75, 0, 5, rng, big=1.4, small=.8, lw=.5)                          # the rock wall, cut
-        lw_box(ax, x - .3, -3, x + .3, EAVE, lw=.8)                                                    # 6 in pipe post
+        lw_box(ax, x - POSTR, -3, x + POSTR, EAVE, lw=.8)                                                    # 6 in pipe post
         lw_box(ax, x - 1.2, -3.8, x + 1.2, -2.9, lw=.6)                                                # footing
         for k in range(5): lw_line(ax, [x - 1.1 + k * .5, x - .85 + k * .5], [-3.8, -2.9], lw=.25)
         lw_line(ax, [x - .6, x + .6], [6, 6], lw=2.0)                                                  # the floating pipe, in section
@@ -130,8 +131,8 @@ def truss_page():
     ae.annotate('', xy=(12, 12.8), xytext=(15, 12.8), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(13.5, 13.1, '3 ft', ha='center', fontsize=7.5)
     fig.text(0.02, 0.385, 'Alzado de dos crujías · Elevation of two bays', fontsize=11, weight='bold', color=INK)
     y = 0.86
-    specs = [('Cerchas de acero cada 12 ft sobre postes de tubo de 6 in (6⅝ in de diámetro), cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
-              'Steel trusses every 12 ft on 6 in pipe posts (6⅝ in outside diameter), each on its own footing: top chords to the ridge, bottom chord at the eave, verticals and diagonals.'),
+    specs = [('Cerchas de acero cada 12 ft sobre los tubos pesados de 12 in de Andrés (12¾ in de diámetro) como postes, cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
+              'Steel trusses every 12 ft on Andrés' heavy 12 in tubes as posts (12¾ in outside diameter), each on its own footing: top chords to the ridge, bottom chord at the eave, verticals and diagonals.'),
              ('Muro de piedra apilada de 5 ft en todo el perímetro y entre caballerizas. Un tubo negro flota 1 ft arriba del muro sobre postes cortos: 6 ft en total.',
               'Stacked rock wall 5 ft high all round and between the stalls. A black pipe floats 1 ft above it on short posts: 6 ft overall.'),
              ('Del tubo al alero, paneles de 3 ft de ancho con varas horizontales (tipo nido de pájaro) en marco de acero oscuro; cuatro paneles por crujía de 12 ft.',

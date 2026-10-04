@@ -102,6 +102,16 @@ if __name__ == '__main__':
         _lt = v.split('-fan-')[1] if '-fan-' in v else ''
         BRIEF = _BRIEF0.replace(LIGHT_DEFAULT, LIGHT[_lt][1]) if _lt in LIGHT else _BRIEF0
         HYB = {k_: (v_.replace('October, late afternoon golden hour before sunset, fair-weather cumulus clouds.', LIGHT[_lt][1]) if _lt in LIGHT else v_) for k_, v_ in _HYB0.items()}
+        _base = v.split('-fan-')[0]
+        if _base.startswith('el-'):                         # 4 Oct: elevations keep their own straight-on brief + site photos, light swapped for fans
+            import elevations as EL
+            _pr = EL.BRIEF.format(side=EL.SIDE.get(_base) or EL.SIDE[_base.rsplit('-', 1)[0]]) + EL.EXTRA.get(_base, '')
+            if _lt in LIGHT: _pr = _pr.replace('Golden hour, warm low sun, long soft shadows, a sky of big lit cumulus clouds.', LIGHT[_lt][1])
+            try:
+                im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), _pr, EL.REFS, k)
+                im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE} (elevation): ok in {time.time() - t:.0f}s')
+            except Exception as e: print(f'{v} {ENGINE} (elevation): FAILED {str(e)[:160]}')
+            continue
         hb = HYB.get(v, HYB.get(v.split('-fan-')[0])) if STYLE == 'hybrid' else None
         if hb:
             try:
