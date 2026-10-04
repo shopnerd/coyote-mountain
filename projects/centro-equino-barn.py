@@ -222,17 +222,18 @@ for s in (-1, 1):
     for k in range(n_p + 1):
         y = s * run * k / n_p
         if k == 0: y = s * 0.6
-        bar((-HL, y, roof_z(y) + top), (HL, y, roof_z(y) + top), PURL_D, 16)   # round, not hexagonal (Will, 4 Oct)
+        bar((-HL - 2.0 + .3, y, roof_z(y) + top), (HL + 2.0 - .3, y, roof_z(y) + top), PURL_D, 16)   # purlins carry the 2 ft gable overhang   # round, not hexagonal (Will, 4 Oct)
     bar((-HL, s * HD, EAVE - 0.2), (HL, s * HD, EAVE - 0.2), PURL_D, 16)      # eave beam at the column heads
 
 # ---- roof: two sheets on the purlins, 2 ft past the walls on the long sides, a little thickness ----
 T, zr = .25, top + PURL_D / 2
+GOH = 2.0                                        # 4 Oct (Will): 2 ft overhang at the gable ends too (long sides already OH = 2)
 mat('roof')
 for s in (-1, 1):
     y_out = s * (HD + OH)
     for dz in (0, T):
-        quad((-HL - .5, y_out, roof_z(y_out) + zr + dz), (HL + .5, y_out, roof_z(y_out) + zr + dz),
-             (HL + .5, 0, RIDGE + zr + dz), (-HL - .5, 0, RIDGE + zr + dz))
+        quad((-HL - GOH, y_out, roof_z(y_out) + zr + dz), (HL + GOH, y_out, roof_z(y_out) + zr + dz),
+             (HL + GOH, 0, RIDGE + zr + dz), (-HL - GOH, 0, RIDGE + zr + dz))
 
 # ---- clerestory monitor along the ridge: glazing on both long sides, its own low gable roof above (27 Sep) ----
 zb = roof_z(MON_HW) + zr
