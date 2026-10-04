@@ -162,12 +162,23 @@ for fn in FILES:
     # footprint (+3 ft) to its floor, easing back to natural over 8 ft ----
     cvl = [q for q in d['strokes'] if q.get('name') == 'covered stalls']
     cvs = cvl[0] if cvl else None
-    if cvs: cfl = ground(z, *cvs['c']) + cvs.get('lift', 0); cr_ = math.radians(cvs['rot']); Fp = np.array(cvs['foot']); fx0, fy0 = Fp.min(0); fx1, fy1 = Fp.max(0)
+    if cvs:
+        # 4 Oct: the obj is written in east/north feet (covered_stalls.py `world`), so its bounding box is a 92 x 98 ft square,
+        # not the 92 x 36 building: test the TRUE rotated rectangle instead (that square had flattened a tongue up to the scrub road)
+        from objtools import parse_obj as _po
+        _T, _ = _po(os.path.join(HERE, 'covered-stalls.obj')); _P = _T.reshape(-1, 3); _mx, _my = _P[:, 0].mean() * FT, _P[:, 1].mean() * FT
+        _st = [(-116.7637927468709, 31.99970749966619), (-116.7635094983617, 31.99998532313917), (-116.7633790473066, 31.99988684382775), (-116.7636714287398, 31.99959200352455)]
+        from geo import la0 as _la0, lo0 as _lo0
+        _k = 111320 * math.cos(math.radians(_la0)); _enu = lambda la, lo: np.array([(lo - _lo0) * _k, (la - _la0) * 111320])
+        _A, _B, _C, _D = (_enu(la, lo) for lo, la in _st)
+        _u = (_B - _A) / np.linalg.norm(_B - _A); _v = (_D - _A) / np.linalg.norm(_D - _A); _v = _v - _u * (_v @ _u); _v /= np.linalg.norm(_v)
+        cfl = ground(z, *cvs['c']) + cvs.get('lift', 0); cr_ = math.radians(cvs['rot']); RXs, HDs = 46.0, 26.0          # roof 92 ft, building 52 ft
     for j_ in (range(H) if cvs else []):
         for i_ in range(W):
             dx, dy = (i_ - cvs['c'][0]) * cs, -(j_ - cvs['c'][1]) * cs
-            lx, ly = dx * math.cos(cr_) + dy * math.sin(cr_), -dx * math.sin(cr_) + dy * math.cos(cr_)
-            ox = max(fx0 - lx, 0, lx - fx1); oy = max(fy0 - ly, 0, ly - fy1); o = math.hypot(ox, oy) / FT
+            ex, ey = dx * math.cos(cr_) + dy * math.sin(cr_) + _mx, -dx * math.sin(cr_) + dy * math.cos(cr_) + _my   # east/north from the obj origin (m)
+            t_, s_ = (ex * _u[0] + ey * _u[1]) / FT, (ex * _v[0] + ey * _v[1]) / FT                                   # along / across the building (ft)
+            o = math.hypot(max(-RXs - t_, 0, t_ - RXs), max(-HDs - s_, 0, s_ - HDs))
             if o <= 3: z[j_, i_] = cfl
             elif o <= 11: f = (o - 3) / 8; z[j_, i_] = cfl * (1 - f) + z[j_, i_] * f
     d['z'] = [round(float(q), 3) for q in z.flatten()]
