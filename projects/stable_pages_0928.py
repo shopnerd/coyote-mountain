@@ -1,3 +1,4 @@
+exec(open('linework.py', encoding='utf-8').read())
 exec(open('stable_elevations.py', encoding='utf-8').read())
 import math
 from matplotlib.patches import Circle
@@ -78,44 +79,55 @@ def barn_plan():
 def truss_page():
     fig = newpage(); heading(fig, 'Estructura · cerchas de acero, piedra y varas', 'Structure · steel trusses, rock and sticks')
     HD, EAVE, RIDGE = 21, 12, 17; rz = lambda y: RIDGE - (RIDGE - EAVE) / HD * abs(y)
-    # ---- cross-section through a truss ----
+    # ---- cross-section through a truss (4 Oct, Will: line work on the paper, no fills; real sticks; field stones) ----
+    import random as _r2; rng = _r2.Random(21); BG = PAPER
     ax = fig.add_axes([0.02, 0.44, 0.44, 0.44]); ax.set_aspect('equal'); ax.axis('off'); ax.set_xlim(-27, 30); ax.set_ylim(-5, 22)
-    ax.add_patch(Rect((-27, -5), 54, 5, fc='#efe6d2', ec='none')); ax.plot([-27, 27], [0, 0], color=INK, lw=1)
-    ax.add_patch(Rect((-HD + .75, 0), 2 * HD - 1.5, .35, fc=DIRT2, ec='none'))
+    lw_ground(ax, -27, 27, step=1.0)
+    lw_line(ax, [-HD + .75, HD - .75], [.35, .35], lw=.4, color=MUTED)                                   # dirt floor
     for sx in (-1, 1):
         x = sx * HD
-        ax.add_patch(Rect((x - .75, 0), 1.5, 5, fc=STONE2, ec=INK, lw=.7, zorder=3))
-        ax.add_patch(Rect((x - .3, -3), .6, EAVE + 3, fc=STEEL2, ec=INK, lw=.5, zorder=4))                 # 6 in pipe post on its footing
-        ax.add_patch(Rect((x - 1.2, -3.8), 2.4, .9, fc=CONC2, ec=INK, lw=.5, hatch='..', zorder=2))
-        ax.plot([x - .6, x + .6], [6, 6], color='black', lw=2.2, zorder=5)                                   # the floating pipe
-        for yy in np.arange(6.5, EAVE - .2, .42): ax.plot([x - .25, x + .25], [yy, yy], color=STAKE2, lw=2, zorder=4)
-        ax.plot([x + sx * 2, 0], [rz(HD + 2), RIDGE], color=STEEL2, lw=2.6, zorder=6)                       # top chords with a 2 ft overhang
-        for k in (1, 2, 3):                                                                                    # verticals and webs
+        lw_stones(ax, x - .75, x + .75, 0, 5, rng, big=1.4, small=.8, lw=.5)                          # the rock wall, cut
+        lw_box(ax, x - .3, -3, x + .3, EAVE, lw=.8)                                                    # 6 in pipe post
+        lw_box(ax, x - 1.2, -3.8, x + 1.2, -2.9, lw=.6)                                                # footing
+        for k in range(5): lw_line(ax, [x - 1.1 + k * .5, x - .85 + k * .5], [-3.8, -2.9], lw=.25)
+        lw_line(ax, [x - .6, x + .6], [6, 6], lw=2.0)                                                  # the floating pipe, in section
+        for yy in np.arange(6.4, EAVE - .15, .32):                                                     # sticks cut through: little irregular circles
+            r = rng.uniform(.09, .14); t = np.linspace(0, 2 * np.pi, 9)
+            ax.plot(x + rng.uniform(-.12, .12) + r * np.cos(t) * rng.uniform(.8, 1.2), yy + r * np.sin(t), color=LW_STICK, lw=.5)
+        lw_box(ax, x - .35, 6.2, x + .35, EAVE - .05, lw=.6)                                           # the steel frame around them
+        lw_line(ax, [x + sx * 2, 0], [rz(HD + 2), RIDGE], lw=1.8)                                      # top chords with a 2 ft overhang
+        for k in (1, 2, 3):
             yv = sx * HD * k / 4; yw = sx * HD * (k - 1) / 4
-            ax.plot([yv, yv], [EAVE, rz(yv)], color=STEEL2, lw=1.2, zorder=6); ax.plot([yv, yw], [EAVE, rz(yw)], color=STEEL2, lw=1, zorder=6)
-    ax.plot([-HD, HD], [EAVE, EAVE], color=STEEL2, lw=2, zorder=6); ax.plot([0, 0], [EAVE, RIDGE], color=STEEL2, lw=1.4, zorder=6)
-    ax.plot([-5, -5], [rz(5), rz(5) + 2.5], color=STEEL2, lw=1.2); ax.plot([5, 5], [rz(5), rz(5) + 2.5], color=STEEL2, lw=1.2)
-    ax.plot([-6, 0, 6], [rz(5) + 2.3, RIDGE + 3.4, rz(5) + 2.3], color=STEEL2, lw=2.2)                        # clerestory roof
-    ax.text(0, RIDGE + 4.3, 'claraboya abierta · open clerestory', ha='center', fontsize=7.5, color=MUTED)
+            lw_line(ax, [yv, yv], [EAVE, rz(yv)], lw=.8); lw_line(ax, [yv, yw], [EAVE, rz(yw)], lw=.7)
+    lw_line(ax, [-HD, HD], [EAVE, EAVE], lw=1.5); lw_line(ax, [0, 0], [EAVE, RIDGE], lw=1.0)
+    lw_line(ax, [-5, -5], [rz(5), rz(5) + 2.5], lw=.8); lw_line(ax, [5, 5], [rz(5), rz(5) + 2.5], lw=.8)
+    lw_line(ax, [-6, 0, 6], [rz(5) + 2.3, RIDGE + 3.4, rz(5) + 2.3], lw=1.5)                            # clerestory roof
+    lw_line(ax, [-HD - 2, 0, HD + 2], [rz(HD + 2) + .35, RIDGE + .35, rz(HD + 2) + .35], lw=.6)       # roof sheets on the purlins
+    ax.text(0, RIDGE + 4.3, 'claraboya abierta · open clerestory', ha='center', fontsize=8, color=MUTED)
     for (a, b, t) in (((-HD - 3.2, 0), (-HD - 3.2, 5), '5 ft'), ((-HD - 3.2, 5), (-HD - 3.2, 6), '6 ft'), ((HD + 3.2, 0), (HD + 3.2, EAVE), 'alero · eave 12 ft'), ((27, 0), (27, RIDGE), 'cumbrera · ridge 17 ft')):
-        ax.annotate('', xy=a, xytext=b, arrowprops=dict(arrowstyle='<->', lw=.7)); ax.text(a[0] + (.6 if a[0] > 0 else -.6), (a[1] + b[1]) / 2, t, fontsize=6.8, ha='left' if a[0] > 0 else 'right', va='center', rotation=90 if a[0] > 20 else 0)
-    ax.annotate('', xy=(-HD, -4.4), xytext=(HD, -4.4), arrowprops=dict(arrowstyle='<->', lw=.7)); ax.text(0, -4.1, '42 ft', ha='center', va='bottom', fontsize=8)
-    ax.text(-8, 2.6, 'caballeriza · stall', ha='center', fontsize=7, color=MUTED); ax.text(8, 2.6, 'pasillo · aisle', ha='center', fontsize=7, color=MUTED)
-    fig.text(0.02, 0.43, 'Corte por una cercha · Section through a truss', fontsize=11, weight='bold', color=INK)
-    # ---- elevation of two bays ----
-    ae = fig.add_axes([0.02, 0.1, 0.44, 0.28]); ae.set_aspect('equal'); ae.axis('off'); ae.set_xlim(-1, 25); ae.set_ylim(-1.5, 13.5)
-    ae.plot([-1, 25], [0, 0], color=INK, lw=1)
+        ax.annotate('', xy=a, xytext=b, arrowprops=dict(arrowstyle='<->', lw=.6)); ax.text(a[0] + (.6 if a[0] > 0 else -.6), (a[1] + b[1]) / 2, t, fontsize=7.5, ha='left' if a[0] > 0 else 'right', va='center', rotation=90 if a[0] > 20 else 0)
+    ax.annotate('', xy=(-HD, -4.4), xytext=(HD, -4.4), arrowprops=dict(arrowstyle='<->', lw=.6)); ax.text(0, -4.1, '42 ft', ha='center', va='bottom', fontsize=8)
+    ax.text(-8, 2.6, 'caballeriza · stall', ha='center', fontsize=7.5, color=MUTED); ax.text(8, 2.6, 'pasillo · aisle', ha='center', fontsize=7.5, color=MUTED)
+    fig.text(0.02, 0.43, 'Corte por una cercha · Section through a truss', fontsize=12, weight='bold', color=INK)
+    # ---- elevation of two bays: rock, the floating pipe, 3 ft frames of real sticks; the 6 x 9 doorway OPEN (Will) ----
+    ae = fig.add_axes([0.02, 0.1, 0.44, 0.28]); ae.set_aspect('equal'); ae.axis('off'); ae.set_xlim(-1, 25); ae.set_ylim(-1.8, 13.5)
+    lw_ground(ae, -1, 25, tick=.35, step=.6, lw=1.0)
+    DX0, DX1 = 15, 21                                                                                   # the doorway to the run
     for x0 in (0, 12):
-        ae.add_patch(Rect((x0, 0), 12, 5, fc=STONE2, ec=INK, lw=.6))
-        ae.plot([x0, x0 + 12], [6, 6], color='black', lw=2)
-        for k in range(4):
-            px = x0 + 3 * k; ae.add_patch(Rect((px, 6.2), 3, EAVE - 6.4, fc='none', ec=STEEL2, lw=1.1))
-            for yy in np.arange(6.6, EAVE - .3, .42): ae.plot([px + .15, px + 2.85], [yy, yy], color=STAKE2, lw=1.4)
-    ae.add_patch(Rect((15, 0), 6, 9, fc='white', ec=INK, lw=.8)); ae.plot([15, 21], [9.1, 9.1], color=STEEL2, lw=2.4); ae.text(18, 4, 'abertura\nlibre al\ncorral\n6 × 9 ft\nopen\ndoorway', ha='center', va='center', fontsize=6.3)
-    for x in (0, 12, 24): ae.add_patch(Rect((x - .25, 0), .5, EAVE, fc=STEEL2, ec=INK, lw=.4))
-    ae.plot([-1, 25], [EAVE + .1, EAVE + .1], color=STEEL2, lw=3)
-    ae.annotate('', xy=(0, -1), xytext=(12, -1), arrowprops=dict(arrowstyle='<->', lw=.7)); ae.text(6, -1.4, '12 ft', ha='center', va='top', fontsize=7.5)
-    ae.annotate('', xy=(12, 12.8), xytext=(15, 12.8), arrowprops=dict(arrowstyle='<->', lw=.7)); ae.text(13.5, 13.1, '3 ft', ha='center', fontsize=7)
+        for a, b in ((x0, x0 + 12),) if x0 == 0 else ((12, DX0), (DX1, 24)):
+            lw_stones(ae, a + .25, b - .25, 0, 5, rng, big=2.0, small=.85, lw=.5)
+            lw_line(ae, [a + .25, b - .25], [6, 6], lw=1.8)                                           # the floating pipe
+            for px in np.arange(a + .25, b - .3, 3.0 if b - a >= 3 else b - a):
+                q = min(px + 3.0, b - .25)
+                if q - px > .6: lw_sticks(ae, px, q, 6.25, EAVE - .1, rng, gap=.2, lw=(.35, .55), amp=.06, frame_lw=1.1, outline=True)
+    for px in np.arange(DX0, DX1 - .1, 3.0):                                                            # above the doorway: sticks from the lintel up
+        lw_sticks(ae, px, px + 3.0, 9.35, EAVE - .1, rng, gap=.2, lw=(.35, .55), amp=.06, frame_lw=1.1, outline=True)
+    lw_box(ae, DX0, 0, DX1, 9.1, lw=1.0); lw_line(ae, [DX0 - .1, DX1 + .1], [9.2, 9.2], lw=2.2)         # the open doorway and its steel lintel
+    ae.text(18, 4.4, 'abertura libre al corral\n6 × 9 ft\nopen doorway to the run', ha='center', va='center', fontsize=7.5, color=INK)
+    for x in (0, 12, 24): lw_pipe(ae, x, 0, EAVE, d=.5, lw=.9)
+    lw_line(ae, [-1, 25], [EAVE + .1, EAVE + .1], lw=2.0)
+    ae.annotate('', xy=(0, -1.1), xytext=(12, -1.1), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(6, -1.4, '12 ft', ha='center', va='top', fontsize=8)
+    ae.annotate('', xy=(12, 12.8), xytext=(15, 12.8), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(13.5, 13.1, '3 ft', ha='center', fontsize=7.5)
     fig.text(0.02, 0.385, 'Alzado de dos crujías · Elevation of two bays', fontsize=11, weight='bold', color=INK)
     y = 0.86
     specs = [('Cerchas de acero cada 12 ft sobre postes de tubo de 6 in (6⅝ in de diámetro), cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
