@@ -1,3 +1,4 @@
+exec(open('stable_elevations.py', encoding='utf-8').read())
 import math
 from matplotlib.patches import Circle
 # Stable pages for the pack, 28 Sep 2026 design (exec'd by pack.py after its own helpers; replaces barn_plan() and the
@@ -54,9 +55,10 @@ def barn_plan():
     ax.annotate('', xy=(HL + 8, -HD), xytext=(HL + 8, HD), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(HL + 10, 0, '42 ft\n(12.8 m)', va='center', fontsize=9)
     ax.annotate('', xy=(HL + 8, HD), xytext=(HL + 8, HD + RUN), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(HL + 10, HD + RUN / 2, '40 ft\ncorrales\nruns', va='center', fontsize=8)
     ax.text(12, -HD - RUN - 3, 'muro bajo de piedra · low rock wall', ha='center', va='top', fontsize=7, color=MUTED)
-    ax.text(-HL - 13, 0, 'camino\nroad →', ha='center', va='center', fontsize=7.5, color=MUTED); ax.text(-HL + 10, HD + RUN + 11, 'oeste (camino) ← · → este (estacionamiento)', fontsize=8.5, weight='bold')
+    ax.text(-HL + 10, HD + RUN + 11, 'oeste (camino) ← · → este (estacionamiento)', fontsize=8.5, weight='bold')
     _na = math.radians(24.16); ax.annotate('', xy=(-HL + 1 + 7 * math.sin(_na), HD + RUN + 8 + 7 * math.cos(_na)), xytext=(-HL + 1, HD + RUN + 8), arrowprops=dict(arrowstyle='-|>', lw=1.2, color=INK), annotation_clip=False); ax.text(-HL + 1 + 9.5 * math.sin(_na), HD + RUN + 8 + 9.5 * math.cos(_na), 'N', fontsize=9, weight='bold', ha='center', va='center')   # 4 Oct: true north leans 24 deg east of the stable's axis
     ax.set_xlim(-57, 60); ax.set_ylim(-HD - RUN - 8, HD + RUN + 13)
+    stable_elevations(fig)                                     # 4 Oct (Will): east + south elevations left of the plan
     y = 0.85
     specs = [('Planta 72 × 42 ft sobre una retícula de 12 ft: 6 crujías, cerchas de acero cada 12 ft. Pasillo central de 14 ft abierto de punta a punta con una puerta corrediza grande en cada extremo; el camino llega directo a la puerta oeste.',
               '72 × 42 ft on a 12 ft grid: 6 bays, steel trusses every 12 ft. A 14 ft centre aisle open end to end with a big sliding door at each end; the road comes straight into the west door.'),

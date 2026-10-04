@@ -296,21 +296,21 @@ FIN=DL+'/2026-09-28 finalists/'
 w_cover()
 w_renders(2,[(1,'Alzado oeste: la entrada, el bebedero y las plantas','West elevation: the entry drive, trough and planting'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
              (3,'Alzado sur: el lavado y los corrales','South elevation: the wash room and runs'),(4,'Alzado este: la entrada desde el estacionamiento','East elevation: the parking entry')])
-barn_plan()
+barn_plan(); ZOOMPG = {len(PAGES) - 1}   # 4 Oct: drawing pages whose drawings enlarge on the web page
 import qrcode                                             # Walker added a QR to the 3D model; point it at the public copy
 _qr=qrcode.QRCode(border=0,box_size=10); _qr.add_data('https://will.100xbtr.com/equino/model/'); _qr.make(fit=True)
 _fig=PAGES[-1]; _ax=_fig.add_axes([0.03,0.115,0.05,0.077]); _ax.imshow(np.asarray(_qr.make_image(fill_color='black',back_color='white').convert('L')),cmap='gray',interpolation='nearest'); _ax.axis('off')
 _fig.text(0.085,0.168,'Modelo 3D del establo · 3D model of the stable',fontsize=10,weight='bold',color=INK)
 _fig.text(0.085,0.150,'Gírelo y explórelo en línea · Turn it and explore it online',fontsize=8.5,color=MUTED)
 _fig.text(0.085,0.133,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
-truss_page()
+truss_page(); ZOOMPG.add(len(PAGES) - 1)
 w_renders(3,[(5,'Sobre las caballerizas techadas','Over the covered stalls'),(6,'Bajo el techo mariposa','Under the butterfly roof'),
              (7,'El bebedero redondo y el techo mariposa, desde el oeste','The round trough and the butterfly roof, from the west'),(8,'Desde el cerro: las caballerizas y el establo','From the hill: the covered stalls and the stable')])
-stalls_page()
+stalls_page(); ZOOMPG.add(len(PAGES) - 1)
 w_renders('3b',[(9,'El lado norte y sus corrales','The north side and its runs'),(10,'Dentro del establo','Inside the stable'),
              (11,'Las gradas y el día de campo','The bleachers and a picnic'),(12,'Los escalones, de lado','The steps from the side')])
 w_site()
-planview(FIN+'00-plan.png')
+planview(FIN+'00-plan.png'); ZOOMPG.add(len(PAGES) - 1)
 w_text_refs()
 w_site_materials()
 w_inspirations()
@@ -323,7 +323,7 @@ sheet('irrigation.py','Plan de riego y agua','Irrigation and water plan')
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={0:[('Caballerizas del establo: 12 × 14 ft con corrales de 12 × 40 ft (acordado 4 oct). Alfalfa: dos bodegas de 24 × 12 ft; se descarga desde el camino por las rejas de los extremos, el camión no entra al pasillo.','Stable stalls: 12 × 14 ft with 12 × 40 ft runs (agreed 4 Oct). Alfalfa: two 24 × 12 ft bays; unloads from the main road through the end gates, the truck stays out of the aisle.')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v30.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v31.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 with PdfPages(tmp) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
@@ -339,6 +339,26 @@ for _k,_pg in enumerate(_doc):
     _pix=_pg.get_pixmap(matrix=_pm.Matrix(2200/_pg.rect.width,2200/_pg.rect.width)); Image.frombytes('RGB',(_pix.width,_pix.height),_pix.samples).save(os.path.join(_web,f'p{_k+1:02d}.jpg'),quality=82)
 for _old in os.listdir(_web):
     if _old.startswith('p') and _old.endswith('.jpg') and int(_old[1:3])>_n: os.remove(os.path.join(_web,_old))
-import json as _json; _json.dump({'pages':_n,'version':os.path.basename(out),'built':__import__('datetime').date.today().isoformat()},open(os.path.join(_web,'pages.json'),'w'))
+# 4 Oct (Will): click a rendering or a drawing on the web page and it fills the screen. Hotspots = the renderings (photos placed from
+# renders/) and the big drawings on the drawing pages; each gets its own high-res crop from the PDF. Material/inspiration photos don't.
+_zd = os.path.join(_web, 'zoom'); os.makedirs(_zd, exist_ok=True)
+for _old in os.listdir(_zd): os.remove(os.path.join(_zd, _old))
+_hot = {}
+def _crop(_k, fx, fy, fw, fh):
+    _pg = _doc[_k]; W_, H_ = _pg.rect.width, _pg.rect.height; clip = _pm.Rect(fx * W_, fy * H_, (fx + fw) * W_, (fy + fh) * H_)
+    z = min(2600 / clip.width, 2600 / clip.height, 4.5); _pix = _pg.get_pixmap(matrix=_pm.Matrix(z, z), clip=clip)
+    name = f'p{_k+1:02d}-{len(_hot.get(_k, []))}.jpg'; Image.frombytes('RGB', (_pix.width, _pix.height), _pix.samples).save(os.path.join(_zd, name), quality=85)
+    _hot.setdefault(_k, []).append({'x': round(fx, 4), 'y': round(fy, 4), 'w': round(fw, 4), 'h': round(fh, 4), 'src': 'zoom/' + name})
+for _pgi, (_x0, _y0, _x1, _y1), _src, _cr, _paper in PHOTOS:
+    if _src and ('renders' in _src.replace(chr(92), '/') or 'cover' in os.path.basename(_src).lower()): _crop(_pgi, _x0 / PX[0], _y0 / PX[1], (_x1 - _x0) / PX[0], (_y1 - _y0) / PX[1])
+for _pgi in sorted(ZOOMPG):
+    _f = PAGES[_pgi]; _f.canvas.draw()
+    for _ax in _f.axes:
+        _b = _ax.get_tightbbox(_f.canvas.get_renderer()).transformed(_f.transFigure.inverted())
+        _bx0, _by0, _bx1, _by1 = max(_b.x0, 0), max(_b.y0, 0), min(_b.x1, 1), min(_b.y1, 1)
+        if (_bx1 - _bx0) * (_by1 - _by0) < .012: continue                      # skip QR codes, legends, small keys
+        _crop(_pgi, _bx0 - .005, 1 - _by1 - .005, _bx1 - _bx0 + .01, _by1 - _by0 + .01)
+import json as _json; _json.dump({'pages':_n,'version':os.path.basename(out),'built':__import__('datetime').date.today().isoformat(),'hot':{f'p{k+1:02d}':v for k,v in _hot.items()}},open(os.path.join(_web,'pages.json'),'w'))
+print('zoom hotspots:', {f'p{k+1:02d}': len(v) for k, v in sorted(_hot.items())})
 print('web pages:',_n)
 print(out,len(PAGES))
