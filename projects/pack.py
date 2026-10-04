@@ -291,10 +291,12 @@ exec(open('stable_pages_0928.py',encoding='utf-8').read())   # 28 Sep stable: pl
 exec(open('walker_pages.py',encoding='utf-8').read())    # 3 Oct: Walker's v14 photo pages (Giant Nature), photos at native resolution
 FIN=DL+'/2026-09-28 finalists/'
 w_cover()
-w_renders(2,[(1,'El establo y el jardín','The stable and its garden'),(2,'El lado norte y sus corrales','The north side and its runs'),
-             (3,'El establo desde el camino','The stable from the road'),(4,'Dentro del establo','Inside the stable')])
-w_renders(3,[(5,'Las gradas y el día de campo','The bleachers and a picnic'),(6,'El establo, las caballerizas y las gradas','The stable, covered stalls and bleachers'),
-             (7,'Bajo el techo mariposa','Under the butterfly roof'),(8,'El techo mariposa y el bebedero, desde el oeste','The butterfly roof and round trough, from the west')])
+w_renders(2,[(1,'Alzado oeste: la entrada, el bebedero y las plantas','West elevation: the entry drive, trough and planting'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
+             (3,'Alzado sur: el lavado y los corrales','South elevation: the wash room and runs'),(4,'Alzado este: la entrada desde el estacionamiento','East elevation: the parking entry')])
+w_renders(3,[(5,'Sobre las caballerizas techadas','Over the covered stalls'),(6,'Bajo el techo mariposa','Under the butterfly roof'),
+             (7,'El bebedero redondo y el techo mariposa, desde el oeste','The round trough and the butterfly roof, from the west'),(8,'Desde el cerro: las caballerizas y el establo','From the hill: the covered stalls and the stable')])
+w_renders('3b',[(9,'El lado norte y sus corrales','The north side and its runs'),(10,'Dentro del establo','Inside the stable'),
+             (11,'Las gradas y el día de campo','The bleachers and a picnic'),(12,'Los escalones, de lado','The steps from the side')])
 w_site()
 planview(FIN+'00-plan.png')
 w_text_refs()
@@ -318,7 +320,7 @@ placeholder('Logística','Logistics','Orden de obra, maquinaria, materiales, agu
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={1:[('Caballerizas del establo: en la v14 Walker puso 12 × 12 ft con corrales de 12 × 30 ft; el modelo y estos planos siguen con 12 × 14 ft y corrales de 12 × 40 ft. ¿Cuál queda?','Stable stalls: in v14 Walker wrote 12 × 12 ft with 12 × 30 ft runs; the model and these drawings still have 12 × 14 ft and 12 × 40 ft runs. Which one stays?')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-03-v16.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v17.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 with PdfPages(tmp) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)

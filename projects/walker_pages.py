@@ -61,7 +61,7 @@ def w_site():
     fig = wpage(); wtitle(fig, 'Vistas del sitio', 'Site views')
     for k, (n, es, en) in enumerate([(1, 'El centro desde el noreste, hacia el oeste', 'The centre from the north-east, looking west'),
                                      (2, 'La maqueta del sitio, desde el suroeste', 'The site model, from the south-west'),
-                                     (3, 'La maqueta del sitio, en corte', 'The site model, cut as a section')]):
+                                     (3, 'La maqueta del sitio, en planta', 'The site model, as a plan')]):
         label(fig, slot(fig, f'4-{k}'), es, en, n)
     wfoot(fig, nxt(), 'Vistas del sitio', 'Site views'); PAGES.append(fig)
 def wpara(fig, x, y, es, en, w=74, size=9.8, lead=26):
@@ -110,7 +110,7 @@ def w_inspirations():
                                   ('Puerta corrediza de listones', 'A slatted sliding barn door'), ('Piedra vieja y cerchas de acero', 'Old stone and steel trusses')]):
         label(fig, slot(fig, f'8-{k}'), es, en, size=12, credit='Foto: Luis Gordoa' if k == 0 else None)
     section(fig, 945, 'Detalles · Details')
-    for k, (es, en) in enumerate([('Piedra con dinteles de acero', 'Stone with steel lintels'), ('Lavadero con muros de piedra', 'A stone-walled wash rack'),
+    for k, (es, en) in enumerate([('Varas en marcos de acero', 'Sticks in steel frames'), ('Lavadero con muros de piedra', 'A stone-walled wash rack'),
                                   ('Lavado: drenaje, manguera, repisas', 'Wash stall: drain, hose, shelves'), ('Celosías de varas y luz', 'Stick screens and dappled light'),
                                   ('Llanta para rascarse', 'A tyre scratching post')]):
         label(fig, slot(fig, f'8-{k + 4}'), es, en, size=11.5)

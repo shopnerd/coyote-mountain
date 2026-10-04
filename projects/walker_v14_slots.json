@@ -23,14 +23,14 @@
    1251,
    763
   ],
-  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-27 big gallery (OpenAI + Gemini)/v7 28 Sep current model (Gemini + 4 OpenAI)/16-stable-sw-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/1003pm/el-west-horse-openai.png",
   "crop": [
-   0.12052139951977235,
-   0.20953218340401547,
-   0.853434885735987,
-   0.9388996993023278
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 37
+  "note": "finalist placed 4 Oct (gallery picks)"
  },
  "2-1": {
   "rect": [
@@ -39,14 +39,14 @@
    2280,
    763
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-north-google.png",
   "crop": [
-   -0.003176189899181497,
-   0.011517435616382514,
-   1.001820437357019,
-   0.9881711081939432
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 550
+  "note": "finalist placed 4 Oct (gallery picks)"
  },
  "2-2": {
   "rect": [
@@ -55,14 +55,14 @@
    1251,
    1448
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/p2-road-crop-hi-4.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-south-google.png",
   "crop": [
    0,
    0,
    1,
    1
   ],
-  "note": "3 Oct: modelshots p2-road at SHOT_DSF=3.6, Walker crop cut out (model-p2-road-crop), finish_hi 16:9 with close-framing note"
+  "note": "finalist placed 4 Oct (gallery picks)"
  },
  "2-3": {
   "rect": [
@@ -71,14 +71,14 @@
    2280,
    1447
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-east-google.png",
   "crop": [
-   -0.003301407285062338,
-   0.005877019400874951,
-   1.0020081638804872,
-   0.9857494423359797
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 527
+  "note": "finalist placed 4 Oct (gallery picks)"
  },
  "3-0": {
   "rect": [
@@ -87,14 +87,14 @@
    1251,
    764
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/14-bleachers-high-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/1-hero-sw-google.png",
   "crop": [
-   -0.0007627706948969716,
-   0.011809339775481325,
-   1.002079341592933,
-   0.9917132600787042
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 498
+  "note": "placed 4 Oct"
  },
  "3-1": {
   "rect": [
@@ -103,14 +103,14 @@
    2280,
    763
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/4-hill-s-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/5-corridor-out-google.png",
   "crop": [
-   -0.003222225000700034,
-   0.01108280782438266,
-   1.0019784039996489,
-   0.98839593740008
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 509
+  "note": "placed 4 Oct"
  },
  "3-2": {
   "rect": [
@@ -119,14 +119,14 @@
    1251,
    1448
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/5-corridor-out-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/2-corridor-1.png",
   "crop": [
-   -0.0008997252333068361,
-   0.011938895066956355,
-   1.002204736107171,
-   0.9920141527085918
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 484
+  "note": "placed 4 Oct"
  },
  "3-3": {
   "rect": [
@@ -135,14 +135,14 @@
    2280,
    1447
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/2-corridor-1.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/4-hill-s-google.png",
   "crop": [
-   0.13883117219929259,
-   0.1866749615896138,
-   0.8593710069897249,
-   0.8834798680002974
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 379
+  "note": "placed 4 Oct"
  },
  "4-0": {
   "rect": [
@@ -167,14 +167,14 @@
    2470,
    775
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/b3-sw-openai.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/b3-sw-openai.png",
   "crop": [
-   -0.002576168907777627,
-   -0.0062363860310848925,
-   1.002489474310923,
-   1.0048861623348895
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 578
+  "note": "finalist placed 4 Oct (gallery picks)"
  },
  "4-2": {
   "rect": [
@@ -183,14 +183,14 @@
    2469,
    1435
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/b1-ne-openai.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/b7-plan-openai.png",
   "crop": [
-   -0.0015130188044597912,
-   -0.005892605180924521,
-   1.0013893888468406,
-   1.0051859166435146
+   0,
+   0,
+   1,
+   1
   ],
-  "inliers": 559
+  "note": "finalist placed 4 Oct (gallery picks)"
  },
  "6-0": {
   "rect": [
@@ -279,14 +279,14 @@
    1256,
    1447
   ],
-  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/7AEE90CC-3478-448B-8B94-89638AB8DB4C.JPG",
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/128E5435-E9BA-4E5B-9E02-5D4A57532C7F.JPG",
   "crop": [
-   -0.002200745617520632,
-   0.24761636591878755,
-   1.0033351285752805,
-   0.6279469073878445
+   -0.003,
+   0.264,
+   1.004,
+   0.735
   ],
-  "inliers": 15
+  "note": "restored"
  },
  "6-6": {
   "rect": [
@@ -467,7 +467,7 @@
    0.8835706713779355,
    1.0040075481431057
   ],
-  "inliers": 474
+  "note": "Will/Walker photo 4 Oct"
  },
  "8-1": {
   "rect": [
@@ -483,7 +483,7 @@
    0.951203911592369,
    0.9837849877696689
   ],
-  "inliers": 474
+  "note": "Will/Walker photo 4 Oct"
  },
  "8-2": {
   "rect": [
@@ -499,7 +499,7 @@
    0.8061670115991848,
    0.9106833551965834
   ],
-  "inliers": 362
+  "note": "Will/Walker photo 4 Oct"
  },
  "8-3": {
   "rect": [
@@ -515,7 +515,7 @@
    1.006172838007686,
    0.7770329998610406
   ],
-  "inliers": 381
+  "note": "Will/Walker photo 4 Oct"
  },
  "8-4": {
   "rect": [
@@ -524,14 +524,14 @@
    532,
    1440
   ],
-  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/5EAD93ED-D2A1-46F1-9621-E621C2BBAE5B.JPG",
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/stick and frames.JPG",
   "crop": [
-   0.14577480437648624,
-   0.07422152509212458,
-   0.8537749847743435,
-   0.9762769998840981
+   0.0,
+   0.0,
+   0.52,
+   0.66
   ],
-  "inliers": 371
+  "note": "Will/Walker photo 4 Oct: horizontal sticks in steel frames"
  },
  "8-5": {
   "rect": [
@@ -596,5 +596,69 @@
    0.9975166441620277
   ],
   "inliers": 268
+ },
+ "3b-0": {
+  "rect": [
+   271,
+   231,
+   1251,
+   764
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
+ },
+ "3b-1": {
+  "rect": [
+   1298,
+   231,
+   2280,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
+ },
+ "3b-2": {
+  "rect": [
+   271,
+   915,
+   1251,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/14-bleachers-high-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
+ },
+ "3b-3": {
+  "rect": [
+   1298,
+   914,
+   2280,
+   1447
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/23-picnic-side-openai.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
  }
 }
