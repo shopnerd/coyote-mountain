@@ -97,7 +97,8 @@ def truss_page():
     HD, EAVE, RIDGE = 21, 12, 17; rz = lambda y: RIDGE - (RIDGE - EAVE) / HD * abs(y)
     # ---- cross-section through a truss (4 Oct, Will: line work on the paper, no fills; real sticks; field stones) ----
     import random as _r2; rng = _r2.Random(21); BG = PAPER
-    ax = fig.add_axes([0.02, 0.44, 0.44, 0.44]); ax.set_aspect('equal'); ax.axis('off'); ax.set_xlim(-27, 30); ax.set_ylim(-5, 22); ax.set_gid('section')
+    fig._norm_skip = True                       # 4 Oct (Will): laid out by hand, both drawings big and centred left of the text
+    ax = fig.add_axes([0.031, 0.49, 0.62, 0.38]); ax.set_aspect('equal'); ax.set_anchor('C'); ax.axis('off'); ax.set_xlim(-27, 30); ax.set_ylim(-5, 22); ax.set_gid('section')
     lw_ground(ax, -27, 27, step=1.0)
     lw_line(ax, [-HD + .75, HD - .75], [.35, .35], lw=.4, color=MUTED)                                   # dirt floor
     for sx in (-1, 1):
@@ -124,9 +125,9 @@ def truss_page():
         ax.annotate('', xy=a, xytext=b, arrowprops=dict(arrowstyle='<->', lw=.6)); ax.text(a[0] + (.6 if a[0] > 0 else -.6), (a[1] + b[1]) / 2, t, fontsize=7.5, ha='left' if a[0] > 0 else 'right', va='center', rotation=90 if a[0] > 20 else 0)
     ax.annotate('', xy=(-HD, -4.4), xytext=(HD, -4.4), arrowprops=dict(arrowstyle='<->', lw=.6)); ax.text(0, -4.1, '42 ft', ha='center', va='bottom', fontsize=8)
     ax.text(-8, 2.6, 'caballeriza · stall', ha='center', fontsize=7.5, color=MUTED); ax.text(8, 2.6, 'pasillo · aisle', ha='center', fontsize=7.5, color=MUTED)
-    fig.text(0.02, 0.43, 'Corte por una cercha · Section through a truss', fontsize=12, weight='bold', color=INK)
+    fig.text(0.341, 0.462, 'Corte por una cercha · Section through a truss', fontsize=12, weight='bold', color=INK, ha='center')
     # ---- elevation of two bays: rock, the floating pipe, 3 ft frames of real sticks; the 6 x 9 doorway OPEN (Will) ----
-    ae = fig.add_axes([0.02, 0.1, 0.44, 0.28]); ae.set_aspect('equal'); ae.axis('off'); ae.set_gid('two-bays'); ae.set_xlim(-1, 25); ae.set_ylim(-1.8, 13.5)
+    ae = fig.add_axes([0.031, 0.115, 0.62, 0.31]); ae.set_aspect('equal'); ae.set_anchor('C'); ae.axis('off'); ae.set_gid('two-bays'); ae.set_xlim(-1, 25); ae.set_ylim(-1.8, 13.5)
     lw_ground(ae, -1, 25, tick=.35, step=.6, lw=1.0)
     DX0, DX1 = 15, 21                                                                                   # the doorway to the run
     for x0 in (0, 12):
@@ -144,7 +145,7 @@ def truss_page():
     lw_line(ae, [-1, 25], [EAVE + .1, EAVE + .1], lw=2.0)
     ae.annotate('', xy=(0, -1.1), xytext=(12, -1.1), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(6, -1.4, '12 ft', ha='center', va='top', fontsize=8)
     ae.annotate('', xy=(12, 12.8), xytext=(15, 12.8), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(13.5, 13.1, '3 ft', ha='center', fontsize=7.5)
-    fig.text(0.02, 0.385, 'Alzado de dos crujías · Elevation of two bays', fontsize=11, weight='bold', color=INK)
+    fig.text(0.341, 0.088, 'Alzado de dos crujías · Elevation of two bays', fontsize=12, weight='bold', color=INK, ha='center')
     y = 0.86
     specs = [('Cerchas de acero cada 12 ft sobre los tubos pesados de 12 in de Andrés (12¾ in de diámetro) como postes, cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
               'Steel trusses every 12 ft on Andrés’ heavy 12 in tubes as posts (12¾ in outside diameter), each on its own footing: top chords to the ridge, bottom chord at the eave, verticals and diagonals.'),
@@ -156,7 +157,7 @@ def truss_page():
               'Each stall opens to its run through an open 6 × 9 ft doorway with a steel lintel; toward the aisle, a black pipe front with a gate.'),
              ('Techo metálico gris oscuro, claraboya abierta de 48 × 10 ft, dos puertas corredizas de madera de 7½ × 11½ ft en cada extremo sobre riel de acero.',
               'Dark grey metal roof, an open 48 × 10 ft clerestory, two 7½ × 11½ ft wooden sliding doors at each end on a steel track.')]
-    for es, en in specs: y = para(fig, 0.52, y, es, en, w=74, fs=10)   # 4 Oct: was 8.2
-    fig.text(0.52, 0.12, 'Dimensiones de cerchas, postes y zapatas por el ingeniero estructural.', fontsize=9.5, color=CLAY)
-    fig.text(0.52, 0.105, 'Truss, post and footing sizes to be set by the structural engineer.', fontsize=9.5, color=CLAY, style='italic')
+    for es, en in specs: y = para(fig, 0.685, y, es, en, w=66, fs=10)   # 4 Oct: was 8.2
+    fig.text(0.685, 0.12, 'Dimensiones de cerchas, postes y zapatas por el ingeniero estructural.', fontsize=9.5, color=CLAY)
+    fig.text(0.685, 0.105, 'Truss, post and footing sizes to be set by the structural engineer.', fontsize=9.5, color=CLAY, style='italic')
     tblock(fig, nxt(), 'Estructura', 'Structure'); PAGES.append(fig)

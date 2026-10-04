@@ -9,7 +9,7 @@ Results land in the gallery's "Abanico de cámaras · Camera fan" section, one b
 import subprocess, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))
 PHOTO = ['el-west-horse', 'el-north', 'el-south', 'el-east', '1-hero-sw', '5-corridor-out', '2-corridor', '8-stable', '10-stable-aisle',
-         '14-bleachers-high', '23-picnic-side', 'p4-site-ne']
+         '14-bleachers-high', '23-picnic-side', 'p4-site-ne', '4-hill-s']   # 4 Oct: + the hill view (pack p5, E-1)
 BLOCK = ['b3-sw', 'b4-nw']
 def run(*a):
     p = subprocess.run([sys.executable, 'fan.py', *a], cwd=HERE, capture_output=True, text=True)
