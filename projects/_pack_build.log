@@ -1,5 +1,5 @@
 <string>:18: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
-cut 3611 fill 2836 yd3
+cut 3611 fill 2845 yd3
 notes end at 0.089 (footer rule 0.055)
 PV: stable half 60 panels (4x15), stalls 120; potential 104.4 kWp 165 MWh/yr; use 29.6 kWh/day 10,790/yr; phase 1 7.0 kWp 12.1 MWh
 schedule ends at 0.088

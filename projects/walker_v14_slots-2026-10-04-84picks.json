@@ -23,7 +23,7 @@
    1251,
    763
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/1003pm/el-west-horse-openai.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-west-horse-fan-golden-openai.png",
   "crop": [
    0,
    0,
@@ -39,7 +39,7 @@
    2280,
    763
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-north-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-north-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -55,7 +55,7 @@
    1251,
    1448
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-south-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-south-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -71,7 +71,7 @@
    2280,
    1447
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-east-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-east-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -87,7 +87,7 @@
    1251,
    764
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/1-hero-sw-openai.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/1-hero-sw-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -103,7 +103,7 @@
    2280,
    763
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/5-corridor-out-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/5-corridor-out-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -119,7 +119,7 @@
    1251,
    1448
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/2-corridor-1.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/2-corridor-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -135,7 +135,7 @@
    2280,
    1447
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/4-hill-s-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -151,7 +151,7 @@
    1456,
    1434
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/p4-site-ne-green-1.jpg",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/p4-site-ne-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -167,7 +167,7 @@
    2470,
    775
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/b3-sw-openai.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery6/b3-sw-openai.png",
   "crop": [
    0,
    0,
@@ -184,12 +184,12 @@
    2469,
    1435
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/b4-nw-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery6/b4-nw-openai.png",
   "crop": [
-   0.0251,
-   0.127,
-   0.9251,
-   1.0
+   0,
+   0,
+   1,
+   1
   ],
   "note": "4 Oct (Walker): replaces b7-plan-openai, which repeated the plan view page · 4 Oct (Will): cropped so the block matches slot 2 in size",
   "paper": true
@@ -606,7 +606,7 @@
    1251,
    764
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/8-stable-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -622,7 +622,7 @@
    2280,
    763
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/10-stable-aisle-fan-golden-openai.png",
   "crop": [
    0,
    0,
@@ -638,7 +638,7 @@
    1251,
    1448
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/14-bleachers-high-google.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/14-bleachers-high-fan-golden-google.png",
   "crop": [
    0,
    0,
@@ -654,7 +654,7 @@
    2280,
    1447
   ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/23-picnic-side-openai.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/23-picnic-side-fan-golden-google.png",
   "crop": [
    0,
    0,

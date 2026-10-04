@@ -317,7 +317,7 @@ stalls_page(); ZOOMPG.add(len(PAGES) - 1)
 w_renders('3b',[(9,'El lado norte y sus corrales','The north side and its runs'),(10,'Dentro del establo','Inside the stable'),
              (11,'Las gradas y el día de campo','The bleachers and a picnic'),(12,'Los escalones, de lado','The steps from the side')])
 w_site()
-planview(os.path.join(os.path.dirname(os.path.abspath('pack.py')),'renders','gallery6','b7-plan-openai.png'))   # 4 Oct: the 84 ft stable; ZOOMPG.add(len(PAGES) - 1)
+planview(FIN+'00-plan.png')   # 4 Oct (Will): approved image restored; 84 ft option = renders/gallery6/b7-plan-openai.png; ZOOMPG.add(len(PAGES) - 1)
 w_text_refs()
 w_site_materials()
 w_inspirations()
