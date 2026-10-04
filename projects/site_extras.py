@@ -135,28 +135,6 @@ for fn in FILES:
             m.face([bot[q], bot[q2], mid[q2], mid[q]], 'pine'); m.face([mid[q], mid[q2], top[q2], top[q]], 'pine')
         m.face(bot[::-1], 'pine'); m.face(top, 'pine')
     d['strokes'].append(stroke(m, 'pine forest', 'pine-forest.obj', z, f'pine grove between the parking and the stable: {len(trees)} round-crowned pines 14-22 ft (Will, 28 Sep)'))
-    # ---- minimal native planting (Will, 3 Oct, red markup on the west elevation): two low beds flanking the drive-in between the
-    # long trough and the west gable: sage / buckwheat / brittlebush mounds 1.5-3.5 ft, kept 9 ft off the road, 6 ft apart ----
-    rd_ = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road']
-    RP = [grid2b(*q[:2]) for q in rd_[0]['pts']] if rd_ else []
-    def near_road(x, y): return RP and min(math.hypot(x - a, y - b) for a, b in RP) < 9.5
-    rnd2 = random.Random(7); shrubs = []
-    for side in (-1, 1):
-        tries = 0
-        while len([q for q in shrubs if q[3] == side]) < 14 and tries < 4000:
-            tries += 1; x, y = rnd2.uniform(-86, -44), side * rnd2.uniform(6, 26)
-            if near_road(x, y) or any(math.hypot(x - a, y - b) < 6 for a, b, _r, _s in shrubs): continue
-            shrubs.append((x, y, rnd2.uniform(1.5, 3.4), side))
-    m = Mesh(); n = 8
-    for x, y, R_, _side in shrubs:
-        zg = ground(z, *b2grid(x, y)); h = R_ * .9 * FT
-        ring = lambda rr, zz: [(x + rr * math.cos(2 * math.pi * q / n + .3), y + rr * math.sin(2 * math.pi * q / n + .3), zz) for q in range(n)]
-        bot, mid, top = ring(R_ * .9, zg - .05), ring(R_, zg + h * .45), ring(R_ * .5, zg + h)
-        for q in range(n):
-            q2 = (q + 1) % n
-            m.face([bot[q], bot[q2], mid[q2], mid[q]], 'sage'); m.face([mid[q], mid[q2], top[q2], top[q]], 'sage')
-        m.face(top, 'sage')
-    d['strokes'].append(stroke(m, 'native planting', 'native-planting.obj', z, f'minimal native planting: {len(shrubs)} low sage/buckwheat mounds in two beds flanking the stable drive-in (Will, 3 Oct)'))
     # ---- the concrete wash pad (in the stable model, 24 x 12 ft along the solid rooms): level the ground under it to the stable
     # floor so it reads as one clean rectangle, not poked through by the slope (Will, 28 Sep) ----
     stb = [q for q in d['strokes'] if q.get('name') == 'walker barn 72x40'][0]
@@ -221,6 +199,40 @@ for fn in FILES:
             if dmin > 11: continue
             zr = prof[sel][k_]; f = 0 if dmin <= 7 else (dmin - 7) / 4
             z[j_, i_] = zr * (1 - f) + z[j_, i_] * f
+    d['z'] = [round(float(q), 3) for q in z.flatten()]
+    # ---- minimal native planting (Will, 3 Oct, red markup on the west elevation): two low beds flanking the drive-in between the
+    # long trough and the west gable: sage / buckwheat / brittlebush mounds 1.5-3.5 ft, kept 9 ft off the road, 6 ft apart ----
+    rd_ = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road']   # AFTER the re-route below, so the rows follow the real drive
+    RP = [grid2b(*q[:2]) for q in rd_[0]['pts']] if rd_ else []
+    def near_road(x, y): return RP and min(math.hypot(x - a, y - b) for a, b in RP) < 9.5
+    rd_[0]['pw'] = 14 * FT                                            # 4 Oct (Will): the entry drive is 14 ft wide all the way to the trough
+    # plants LINE the drive on both sides from the trough to the gable (4 Oct, Will): a row 1-4 ft off each edge, mixed sizes
+    # (sage, buckwheat, deer grass, a few taller accents), with a second loose row behind
+    rnd2 = random.Random(7); shrubs = []
+    seg = [(x, y) for x, y in RP if -90 <= x <= -40]                  # the straight approach between trough and gable
+    seg.sort()
+    def along(t):                                                   # point + normal at fraction t of the approach
+        k = min(int(t * (len(seg) - 1)), len(seg) - 2); a, b = seg[k], seg[k + 1]
+        dx, dy = b[0] - a[0], b[1] - a[1]; L = math.hypot(dx, dy) or 1
+        return (a[0] + dx * (t * (len(seg) - 1) - k), a[1] + dy * (t * (len(seg) - 1) - k)), (-dy / L, dx / L)
+    for side in (-1, 1):
+        t = .04
+        while t < .97:
+            (px, py), (nx, ny) = along(t); off = 7 + rnd2.uniform(1.0, 4.0); R_ = rnd2.choice([1.4, 1.8, 2.2, 2.6, 3.0, 3.6])
+            shrubs.append((px + nx * off * side, py + ny * off * side, R_, side))
+            if rnd2.random() < .45:                                   # a second, looser row behind
+                off2 = off + rnd2.uniform(4.5, 8.0); shrubs.append((px + nx * off2 * side, py + ny * off2 * side, rnd2.uniform(1.5, 3.2), side))
+            t += (R_ * 2 + rnd2.uniform(1.5, 3.5)) / 50.0
+    m = Mesh(); n = 8
+    for x, y, R_, _side in shrubs:
+        zg = ground(z, *b2grid(x, y)); h = R_ * .9 * FT
+        ring = lambda rr, zz: [(x + rr * math.cos(2 * math.pi * q / n + .3), y + rr * math.sin(2 * math.pi * q / n + .3), zz) for q in range(n)]
+        bot, mid, top = ring(R_ * .9, zg - .05), ring(R_, zg + h * .45), ring(R_ * .5, zg + h)
+        for q in range(n):
+            q2 = (q + 1) % n
+            m.face([bot[q], bot[q2], mid[q2], mid[q]], 'sage'); m.face([mid[q], mid[q2], top[q2], top[q]], 'sage')
+        m.face(top, 'sage')
+    d['strokes'].append(stroke(m, 'native planting', 'native-planting.obj', z, f'native planting: {len(shrubs)} mixed sage/buckwheat/deer-grass mounds lining both sides of the 14 ft entry drive from the trough to the gable (Will, 4 Oct)'))
     d['z'] = [round(float(q), 3) for q in z.flatten()]
     json.dump(d, open(p, 'w', encoding='utf-8'))
     print(fn, ': long trough', round(LEN, 1), 'ft in', NS, 'sections at', [round(q[2], 2) for q in secs], 'm;', len(trees), 'pines')
