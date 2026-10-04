@@ -15,6 +15,7 @@ github shopnerd/coyote-mountain, will-os = shopnerd/will-os); both repos were at
 - Deliverable suggestion: a new sheet "E-1 Plan eléctrico y de iluminación · Electrical and lighting plan" (same pattern as
   `irrigation.py` / D-3: exec drain.py, site map + notes column, bilingual, a fixture schedule and a short dark-sky note), a
   stable-plan overlay with outlets/lights per stall/aisle/wash/tack (12 ft grid makes it easy), add it to pack.py after D-3.
+- Will's image of it: "the stable will look incredible at night with the sticks and the light pouring out": warm interior light glowing through the gaps between the horizontal sticks and the open clerestory is the hero night shot; keep the outside dark around it.
 - **Then render "early evening just after sundown"** with the lights on (the `blue` light variant + the fixtures in the brief):
   but renders are PAUSED (see §3) until the details are settled.
 
