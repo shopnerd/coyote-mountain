@@ -10,7 +10,7 @@ p05   400 dpi    2619x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/rend
 p07   400 dpi    2613x1420  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png
 p07   400 dpi    2619x1418  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png
 p07   400 dpi    2613x1421  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/14-bleachers-high-google.png
-p07   235 dpi     1536x834  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/23-picnic-side-openai.png
+p07   235 dpi     1536x834  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/23-picnic-side-openai.png
 p08   400 dpi    3669x3208  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/p4-site-ne-green-1.jpg
 p08   238 dpi     1530x864  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/b3-sw-openai.png
 p08   369 dpi    2369x1341  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/b4-nw-google.png
