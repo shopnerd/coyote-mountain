@@ -18,6 +18,20 @@ github shopnerd/coyote-mountain, will-os = shopnerd/will-os); both repos were at
   index.html copies. Check shots: `renders/checkshot.mjs`. Open question for Will: solar ON by default in the model/renders?
 - p10 text + stale comments now say 12 in tube posts.
 
+- **LATER SAME DAY: stable is 84 × 42 ft** (Will saw the hut in the model and said no). One more 12 ft bay at the WEST end:
+  kitchen 12 × 14 (NW, gable window), bathroom 12 × 8 + electrical room 12 × 6 (SW, its own door in the west gable, shut-off
+  beside it). Built symmetric with `XOFF = -6` in `centro-equino-barn.py` so the obj origin and everything east of old x -36
+  stayed put; drawings use the OLD frame (walls x -48..36). Wash pad 12 × 36 with the trellis over all of it; pad trough back at
+  the building's (new) corner; C1 at stable-frame (-60,-35); hut removed from site_extras. Clerestory and phase-1 solar stay
+  centred over the horses (old centre). Stable roof 88 × 46 → 60 panels per half; potential 240 panels, 104 kWp, 165 MWh/yr.
+  Proposal drawing: `stable_extension_plan.py`. Backups `*-2026-10-04-pre-84.*`. Option C (give up a stall) ruled out: stalls are the rent.
+- **Renders resumed** (Will topped up Gemini credits). New light tag `dusk` (18.7 h, the E-1 lighting written into the brief) and a
+  SOLAR sentence in every brief; model shots now show the phase-1 panels unless `solar: false`. `4-hill-s-fan-dusk` (Gemini) is in
+  E-1 slot E1-1. **Every older painting now shows the 72 ft stable** (and the thin posts): a re-render round is due; Will picks which.
+- Pack page: hover cue is a small corner magnifier (no brown box); enlarge opens/closes instantly (no grow/fade); mouse click closes at once.
+- Trap: on Windows, stopping a background `python -m http.server` job leaves python running. Three stale servers on 8792 served old
+  data.json and made check shots lie. Check `netstat -ano | grep :8792` and kill strays before model shots.
+
 ## 1. (DONE, see §0) what Will asked for last
 **Basic electrical and lighting plan** (Will, 4 Oct, after seeing the blue-hour hill view `4-hill-s-fan-blue-google`, which he likes
 "quite a bit"):
