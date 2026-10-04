@@ -259,7 +259,7 @@ for fn in FILES:
     P0 = np.array(grid2b(*keep[0][:2])); P1b = np.array(grid2b(*keep[1][:2]))       # join smoothly: leave the old line along its own heading
     t0 = (P0 - P1b) / np.linalg.norm(P0 - P1b)
     P3 = np.array([-50.0, 0.0]);   # 4 Oct: the west gable is at x -48 now
-    Lb = np.linalg.norm(P3 - P0); c1 = P0 + t0 * Lb * .35; c2 = P3 - np.array([Lb * .3, 0.0])  # and arrive square to the entry
+    Lb = np.linalg.norm(P3 - P0); c1 = P0 + t0 * Lb * .35; c2 = P3 - np.array([Lb * .05, 0.0])   # 4 Oct: with the gable 12 ft further west the old .3 bent the drive across the trough's north end; .05 keeps it clear  # and arrive square to the entry
     approach = [tuple((1 - s_) ** 3 * P3 + 3 * (1 - s_) ** 2 * s_ * c2 + 3 * (1 - s_) * s_ ** 2 * c1 + s_ ** 3 * P0) for s_ in np.linspace(0, 1, 14)[:-1]]
     rd['pts'] = [[*b2grid(x, y), zc_] for x, y in approach] + keep
     # the road keeps a smooth even grade past the trough (3 Oct, Will: no glitch): along the new curve, take the pre-trough
@@ -299,6 +299,7 @@ for fn in FILES:
                 off2 = off + rnd2.uniform(4.5, 8.0); shrubs.append((px + nx * off2 * side, py + ny * off2 * side, rnd2.uniform(1.5, 3.2), side))
             t += (R_ * 2 + rnd2.uniform(1.5, 3.5)) / 50.0
     m = Mesh(); n = 8
+    shrubs = [q for q in shrubs if not (TXW - 6 < q[0] < TXW + 6 and -26 < q[1] < 26)]   # 4 Oct: never on or against the long trough
     for x, y, R_, _side in shrubs:
         zg = ground(z, *b2grid(x, y)); h = R_ * .9 * FT
         ring = lambda rr, zz: [(x + rr * math.cos(2 * math.pi * q / n + .3), y + rr * math.sin(2 * math.pi * q / n + .3), zz) for q in range(n)]
