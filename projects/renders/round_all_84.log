@@ -1,0 +1,206 @@
+--- fan.py el-west-horse --light --tags golden,dawn,storm,blue --engines google
+el-west-horse-fan-golden ok
+el-west-horse-fan-dawn ok
+el-west-horse-fan-storm ok
+el-west-horse-fan-blue ok
+el-west-horse-fan-golden google (elevation): ok in 25s
+el-west-horse-fan-dawn google (elevation): ok in 23s
+el-west-horse-fan-storm google (elevation): ok in 24s
+el-west-horse-fan-blue google (elevation): ok in 23s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py el-west-horse --light --tags golden --engines openai
+el-west-horse-fan-golden ok
+el-west-horse-fan-golden openai (elevation): ok in 85s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py el-north --light --tags golden,dawn,storm,blue --engines google
+el-north-fan-golden ok
+el-north-fan-dawn ok
+el-north-fan-storm ok
+el-north-fan-blue ok
+el-north-fan-golden google (elevation): ok in 21s
+el-north-fan-dawn google (elevation): ok in 22s
+el-north-fan-storm google (elevation): ok in 21s
+el-north-fan-blue google (elevation): ok in 22s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py el-north --light --tags golden --engines openai
+el-north-fan-golden ok
+el-north-fan-golden openai (elevation): ok in 80s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py el-south --light --tags golden,dawn,storm,blue --engines google
+el-south-fan-golden ok
+el-south-fan-dawn ok
+el-south-fan-storm ok
+el-south-fan-blue ok
+el-south-fan-golden google (elevation): ok in 22s
+el-south-fan-dawn google (elevation): ok in 22s
+el-south-fan-storm google (elevation): ok in 22s
+el-south-fan-blue google (elevation): ok in 24s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py el-south --light --tags golden --engines openai
+el-south-fan-golden ok
+el-south-fan-golden openai (elevation): ok in 74s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py el-east --light --tags golden,dawn,storm,blue --engines google
+el-east-fan-golden ok
+el-east-fan-dawn ok
+el-east-fan-storm ok
+el-east-fan-blue ok
+el-east-fan-golden google (elevation): ok in 21s
+el-east-fan-dawn google (elevation): ok in 21s
+el-east-fan-storm google (elevation): ok in 23s
+el-east-fan-blue google (elevation): ok in 22s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py el-east --light --tags golden --engines openai
+el-east-fan-golden ok
+el-east-fan-golden openai (elevation): ok in 85s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 1-hero-sw --light --tags golden,dawn,storm,blue --engines google
+1-hero-sw-fan-golden ok
+1-hero-sw-fan-dawn ok
+1-hero-sw-fan-storm ok
+1-hero-sw-fan-blue ok
+1-hero-sw-fan-golden google: ok in 23s
+1-hero-sw-fan-dawn google: ok in 23s
+1-hero-sw-fan-storm google: ok in 24s
+1-hero-sw-fan-blue google: ok in 24s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 1-hero-sw --light --tags golden --engines openai
+1-hero-sw-fan-golden ok
+1-hero-sw-fan-golden openai: ok in 82s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 5-corridor-out --light --tags golden,dawn,storm,blue --engines google
+5-corridor-out-fan-golden ok
+5-corridor-out-fan-dawn ok
+5-corridor-out-fan-storm ok
+5-corridor-out-fan-blue ok
+5-corridor-out-fan-golden google: ok in 24s
+5-corridor-out-fan-dawn google: ok in 23s
+5-corridor-out-fan-storm google: ok in 22s
+5-corridor-out-fan-blue google: ok in 22s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 5-corridor-out --light --tags golden --engines openai
+5-corridor-out-fan-golden ok
+5-corridor-out-fan-golden openai: ok in 75s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 2-corridor --light --tags golden,dawn,storm,blue --engines google
+2-corridor-fan-golden ok
+2-corridor-fan-dawn ok
+2-corridor-fan-storm ok
+2-corridor-fan-blue ok
+2-corridor-fan-golden google: ok in 24s
+2-corridor-fan-dawn google: ok in 25s
+2-corridor-fan-storm google: ok in 23s
+2-corridor-fan-blue google: ok in 24s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 2-corridor --light --tags golden --engines openai
+2-corridor-fan-golden ok
+2-corridor-fan-golden openai: ok in 87s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 8-stable --light --tags golden,dawn,storm,blue --engines google
+8-stable-fan-golden ok
+8-stable-fan-dawn ok
+8-stable-fan-storm ok
+8-stable-fan-blue ok
+8-stable-fan-golden google: ok in 24s
+8-stable-fan-dawn google: ok in 24s
+8-stable-fan-storm google: ok in 23s
+8-stable-fan-blue google: ok in 23s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 8-stable --light --tags golden --engines openai
+8-stable-fan-golden ok
+8-stable-fan-golden openai: ok in 84s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 10-stable-aisle --light --tags golden,dawn,storm,blue --engines google
+10-stable-aisle-fan-golden ok
+10-stable-aisle-fan-dawn ok
+10-stable-aisle-fan-storm ok
+10-stable-aisle-fan-blue ok
+10-stable-aisle-fan-golden google: ok in 25s
+10-stable-aisle-fan-dawn google: ok in 22s
+10-stable-aisle-fan-storm google: ok in 23s
+10-stable-aisle-fan-blue google: ok in 23s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 10-stable-aisle --light --tags golden --engines openai
+10-stable-aisle-fan-golden ok
+10-stable-aisle-fan-golden openai: ok in 75s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 14-bleachers-high --light --tags golden,dawn,storm,blue --engines google
+14-bleachers-high-fan-golden ok
+14-bleachers-high-fan-dawn ok
+14-bleachers-high-fan-storm ok
+14-bleachers-high-fan-blue ok
+14-bleachers-high-fan-golden google: ok in 23s
+14-bleachers-high-fan-dawn google: ok in 24s
+14-bleachers-high-fan-storm google: ok in 23s
+14-bleachers-high-fan-blue google: ok in 24s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 14-bleachers-high --light --tags golden --engines openai
+14-bleachers-high-fan-golden openai: ok in 84s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 23-picnic-side --light --tags golden,dawn,storm,blue --engines google
+23-picnic-side-fan-golden ok
+23-picnic-side-fan-dawn ok
+23-picnic-side-fan-storm ok
+23-picnic-side-fan-blue ok
+23-picnic-side-fan-golden google: ok in 23s
+23-picnic-side-fan-dawn google: ok in 24s
+23-picnic-side-fan-storm google: ok in 23s
+23-picnic-side-fan-blue google: ok in 25s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 23-picnic-side --light --tags golden --engines openai
+23-picnic-side-fan-golden ok
+23-picnic-side-fan-golden openai: ok in 84s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py p4-site-ne --light --tags golden,dawn,storm,blue --engines google
+p4-site-ne-fan-golden ok
+p4-site-ne-fan-dawn ok
+p4-site-ne-fan-storm ok
+p4-site-ne-fan-blue ok
+p4-site-ne-fan-golden google: ok in 25s
+p4-site-ne-fan-dawn google: ok in 22s
+p4-site-ne-fan-storm google: ok in 24s
+p4-site-ne-fan-blue google: ok in 24s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py p4-site-ne --light --tags golden --engines openai
+p4-site-ne-fan-golden ok
+p4-site-ne-fan-golden openai: ok in 83s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 4-hill-s --light --tags golden,dawn,storm,blue --engines google
+4-hill-s-fan-golden ok
+4-hill-s-fan-dawn ok
+4-hill-s-fan-storm ok
+4-hill-s-fan-blue ok
+4-hill-s-fan-golden google: ok in 25s
+4-hill-s-fan-dawn google: ok in 24s
+4-hill-s-fan-storm google: ok in 23s
+4-hill-s-fan-blue google: ok in 24s
+published 8 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py 4-hill-s --light --tags golden --engines openai
+4-hill-s-fan-golden ok
+4-hill-s-fan-golden openai: ok in 85s
+published 2 images; gallery section "Abanico de cámaras" lists 14 fan(s)
+--- fan.py b3-sw --tags left,right,high,closer,wider --engines google
+b3-sw-fan-left ok
+b3-sw-fan-right ok
+b3-sw-fan-high ok
+b3-sw-fan-closer ok
+b3-sw-fan-wider ok
+b3-sw-fan-left google: ok in 22s
+b3-sw-fan-right google: ok in 21s
+b3-sw-fan-high google: ok in 21s
+b3-sw-fan-closer google: ok in 22s
+b3-sw-fan-wider google: ok in 21s
+published 10 images; gallery section "Abanico de cámaras" lists 15 fan(s)
+--- fan.py b4-nw --tags left,right,high,closer,wider --engines google
+b4-nw-fan-left ok
+b4-nw-fan-right ok
+b4-nw-fan-high ok
+b4-nw-fan-closer ok
+b4-nw-fan-wider ok
+b4-nw-fan-left google: ok in 21s
+b4-nw-fan-right google: ok in 21s
+b4-nw-fan-high google: ok in 20s
+b4-nw-fan-closer google: ok in 21s
+b4-nw-fan-wider google: ok in 21s
+published 10 images; gallery section "Abanico de cámaras" lists 16 fan(s)
+ROUND DONE

@@ -1,0 +1,666 @@
+{
+ "1-0": {
+  "rect": [
+   1261,
+   0,
+   2550,
+   1650
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/cover-horses-portrait.jpg",
+  "crop": [
+   -0.002464507184534358,
+   0.00031319078401725246,
+   1.0003392262771895,
+   0.9998520518634659
+  ],
+  "inliers": 1274,
+  "note": "Walker original via Adobe share, 3 Oct"
+ },
+ "2-0": {
+  "rect": [
+   271,
+   231,
+   1251,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/1003pm/el-west-horse-openai.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "finalist placed 4 Oct (gallery picks)"
+ },
+ "2-1": {
+  "rect": [
+   1298,
+   231,
+   2280,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-north-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "finalist placed 4 Oct (gallery picks)"
+ },
+ "2-2": {
+  "rect": [
+   270,
+   915,
+   1251,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-south-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "finalist placed 4 Oct (gallery picks)"
+ },
+ "2-3": {
+  "rect": [
+   1298,
+   914,
+   2280,
+   1447
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-east-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "finalist placed 4 Oct (gallery picks)"
+ },
+ "3-0": {
+  "rect": [
+   271,
+   231,
+   1251,
+   764
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/1-hero-sw-openai.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "4 Oct (Will starred 1-hero-sw-oct4o): corridor open at the end, replaces the 27 Sep painting with the invented stone wall"
+ },
+ "3-1": {
+  "rect": [
+   1298,
+   231,
+   2280,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/5-corridor-out-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
+ },
+ "3-2": {
+  "rect": [
+   271,
+   915,
+   1251,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/2-corridor-1.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
+ },
+ "3-3": {
+  "rect": [
+   1298,
+   914,
+   2280,
+   1447
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/4-hill-s-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "4 Oct (Will): repainted from the current model (round stone trough, alfalfa bays, pergola)"
+ },
+ "4-0": {
+  "rect": [
+   80,
+   231,
+   1456,
+   1434
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/p4-site-ne-green-1.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "4 Oct (Walker): greener, oaks in the track loop, vernal pools; Gemini edit of p4-site-ne-hi-1"
+ },
+ "4-1": {
+  "rect": [
+   1505,
+   230,
+   2470,
+   775
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/b3-sw-openai.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "finalist placed 4 Oct (gallery picks)",
+  "paper": true
+ },
+ "4-2": {
+  "rect": [
+   1506,
+   890,
+   2469,
+   1435
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/b4-nw-google.png",
+  "crop": [
+   0.0251,
+   0.127,
+   0.9251,
+   1.0
+  ],
+  "note": "4 Oct (Walker): replaces b7-plan-openai, which repeated the plan view page · 4 Oct (Will): cropped so the block matches slot 2 in size",
+  "paper": true
+ },
+ "6-0": {
+  "rect": [
+   80,
+   668,
+   648,
+   984
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/47E1503E-EBAF-4725-A2C5-7D187780ABA6.JPG",
+  "crop": [
+   -0.001261019165776048,
+   0.18561958801009246,
+   0.9849920289869474,
+   0.8035588936347626
+  ],
+  "inliers": 361
+ },
+ "6-1": {
+  "rect": [
+   688,
+   669,
+   1256,
+   984
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/2F5955AB-675C-4DE6-9749-EA7239800A65.JPG",
+  "crop": [
+   -0.002198469130373588,
+   0.33088597278910253,
+   1.003203374500997,
+   0.7257658091754389
+  ],
+  "inliers": 269
+ },
+ "6-2": {
+  "rect": [
+   1294,
+   668,
+   1863,
+   984
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/6DF71C9B-0B8B-4F41-9137-7ADCEEE5F613.JPG",
+  "crop": [
+   0.0032125112803024726,
+   0.5322820509623364,
+   0.9496494676225069,
+   0.6931217683115625
+  ],
+  "inliers": 112
+ },
+ "6-3": {
+  "rect": [
+   1901,
+   668,
+   2470,
+   985
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/8A5F86F4-53BB-44DF-8483-E19DC676C7AD.JPG",
+  "crop": [
+   -0.00326317327120796,
+   0.26363986774067644,
+   1.0044943481537332,
+   0.7345498745947268
+  ],
+  "inliers": 206
+ },
+ "6-4": {
+  "rect": [
+   80,
+   1129,
+   648,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/EA0ACC5C-7E0F-4594-ACDE-45F54280FC5F.JPG",
+  "crop": [
+   -0.004526973816237679,
+   0.2886010936243061,
+   1.0011151582551112,
+   0.7120631687438692
+  ],
+  "inliers": 183
+ },
+ "6-5": {
+  "rect": [
+   688,
+   1130,
+   1256,
+   1447
+  ],
+  "src": "walker_v14_crops/v14-6-5.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "4 Oct: 128E5435 original was never on Drive; cut from Walker v14 page 6 (150 dpi)"
+ },
+ "6-6": {
+  "rect": [
+   1294,
+   1129,
+   1864,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/FDF3243C-F0A1-4B58-9DBC-DDCAE97CEBAD.JPG",
+  "crop": [
+   -0.0032588642596663546,
+   0.28864705450549155,
+   1.005303334658344,
+   0.7124529711399706
+  ],
+  "inliers": 240
+ },
+ "6-7": {
+  "rect": [
+   1901,
+   1129,
+   2471,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/72AD092E-E646-458E-877D-399A7BEAE50B.JPG",
+  "crop": [
+   -0.0031593289099830263,
+   0.2885464488206751,
+   1.0060473338197689,
+   0.7124206313007025
+  ],
+  "inliers": 178
+ },
+ "7-0": {
+  "rect": [
+   80,
+   287,
+   649,
+   795
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/A9E16894-0AF7-4FA3-9824-B84DED500296.JPG",
+  "crop": [
+   0.07618138484675936,
+   -0.0018859872685148841,
+   0.9226858790123923,
+   1.0058655923911062
+  ],
+  "inliers": 502
+ },
+ "7-1": {
+  "rect": [
+   688,
+   287,
+   1256,
+   794
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/A39FD7FF-D32A-4D27-B4CE-858BDD950E3F.JPG",
+  "crop": [
+   0.07800145977488793,
+   -0.001909103475967364,
+   0.9230061026206735,
+   1.004051176952882
+  ],
+  "inliers": 402
+ },
+ "7-2": {
+  "rect": [
+   1294,
+   287,
+   1864,
+   794
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/stone-cobble-paving.jpg",
+  "crop": [
+   0.0031864836175106003,
+   -0.0018633912037847797,
+   0.9982587868268001,
+   1.0045204000769474
+  ],
+  "inliers": 1292,
+  "note": "Walker original via Adobe share, 3 Oct"
+ },
+ "7-3": {
+  "rect": [
+   1900,
+   287,
+   2470,
+   794
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/97C73138-3D20-401F-8477-5381FA3AA71D.JPG",
+  "crop": [
+   0.060794206573733134,
+   -0.0021372766725658915,
+   0.9382656557437672,
+   1.0046256652623078
+  ],
+  "inliers": 502
+ },
+ "7-4": {
+  "rect": [
+   80,
+   937,
+   649,
+   1447
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/wood-log-pile.jpg",
+  "crop": [
+   -0.004850022082061212,
+   0.16034983533298733,
+   1.0032499611787302,
+   0.836863846301018
+  ],
+  "inliers": 747,
+  "note": "Walker original via Adobe share, 3 Oct"
+ },
+ "7-5": {
+  "rect": [
+   688,
+   937,
+   1256,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/wood-fallen-oak.jpg",
+  "crop": [
+   -0.002649544069082933,
+   0.19365140044223353,
+   1.0038073599745065,
+   0.8719038988094141
+  ],
+  "inliers": 581,
+  "note": "Walker original via Adobe share, 3 Oct"
+ },
+ "7-6": {
+  "rect": [
+   1294,
+   938,
+   1864,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/steel-roof-skylight.jpg",
+  "crop": [
+   0.07690100553612324,
+   -0.0048791891041352845,
+   0.9248137105576625,
+   1.0069646345668914
+  ],
+  "inliers": 435,
+  "note": "Walker original via Adobe share, 3 Oct"
+ },
+ "7-7": {
+  "rect": [
+   1901,
+   938,
+   2470,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/fence-black-posts-wire.jpg",
+  "crop": [
+   0.15913382316217042,
+   -0.005196390919228771,
+   0.8408643069698897,
+   1.0068170604912834
+  ],
+  "inliers": 629,
+  "note": "Walker original via Adobe share, 3 Oct"
+ },
+ "8-0": {
+  "rect": [
+   80,
+   289,
+   653,
+   784
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DF6ECC64-DBC1-4E02-AC67-81714C435793.JPG",
+  "crop": [
+   0.11532026884500443,
+   -0.0042412946988602635,
+   0.8835706713779355,
+   1.0040075481431057
+  ],
+  "note": "Will/Walker photo 4 Oct"
+ },
+ "8-1": {
+  "rect": [
+   686,
+   289,
+   1257,
+   784
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DA2B0734-8C87-42DF-A3D6-0734C4EE1D6B.JPG",
+  "crop": [
+   0.04665122330559056,
+   0.00155355209953802,
+   0.951203911592369,
+   0.9837849877696689
+  ],
+  "note": "Will/Walker photo 4 Oct"
+ },
+ "8-2": {
+  "rect": [
+   1292,
+   288,
+   1864,
+   784
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/F861117E-1180-4342-B1F9-E107BAAA4698.JPG",
+  "crop": [
+   0.19320362027875482,
+   0.11565792472726572,
+   0.8061670115991848,
+   0.9106833551965834
+  ],
+  "note": "Will/Walker photo 4 Oct"
+ },
+ "8-3": {
+  "rect": [
+   1898,
+   288,
+   2471,
+   784
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/D837C822-2D3D-4B19-95C6-A976B6D301DC.JPG",
+  "crop": [
+   -0.0026362523672088423,
+   0.09207284289458095,
+   1.006172838007686,
+   0.7770329998610406
+  ],
+  "note": "Will/Walker photo 4 Oct"
+ },
+ "8-4": {
+  "rect": [
+   80,
+   945,
+   532,
+   1440
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/stick and frames.JPG",
+  "crop": [
+   0.0,
+   0.0,
+   0.52,
+   0.66
+  ],
+  "note": "Will/Walker photo 4 Oct: horizontal sticks in steel frames"
+ },
+ "8-5": {
+  "rect": [
+   564,
+   945,
+   1016,
+   1440
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/A74A746E-F896-4C51-A871-1CE1A51F2A1B.JPG",
+  "crop": [
+   0.16935739436544578,
+   -0.004483869123651166,
+   0.8283075484225271,
+   1.002636856558594
+  ],
+  "inliers": 340
+ },
+ "8-6": {
+  "rect": [
+   1049,
+   944,
+   1501,
+   1440
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/40F87D20-E2DB-4C6F-93DA-AC7F0C2EA4A6.JPG",
+  "crop": [
+   0.011858774638850876,
+   0.060405938904478824,
+   0.9796447460748777,
+   0.9386923908273949
+  ],
+  "inliers": 326
+ },
+ "8-7": {
+  "rect": [
+   1534,
+   945,
+   1984,
+   1440
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/DE25BABB-C2AD-424F-9DC0-66AA7BA5F183.JPG",
+  "crop": [
+   0.11831475692657901,
+   0.035160416943425574,
+   0.8785331115147207,
+   0.963373849254845
+  ],
+  "inliers": 457
+ },
+ "8-8": {
+  "rect": [
+   2018,
+   944,
+   2470,
+   1440
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/3D72CA01-024F-4217-9DEF-887D0530B23E.JPG",
+  "crop": [
+   0.023292090956116954,
+   0.06749416068593542,
+   0.6869098841272278,
+   0.9975166441620277
+  ],
+  "inliers": 268
+ },
+ "3b-0": {
+  "rect": [
+   271,
+   231,
+   1251,
+   764
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
+ },
+ "3b-1": {
+  "rect": [
+   1298,
+   231,
+   2280,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
+ },
+ "3b-2": {
+  "rect": [
+   271,
+   915,
+   1251,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/14-bleachers-high-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "placed 4 Oct"
+ },
+ "3b-3": {
+  "rect": [
+   1298,
+   914,
+   2280,
+   1447
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/23-picnic-side-openai.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "4 Oct (Will starred 23-picnic-side-oct4o): trailer as a small cafe, raked arena"
+ }
+}

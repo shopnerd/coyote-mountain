@@ -1,19 +1,19 @@
 p01   204 dpi    1754x2245  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/Walker originals (Adobe share 3 Oct)/cover-horses-portrait.jpg
-p02   197 dpi     1536x698  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/1003pm/el-west-horse-openai.png
-p02   352 dpi    2752x1250  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-north-google.png
-p02   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-south-google.png
-p02   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-east-google.png
-p05   197 dpi     1536x698  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/1-hero-sw-openai.png
-p05   352 dpi    2752x1250  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/5-corridor-out-google.png
-p05   197 dpi     1536x698  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/2-corridor-1.png
-p05   400 dpi    3125x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/4-hill-s-google.png
-p07   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png
-p07   352 dpi    2752x1250  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/10-stable-aisle-google.png
-p07   400 dpi    3125x1422  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/14-bleachers-high-google.png
-p07   197 dpi     1536x698  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery5/23-picnic-side-openai.png
-p08   400 dpi    3669x3208  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/finished/p4-site-ne-green-1.jpg
-p08   238 dpi     1530x864  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery4/b3-sw-openai.png
-p08   369 dpi    2369x1341  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/b4-nw-google.png
+p02   197 dpi     1536x698  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-west-horse-fan-golden-openai.png
+p02   352 dpi    2752x1250  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-north-fan-golden-google.png
+p02   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-south-fan-golden-google.png
+p02   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-east-fan-golden-google.png
+p05   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/1-hero-sw-fan-golden-google.png
+p05   352 dpi    2752x1250  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/5-corridor-out-fan-golden-google.png
+p05   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/2-corridor-fan-golden-google.png
+p05   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-golden-google.png
+p07   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/8-stable-fan-golden-google.png
+p07   197 dpi     1536x698  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/10-stable-aisle-fan-golden-openai.png
+p07   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/14-bleachers-high-fan-golden-google.png
+p07   352 dpi    2752x1252  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/23-picnic-side-fan-golden-google.png
+p08   191 dpi    1756x1536  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/p4-site-ne-fan-golden-google.png
+p08   238 dpi     1530x864  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery6/b3-sw-openai.png
+p08   238 dpi     1526x864  C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery6/b4-nw-openai.png
 p10   177 dpi      670x373  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/47E1503E-EBAF-4725-A2C5-7D187780ABA6.JPG
 p10   106 dpi      402x223  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/2F5955AB-675C-4DE6-9749-EA7239800A65.JPG
 p10   139 dpi      526x291  G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-09-28 finalists/6DF71C9B-0B8B-4F41-9137-7ADCEEE5F613.JPG

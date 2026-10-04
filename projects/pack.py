@@ -57,7 +57,8 @@ def cover(win):
 # ---- 2 plan view (illustrative)
 def planview(n):
     fig=newpage(); heading(fig,'Vista en planta','Plan view')
-    ax=fig.add_axes([0.02,0.075,0.70,0.81]); ax.imshow((img(n)*(np.array(matplotlib.colors.to_rgb(PAPER)))).astype(np.uint8)); ax.axis('off')   # white studio background takes the paper colour
+    fig._norm_skip=True   # 4 Oct: laid out by hand
+    ax=fig.add_axes([0.031,0.075,0.64,0.81]); ax.set_anchor('W'); ax.imshow((img(n)*(np.array(matplotlib.colors.to_rgb(PAPER)))).astype(np.uint8)); ax.axis('off')   # white studio background takes the paper colour
     items=[('Establo principal','Main stable','84 × 42 ft en retícula de 12 ft · cerchas de acero, piedra a 5 ft con tubo arriba, paneles de varas horizontales, claraboya abierta · 10 caballerizas con corral de 12 × 40 ft, 6 al norte y 4 al sur · cocina, baño, cuarto eléctrico, lavado y monturas en el extremo oeste','84 × 42 ft on a 12 ft grid · steel trusses, rock to 5 ft with a pipe rail, horizontal stick panels, open clerestory · 10 stalls with 12 × 40 ft runs, 6 north and 4 south · kitchen, bathroom, electrical room, wash and tack at the west end'),
            ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
@@ -67,8 +68,8 @@ def planview(n):
            ('Estacionamiento','Parking','franja angosta al extremo este, 13 cajones a 60°','narrow strip at the far east corner, 13 stalls at 60°')]
     y=0.86
     for es,en,tes,ten in items:
-        fig.text(0.74,y,f'{es} · {en}',fontsize=11,weight='bold',color=INK); y-=.021
-        y=para(fig,0.74,y,tes,ten,w=60,fs=9.0)
+        fig.text(0.70,y,f'{es} · {en}',fontsize=10.5,weight='bold',color=INK); y-=.02
+        y=para(fig,0.70,y,tes,ten,w=72,fs=8.6)
     tblock(fig,nxt(),'Vista en planta','Plan view'); PAGES.append(fig)
 X,Y=np.meshgrid(np.arange(W),np.arange(H))
 LOOP=[s for s in S if s.get('shape') and not s.get('name') and len(s['pts'])==10 and abs(s['pts'][0][0]-26.6)<.3][0]
@@ -315,7 +316,7 @@ stalls_page(); ZOOMPG.add(len(PAGES) - 1)
 w_renders('3b',[(9,'El lado norte y sus corrales','The north side and its runs'),(10,'Dentro del establo','Inside the stable'),
              (11,'Las gradas y el día de campo','The bleachers and a picnic'),(12,'Los escalones, de lado','The steps from the side')])
 w_site()
-planview(FIN+'00-plan.png'); ZOOMPG.add(len(PAGES) - 1)
+planview(os.path.join(os.path.dirname(os.path.abspath('pack.py')),'renders','gallery6','b7-plan-openai.png'))   # 4 Oct: the 84 ft stable; ZOOMPG.add(len(PAGES) - 1)
 w_text_refs()
 w_site_materials()
 w_inspirations()
