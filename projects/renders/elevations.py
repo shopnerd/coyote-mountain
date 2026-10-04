@@ -8,6 +8,7 @@ from paint import openai, google, key
 from gallery2 import gemini_key
 paint.QUAL = 'high'
 SIDE = {
+ 'el-south-sun': None, 'el-west-horse': None,
  'el-north': 'the long NORTH side of the stable: six stalls, each opening through a 6 x 9 ft open doorway to its own 12 x 40 ft run fenced in black steel pipe, the runs in front of the camera',
  'el-south': 'the long SOUTH side of the stable: at the left end the two plastered rooms (wash room with a wooden sliding door beside its opening, onto a concrete pad), then four stalls opening to their runs that climb the slope toward the camera, fenced in black steel pipe; the long low tan fieldstone water trough at far left',
  'el-west': 'the WEST end of the stable, its main entry: the open gable entry with its stick-clad sliding doors slid aside, the dirt road sweeping in from the left into the aisle, the plastered rooms at the right end, and in the foreground the long low tan fieldstone water trough running across the whole view, acting as a low retaining wall',
@@ -26,6 +27,8 @@ BRIEF = ('Turn the FIRST image, an exact 3D model render, into an architectural 
  'Two or three horses in the runs or being led, one person, maybe a ranch dog, all at true scale. Photoreal, high-end architectural photography.')
 REFS = [os.path.join(HERE, 'site-ref-0576.jpg'), os.path.join(HERE, 'site-ref-0577.jpg')]
 EXTRA = {   # per-view fixes from the gallery notes
+ 'el-south-sun': ' LIGHT, overriding anything above: this one is shot in BRIGHT late-morning sun, high clear light, well exposed and airy, a pale blue sky with a few small white clouds; nothing dark, no dusk, no long golden shadows (Will, 3 Oct: "sunnier, it always looks dark").',
+ 'el-west-horse': ' The rounded mounds either side of the drive are SHRUBS: soft grey-green sage and buckwheat foliage, leafy, not rocks, not boulders, no stone anywhere on the ground except the trough wall. Add ONE horse standing just behind the long stone trough at the LOWER RIGHT of the frame, head down drinking from it, true to scale; the trough and everything else stay exactly as rendered (Will, 3 Oct).',
  'el-west': ' Two low beds of grey-green native shrubs (sage, buckwheat, brittlebush, knee-high rounded mounds) flank the dirt drive-in on both sides between the long stone trough in the foreground and the gable, exactly where the render shows the mounds: nothing taller than 3 ft, no lawn, no flowers; the rest stays dry grass and dirt (Will, 3 Oct, red markup).',
  'el-south-wash': ' The wash room’s 6 x 9 ft opening has a WOODEN PLANK SLIDING DOOR on a steel track above it, slid open to the right (east) of the opening over the plastered wall, exactly where the render shows it; a horse drinks from the low fieldstone trough along the west edge of the concrete pad (Will, 3 Oct).',
  'el-south': ' The wash room at the left end has a WOODEN PLANK SLIDING DOOR on a steel track above its opening, slid open to the right of the opening, exactly where the render shows it; the low fieldstone trough runs along the west edge of the concrete pad, out from the building corner (Will, 3 Oct).',
@@ -38,6 +41,6 @@ if __name__ == '__main__':
     for v in views:
         t = time.time()
         try:
-            im = (openai if eng == 'openai' else google)(os.path.join(HERE, 'model', f'model-{v}.png'), BRIEF.format(side=SIDE[v]) + EXTRA.get(v, ''), REFS, k)
+            im = (openai if eng == 'openai' else google)(os.path.join(HERE, 'model', f'model-{v}.png'), BRIEF.format(side=SIDE[v] or SIDE[v.rsplit('-', 1)[0]]) + EXTRA.get(v, ''), REFS, k)
             im.save(os.path.join(EL_OUT, f'{v}-{eng}.png')); print(v, eng, 'ok', round(time.time() - t))
         except Exception as e: print(v, eng, 'FAILED', str(e)[:200])
