@@ -29,6 +29,7 @@ github shopnerd/coyote-mountain, will-os = shopnerd/will-os); both repos were at
   SOLAR sentence in every brief; model shots now show the phase-1 panels unless `solar: false`. `4-hill-s-fan-dusk` (Gemini) is in
   E-1 slot E1-1. **Every older painting now shows the 72 ft stable** (and the thin posts): a re-render round is due; Will picks which.
 - Pack page: hover cue is a small corner magnifier (no brown box); enlarge opens/closes instantly (no grow/fade); mouse click closes at once.
+- **Even margins (Will):** every page uses Walker's frame (80 px of 2550 each side, her footer via tblock -> wfoot, titles at PAGE_M). `layout_ov.normalize_page` runs on every non-Walker page before the editor's moves: content grouped into columns, outer columns on the margins, even gutters (max .03, drawings grow into extra room), scaled down if too wide. Multi-row sheets set `fig._norm_single = True` (E-1). The 2 x 2 render grids span 80..2470 px (crops are wider, ~2.2:1).
 - Trap: on Windows, stopping a background `python -m http.server` job leaves python running. Three stale servers on 8792 served old
   data.json and made check shots lie. Check `netstat -ano | grep :8792` and kill strays before model shots.
 
