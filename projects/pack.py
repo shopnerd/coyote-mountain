@@ -303,10 +303,11 @@ w_renders(2,[(1,'Alzado oeste: la entrada, el bebedero y las plantas','West elev
 barn_plan(); ZOOMPG = {len(PAGES) - 1}   # 4 Oct: drawing pages whose drawings enlarge on the web page
 import qrcode                                             # Walker added a QR to the 3D model; point it at the public copy
 _qr=qrcode.QRCode(border=0,box_size=10); _qr.add_data('https://will.100xbtr.com/equino/model/'); _qr.make(fit=True)
-_fig=PAGES[-1]; _ax=_fig.add_axes([0.03,0.115,0.05,0.077]); _ax.imshow(np.asarray(_qr.make_image(fill_color='black',back_color='white').convert('L')),cmap='gray',interpolation='nearest'); _ax.axis('off')
-_fig.text(0.085,0.168,'Modelo 3D del establo · 3D model of the stable',fontsize=10,weight='bold',color=INK)
-_fig.text(0.085,0.150,'Gírelo y explórelo en línea · Turn it and explore it online',fontsize=8.5,color=MUTED)
-_fig.text(0.085,0.133,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
+_fig=PAGES[-1]; _ax=_fig.add_axes([0.031,0.435,0.05,0.077]);   # 4 Oct (Will): between the two elevations
+_ax.set_gid('qr'); _ax.imshow(np.asarray(_qr.make_image(fill_color='black',back_color='white').convert('L')),cmap='gray',interpolation='nearest'); _ax.axis('off')
+_fig.text(0.087,0.488,'Modelo 3D del establo · 3D model of the stable',fontsize=10,weight='bold',color=INK)
+_fig.text(0.087,0.470,'Gírelo y explórelo en línea · Turn it and explore it online',fontsize=8.5,color=MUTED)
+_fig.text(0.087,0.453,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
 truss_page(); ZOOMPG.add(len(PAGES) - 1)
 w_renders(3,[(5,'Sobre las caballerizas techadas','Over the covered stalls'),(6,'Bajo el techo mariposa','Under the butterfly roof'),
              (7,'El bebedero redondo y el techo mariposa, desde el oeste','The round trough and the butterfly roof, from the west'),(8,'Desde el cerro: las caballerizas y el establo','From the hill: the covered stalls and the stable')])

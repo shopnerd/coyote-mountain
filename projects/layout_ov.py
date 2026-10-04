@@ -19,6 +19,7 @@ def normalize_page(fig, k, M=80 / 2550, GMAX=.03, GMIN=.018):
     horizontal overlap. The columns are laid out so the outer ones sit exactly on the margins with equal gutters; a page that
     is too wide is scaled down a little (fonts too); where the gutters would get wider than GMAX, drawing-only columns grow
     (if the page has the height) and the rest is shared out as gutter."""
+    if getattr(fig, '_norm_skip', False): return                                       # pages laid out by hand (p3)
     from matplotlib.lines import Line2D
     from matplotlib.patches import Rectangle
     fig.canvas.draw(); r = fig.canvas.get_renderer(); inv = fig.transFigure.inverted()

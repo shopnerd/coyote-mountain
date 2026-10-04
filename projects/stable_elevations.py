@@ -20,7 +20,7 @@ def stable_elevations(fig):
         ax.add_patch(matplotlib.patches.Rectangle((x0, z0), x1 - x0, z1 - z0, fc=BG, ec=LW_INK, lw=lw, zorder=3))
 
     # ---------------- east elevation (looking west; north is to the right) ----------------
-    ax = fig.add_axes([0.012, 0.585, 0.272, 0.235]); ax.set_aspect('equal'); ax.axis('off'); ax.set_gid('elev-east')
+    ax = fig.add_axes([0.031, 0.62, 0.245, 0.22]); ax.set_aspect('equal'); ax.axis('off'); ax.set_gid('elev-east')
     ax.set_xlim(-28.5, 60.5); ax.set_ylim(-4, 22)
     lw_ground(ax, -28.5, 60.5)
     W = HD + RT
@@ -54,7 +54,7 @@ def stable_elevations(fig):
     ax.text(-28.5, 28.4, 'alero 12 ft · cumbrera 17 ft · claraboya a 20.7 ft · eave 12 ft, ridge 17 ft, clerestory top 20.7 ft', fontsize=7, color=MUTED, clip_on=False)
 
     # ---------------- south elevation (looking north; west is to the left) ----------------
-    ax = fig.add_axes([0.012, 0.29, 0.272, 0.235]); ax.set_aspect('equal'); ax.axis('off'); ax.set_gid('elev-south')
+    ax = fig.add_axes([0.031, 0.115, 0.245, 0.22]); ax.set_aspect('equal'); ax.axis('off'); ax.set_gid('elev-south')   # 4 Oct (Will): moved down; the 3D-model link sits between the two
     XW = -48.0                                                                      # 4 Oct: the new west wall
     ax.set_xlim(-52.5, 39.5); ax.set_ylim(-5, 22)
     lw_ground(ax, -52.5, 39.5)
