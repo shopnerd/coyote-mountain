@@ -66,6 +66,25 @@ def road_y(x):
     R_ = sorted(ROAD); xs = [p[0] for p in R_]; ys = [p[1] for p in R_]
     return float(np.interp(x, xs, ys))
 
+
+def spill_basin(m, x0, x1, y_end, sgn, floor_z, rim_z):
+    """4 Oct (Will, photo of two stepped stone basins): the trough spills over a stone spout at its end into a small, lower stone
+    basin butted right against it; a small pump in that basin sends the water back. x0..x1 = trough width (ft), y_end = its end
+    face (ft), sgn = +1/-1 outward along y, floor_z / rim_z = the trough's floor and rim (m)."""
+    BW, BL, WT_ = (x1 - x0) * .95, 3.2, .55
+    xc = (x0 + x1) / 2; a0, a1 = xc - BW / 2, xc + BW / 2
+    y0, y1 = sorted((y_end, y_end + sgn * BL))
+    brim = rim_z - .9 * FT; bfl = floor_z - .25 * FT
+    m.box(a0, a1, y0, y1, bfl - .3, bfl, 'rock')                                                   # base
+    m.box(a0, a0 + WT_, y0, y1, bfl, brim, 'rock'); m.box(a1 - WT_, a1, y0, y1, bfl, brim, 'rock')   # side walls
+    ye = y1 if sgn > 0 else y0; m.box(a0, a1, min(ye, ye - sgn * WT_), max(ye, ye - sgn * WT_), bfl, brim, 'rock')   # far wall (the near side is the trough)
+    bwl = brim - .3 * FT
+    m.face([(a0 + WT_, y0 + (WT_ if sgn < 0 else 0), bwl), (a1 - WT_, y0 + (WT_ if sgn < 0 else 0), bwl), (a1 - WT_, y1 - (WT_ if sgn > 0 else 0), bwl), (a0 + WT_, y1 - (WT_ if sgn > 0 else 0), bwl)], 'water')
+    sy0, sy1 = sorted((y_end - sgn * .45, y_end + sgn * .75))                                     # the spout: a stone lip notched in the end wall
+    m.box(xc - .35, xc + .35, sy0, sy1, rim_z - .2 * FT, rim_z - .05 * FT, 'rock')
+    ly = y_end + sgn * .75; zt = rim_z - .12 * FT                                                  # the falling sheet of water
+    m.face([(xc - .22, ly, zt), (xc + .22, ly, zt), (xc + .22, ly + sgn * .35, bwl), (xc - .22, ly + sgn * .35, bwl)], 'water')
+
 for fn in FILES:
     p = os.path.join(HERE, fn); d = json.load(open(p, encoding='utf-8')); z = np.array(d['z'], float).reshape(H, W)
     d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'east trough', 'pine forest', 'forest trail', 'stable roof water to the long trough (buried pipe)', 'wash pad trough', 'native planting')]
@@ -103,6 +122,7 @@ for fn in FILES:
         obox(a, a + u * WT, -TW / 2 + WT, TW / 2 - WT, zc + .5 * FT, zc + RIM, 'rock'); obox(b - u * WT, b, -TW / 2 + WT, TW / 2 - WT, zc + .5 * FT, zc + RIM, 'rock')
         wl = zc + RIM - .35 * FT; c = [a + u * WT + nv * (-TW / 2 + WT), b - u * WT + nv * (-TW / 2 + WT), b - u * WT + nv * (TW / 2 - WT), a + u * WT + nv * (TW / 2 - WT)]
         m.face([(*p_, wl) for p_ in c], 'water')
+    spill_basin(m, TXW - TW / 2, TXW + TW / 2, secs[-1][1][1], 1, secs[-1][2] + .5 * FT, secs[-1][2] + RIM)   # 4 Oct: spill basin at the north end
     d['strokes'].append(stroke(m, 'stone trough (long)', 'stone-trough-long.obj', z,
         'long stone water trough as a retaining wall between the stable and the main road, 44 ft, one level, rim 2 ft, uphill side backfilled to the rim (Will + Walker, 3 Oct)'))
     # roof water from the stable (Will: capture it into the trough): a gutter downpipe at the stable's south-west corner, buried pipe to the trough's north end
@@ -178,6 +198,7 @@ for fn in FILES:
     m.box(x0, x0 + WT2, y0, y1, lip, top, 'rock'); m.box(x1 - WT2, x1, y0, y1, lip, top, 'rock')   # long walls
     m.box(x0, x1, y0, y0 + WT2, lip, top, 'rock'); m.box(x0, x1, y1 - WT2, y1, lip, top, 'rock')   # end walls
     wl = fz + 1.65 * FT; m.face([(x0 + WT2, y0 + WT2, wl), (x1 - WT2, y0 + WT2, wl), (x1 - WT2, y1 - WT2, wl), (x0 + WT2, y1 - WT2, wl)], 'water')
+    spill_basin(m, x0, x1, y0, -1, lip, top)                                     # 4 Oct: spill basin at the south end, away from the wall
     d['strokes'].append(stroke(m, 'wash pad trough', 'wash-pad-trough.obj', z, 'fieldstone trough 14 x 3 ft along the west edge of the wash pad, out from the SW corner, rim 2 ft (Will, 3 Oct)'))
     # ---- 4 Oct (Will, revised that night: red lines on the plan shot): a third stone trough ALONG THE EAST RUN FENCE, just outside
     # the north-east run's east fence (x = 36), 32 x 3.5 ft, from 4 ft past the wall line out along the run; the horse in that run
@@ -197,6 +218,7 @@ for fn in FILES:
     m.box(ex0, ex0 + WT2, ey0, ey1, lip, top, 'rock'); m.box(ex1 - WT2, ex1, ey0, ey1, lip, top, 'rock')
     m.box(ex0, ex1, ey0, ey0 + WT2, lip, top, 'rock'); m.box(ex0, ex1, ey1 - WT2, ey1, lip, top, 'rock')
     wl = efz + 1.65 * FT; m.face([(ex0 + WT2, ey0 + WT2, wl), (ex1 - WT2, ey0 + WT2, wl), (ex1 - WT2, ey1 - WT2, wl), (ex0 + WT2, ey1 - WT2, wl)], 'water')
+    spill_basin(m, ex0, ex1, ey1, 1, lip, top)                                   # 4 Oct: spill basin at the far (north) end
     d['strokes'].append(stroke(m, 'east trough', 'east-trough.obj', z, 'fieldstone trough 32 x 3.5 ft along the outside of the north-east run fence, 4 ft off the wall line, rim 2 ft, fed by the north gutter (Will, 4 Oct night)'))
     # ---- the covered stalls' pad (3 Oct: the building grew 8 ft for the through-hallway alfalfa bay): level the ground under its
     # footprint (+3 ft) to its floor, easing back to natural over 8 ft ----

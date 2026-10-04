@@ -325,7 +325,7 @@ sheet('irrigation.py','Plan de riego y agua','Irrigation and water plan')
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={0:[('Caballerizas del establo: 12 × 14 ft con corrales de 12 × 40 ft (acordado 4 oct). Alfalfa: dos bodegas de 24 × 12 ft; se descarga desde el camino por las rejas de los extremos, el camión no entra al pasillo.','Stable stalls: 12 × 14 ft with 12 × 40 ft runs (agreed 4 Oct). Alfalfa: two 24 × 12 ft bays; unloads from the main road through the end gates, the truck stays out of the aisle.')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v34.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v36.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:
@@ -347,11 +347,11 @@ for _old in os.listdir(_web):
 _zd = os.path.join(_web, 'zoom'); os.makedirs(_zd, exist_ok=True)
 for _old in os.listdir(_zd): os.remove(os.path.join(_zd, _old))
 _hot = {}
-def _crop(_k, fx, fy, fw, fh):
+def _crop(_k, fx, fy, fw, fh, extra=None):
     _pg = _doc[_k]; W_, H_ = _pg.rect.width, _pg.rect.height; clip = _pm.Rect(fx * W_, fy * H_, (fx + fw) * W_, (fy + fh) * H_)
     z = min(2600 / clip.width, 2600 / clip.height, 4.5); _pix = _pg.get_pixmap(matrix=_pm.Matrix(z, z), clip=clip)
     name = f'p{_k+1:02d}-{len(_hot.get(_k, []))}.jpg'; Image.frombytes('RGB', (_pix.width, _pix.height), _pix.samples).save(os.path.join(_zd, name), quality=85)
-    _hot.setdefault(_k, []).append({'x': round(fx, 4), 'y': round(fy, 4), 'w': round(fw, 4), 'h': round(fh, 4), 'src': 'zoom/' + name})
+    _hot.setdefault(_k, []).append({'x': round(fx, 4), 'y': round(fy, 4), 'w': round(fw, 4), 'h': round(fh, 4), 'src': 'zoom/' + name, **(extra or {})})
 for _pgi, (_x0, _y0, _x1, _y1), _src, _cr, _paper in PHOTOS:
     if _src and ('renders' in _src.replace(chr(92), '/') or 'cover' in os.path.basename(_src).lower()): _crop(_pgi, _x0 / PX[0], _y0 / PX[1], (_x1 - _x0) / PX[0], (_y1 - _y0) / PX[1])
 for _pgi in sorted(ZOOMPG):
@@ -370,14 +370,24 @@ for _pgi, _f in enumerate(PAGES):
         if not _t.get_visible() or not _s.strip() or _t.get_fontsize() > 13 or _t.get_fontsize() < 5: continue
         _b = _t.get_window_extent(_r).transformed(_f.transFigure.inverted())
         if _b.y1 < .065 or _b.y0 > .97: continue                                     # skip the footer and the page title band
-        _ln.append([_b.x0, 1 - _b.y1, _b.x1, 1 - _b.y0])
+        _ln.append([_b.x0, 1 - _b.y1, _b.x1, 1 - _b.y0, _s, _t.get_style() == 'italic', str(_t.get_weight()) in ('bold', '700', '600', 'semibold'), _t.get_fontsize(), matplotlib.colors.to_hex(_t.get_color())])
     _ln.sort(key=lambda q: (round(q[0], 2), q[1])); _blocks = []
     for q in sorted(_ln, key=lambda q: q[1]):
         for g in _blocks:
-            if abs(q[0] - g['x0']) < .02 and q[1] >= g['y0'] - .005 and q[1] - g['y1'] < .03: g['y1'] = max(g['y1'], q[3]); g['x1'] = max(g['x1'], q[2]); g['n'] += 1; break
-        else: _blocks.append({'x0': q[0], 'y0': q[1], 'x1': q[2], 'y1': q[3], 'n': 1})
+            if abs(q[0] - g['x0']) < .02 and q[1] >= g['y0'] - .005 and q[1] - g['y1'] < .03: g['y1'] = max(g['y1'], q[3]); g['x1'] = max(g['x1'], q[2]); g['n'] += 1; g['L'].append(q); break
+        else: _blocks.append({'x0': q[0], 'y0': q[1], 'x1': q[2], 'y1': q[3], 'n': 1, 'L': [q]})
     for g in _blocks:
-        if g['n'] >= 3 and g['y1'] - g['y0'] > .05: _crop(_pgi, g['x0'] - .006, g['y0'] - .006, g['x1'] - g['x0'] + .012, g['y1'] - g['y0'] + .012)
+        if g['n'] >= 3 and g['y1'] - g['y0'] > .05:
+            # 4 Oct (Will, on the phone): the block also as real text, so it reflows and scrolls instead of shrinking. Lines of one
+            # style that follow closely join into a paragraph; bold or larger lines become headings; italic = the English half.
+            paras, prev = [], None
+            for q in sorted(g['L'], key=lambda q: q[1]):
+                x0_, y0_, x1_, y1_, txt, it_, bd_, fs_, col = q; kind = 'h' if (bd_ or fs_ >= 10.6) else ('e' if it_ else 'p')
+                hy = y1_ - y0_
+                if prev and prev['k'] == kind and kind != 'h' and y0_ - prev['y'] < hy * .9 and prev['c'] == col:
+                    prev['t'] = (prev['t'][:-1] if prev['t'].endswith('-') else prev['t'] + ' ') + txt.strip(); prev['y'] = y1_
+                else: prev = {'k': kind, 't': txt.strip(), 'y': y1_, 'c': col}; paras.append(prev)
+            _crop(_pgi, g['x0'] - .006, g['y0'] - .006, g['x1'] - g['x0'] + .012, g['y1'] - g['y0'] + .012, {'text': [{'k': q['k'], 't': q['t'], 'c': q['c']} for q in paras]})
 print('zoom hotspots with text:', {f'p{k+1:02d}': len(v) for k, v in sorted(_hot.items())})
 import json as _json; _json.dump({'pages':_n,'version':os.path.basename(out),'built':__import__('datetime').date.today().isoformat(),'hot':{f'p{k+1:02d}':v for k,v in _hot.items()}},open(os.path.join(_web,'pages.json'),'w'))
 print('zoom hotspots:', {f'p{k+1:02d}': len(v) for k, v in sorted(_hot.items())})

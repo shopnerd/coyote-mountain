@@ -17,7 +17,8 @@ const VIEWS = [   // grid (i, j) and eye height in metres, yaw/pitch as in topo.
   { id: '5-corridor-out', i: 89.6, j: 64.2, h: 1.7, yaw: -1.436, pitch: 1.56 },
   { id: '6-west', i: 64.5, j: 46.5, h: 18, yaw: 0.838, pitch: 1.82 },
   { id: '7-plan', top: { i: 88, j: 56, w: 420 } },
-  { id: 'trough-opts', top: { i: 116, j: 58, w: 150 } },   // 4 Oct: stable + parking, third-trough options
+  { id: 'trough-opts', top: { i: 116, j: 58, w: 150 } },
+  { id: 'wash-farrier', orbit: { ti: 103.5, tj: 61.0, az: 122, el: 9, dist: 8.2, fov: 62 } },   // 4 Oct: the wash pad under the grape trellis, from the south-west   // 4 Oct: stable + parking, third-trough options
   { id: '8-stable', i: 112.5, j: 49, h: 9, yaw: -0.50, pitch: 1.72 },
   { id: '9-arrival', i: 128, j: 64.5, h: 2.2, yaw: -1.83, pitch: 1.6 },
   { id: '10-stable-aisle', i: 104.1, j: 57.56, h: 1.7, yaw: 1.26, pitch: 1.57 },
