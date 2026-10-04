@@ -21,9 +21,9 @@ def stalls_page():
         ax.text(XS+AL/2,sg*(HC+OV/2),'alfalfa\n24 × 12',ha='center',va='center',fontsize=7.5,weight='bold',zorder=6)
         ax.plot([XS,XS+AL],[sg*HC]*2,color='#2c2f33',lw=2.2,zorder=7); ax.plot([XS+AL/2-4,XS+AL/2+4],[sg*HC]*2,color=CLAY,lw=3,zorder=8)   # panel + gate
         ax.plot([HL,HL],[sg*(HC+2),sg*(RE-2)],color=CLAY,lw=3,zorder=8)                                                                   # unloading gate on the road end
-    ax.text(XS+AL/2,RE+1.2,'reja de tubo con puerta al pasillo · pipe panel + gate to the aisle',ha='center',va='bottom',fontsize=6.3,color=CLAY)
-    ax.text(HL+1.5,RE+4.5,'descarga desde el camino · unloading gate from the road',ha='left',va='bottom',fontsize=6.3,color=CLAY)
-    ax.text(HL+1,0,'pasillo abierto\nopen end',ha='left',va='center',fontsize=6.5,color=MUTED)
+    ax.text(XS+AL/2,-RE-1.5,'reja de tubo con puerta al pasillo · pipe panel + gate to the aisle',ha='center',va='top',fontsize=6.3,color=CLAY)
+    ax.text(XS+AL/2,-RE-5,'descarga por puertas en el extremo, desde el camino · unloading through end gates, from the road',ha='center',va='top',fontsize=6.3,color=CLAY)
+    ax.text(HL+1,-HC-1.5,'pasillo abierto · open end',ha='left',va='top',fontsize=6.3,color=MUTED)
     ax.plot([-HL-2,HL+2,HL+2,-HL-2,-HL-2],[-RE,-RE,RE,RE,-RE],color=CLAY,lw=1.1,ls=(0,(5,3)))            # roof edge
     ax.annotate('',xy=(-HL-2,0),xytext=(HL-4,0),arrowprops=dict(arrowstyle='-|>',color='#1f78c8',lw=1.4))
     ax.text(0,1.2,'valle del techo, cae 0.5 % · roof valley, falls 0.5%',fontsize=7.5,color='#1f78c8',ha='center',va='bottom')
@@ -66,12 +66,12 @@ def stalls_page():
     sx.set_xlim(-HD-2,HD+2); sx.set_ylim(-4.5,14)
     y=0.85
     specs=[('8 caballerizas de 16 × 20 ft, 4 por lado, frente a un pasillo de 12 ft; en el extremo del lado del establo, bajo el mismo techo, la alfalfa en dos bodegas de 24 × 12 ft, una a cada lado del pasillo abierto de punta a punta (576 pies², lo mismo que antes); 88 × 52 ft en total.','8 stalls of 16 × 20 ft, 4 a side, facing a 12 ft corridor open end to end; at the stable end, under the same roof, the alfalfa in two bays of 24 × 12 ft, one each side of the corridor (576 sq ft, the same as before); 88 × 52 ft overall.'),
-           ('Techo mariposa de 92 × 36 ft sobre el pasillo, los primeros 12 ft de cada caballeriza y las bodegas; pendiente de 1:12 hacia un valle central; lámina de junta alzada. Sin muro en el extremo, el marco del techo sobre las bodegas lo revisa el ingeniero (DRO).','Butterfly roof 92 × 36 ft over the corridor, the first 12 ft of every stall and the alfalfa bays; 1:12 down to a centre valley; standing-seam metal. With no end wall, the roof frame over the bays is for the engineer (DRO) to check.'),
+           ('Techo mariposa de 92 × 36 ft sobre el pasillo, los frentes y las bodegas; 1:12 hacia un valle central; lámina de junta alzada. Sin muro en el extremo, el marco sobre las bodegas lo revisa el ingeniero (DRO).','Butterfly roof 92 × 36 ft over the corridor, the stall fronts and the alfalfa bays; 1:12 down to a centre valley; standing-seam metal. With no end wall, the frame over the bays is for the engineer (DRO) to check.'),
            ('El valle cae 0.5 % al suroeste y sigue como canalón abierto, en voladizo de 7 ft sin poste, hasta un bebedero redondo de 8 ft a 7 ft del extremo, con paso libre alrededor.','The valley falls 0.5% to the south-west and carries on as an open chute, cantilevered 7 ft with no post, into an 8 ft round trough 7 ft from the building end, with room to walk round it.'),
            ('Agua: el techo capta unos 7,100 L por cada 2.5 cm de lluvia; el bebedero (unos 1,900 L) se llena con unos 7 mm. Las demasías van por tubo enterrado a la zanja.','Water: the roof sheds about 1,900 gal per inch of rain; the trough (about 500 gal) fills with about a quarter inch. Overflow runs in a buried pipe to the ditch.'),
            ('Pasillo a nivel de lado a lado (1,089 ft); frentes techados con franja a nivel de 6 ft y caída de 5 % como máximo; fondos abiertos hasta 8 %, siguiendo el terreno. Las palmas pueden quedar en los fondos. Cada bodega de alfalfa queda cerrada hacia el pasillo con reja de tubo y puerta, para que los caballos no lleguen al heno; se descarga por una puerta en el extremo, desde el camino principal, sin meter el camión al pasillo.','Corridor level side to side (about 1,089 ft); covered fronts with a 6 ft level strip and at most 5%; open backs up to 8%, following the ground. Palms can stay in the open backs. Each alfalfa bay is closed to the aisle by a pipe panel with a gate, so horses cannot reach the hay; it unloads through a gate in the end panel from the main road, without bringing the truck into the aisle.'),
-           ('Holguras: 18 ft al camino principal, 34 ft al camino del corral redondo, 29 ft al camino del cerro.','Clearances: 18 ft to the main road, 34 ft to the round pen road, 29 ft to the scrub-side road.')]
-    for es,en in specs: y=para(fig,0.70,y,es,en,w=60,fs=7.4)
+           ('Holguras: 18 ft al camino principal, 34 ft al del corral redondo, 29 ft al del cerro.','Clearances: 18 ft to the main road, 34 ft to the round-pen road, 29 ft to the scrub-side road.')]
+    for es,en in specs: y=para(fig,0.70,y,es,en,w=68,fs=6.9)
     fig.text(0.70,0.1,'Esquema preliminar; la estructura del techo requiere cálculo de un ingeniero (DRO).',fontsize=8,color=MUTED)
     fig.text(0.70,0.085,'Preliminary diagram; the roof structure needs an engineer’s calculation (DRO).',fontsize=8,color=MUTED,style='italic')
     tblock(fig,nxt(),'Caballerizas techadas','Covered stalls'); PAGES.append(fig)
