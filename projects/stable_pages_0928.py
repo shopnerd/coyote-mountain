@@ -31,6 +31,9 @@ def barn_plan():
     ax.add_patch(Rect((-HL + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(-HL + 1, -HD - 3, 'puerta corrediza 7×9 · sliding door', ha='left', va='top', fontsize=5.5, color=CLAY); ax.add_patch(Rect((-HL + 9.3, -HD - 1.4), 7, .5, fc='#8a6a42', ec='none'))   # 3 Oct: wooden sliding door, parked east of the opening
     ax.add_patch(Rect((-HL - 3, -HD - 0.75 - 13.5), 3, 13.5, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((-HL - 2.4, -HD - 0.75 - 12.9), 1.8, 12.3, fc='#8fb3c7', ec='none'))   # 3 Oct: 14 x 3 ft stone trough on the pad's west edge
     ax.text(-HL - 4.5, -HD - 0.75 - 6.75, 'bebedero · trough 14×3', ha='center', va='center', fontsize=5.5, color=CLAY, rotation=90)
+    ax.add_patch(Rect((HL + 30 - 1.75, -25), 3.5, 20, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((HL + 30 - 1.15, -24.4), 2.3, 18.8, fc='#8fb3c7', ec='none'))   # 4 Oct (Will, option B): east trough 20 x 3.5 at the gable where the path arrives
+    ax.text(HL + 33.5, -15, 'bebedero este · east trough 20×3.5', ha='center', va='center', fontsize=5.5, color=CLAY, rotation=90)
+    ax.text(HL + 30, -3.2, 'sendero del estacionamiento → · path from the parking', ha='center', va='bottom', fontsize=5.2, color=MUTED) if 'MUTED' in globals() else None
     ax.text(0, 0, 'pasillo · aisle 14 ft  (piso de tierra · dirt floor)', ha='center', va='center', fontsize=8.5, color=MUTED)
     for sx in (-1, 1):
         xg = sx * HL; ax.add_patch(Rect((xg - 1, -AI / 2), 2, AI, fc='white', ec='none'))
@@ -44,7 +47,7 @@ def barn_plan():
     ax.annotate('', xy=(HL + 8, HD), xytext=(HL + 8, HD + RUN), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(HL + 10, HD + RUN / 2, '40 ft\ncorrales\nruns', va='center', fontsize=8)
     ax.text(12, -HD - RUN - 3, 'muro bajo de piedra · low rock wall', ha='center', va='top', fontsize=7, color=MUTED)
     ax.text(-HL - 13, 0, 'camino\nroad →', ha='center', va='center', fontsize=7.5, color=MUTED); ax.text(-HL, HD + RUN + 11, 'N ↑   oeste (camino) ← · → este (estacionamiento)', fontsize=8.5, weight='bold')
-    ax.set_xlim(-57, 60); ax.set_ylim(-HD - RUN - 8, HD + RUN + 13)
+    ax.set_xlim(-57, 72); ax.set_ylim(-HD - RUN - 8, HD + RUN + 13)   # 4 Oct: room for the east trough
     y = 0.85
     specs = [('Planta 72 × 42 ft sobre una retícula de 12 ft: 6 crujías, cerchas de acero cada 12 ft. Pasillo central de 14 ft abierto de punta a punta con una puerta corrediza grande en cada extremo; el camino llega directo a la puerta oeste.',
               '72 × 42 ft on a 12 ft grid: 6 bays, steel trusses every 12 ft. A 14 ft centre aisle open end to end with a big sliding door at each end; the road comes straight into the west door.'),

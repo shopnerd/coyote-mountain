@@ -1,0 +1,127 @@
+exec(open('drain.py',encoding='utf-8').read())
+# Sheet D-3 · Plan de riego y agua · Irrigation and water plan (4 Oct 2026, Will): vineyard supply, two underground cisterns
+# under the roofs' downspouts, recirculating troughs, drip zones for native planting and the old nursery's trees.
+import matplotlib.patches as mpatches
+from matplotlib.patches import Polygon as MPoly, Circle as MCircle, Rectangle as MRect
+PIPE='#b5602e'; TANK='#0b4f8a'; ZONE=dict(trees='#4f7a3a', natives='#8a9a3a', lawn='#c9b830')
+def foot_of(name):
+    o=byname(name)
+    return np.array(foot(o[0])) if o else None
+def pts_of(name): return np.array([q[:2] for q in byname(name)[0]['pts']])
+# ---- water numbers (ft², gal) ----
+RAIN_IN=11.0                                           # Valle de Guadalupe, lower canyon: ~280 mm/yr, Dec–Mar
+stable_ft2=76*46; stalls_ft2=92*36                     # roofs with their 2 ft overhangs (stable), butterfly roof (stalls)
+gpi=lambda a: a*0.623                                  # gal per inch of rain on a ft² (0.623 gal/ft²/in)
+stable_gpi, stalls_gpi = gpi(stable_ft2), gpi(stalls_ft2)
+C1_M3, C2_M3 = 40, 30                                  # underground concrete cisterns (m³)
+m3gal=264.2
+horses=22; drink=10                                    # gal/horse/day, hot weather
+trough_gal={'long':44*3.5*1.5*7.48, 'east':20*3.5*1.5*7.48, 'pad':14*3*1.5*7.48, 'round':math.pi*16*1.5*7.48}
+# ---- figure ----
+fig=plt.figure(figsize=(17,11),dpi=170); fig.patch.set_facecolor(globals().get('PAPER','white'))
+ax=base_axes(fig,[0.015,0.27,0.665,0.67],alpha=.42)
+contours(ax,z); features(ax)
+# objects
+for n,col in (('walker barn 72x40','white'),('covered stalls','white'),('stone trough (long)',WATER),('wash pad trough',WATER),('east trough',WATER),('bleachers','#e8e2d6')):
+    F=foot_of(n)
+    if F is not None: P=np.vstack([F,F[:1]]); ax.fill(P[:,0],P[:,1],color=col,alpha=.9,zorder=5); ax.plot(P[:,0],P[:,1],color=INK,lw=.8,zorder=6)
+# ---- zones ----
+def zone(poly,kind,lab,xy=None,hatch='//'):
+    P=np.array(poly); ax.add_patch(MPoly(P,closed=True,facecolor=ZONE[kind],edgecolor=ZONE[kind],alpha=.22,lw=1.2,hatch=hatch,zorder=4))
+    ax.add_patch(MPoly(P,closed=True,fill=False,edgecolor=ZONE[kind],lw=1.4,zorder=4))
+    if xy=='': return
+    if xy is None: xy=P.mean(axis=0)
+    ax.text(xy[0],xy[1],lab,fontsize=7.2,weight='bold',color=INK,ha='center',va='center',zorder=12,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='none',alpha=.85))
+tr=pts_of('track'); cx,cy=tr[:,0].mean(),tr[:,1].mean()
+infield=[(cx+(x-cx)*.72, cy+(y-cy)*.72) for x,y in tr[::2]]                           # inside the track: the old nursery's trees
+zone(infield,'trees','Z3 · árboles del antiguo vivero (existentes)\nold nursery trees, existing','',hatch='..')
+ax.text(cx,cy-3,'Z3 · árboles del antiguo vivero\nold nursery trees (existing)',fontsize=7.2,weight='bold',color=INK,ha='center',va='center',zorder=12,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='none',alpha=.85))
+pf=foot_of('pine forest')
+if pf is not None: zone(pf,'trees','Z2 · pinar · pine grove',xy=(pf[:,0].mean(),pf[:,1].min()-1.6),hatch='..')
+np_=foot_of('native planting')
+if np_ is not None: zone(np_,'natives','Z1 · nativas · natives',xy=(np_[:,0].mean()-2.5,np_[:,1].max()+2.4))
+cs_=foot_of('covered stalls')
+if cs_ is not None:
+    c0=cs_.mean(axis=0); zone([(c0[0]+(x-c0[0])*1.35, c0[1]+(y-c0[1])*1.35) for x,y in cs_],'trees','Z4 · palmas y sombra de las caballerizas\nstall palms and shade','',hatch='..')
+    ax.text(c0[0]+2,c0[1]+7.2,'Z4 · palmas · stall palms',fontsize=7.2,weight='bold',color=INK,ha='center',zorder=12,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='none',alpha=.85))
+bl=byname('bleachers')[0]['c']; zone([(bl[0]-5,bl[1]-4),(bl[0]+5,bl[1]-4),(bl[0]+5,bl[1]+4),(bl[0]-5,bl[1]+4)],'trees','Z5 · sombra · picnic shade',xy=(bl[0],bl[1]-5.6))
+# parking + main road: new shade trees as a dotted line
+pk=np.array([q[:2] for s_ in S if s_.get('name')=='parking stall' for q in s_['pts']])
+ax.plot([pk[:,0].min()-1,pk[:,0].max()+1],[pk[:,1].max()+1.6]*2,color=ZONE['trees'],lw=2.2,dashes=(1,2.2),zorder=6)
+ax.text(pk[:,0].mean(),pk[:,1].max()+3.6,'Z6 · sombra del estacionamiento (nueva)\nparking shade trees (new)',fontsize=6.6,color=INK,ha='center',zorder=12,bbox=dict(boxstyle='round,pad=.2',fc='white',ec='none',alpha=.8))
+# ---- supply: vineyard main at the NE gate, along the main road, branches ----
+mr=pts_of('main road, north-east gate to south gate'); br=pts_of('barn to cross-fence road')
+stb=byname('walker barn 72x40')[0]['c']
+ax.plot(mr[:,0],mr[:,1],color=PIPE,lw=2.2,zorder=9,solid_capstyle='round')                            # 2 in main along the main road
+ax.plot(br[:,0],br[:,1],color=PIPE,lw=1.6,zorder=9,dashes=(6,2))                                       # 1.5 in branch along the barn road to the stalls + round pen
+g=pts_of('gate · north-east, main road').mean(axis=0)
+ax.add_patch(MCircle(g,1.6,facecolor='white',edgecolor=PIPE,lw=2,zorder=13)); ax.text(g[0]-2.4,g[1]+1.2,'toma del viñedo · vineyard tap\n(por confirmar · to confirm)',fontsize=6.6,color=PIPE,zorder=13,ha='right',va='top')
+# branch to the infield trees and the arena/round-pen shade
+ax.plot([br[-1][0],cx+6],[br[-1][1],cy],color=PIPE,lw=1.3,zorder=9,dashes=(3,2))
+# ---- cisterns ----
+lt=byname('stone trough (long)')[0]['c']; C1=(lt[0]-3.2,lt[1]-3.4)
+if cs_ is not None:
+    sw=cs_[np.argmax(cs_[:,1]-cs_[:,0]*.3)]; C2=(sw[0]-2.6,sw[1]+2.2)
+else: C2=(80,70)
+for (x,y),lab,m3 in ((C1,'C1',C1_M3),(C2,'C2',C2_M3)):
+    s_=math.sqrt(m3/2.5)/cs/2                                                                           # 2.5 m deep → side in cells
+    ax.add_patch(MRect((x-s_,y-s_),2*s_,2*s_,facecolor=TANK,edgecolor=TANK,alpha=.35,lw=1.4,ls='--',zorder=10))
+    ax.text(x,y,f'{lab}',fontsize=7.5,weight='bold',color='white',ha='center',va='center',zorder=12)
+# downspout pipes roof → cistern → trough (dashed water)
+ax.plot([stb[0]-3.2,C1[0]],[stb[1]-1.2,C1[1]],color=WATER,lw=1.6,dashes=(2,1.5),zorder=9)
+ax.plot([C1[0],lt[0]],[C1[1],lt[1]],color=WATER,lw=1.6,dashes=(2,1.5),zorder=9)
+et=byname('east trough');
+if et: e=et[0]['c']; ax.plot([stb[0]+3.6,e[0]],[stb[1]+1.6,e[1]],color=WATER,lw=1.6,dashes=(2,1.5),zorder=9)
+works(ax)
+# recirculation symbol on each trough
+for n in ('stone trough (long)','east trough','wash pad trough'):
+    o=byname(n)
+    if o: c_=o[0]['c']; ax.annotate('',xy=(c_[0]+1.6,c_[1]-1.8),xytext=(c_[0]-1.6,c_[1]-1.8),arrowprops=dict(arrowstyle='<->',color=WATER,lw=1.1,connectionstyle='arc3,rad=.6'),zorder=13)
+north(ax,140,8); scalebar(ax,6,96)
+# callouts
+CALLI=[((g[0]+2.8,g[1]+2.2),1),((C1[0]-4.2,C1[1]-3.6),2),((C2[0]-3.4,C2[1]+2.4),3),((lt[0]-2.2,lt[1]+5.4),4),((cx,cy+9),5),((pf.mean(axis=0)[0]+3,pf.mean(axis=0)[1]-9) if pf is not None else (118,48),6),((np_.mean(axis=0)[0]+1.5,np_.mean(axis=0)[1]-6.2) if np_ is not None else (100,52),7),((pk[:,0].min()-4,pk[:,1].mean()),8)]
+for xy,n in CALLI: callout(ax,xy,n)
+# ---- detail: recirculating trough section (inset) ----
+dx=fig.add_axes([0.02,0.13,0.31,0.125]); dx.set_xlim(0,100); dx.set_ylim(-4,31); dx.axis('off')
+dx.add_patch(MRect((8,4),60,10,facecolor='#d9d4cb',edgecolor=INK,lw=1)); dx.add_patch(MRect((10,6),56,6.5,facecolor=WATER,alpha=.6,edgecolor='none'))
+dx.plot([68,74],[12.5,7],color=WATER,lw=2); dx.add_patch(MRect((72,0),10,7,facecolor='white',edgecolor=INK,lw=1,hatch='|||'))
+dx.plot([82,90,90,12,12],[3,3,16,16,13.5],color=WATER,lw=1.4,dashes=(3,2)); dx.add_patch(MCircle((90,10),2.2,facecolor='white',edgecolor=INK,lw=1)); dx.text(90,10,'B',fontsize=6,ha='center',va='center')
+dx.plot([74,74],[2,-2],color=INK,lw=1); dx.text(2,29,'Bebedero recirculante: vertedero en un extremo → rejilla y pozo → bomba pequeña (B) → regresa al otro extremo;',fontsize=6.0,color=INK)
+dx.text(2,25.5,'flotador de reposición desde la cisterna; rebose a la zanja.',fontsize=6.0,color=INK); dx.text(2,22,'Recirculating trough: weir at one end → grate and sump → small pump (B) → back to the far end;',fontsize=6.0,color='#6a655a',style='italic'); dx.text(2,18.5,'float make-up from the cistern; overflow to the ditch.',fontsize=6.0,color='#6a655a',style='italic')
+dx.text(38,8.5,'agua · water',fontsize=6,ha='center',color='white'); dx.text(77,-2.6,'rejilla · grate',fontsize=5.8,ha='center',color=INK)
+# ---- side panel ----
+px=0.70
+fig.text(px,0.955,'PLAN DE RIEGO Y AGUA',fontsize=20,weight='bold',color=INK)
+fig.text(px,0.93,'Irrigation and water plan · Centro Equino, Chichihuas',fontsize=12.5,color='#555')
+NOTES_I=[
+ ('Vineyard supply','Toma del viñedo',f'A 2 in HDPE main from the vineyard line, assumed at the north-east gate (point and pressure to confirm with the ranch), buried along the main road to the stable (about 530 ft); a 1.5 in branch along the barn road to the covered stalls and the round pen, and a drip branch into the track infield.',f'Línea principal de HDPE de 2 in desde la red del viñedo, supuesta en la puerta noreste (punto y presión por confirmar con el rancho), enterrada por el camino principal hasta el establo (unos 160 m); ramal de 1.5 in por el camino del establo a las caballerizas y al corral redondo, y ramal de goteo al interior de la pista.'),
+ ('Cistern C1, stable','Cisterna C1, establo',f'Underground concrete cistern of {C1_M3} m³ ({C1_M3*m3gal:,.0f} gal) beside the long trough, dug with the ranch’s machinery. Both stable gutters feed it: the roof ({stable_ft2:,} ft² with its overhangs) gives about {stable_gpi:,.0f} gal per inch of rain, about {stable_gpi*RAIN_IN:,.0f} gal in a normal year. Overflow to the barn-road ditch; submersible pump; first-flush diverter and leaf screen.',f'Cisterna de concreto enterrada de {C1_M3} m³ junto al bebedero largo, excavada con la maquinaria del rancho. La alimentan las dos canales del establo: el techo ({stable_ft2*0.0929:,.0f} m² con aleros) da unos {stable_gpi*3.785/2.54:,.0f} L por cm de lluvia, unos {stable_gpi*RAIN_IN*3.785/1000:,.0f} m³ en un año normal. Rebose a la zanja del camino del establo; bomba sumergible; desviador de primeras lluvias y rejilla de hojas.'),
+ ('Cistern C2, covered stalls','Cisterna C2, caballerizas',f'Underground cistern of {C2_M3} m³ ({C2_M3*m3gal:,.0f} gal) at the south-west end, next to the round trough, fed by the butterfly roof’s valley gutter ({stalls_gpi:,.0f} gal per inch, about {stalls_gpi*RAIN_IN:,.0f} gal a year). The chute still pours into the round trough for show; the cistern takes the rest. Overflow to the stalls’ ditch.',f'Cisterna enterrada de {C2_M3} m³ en el extremo suroeste, junto al bebedero redondo, alimentada por el canalón del valle del techo mariposa ({stalls_gpi*3.785/2.54:,.0f} L por cm, unos {stalls_gpi*RAIN_IN*3.785/1000:,.0f} m³ al año). El canalón sigue vertiendo al bebedero redondo a la vista; la cisterna recibe el resto. Rebose a la zanja de las caballerizas.'),
+ ('Recirculating troughs','Bebederos recirculantes',f'All four stone troughs recirculate (detail below left): the water spills over a low weir at one end into a grated sump and a small pump returns it to the far end, so it moves, stays clean and makes a sound. A float valve tops up from the cistern; mains as backup. Long trough about {trough_gal["long"]:,.0f} gal, east trough {trough_gal["east"]:,.0f}, pad trough {trough_gal["pad"]:,.0f}, round trough {trough_gal["round"]:,.0f}.',f'Los cuatro bebederos de piedra recirculan (detalle abajo a la izquierda): el agua cae por un vertedero bajo en un extremo a un pozo con rejilla y una bomba pequeña la regresa al otro extremo, así se mueve, se mantiene limpia y suena. Un flotador repone desde la cisterna; la red como respaldo. Bebedero largo unos {trough_gal["long"]*3.785/1000:,.1f} m³, este {trough_gal["east"]*3.785/1000:,.1f}, de la losa {trough_gal["pad"]*3.785/1000:,.1f}, redondo {trough_gal["round"]*3.785/1000:,.1f}.'),
+ ('Z3 · the old nursery’s trees','Z3 · los árboles del antiguo vivero','For years this ground was a rented plant nursery; the trees inside the track and under the covered stalls are what it left. They are kept, and a drip ring (two 2 gal/h emitters per tree, deep and slow) carries them through the first dry summers of the new use, then is weaned off. A good story for the place, and the start of a vivero again.','Durante años este terreno fue un vivero rentado; los árboles dentro de la pista y bajo las caballerizas son lo que dejó. Se conservan, y un anillo de goteo (dos goteros de 8 L/h por árbol, hondo y lento) los acompaña en los primeros veranos secos del nuevo uso, luego se retira. Una buena historia para el lugar, y el inicio de un vivero otra vez.'),
+ ('Z2 · pine grove and Z4 · stall palms','Z2 · pinar y Z4 · palmas','Existing trees between the parking and the stable, and the palms at the stall backs: drip rings for establishment years only. New shade trees (Z5 picnic, Z6 parking) are natives that live on winter rain once rooted: encino (coast live oak), pirul (California pepper), palo verde, mesquite, aliso (sycamore) in the draw.','Árboles existentes entre el estacionamiento y el establo, y las palmas al fondo de las caballerizas: anillos de goteo solo los años de establecimiento. Los árboles de sombra nuevos (Z5 día de campo, Z6 estacionamiento) son nativos que viven de la lluvia de invierno una vez arraigados: encino, pirul, palo verde, mezquite, aliso en la cañada.'),
+ ('Z1 · native planting','Z1 · plantas nativas','The beds along the entry drive and around the troughs: the palette used before on the ranch’s landscapes (white and Cleveland sage, buckwheat, brittlebush, deer grass, agave). Drip at 1 gal per plant a week in summer for two years, then rain only. No lawn anywhere; mulch from the ranch’s own prunings.','Los macizos de la entrada y alrededor de los bebederos: la paleta usada antes en los paisajes del rancho (salvia blanca y de Cleveland, trigo sarraceno silvestre, incienso, muhly, agave). Goteo de 4 L por planta a la semana en verano por dos años, luego solo lluvia. Sin pasto en ningún lado; acolchado de las podas del rancho.'),
+ ('Water budget','Presupuesto de agua',f'Horses are the real use: {horses} horses × {drink} gal a day ≈ {horses*drink*7:,.0f} gal a week, from the cisterns first, mains second. Summer irrigation at full establishment ≈ 2,000 gal a week; a season of recirculating troughs loses only evaporation. The two cisterns ({(C1_M3+C2_M3)*m3gal:,.0f} gal) hold about {(C1_M3+C2_M3)*m3gal/(horses*drink*7+2000):.0f} weeks of everything with no rain; one inch of rain refills {stable_gpi+stalls_gpi:,.0f} gal.',f'Los caballos son el uso real: {horses} caballos × {drink*3.785:.0f} L al día ≈ {horses*drink*7*3.785/1000:,.1f} m³ a la semana, primero de las cisternas, luego de la red. El riego de verano en pleno establecimiento ≈ {2000*3.785/1000:,.1f} m³ por semana; una temporada de bebederos recirculantes solo pierde evaporación. Las dos cisternas ({(C1_M3+C2_M3)} m³) guardan unas {(C1_M3+C2_M3)*m3gal/(horses*drink*7+2000):.0f} semanas de todo sin lluvia; 2.5 cm de lluvia reponen {(stable_gpi+stalls_gpi)*3.785/1000:,.1f} m³.'),
+]
+y=0.895
+import textwrap
+for k,(en,es,ten,tes) in enumerate(NOTES_I):
+    fig.text(px,y,f'{k+1}',fontsize=10,weight='bold',color='#b5602e')
+    fig.text(px+.018,y,f'{es} · {en}',fontsize=8.6,weight='bold',color=INK)
+    ly=y-.0145
+    for line in textwrap.wrap(tes,92): fig.text(px+.018,ly,line,fontsize=6.3,color=INK); ly-=.0101
+    for line in textwrap.wrap(ten,92): fig.text(px+.018,ly,line,fontsize=6.3,color='#6a655a',style='italic'); ly-=.0101
+    y=ly-.006
+# vision box
+fig.text(0.355,0.245,'Visión · Vision',fontsize=8.5,color=INK,weight='bold')
+for k,line in enumerate(textwrap.wrap('Agua primero, luego árboles, luego edificios: el centro ecuestre como vivero otra vez, con café, cata de vino, juegos para niños y animales que se dejan tocar, todo regado por la lluvia que cae en los techos.',112)): fig.text(0.355,0.230-k*.0105,line,fontsize=6.6,color=INK)
+for k,line in enumerate(textwrap.wrap('Water first, then trees, then buildings: the horse centre as a nursery again, with a café, wine tasting, children’s play and animals you can touch, all watered by the rain that falls on the roofs.',112)): fig.text(0.355,0.206-k*.0105,line,fontsize=6.6,color='#6a655a',style='italic')
+fig.text(0.355,0.176,f'Lluvia ≈ {RAIN_IN*25.4:.0f} mm/año (dic–mar) · techos ≈ {(stable_gpi+stalls_gpi)*3.785/2.54:,.0f} L por cm · cisternas {C1_M3+C2_M3} m³',fontsize=7.2,color=INK); fig.text(0.355,0.163,f'Rain ≈ {RAIN_IN:.0f} in/yr · roofs ≈ {stable_gpi+stalls_gpi:,.0f} gal/in · cisterns {(C1_M3+C2_M3)*m3gal:,.0f} gal',fontsize=7.2,color='#6a655a',style='italic')
+# legend
+items=[(PIPE,'-',2.2,'Línea principal 2 in · 2 in main'),(PIPE,'--',1.6,'Ramal 1.5 in / goteo · 1.5 in branch / drip'),(WATER,':',1.6,'Bajada y alimentación · Downspout and feed'),(TANK,'--',1.4,'Cisterna enterrada · Underground cistern'),(ZONE['trees'],'-',6,'Zona de árboles · Tree zone'),(ZONE['natives'],'-',6,'Zona de nativas · Native zone')]
+for k,(c,st,lw,tx) in enumerate(items):
+    lx=0.355+(k%2)*0.165; ly=0.145-(k//2)*0.02
+    fig.add_artist(matplotlib.lines.Line2D([lx,lx+.03],[ly,ly],color=c,lw=lw,ls=st,alpha=.6 if lw==6 else 1))
+    fig.text(lx+.038,ly-.005,tx,fontsize=7.4,color=INK)
+fig.text(0.02,0.03,'31.9999 N, 116.7641 W · Hoja / Sheet D-3 · 4 oct 2026 · Diseño preliminar, no para construcción · Preliminary design, not for construction',fontsize=8,color='#6a655a')
+if not globals().get('PACK'): fig.savefig('D3-irrigation.png',dpi=170); print('ok')

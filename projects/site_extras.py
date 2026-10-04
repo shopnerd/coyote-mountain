@@ -68,7 +68,7 @@ def road_y(x):
 
 for fn in FILES:
     p = os.path.join(HERE, fn); d = json.load(open(p, encoding='utf-8')); z = np.array(d['z'], float).reshape(H, W)
-    d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'pine forest', 'forest trail', 'stable roof water to the long trough (buried pipe)', 'wash pad trough', 'native planting')]
+    d['strokes'] = [s for s in d['strokes'] if (s.get('name') or '') not in ('stone trough 12x4', 'stone trough', 'trough water', 'stone trough (long)', 'east trough', 'pine forest', 'forest trail', 'stable roof water to the long trough (buried pipe)', 'wash pad trough', 'native planting')]
     # ---- long stone trough (Will's markup, 28 Sep; 40 ft after 'a lot of water'): along the inside of the west road, from where the old 12x4 trough stood
     # south toward the scrub-side road, clear of the stable front so you can drive right up. The ground rises ~9 ft going south,
     # so it is three level stone sections stepping up the slope, each on its own levelled strip.
@@ -158,6 +158,22 @@ for fn in FILES:
     m.box(x0, x1, y0, y0 + WT2, lip, top, 'rock'); m.box(x0, x1, y1 - WT2, y1, lip, top, 'rock')   # end walls
     wl = fz + 1.65 * FT; m.face([(x0 + WT2, y0 + WT2, wl), (x1 - WT2, y0 + WT2, wl), (x1 - WT2, y1 - WT2, wl), (x0 + WT2, y1 - WT2, wl)], 'water')
     d['strokes'].append(stroke(m, 'wash pad trough', 'wash-pad-trough.obj', z, 'fieldstone trough 14 x 3 ft along the west edge of the wash pad, out from the SW corner, rim 2 ft (Will, 3 Oct)'))
+    # ---- 4 Oct (Will, option B): a third stone trough at the EAST gable, where the path from the parking arrives: parallel to the
+    # gable 30 ft out, on the south side of the path (y -5 .. -25), 20 x 3.5 ft, rim 2 ft above a small level apron; fed by the east
+    # downspouts (irrigation sheet D-3). The ground there is ~4 ft above the pad, so it sits on its own level. ----
+    ex0, ex1, ey0, ey1 = 36.0 + 30.0 - 1.75, 36.0 + 30.0 + 1.75, -25.0, -5.0
+    ecx, ecy = (ex0 + ex1) / 2, (ey0 + ey1) / 2; efz = ground(z, *m2grid(*b2m(ecx, ecy)))
+    for j_ in range(H):
+        for i_ in range(W):
+            bx, by = grid2b(i_, j_); o = math.hypot(max(ex0 - 4 - bx, 0, bx - ex1 - 4), max(ey0 - 4 - by, 0, by - ey1 - 4))
+            if o < 8: f = o / 8; z[j_, i_] = efz * (1 - f) + z[j_, i_] * f
+    d['z'] = [round(float(q), 3) for q in z.flatten()]
+    m = Mesh(); top = efz + 2.0 * FT; lip = efz + .4 * FT
+    m.box(ex0, ex1, ey0, ey1, efz - .3, lip, 'rock')
+    m.box(ex0, ex0 + WT2, ey0, ey1, lip, top, 'rock'); m.box(ex1 - WT2, ex1, ey0, ey1, lip, top, 'rock')
+    m.box(ex0, ex1, ey0, ey0 + WT2, lip, top, 'rock'); m.box(ex0, ex1, ey1 - WT2, ey1, lip, top, 'rock')
+    wl = efz + 1.65 * FT; m.face([(ex0 + WT2, ey0 + WT2, wl), (ex1 - WT2, ey0 + WT2, wl), (ex1 - WT2, ey1 - WT2, wl), (ex0 + WT2, ey1 - WT2, wl)], 'water')
+    d['strokes'].append(stroke(m, 'east trough', 'east-trough.obj', z, 'fieldstone trough 20 x 3.5 ft at the east gable, 30 ft out, south of the path from the parking, rim 2 ft (Will, 4 Oct, option B)'))
     # ---- the covered stalls' pad (3 Oct: the building grew 8 ft for the through-hallway alfalfa bay): level the ground under its
     # footprint (+3 ft) to its floor, easing back to natural over 8 ft ----
     cvl = [q for q in d['strokes'] if q.get('name') == 'covered stalls']

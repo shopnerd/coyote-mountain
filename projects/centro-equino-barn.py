@@ -267,6 +267,29 @@ for s in (1, -1):
                 for zz in (.6, 2.4, 4.2, RAIL_Z - PIPE): box(xa, xb, yi - PIPE / 2, yi + PIPE / 2, zz, zz + PIPE)
             gate_x(ga, gb, yi)
 
+# ---- 4 Oct (Will): wooden swing doors on the wash room and the tack room, into the aisle wall's door holes. Plank leaves like the
+# outside sliding door (7 vertical boards, 3 ledges), hung on the jamb nearer the gable, standing open ~50 deg into the room ----
+def swing_door(hx, hy, w, h, ang, into):
+    """leaf hinged at (hx, hy) on the aisle wall line, swung by ang (rad) toward `into` (+1/-1 in y); boards along the leaf"""
+    ux, uy = math.cos(ang), into * math.sin(ang); nx, ny = -uy * .06, ux * .06         # along the leaf, and half its thickness
+    def slab(a, b, z0, z1):
+        p0 = (hx + ux * a, hy + uy * a); p1 = (hx + ux * b, hy + uy * b)
+        c = [(p0[0] - nx, p0[1] - ny), (p1[0] - nx, p1[1] - ny), (p1[0] + nx, p1[1] + ny), (p0[0] + nx, p0[1] + ny)]
+        i = len(V) + 1
+        for zz in (z0, z1):
+            for x, y in c: V.append(world(x, y, zz))
+        for f in ((0, 3, 2, 1), (4, 5, 6, 7), (0, 1, 5, 4), (1, 2, 6, 5), (2, 6, 7, 3), (3, 7, 4, 0)): F.append(tuple(i + k for k in f)); MAT.append(CUR[0])
+    mat('wood'); n = 7
+    for k in range(n): slab(k * w / n + .02, (k + 1) * w / n - .02, .1, h - .1)                 # boards
+    for zz in (.5, h / 2 - .25, h - .75): slab(.05, w - .05, zz, zz + .45)                      # ledges
+    mat('steel')
+    for zz in (1.2, h - 1.2): slab(-.05, .25, zz, zz + .3)                                      # strap hinges at the jamb
+for s_ in (1, -1):
+    for r in [r_ for r_ in rooms if r_['side'] == s_ and r_['kind'] in SOLID]:
+        yi_ = s_ * (HD - ROW_D); hinge_x = r['c'] - TACK_DOOR[0] / 2 if r['c'] < 0 else r['c'] + TACK_DOOR[0] / 2
+        a_ = 0.0 if r['c'] < 0 else math.pi                                                         # shown CLOSED in the wall plane so the plank face reads from the aisle (swings into the room)
+        swing_door(hinge_x, yi_, TACK_DOOR[0], TACK_DOOR[1], a_, s_)
+
 # ---- concrete wash pad (Walker, 28 Sep): 12 x 24 ft running parallel to the barn outside the wash-room door, on the south side ----
 mat('concrete')
 wr = [r for r in rooms if r['kind'] == 'wash'][0]
