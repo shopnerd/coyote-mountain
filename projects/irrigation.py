@@ -116,15 +116,16 @@ NOTES_I=[
  ('Z1 · native planting','Z1 · plantas nativas','The beds along the entry drive and around the troughs: the palette used before on the ranch’s landscapes (white and Cleveland sage, buckwheat, brittlebush, deer grass, agave). Drip at 1 gal per plant a week in summer for two years, then rain only. No lawn anywhere; mulch from the ranch’s own prunings.','Los macizos de la entrada y alrededor de los bebederos: la paleta usada antes en los paisajes del rancho (salvia blanca y de Cleveland, trigo sarraceno silvestre, incienso, muhly, agave). Goteo de 4 L por planta a la semana en verano por dos años, luego solo lluvia. Sin pasto en ningún lado; acolchado de las podas del rancho.'),
  ('Water budget','Presupuesto de agua',f'Horses are the real use: {horses} horses × {drink} gal a day ≈ {horses*drink*7:,.0f} gal a week, from the cisterns first, mains second. Summer irrigation at full establishment ≈ 2,000 gal a week; a season of recirculating troughs loses only evaporation. The two cisterns ({(C1_M3+C2_M3)*m3gal:,.0f} gal) hold about {(C1_M3+C2_M3)*m3gal/(horses*drink*7+2000):.0f} weeks of everything with no rain; one inch of rain puts about {stable_gpi/2+stalls_gpi:,.0f} gal into the cisterns (south half of the stable + the stalls) and {stable_gpi/2:,.0f} gal into the east trough.',f'Los caballos son el uso real: {horses} caballos × {drink*3.785:.0f} L al día ≈ {horses*drink*7*3.785/1000:,.1f} m³ a la semana, primero de las cisternas, luego de la red. El riego de verano en pleno establecimiento ≈ {2000*3.785/1000:,.1f} m³ por semana; una temporada de bebederos recirculantes solo pierde evaporación. Las dos cisternas ({(C1_M3+C2_M3)} m³) guardan unas {(C1_M3+C2_M3)*m3gal/(horses*drink*7+2000):.0f} semanas de todo sin lluvia; 2.5 cm de lluvia meten unos {(stable_gpi/2+stalls_gpi)*3.785/1000:,.1f} m³ a las cisternas (mitad sur del establo + caballerizas) y {stable_gpi/2*3.785/1000:,.1f} m³ al bebedero del este.'),
 ]
-y=0.895
+y=0.902
 import textwrap
 for k,(en,es,ten,tes) in enumerate(NOTES_I):
     fig.text(px,y,f'{k+1}',fontsize=10,weight='bold',color='#b5602e')
     fig.text(px+.018,y,f'{es} · {en}',fontsize=8.6,weight='bold',color=INK)
     ly=y-.0145
-    for line in textwrap.wrap(tes,102): fig.text(px+.018,ly,line,fontsize=6.3,color=INK); ly-=.0096
-    for line in textwrap.wrap(ten,102): fig.text(px+.018,ly,line,fontsize=6.3,color='#6a655a',style='italic'); ly-=.0096
-    y=ly-.006
+    for line in textwrap.wrap(tes,106): fig.text(px+.018,ly,line,fontsize=6.3,color=INK); ly-=.0092
+    for line in textwrap.wrap(ten,106): fig.text(px+.018,ly,line,fontsize=6.3,color='#6a655a',style='italic'); ly-=.0092
+    y=ly-.005
+print('notes end at', round(ly, 3), '(footer rule 0.055)')   # 4 Oct: guard against running into the footer
 # vision box
 fig.text(0.355,0.245,'Visión · Vision',fontsize=8.5,color=INK,weight='bold')
 for k,line in enumerate(textwrap.wrap('Agua primero, luego árboles, luego edificios: el centro ecuestre como vivero otra vez, con café, cata de vino, juegos para niños y animales que se dejan tocar, todo regado por la lluvia que cae en los techos.',112)): fig.text(0.355,0.230-k*.0105,line,fontsize=6.6,color=INK)
