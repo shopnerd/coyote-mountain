@@ -15,6 +15,14 @@ VALLEY_NE, FALL, RISE = 10.7, .005, 1.5
 L, D = PER_SIDE * STALL_W + ALF_L, 2 * STALL_D + CORR
 HL, HD, HC = L / 2, D / 2, CORR / 2; RE = HC + OVER; RX = HL + 2; XS = -HL + PER_SIDE * STALL_W
 def roof_z(x, y): return VALLEY_NE - FALL * (RX - x) + RISE * abs(y) / RE
+# the obj is written in the site's east/north feet, rotated by the yellow line's frame (covered_stalls.py `world`)
+from geo import la0, lo0
+st = [(-116.7637927468709, 31.99970749966619), (-116.7635094983617, 31.99998532313917), (-116.7633790473066, 31.99988684382775), (-116.7636714287398, 31.99959200352455)]
+k_ = 111320 * math.cos(math.radians(la0))
+enu = lambda la, lo: np.array([(lo - lo0) * k_, (la - la0) * 111320])
+A_, B_, C_, D_ = (enu(la, lo) for lo, la in st)
+u_ = (B_ - A_) / np.linalg.norm(B_ - A_); v_ = (D_ - A_) / np.linalg.norm(D_ - A_); v_ = v_ - u_ * (v_ @ u_); v_ /= np.linalg.norm(v_)
+def world(x, y, zz): p = u_ * x + v_ * y; return (p[0], p[1], zz)
 BEAM, PURL, UNDER = .55, .45, .32                        # 8 in rafters, 6 in purlins, hung just under the sheets
 
 MARK = '# --- roof structure (stalls_frame.py) ---'
@@ -30,7 +38,7 @@ def bar(a, b, w):
     c = [(-n1 - n2), (n1 - n2), (n1 + n2), (-n1 + n2)]
     base = len(V) + nv + 1
     for p in (a, b):
-        for q in c: V.append(p + q * w / 2)
+        for q in c: V.append(np.array(world(*(p + q * w / 2))))
     quads = [(0, 1, 2, 3), (4, 7, 6, 5), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)]
     for q in quads: F.append((base + q[0], base + q[1], base + q[2])); F.append((base + q[0], base + q[2], base + q[3]))
 posts = [-HL + q * STALL_W for q in range(PER_SIDE + 1)] + [XS + ALF_L / 2, HL]
