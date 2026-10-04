@@ -67,7 +67,7 @@ def w_site():
     fig = wpage(); wtitle(fig, 'Vistas del sitio', 'Site views')
     for k, (n, es, en) in enumerate([(1, 'El centro desde el noreste, hacia el oeste', 'The centre from the north-east, looking west'),
                                      (2, 'La maqueta del sitio, desde el suroeste', 'The site model, from the south-west'),
-                                     (3, 'La maqueta del sitio, en planta', 'The site model, as a plan')]):
+                                     (3, 'La maqueta del sitio, desde el noroeste', 'The site model, from the north-west')]):
         label(fig, slot(fig, f'4-{k}'), es, en, n)
     wfoot(fig, nxt(), 'Vistas del sitio', 'Site views'); PAGES.append(fig)
 def wpara(fig, x, y, es, en, w=74, size=9.8, lead=26):

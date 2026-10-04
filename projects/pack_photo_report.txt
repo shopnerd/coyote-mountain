@@ -13,7 +13,7 @@ p07   400 dpi    2613x1421  C:\Users\onest\code\coyote-studio/projects/renders/g
 p07   235 dpi     1536x834  C:\Users\onest\code\coyote-studio/projects/renders/gallery3/23-picnic-side-openai.png
 p08   400 dpi    3669x3208  C:\Users\onest\code\coyote-studio/projects/renders/finished/p4-site-ne-green-1.jpg
 p08   238 dpi     1530x864  C:\Users\onest\code\coyote-studio/projects/renders/gallery4/b3-sw-openai.png
-p08   238 dpi     1526x864  C:\Users\onest\code\coyote-studio/projects/renders/gallery4/b7-plan-openai.png
+p08   400 dpi    2568x1453  C:\Users\onest\code\coyote-studio/projects/renders/gallery3/b4-nw-google.png
 p10   177 dpi      670x373  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/47E1503E-EBAF-4725-A2C5-7D187780ABA6.JPG
 p10   106 dpi      402x223  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/2F5955AB-675C-4DE6-9749-EA7239800A65.JPG
 p10   139 dpi      526x291  C:/Users/onest/code/equino-drive/renderings/2026-09-28 finalists/6DF71C9B-0B8B-4F41-9137-7ADCEEE5F613.JPG
