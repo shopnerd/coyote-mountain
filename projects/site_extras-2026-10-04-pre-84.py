@@ -128,7 +128,7 @@ for fn in FILES:
     # roof water from the stable (Will: capture it into the trough): a gutter downpipe at the stable's south-west corner, buried pipe to the trough's north end
     tpl = [q for q in d['strokes'] if (q.get('name') or '') == 'stalls trough overflow pipe']
     if tpl:
-        rp = dict(tpl[0]); rp.update(name='stable roof water to the long trough (buried pipe)', pts=[[*b2grid(-49.0, -22.0), .5], [*b2grid(*(B - u * 2)), .5]])
+        rp = dict(tpl[0]); rp.update(name='stable roof water to the long trough (buried pipe)', pts=[[*b2grid(-37.0, -22.0), .5], [*b2grid(*(B - u * 2)), .5]])
         d['strokes'].append(rp)
     # ---- 4 Oct (Will, night): the path from the parking meanders gently through the pines and arrives ON AXIS at the east gable's
     # big doors, so you are brought to the view straight down the aisle. A smooth Hermite curve from the parking end to a point 30 ft
@@ -183,16 +183,16 @@ for fn in FILES:
     for j_ in range(H):
         for i_ in range(W):
             bx, by = grid2b(i_, j_)
-            if -50 <= bx <= -10 and -36 <= by <= -21.5: z[j_, i_] = floor - .02      # 4 Oct: the pad is 36 ft now (under the new west bay too)
+            if -38 <= bx <= -10 and -36 <= by <= -21.5: z[j_, i_] = floor - .02
             # 3 Oct: the ground is levelled a little past the pad and the trough on its west edge, easing to natural over 10 ft
-            o = math.hypot(max(-54 - bx, 0, bx + 10), max(-37 - by, 0, by + 21.5))
+            o = math.hypot(max(-42 - bx, 0, bx + 10), max(-37 - by, 0, by + 21.5))
             if o < 10 and by < -21.5: f = o / 10; z[j_, i_] = (floor - .02) * (1 - f) + z[j_, i_] * f
     d['z'] = [round(float(q), 3) for q in z.flatten()]
     # ---- a fieldstone trough along the wash pad's WEST edge, running out from the stable's south-west corner (Will, 3 Oct, from
     # the 28 Sep 'stable from the road' painting he liked): 14 x 3 ft just outside the gable line, rim 2 ft above the pad ----
     PAD_S = -21.0 - .75 - 12.0                                      # the pad's south edge (stable: HD 21, ROCK_T/2 .75, pad 12 ft deep)
     TW2, WT2 = 3.0, .7
-    x0, x1, y0, y1 = -48.0 - TW2, -48.0, PAD_S - 1.5, -21.75          # 4 Oct (Will): back at the building's corner, now the new SW corner (x -48), along the 36 ft pad's west edge
+    x0, x1, y0, y1 = -36.0 - TW2, -36.0, PAD_S - 1.5, -21.75          # west of the pad (x -36 is the gable line), wall to 1.5 ft past the pad
     m = Mesh(); fz = floor - .02; top = fz + 2.0 * FT; lip = fz + .4 * FT
     m.box(x0, x1, y0, y1, fz - .3, lip, 'rock')                                                  # base and floor
     m.box(x0, x0 + WT2, y0, y1, lip, top, 'rock'); m.box(x1 - WT2, x1, y0, y1, lip, top, 'rock')   # long walls
@@ -200,7 +200,27 @@ for fn in FILES:
     wl = fz + 1.65 * FT; m.face([(x0 + WT2, y0 + WT2, wl), (x1 - WT2, y0 + WT2, wl), (x1 - WT2, y1 - WT2, wl), (x0 + WT2, y1 - WT2, wl)], 'water')
     spill_basin(m, x0, x1, y0, -1, lip, top)                                     # 4 Oct: spill basin at the south end, away from the wall
     d['strokes'].append(stroke(m, 'wash pad trough', 'wash-pad-trough.obj', z, 'fieldstone trough 14 x 3 ft along the west edge of the wash pad, out from the SW corner, rim 2 ft (Will, 3 Oct)'))
-    # (4 Oct: the stand-alone electrical room is gone: it is now inside the stable's new SW corner bay, centro-equino-barn.py)
+    # ---- 4 Oct (Will): the electrical room (sheet E-1), 10 x 8 ft just south of cistern C1 and west of the pad trough, away from
+    # all hay: fieldstone base to 3 ft, plastered cob above, a dark metal shed roof falling south, a plank door facing the pad
+    # (east), the shut-off + PV rapid-shutdown box on the wall beside it ----
+    rx0, rx1, ry0, ry1 = -56.0, -46.0, -41.0, -33.0
+    rfz = ground(z, *m2grid(*b2m((rx0 + rx1) / 2, (ry0 + ry1) / 2)))
+    m = Mesh(); WT3 = 1.0; zr0 = rfz - .3; zst = rfz + 3 * FT; zs, zn = rfz + 8.0 * FT, rfz + 8.8 * FT
+    dy0, dy1, zdt = -38.5, -35.5, rfz + 7.0 * FT                                                  # the door, 3 x 7 ft in the east wall
+    for (a0, a1, b0, b1) in ((rx0, rx1, ry0, ry0 + WT3), (rx0, rx1, ry1 - WT3, ry1), (rx0, rx0 + WT3, ry0 + WT3, ry1 - WT3)):
+        m.box(a0, a1, b0, b1, zr0, zst, 'rock'); m.box(a0, a1, b0, b1, zst, zs, 'cob')
+    m.box(rx0, rx1, ry1 - WT3, ry1, zs, zn, 'cob')                                                  # the taller north wall
+    for (b0, b1) in ((ry0 + WT3, dy0), (dy1, ry1 - WT3)):
+        m.box(rx1 - WT3, rx1, b0, b1, zr0, zst, 'rock'); m.box(rx1 - WT3, rx1, b0, b1, zst, zs, 'cob')
+    m.box(rx1 - WT3, rx1, dy0, dy1, zdt, zs, 'cob')                                                 # over the door
+    m.box(rx1 - .55, rx1 - .4, dy0 + .05, dy1 - .05, rfz, zdt - .05, 'wood')                         # plank door
+    for xg in (rx0, rx1):                                                                           # gable infill under the sloping roof
+        m.face([(xg, ry0, zs), (xg, ry1, zs), (xg, ry1, zn)], 'cob')
+    zroof = lambda y: zs + (zn - zs) * (y - ry0) / (ry1 - ry0) + .1
+    for dz in (0, .08):
+        m.face([(rx0 - 1, ry0 - 1, zroof(ry0 - 1) + dz), (rx1 + 1, ry0 - 1, zroof(ry0 - 1) + dz), (rx1 + 1, ry1 + 1, zroof(ry1 + 1) + dz), (rx0 - 1, ry1 + 1, zroof(ry1 + 1) + dz)], 'roof')
+    m.box(rx1, rx1 + .35, -40.4, -39.2, rfz + 4 * FT, rfz + 5.6 * FT, 'steel')                      # shut-off + rapid shutdown
+    d['strokes'].append(stroke(m, 'electrical room', 'electrical-room.obj', z, 'electrical room 10 x 8 ft: main panel, solar inverter + battery, C1 pump control; stone base, cob walls, shed roof (Will, 4 Oct, sheet E-1)'))
     # ---- 4 Oct (Will, revised that night: red lines on the plan shot): a third stone trough ALONG THE EAST RUN FENCE, just outside
     # the north-east run's east fence (x = 36), 32 x 3.5 ft, from 4 ft past the wall line out along the run; the horse in that run
     # drinks through the rails, arrivals from the parking drink from the outside. Fed by the NORTH gutter's east downspout; the
@@ -250,7 +270,7 @@ for fn in FILES:
     for j_ in range(H):
         for i_ in range(W):
             bx, by = grid2b(i_, j_)
-            if -50.5 <= bx <= 38.5 and -23.5 <= by <= 23.5 and z[j_, i_] > floor: z[j_, i_] = floor   # 4 Oct: 84 ft, grown west
+            if -38.5 <= bx <= 38.5 and -23.5 <= by <= 23.5 and z[j_, i_] > floor: z[j_, i_] = floor
     d['z'] = [round(float(q), 3) for q in z.flatten()]
     # ---- the barn road comes straight into the middle of the west entry (Will, 28 Sep), not to the stable's corner ----
     rd = [q for q in d['strokes'] if q.get('name') == 'barn to cross-fence road'][0]
@@ -258,8 +278,7 @@ for fn in FILES:
     zc_ = rd['pts'][0][2] if len(rd['pts'][0]) > 2 else .5
     P0 = np.array(grid2b(*keep[0][:2])); P1b = np.array(grid2b(*keep[1][:2]))       # join smoothly: leave the old line along its own heading
     t0 = (P0 - P1b) / np.linalg.norm(P0 - P1b)
-    P3 = np.array([-50.0, 0.0]);   # 4 Oct: the west gable is at x -48 now
-    Lb = np.linalg.norm(P3 - P0); c1 = P0 + t0 * Lb * .35; c2 = P3 - np.array([Lb * .3, 0.0])  # and arrive square to the entry
+    P3 = np.array([-38.0, 0.0]); Lb = np.linalg.norm(P3 - P0); c1 = P0 + t0 * Lb * .35; c2 = P3 - np.array([Lb * .3, 0.0])  # and arrive square to the entry
     approach = [tuple((1 - s_) ** 3 * P3 + 3 * (1 - s_) ** 2 * s_ * c2 + 3 * (1 - s_) * s_ ** 2 * c1 + s_ ** 3 * P0) for s_ in np.linspace(0, 1, 14)[:-1]]
     rd['pts'] = [[*b2grid(x, y), zc_] for x, y in approach] + keep
     # the road keeps a smooth even grade past the trough (3 Oct, Will: no glitch): along the new curve, take the pre-trough
@@ -284,7 +303,7 @@ for fn in FILES:
     # plants LINE the drive on both sides from the trough to the gable (4 Oct, Will): a row 1-4 ft off each edge, mixed sizes
     # (sage, buckwheat, deer grass, a few taller accents), with a second loose row behind
     rnd2 = random.Random(7); shrubs = []
-    seg = [(x, y) for x, y in RP if -90 <= x <= -52]                  # 4 Oct: the gable moved 12 ft west                  # the straight approach between trough and gable
+    seg = [(x, y) for x, y in RP if -90 <= x <= -40]                  # the straight approach between trough and gable
     seg.sort()
     def along(t):                                                   # point + normal at fraction t of the approach
         k = min(int(t * (len(seg) - 1)), len(seg) - 2); a, b = seg[k], seg[k + 1]

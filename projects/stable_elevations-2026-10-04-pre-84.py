@@ -1,6 +1,6 @@
 # 4 Oct (Will): two simple architectural elevations on the stable plan page, left of the plan: east (top) and south (below).
 # LINE WORK on the paper (Will, same night): no tone fills; sticks wavy and real; stones in outline; plank doors; hatched ground.
-# Numbers from centro-equino-barn.py: 84 x 42 (4 Oct: one more bay at the west end; drawn in the old frame, walls x -48..36), eave 12, ridge 17, 2 ft overhangs, 5 ft rock + pipe at 6, 3 ft stick frames to the
+# Numbers from centro-equino-barn.py: 72 x 42, eave 12, ridge 17, 2 ft overhangs, 5 ft rock + pipe at 6, 3 ft stick frames to the
 # eave, clerestory 48 x 10 (2.5 ft), 14 ft aisle with sliding doors at the gables, wash pad + trellis + trough on the SW corner.
 exec(open('linework.py', encoding='utf-8').read())
 import random as _r
@@ -55,12 +55,11 @@ def stable_elevations(fig):
 
     # ---------------- south elevation (looking north; west is to the left) ----------------
     ax = fig.add_axes([0.012, 0.29, 0.272, 0.235]); ax.set_aspect('equal'); ax.axis('off'); ax.set_gid('elev-south')
-    XW = -48.0                                                                      # 4 Oct: the new west wall
-    ax.set_xlim(-52.5, 39.5); ax.set_ylim(-5, 22)
-    lw_ground(ax, -52.5, 39.5)
+    ax.set_xlim(-40.5, 39.5); ax.set_ylim(-5, 22)
+    lw_ground(ax, -40.5, 39.5)
     L = HL + RT
-    lw_stones(ax, XW - RT, L, 0, 5, rng, big=2.0, small=.9, lw=.45)
-    lw_box(ax, XW, 5.0, -12, EAVE, lw=.7)                                          # wash + tack rooms: plastered bale / cob to the eave
+    lw_stones(ax, -L, L, 0, 5, rng, big=2.0, small=.9, lw=.45)
+    lw_box(ax, -HL, 5.0, -12, EAVE, lw=.7)                                          # wash + tack rooms: plastered bale / cob to the eave
     lw_line(ax, [-12, L], [6, 6], lw=1.3)
     for k in range(4): frames(ax, -12 + 12 * k + .3, -12 + 12 * (k + 1) - .3, 6.25, EAVE - .1)
     for c in (-6, 6, 18, 30):                                                       # stall doorways to the runs: open, steel lintel
@@ -68,23 +67,23 @@ def stable_elevations(fig):
     opening(ax, -33, 0, -27, 9)                                                     # wash room opening
     ax.add_patch(matplotlib.patches.Rectangle((-27, .15), 7.3, 9.15, fc=BG, ec='none', zorder=4)); lw_planks(ax, -27, .15, -19.7, 9.3, rng, lw=.6)   # sliding door, parked
     lw_line(ax, [-33.5, -19.4], [9.9, 9.9], lw=1.1, zorder=5)
-    for k in range(8): lw_pipe(ax, XW + 12 * k, 0, EAVE, d=1.06)
+    for k in range(7): lw_pipe(ax, -HL + 12 * k, 0, EAVE, d=1.06)
     r0 = rz(HD + OH) - .45
-    ax.add_patch(matplotlib.patches.Rectangle((XW - OH, r0), HL - XW + 2 * OH, RIDGE + .6 - r0, fc=BG, ec=LW_INK, lw=.9, zorder=5))   # roof plane to the ridge
-    for x in _np.arange(XW - OH + 2, HL + OH, 2.0): lw_line(ax, [x, x], [r0 + .45, RIDGE + .6], lw=.18, color=MUTED, zorder=6)  # standing seams
+    ax.add_patch(matplotlib.patches.Rectangle((-HL - OH, r0), 2 * (HL + OH), RIDGE + .6 - r0, fc=BG, ec=LW_INK, lw=.9, zorder=5))   # roof plane to the ridge
+    for x in _np.arange(-HL - OH + 2, HL + OH, 2.0): lw_line(ax, [x, x], [r0 + .45, RIDGE + .6], lw=.18, color=MUTED, zorder=6)  # standing seams
     zb = rz(5.0)
     ax.add_patch(matplotlib.patches.Rectangle((-24, zb), 48, 2.5, fc=BG, ec=LW_INK, lw=.7, zorder=6))
     for k in range(9): lw_line(ax, [-24 + 6 * k] * 2, [zb, zb + 2.5], lw=.45, zorder=7)
     ax.add_patch(matplotlib.patches.Rectangle((-24.8, zb + 2.5), 49.6, .35 + slope * 5, fc=BG, ec=LW_INK, lw=.8, zorder=7))
-    lw_line(ax, [XW, -12], [.35, .35], lw=.6, zorder=5)                             # wash pad, 36 ft now
-    for x in (XW + .5, -36, -24, -12.5): lw_pipe(ax, x, 0, 10.3, d=.35, lw=.6)      # trellis posts (in front of the wall)
-    lw_line(ax, [XW - .3, -11.7], [10.3, 10.3], lw=1.0, zorder=5)
-    lw_vine(ax, XW, -12.2, 10.3, rng)
-    lw_stones(ax, XW - 3.0, XW, 0, 2.0, rng, course=(.9, 1.0), length=(1.2, 1.6), lw=.45)   # pad trough at the building's corner
+    lw_line(ax, [-HL, -12], [.35, .35], lw=.6, zorder=5)                            # wash pad
+    for x in (-35.5, -24, -12.5): lw_pipe(ax, x, 0, 10.3, d=.35, lw=.6)             # trellis posts (in front of the wall)
+    lw_line(ax, [-HL - .3, -11.7], [10.3, 10.3], lw=1.0, zorder=5)
+    lw_vine(ax, -HL, -12.2, 10.3, rng)
+    lw_stones(ax, -HL - 3.0, -HL, 0, 2.0, rng, course=(.9, 1.0), length=(1.2, 1.6), lw=.45)   # pad trough, west edge
     for h in (1.8, 3.6, 5.5): lw_line(ax, [-12, L], [h, h], lw=.45, color=MUTED, zorder=8)   # the south runs' far fence, in front
-    ax.text(-30, -1.4, 'baño, eléctrico, lavado · losa · pérgola con parra', ha='center', va='top', fontsize=6.5, color=INK)
-    ax.text(-30, -3.3, 'bathroom, electrical, wash · pad · grape trellis', ha='center', va='top', fontsize=6.5, color=MUTED, style='italic')
+    ax.text(-24, -1.4, 'lavado · losa · pérgola con parra', ha='center', va='top', fontsize=6.5, color=INK)
+    ax.text(-24, -3.3, 'wash room · pad · trellis with grapes', ha='center', va='top', fontsize=6.5, color=MUTED, style='italic')
     ax.text(12, -1.4, 'caballerizas 7-10 · puertas a los corrales', ha='center', va='top', fontsize=6.5, color=INK)
     ax.text(12, -3.3, 'stalls 7-10 · doorways to the runs', ha='center', va='top', fontsize=6.5, color=MUTED, style='italic')
-    ax.text(-52.5, 26.5, 'Alzado sur · South elevation', fontsize=11, weight='bold', color=INK, clip_on=False)
-    ax.text(-52.5, 24.3, 'el lado del camino, mirando al norte; 84 ft entre muros · the road side, looking north; 84 ft wall to wall', fontsize=7, color=MUTED, style='italic', clip_on=False)
+    ax.text(-40.5, 26.5, 'Alzado sur · South elevation', fontsize=11, weight='bold', color=INK, clip_on=False)
+    ax.text(-40.5, 24.3, 'el lado del camino, mirando al norte; 72 ft entre muros · the road side, looking north; 72 ft wall to wall', fontsize=7, color=MUTED, style='italic', clip_on=False)

@@ -15,7 +15,7 @@ def foot_of(name):
 def pts_of(name): return np.array([q[:2] for q in byname(name)[0]['pts']])
 # ---- water numbers (ft², gal) ----
 RAIN_IN=11.0                                           # Valle de Guadalupe, lower canyon: ~280 mm/yr, Dec–Mar
-stable_ft2=76*46; stalls_ft2=92*36                     # roofs with their 2 ft overhangs (stable), butterfly roof (stalls)
+stable_ft2=88*46; stalls_ft2=92*36                     # roofs with their 2 ft overhangs (stable), butterfly roof (stalls)
 gpi=lambda a: a*0.623                                  # gal per inch of rain on a ft² (0.623 gal/ft²/in)
 stable_gpi, stalls_gpi = gpi(stable_ft2), gpi(stalls_ft2)
 C1_M3, C2_M3 = 40, 30                                  # underground concrete cisterns (m³)
@@ -65,7 +65,7 @@ ax.add_patch(MCircle(g,1.6,facecolor='white',edgecolor=PIPE,lw=2,zorder=13)); ax
 # branch to the infield trees and the arena/round-pen shade
 ax.plot([br[-1][0],cx+6],[br[-1][1],cy],color=PIPE,lw=1.3,zorder=9,dashes=(3,2))
 # ---- cisterns ----
-lt=byname('stone trough (long)')[0]['c']; C1=b2g(-50,-20)                 # at the stable's SW corner, between the pad trough and the long trough, off the roads
+lt=byname('stone trough (long)')[0]['c']; C1=b2g(-60,-35)                 # at the stable's SW corner, between the pad trough and the long trough, off the roads
 if cs_ is not None:
     # 4 Oct (Will): C2 sits just DOWNHILL of the round trough, so the valley chute, the trough's overflow and the roof all fall into it
     _op=[s_ for s_ in S if s_.get('name')=='stalls trough overflow pipe']
@@ -79,8 +79,8 @@ for (x,y),lab,m3 in ((C1,'C1',C1_M3),(C2,'C2',C2_M3)):
     ax.add_patch(MRect((x-s_,y-s_),2*s_,2*s_,facecolor=TANK,edgecolor=TANK,alpha=.35,lw=1.4,ls='--',zorder=10))
     ax.text(x,y,f'{lab}',fontsize=7.5,weight='bold',color='white',ha='center',va='center',zorder=12)
 # downspout pipes roof → cistern → trough (dashed water)
-sw_=b2g(-36,-23); ax.plot([sw_[0],C1[0]],[sw_[1],C1[1]],color=WATER,lw=1.6,dashes=(2,1.5),zorder=9)          # south gutter, SW downspout -> C1
-pt_=b2g(-37.5,-28); ax.plot([C1[0],pt_[0]],[C1[1],pt_[1]],color=WATER,lw=1.2,dashes=(2,1.5),zorder=9)        # C1 -> pad trough
+sw_=b2g(-48,-23); ax.plot([sw_[0],C1[0]],[sw_[1],C1[1]],color=WATER,lw=1.6,dashes=(2,1.5),zorder=9)          # south gutter, SW downspout -> C1
+pt_=b2g(-49.5,-28); ax.plot([C1[0],pt_[0]],[C1[1],pt_[1]],color=WATER,lw=1.2,dashes=(2,1.5),zorder=9)        # C1 -> pad trough
 ax.plot([C1[0],lt[0]],[C1[1],lt[1]],color=WATER,lw=1.6,dashes=(2,1.5),zorder=9)
 if RT: ax.plot([RT[0],C2[0]],[RT[1],C2[1]],color=WATER,lw=1.6,dashes=(2,1.5),zorder=9)   # trough overflow + chute -> C2, downhill
 et=byname('east trough');

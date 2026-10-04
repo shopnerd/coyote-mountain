@@ -56,7 +56,7 @@ def cover(win):
 def planview(n):
     fig=newpage(); heading(fig,'Vista en planta','Plan view')
     ax=fig.add_axes([0.02,0.075,0.70,0.81]); ax.imshow((img(n)*(np.array(matplotlib.colors.to_rgb(PAPER)))).astype(np.uint8)); ax.axis('off')   # white studio background takes the paper colour
-    items=[('Establo principal','Main stable','72 × 42 ft en retícula de 12 ft · cerchas de acero, piedra a 5 ft con tubo arriba, paneles de varas horizontales, claraboya abierta · 10 caballerizas con corral de 12 × 40 ft, 6 al norte y 4 al sur · lavado y monturas en la esquina oeste','72 × 42 ft on a 12 ft grid · steel trusses, rock to 5 ft with a pipe rail, horizontal stick panels, open clerestory · 10 stalls with 12 × 40 ft runs, 6 north and 4 south · wash and tack at the west corner'),
+    items=[('Establo principal','Main stable','84 × 42 ft en retícula de 12 ft · cerchas de acero, piedra a 5 ft con tubo arriba, paneles de varas horizontales, claraboya abierta · 10 caballerizas con corral de 12 × 40 ft, 6 al norte y 4 al sur · cocina, baño, cuarto eléctrico, lavado y monturas en el extremo oeste','84 × 42 ft on a 12 ft grid · steel trusses, rock to 5 ft with a pipe rail, horizontal stick panels, open clerestory · 10 stalls with 12 × 40 ft runs, 6 north and 4 south · kitchen, bathroom, electrical room, wash and tack at the west end'),
            ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
            ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),

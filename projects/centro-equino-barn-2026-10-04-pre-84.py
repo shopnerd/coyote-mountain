@@ -12,7 +12,7 @@ turned to her bearing; the origin is the barn centre. The # geo line tells topo.
 """
 import math, os
 
-L, D = 84.0, 42.0                        # 4 Oct (Will): one more 12 ft bay at the WEST end for kitchen, bathroom and electrical room (was 72). 27 Sep: a 12 ft grid (Will: trusses 12 ft apart, things lined up): 6 bays x 12 = 72 ft (Walker's sketch had 76); gable 14 + 14 entry + 14
+L, D = 72.0, 42.0                        # 27 Sep: a 12 ft grid (Will: trusses 12 ft apart, things lined up): 6 bays x 12 = 72 ft (Walker's sketch had 76); gable 14 + 14 entry + 14
 HL, HD = L / 2, D / 2
 AISLE, STALL, RUN_D = 14.0, 12.0, 40.0
 ROW_D = (D - AISLE) / 2                  # 14 ft
@@ -27,9 +27,9 @@ DOOR = (6.0, 9.0)                        # open doorways stall -> run, no gate (
 RAIL_H = 5.5
 MON_HW, MON_H, MON_X = 5.0, 2.5, 24.0   # clerestory monitor: half width, glazing height, half length (27 Sep)
 STAKE_H, STAKE_T, STAKE_P = .12, .16, .3   # tomato stakes, horizontal: height, thickness, course spacing (gaps between)
-NORTH = ['kitchen'] + ['stall'] * 6      # 4 Oct (Will): the small kitchen in the new NW corner bay; 6 stalls, one per truss bay
-SOUTH = [('bath', 12), ('wash', 12), ('tack / feed', 12)] + [('stall', 12)] * 4   # 4 Oct (Will): new SW corner bay = bathroom (inner 8 ft) + electrical room (outer 6 ft, its own door in the west gable)   # 28 Sep (Will markup): wash room at the west corner, its 6 x 9 door right by the entry   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
-SOLID = ('tack / feed', 'wash', 'bath', 'kitchen')           # both rooms at the road end closed (27 Sep, Will's markup: 'enclose the tack room as well')           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
+NORTH = ['stall'] * 6                    # 6 x 12 ft, one per truss bay
+SOUTH = [('wash', 12), ('tack / feed', 12)] + [('stall', 12)] * 4   # 28 Sep (Will markup): wash room at the west corner, its 6 x 9 door right by the entry   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
+SOLID = ('tack / feed', 'wash')           # both rooms at the road end closed (27 Sep, Will's markup: 'enclose the tack room as well')           # Walker's elevation: solid infill above the rock at the rooms (straw bale or cob, plastered), not stakes
 RUN_FALL = .05                           # the south runs climb the slope at 5 % (graded), a low rock wall at their uphill end
 LAT, LON, GABLE = 32.0002846, -116.7632631, 65.84
 
@@ -41,8 +41,7 @@ CUR = ['rock']                           # material of the faces being made (wri
 def mat(m): CUR[0] = m
 ROT = math.radians(90 - GABLE)
 rc, rs = math.cos(ROT), math.sin(ROT)
-XOFF = -6.0                              # 4 Oct: the new bay grows WEST only; the build is symmetric about x = 0, the obj origin stays the old centre
-def world(x, y, z): x = x + XOFF; return (x * rc - y * rs, x * rs + y * rc, z)
+def world(x, y, z): return (x * rc - y * rs, x * rs + y * rc, z)
 
 def quad(a, b, c, d):
     i = len(V) + 1; V.extend(world(*p) for p in (a, b, c, d)); F.append((i, i + 1, i + 2, i + 3)); MAT.append(CUR[0])
@@ -150,27 +149,14 @@ for xx in (db + .9, db + 6.7): box(xx - .1, xx + .1, yd - .1, yd + .1, WASH_DOOR
 mat('wood')
 for k in range(7): xk = db + .3 + k * 1.0; box(xk + .03, xk + .97, yd - .12, yd + .12, .15, WASH_DOOR[1] + .3)   # vertical planks
 for zz in (.6, WASH_DOOR[1] / 2 - .25, WASH_DOOR[1] - .6): box(db + .3, db + 7.3, yd - .24, yd - .12, zz, zz + .5)   # ledges on the outside face
-# 4 Oct: holes in the gable walls (ya, yb, z0, z1): the electrical room's outside door (SW) and the kitchen window (NW), both clear of
-# the parked sliding-door leaves (y +/- 7.3 .. 14.8)
-GABLE_HOLES = {(-1, -1): [(-20.2, -17.2, 0.0, 7.0)], (-1, 1): [(15.5, 19.5, 5.6, 8.4)]}
-def gable_wall(x, t, y0, y1, z0, z1, holes):
-    ys = y0
-    for ha, hb, hz0, hz1 in sorted(holes):
-        if hb <= y0 or ha >= y1: continue
-        box(x - t, x + t, ys, ha, z0, z1)
-        if hz0 > z0: box(x - t, x + t, ha, hb, z0, min(z1, hz0))
-        if hz1 < z1: box(x - t, x + t, ha, hb, max(z0, hz1), z1)
-        ys = hb
-    box(x - t, x + t, ys, y1, z0, z1)
 # a big sliding door at each end (two leaves on a track above the entry, shown parked open over the rock) ----
 for sx in (-1, 1):
     x = sx * HL
     for s in (-1, 1):
         y0, y1 = sorted((s * ENTRY_W / 2, s * HD))
-        hg = GABLE_HOLES.get((sx, s), [])
-        mat('rock'); gable_wall(x, ROCK_T / 2, y0, y1, 0, ROCK_H, hg)
+        mat('rock'); box(x - ROCK_T / 2, x + ROCK_T / 2, y0, y1, 0, ROCK_H)
         cob = any(r['side'] == s and r['kind'] in SOLID and abs(r['x0' if sx < 0 else 'x1'] - x) < .1 for r in rooms)
-        if cob: mat('cob'); gable_wall(x, ROCK_T * .4, y0, y1, ROCK_H, EAVE - .3, hg)
+        if cob: mat('cob'); box(x - ROCK_T * .4, x + ROCK_T * .4, y0, y1, ROCK_H, EAVE - .3)
         else:
             rail_y(y0, y1, x)
             if STAKES:                         # framed stakes on the gable bays too, up to the eave
@@ -196,14 +182,6 @@ for sx in (-1, 1):
             for pa, pb in zip(E, E[1:]): box(xm - STAKE_T / 2 + w, xm + STAKE_T / 2 + w, pa + .12, pb - .12, zz, zz + STAKE_H)
             zz += STAKE_P; k += 1
 
-# the electrical room's plank door (closed) with the firefighters' shut-off + PV rapid shutdown beside it; the kitchen's window
-mat('wood'); box(-HL - ROCK_T / 2 + .25, -HL - ROCK_T / 2 + .45, -20.15, -17.25, .05, 6.95)
-mat('steel'); box(-HL - ROCK_T / 2 - .35, -HL - ROCK_T / 2, -16.6, -15.4, 4.0, 5.6)
-mat('glass'); box(-HL - .08, -HL + .08, 15.5, 19.5, 5.6, 8.4)
-mat('steel')
-for yy in (15.5, 17.5, 19.5): box(-HL - .14, -HL + .14, yy - .08, yy + .08, 5.6, 8.4)
-for zz in (5.6, 8.4): box(-HL - .14, -HL + .14, 15.5, 19.5, zz - .08, zz + .08)
-
 # ---- gable triangles above the end trusses (3 Oct): closed with the same framed stick panels, eave to ridge ----
 for sx in (-1, 1):
     x = sx * HL; xi = x - sx * .3                                            # just inside the end truss
@@ -222,7 +200,7 @@ for sx in (-1, 1):
 
 # ---- structure (27 Sep, Will): steel trusses on steel posts (4 Oct: Andrés’ heavy 12 in tubes, see POST) instead of the pipe portal frames, one at every
 # north stall line (7 lines, 12.7 ft apart): top chords, a bottom chord at the eave, king post, verticals and webs ----
-TRUSS = [-HL + L * k / 7 for k in range(8)]   # 4 Oct: 8 truss lines, 12 ft apart
+TRUSS = [-HL + L * k / 6 for k in range(7)]
 POST = 12.75 / 12                               # 4 Oct (Will): back to Andrés' heavy 12 in tubes (12 3/4 in OD), as first planned; was 6 in pipe
 for x in TRUSS:
     mat('steel')
@@ -259,15 +237,14 @@ for s in (-1, 1):
 
 # ---- clerestory monitor along the ridge: glazing on both long sides, its own low gable roof above (27 Sep) ----
 zb = roof_z(MON_HW) + zr
-MON_C = -XOFF                                    # 4 Oct: stays over the horses (the old 72 ft centre), not over the new rooms
 for sgn in (-1, 1):
     mat('truss')   # 4 Oct: clerestory mullions are roof structure too
-    for k in range(int(2 * MON_X / 6) + 1): xm = MON_C - MON_X + 6 * k; box(xm - .2, xm + .2, sgn * MON_HW - .2, sgn * MON_HW + .2, zb, zb + MON_H)   # mullions
+    for k in range(int(2 * MON_X / 6) + 1): xm = -MON_X + 6 * k; box(xm - .2, xm + .2, sgn * MON_HW - .2, sgn * MON_HW + .2, zb, zb + MON_H)   # mullions
     mat('roof')
     for dz in (0, T):
-        quad((MON_C - MON_X - .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz), (MON_C + MON_X + .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz),
-             (MON_C + MON_X + .8, 0, zb + MON_H + slope * MON_HW + dz), (MON_C - MON_X - .8, 0, zb + MON_H + slope * MON_HW + dz))
-for xm in (MON_C - MON_X, MON_C + MON_X):
+        quad((-MON_X - .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz), (MON_X + .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz),
+             (MON_X + .8, 0, zb + MON_H + slope * MON_HW + dz), (-MON_X - .8, 0, zb + MON_H + slope * MON_HW + dz))
+for xm in (-MON_X, MON_X):
     mat('roof'); quad((xm, -MON_HW, zb + MON_H), (xm, MON_HW, zb + MON_H), (xm, 0, zb + MON_H + slope * MON_HW), (xm, 0, zb + MON_H + slope * MON_HW))
 
 # ---- 4 Oct (Will): solar, phase 1 (sheet E-1): 16 all-black 435 W panels (1722 x 1134 mm), 4 rows x 4 in landscape, in the
@@ -280,7 +257,7 @@ if SOLAR_PH1:
     for r_ in range(4):
         ya = -(HD + OH) + 1.5 + r_ * PNL_W * _cr; yb = ya + PNL_W * _cr - .08
         for c_ in range(4):
-            xa = MON_C - 2 * PNL_L + c_ * PNL_L + .04; xb = xa + PNL_L - .08; za, zb_ = roof_z(ya) + _zo, roof_z(yb) + _zo
+            xa = -2 * PNL_L + c_ * PNL_L + .04; xb = xa + PNL_L - .08; za, zb_ = roof_z(ya) + _zo, roof_z(yb) + _zo
             quad((xa, ya, za), (xb, ya, za), (xb, yb, zb_), (xa, yb, zb_))
             quad((xa, yb, zb_ - PNL_T), (xb, yb, zb_ - PNL_T), (xb, ya, za - PNL_T), (xa, ya, za - PNL_T))
             for (p0, p1, z0_, z1_) in (((xa, ya), (xb, ya), za, za), ((xb, yb), (xa, yb), zb_, zb_), ((xb, ya), (xb, yb), za, zb_), ((xa, yb), (xa, ya), zb_, za)):
@@ -305,8 +282,6 @@ for s in (1, -1):
             for xa, xb in ((r['x0'] + .2, ga), (gb, r['x1'] - .2)):
                 for zz in (.6, 2.4, 4.2, RAIL_Z - PIPE): box(xa, xb, yi - PIPE / 2, yi + PIPE / 2, zz, zz + PIPE)
             gate_x(ga, gb, yi)
-
-mat('cob'); box(-HL + .3, -HL + 12 - .3, -15.25, -14.75, 0, EAVE - .3)     # 4 Oct: bathroom (north, 8 ft) | electrical room (south, 6 ft)
 
 # ---- 4 Oct (Will): wooden swing doors on the wash room and the tack room, into the aisle wall's door holes. Plank leaves like the
 # outside sliding door (7 vertical boards, 3 ledges), hung on the jamb nearer the gable, standing open ~50 deg into the room ----
@@ -334,7 +309,7 @@ for s_ in (1, -1):
 # ---- concrete wash pad (Walker, 28 Sep): 12 x 24 ft running parallel to the barn outside the wash-room door, on the south side ----
 mat('concrete')
 wr = [r for r in rooms if r['kind'] == 'wash'][0]
-box(-HL, -HL + 36, -HD - ROCK_T / 2 - 12, -HD - ROCK_T / 2, 0.0, 0.35)   # 4 Oct (Will): the wash area grows with the new bay: 12 x 36 ft          # along the two rooms, clear of the first run; the wash door opens onto it
+box(-HL, -HL + 24, -HD - ROCK_T / 2 - 12, -HD - ROCK_T / 2, 0.0, 0.35)          # along the two rooms, clear of the first run; the wash door opens onto it
 # ---- 4 Oct (Walker, via Will): a pipe trellis over the whole wash pad with grapes on it, like the ranch's other arbours. Steel pipe
 # like the buildings: 4 in posts at the pad's south edge, a 3 in beam there and a 3 in ledger on the wall posts, 2 in cross pipes every
 # 3 ft, three wires; the vine as a loose leaf canopy. Deck at 10.3 ft clears the sliding door's track (9.9 ft); the eave is 12. ----
@@ -342,14 +317,14 @@ import random as _rnd
 TR_H = 10.3
 py0, py1 = -HD - ROCK_T / 2 - 12, -HD - ROCK_T / 2
 mat('steel')
-for x in (-HL + .5, -HL + 12, -HL + 24, -HL + 36 - .5): bar((x, py0 + .5, 0), (x, py0 + .5, TR_H), 4.5 / 12, 10)          # posts
-bar((-HL, py0 + .5, TR_H), (-HL + 36, py0 + .5, TR_H), 3.5 / 12, 10)                                              # south beam
-bar((-HL, py1 - .3, TR_H), (-HL + 36, py1 - .3, TR_H), 3.5 / 12, 10)                                              # ledger on the wall posts
-for k in range(13): xx = -HL + 36 * k / 12; bar((xx, py0 + .5, TR_H + .22), (xx, py1 - .3, TR_H + .22), 2.0 / 12, 8)   # cross pipes
-for k in range(1, 4): yy = py0 + .5 + (py1 - .8 - py0) * k / 4; bar((-HL, yy, TR_H + .4), (-HL + 36, yy, TR_H + .4), .6 / 12, 6)   # wires
+for x in (-HL + .5, -HL + 12, -HL + 24 - .5): bar((x, py0 + .5, 0), (x, py0 + .5, TR_H), 4.5 / 12, 10)          # posts
+bar((-HL, py0 + .5, TR_H), (-HL + 24, py0 + .5, TR_H), 3.5 / 12, 10)                                              # south beam
+bar((-HL, py1 - .3, TR_H), (-HL + 24, py1 - .3, TR_H), 3.5 / 12, 10)                                              # ledger on the wall posts
+for k in range(9): xx = -HL + 24 * k / 8; bar((xx, py0 + .5, TR_H + .22), (xx, py1 - .3, TR_H + .22), 2.0 / 12, 8)   # cross pipes
+for k in range(1, 4): yy = py0 + .5 + (py1 - .8 - py0) * k / 4; bar((-HL, yy, TR_H + .4), (-HL + 24, yy, TR_H + .4), .6 / 12, 6)   # wires
 mat('sage'); _rv = _rnd.Random(5)
-for _ in range(120):                                                                                                 # the grapevine canopy
-    xx = _rv.uniform(-HL + .4, -HL + 35.6); yy = _rv.uniform(py0 + .9, py1 - .5); rr = _rv.uniform(.9, 1.7)
+for _ in range(80):                                                                                                 # the grapevine canopy
+    xx = _rv.uniform(-HL + .4, -HL + 23.6); yy = _rv.uniform(py0 + .9, py1 - .5); rr = _rv.uniform(.9, 1.7)
     box(xx - rr, xx + rr, yy - rr * .75, yy + rr * .75, TR_H + .4, TR_H + .4 + _rv.uniform(.5, 1.2))
 # ---- tie-ups on the wash pad (Will approved sketch v2, 4 Oct night). The sliding door parks east of the opening, so nothing ties to
 # the wall there: W one ring on the SW corner post (head at the corner, tail to the trough, nothing at the tail end), M a 3 in pipe
@@ -362,9 +337,9 @@ def tie_ring(cx, cy, cz, face):                          # a 5 in steel ring sta
         else: p0, p1 = (cx, cy + rr_ * math.cos(a0), cz + rr_ * math.sin(a0)), (cx, cy + rr_ * math.cos(a1), cz + rr_ * math.sin(a1))
         bar(p0, p1, .05, 5)
 WALL_O = -HD - ROCK_T / 2                                # outside face of the south wall
-bar((-HL + 12, -HD - POST / 2 + .05, 6.0), (-HL + 12, WALL_O - .45, 6.0), .1, 6); tie_ring(-HL + 12, WALL_O - .62, 6.0, 'y')   # 4 Oct: on the post west of the wash door (was the corner)   # 4 Oct (Will): W ring on a stub welded to the corner post, 6 ft
+bar((-HL, -HD - POST / 2 + .05, 6.0), (-HL, WALL_O - .45, 6.0), .1, 6); tie_ring(-HL, WALL_O - .62, 6.0, 'y')   # 4 Oct (Will): W ring on a stub welded to the corner post, 6 ft
 mat('steel'); HY0, HY1, HH, HB = WALL_O - 2.0, WALL_O - 10.0, 4.5, 1.0     # M: hoop on x = -24, from 2 ft to 10 ft off the wall
-HX = -HL + 24
+HX = -HL + 12
 bar((HX, HY0, -.2), (HX, HY0, HH - HB), 3.5 / 12, 10); bar((HX, HY1, -.2), (HX, HY1, HH - HB), 3.5 / 12, 10)
 for k in range(4):                                       # the two 12 in bends, four pieces each
     a0, a1 = math.pi / 2 * k / 4, math.pi / 2 * (k + 1) / 4
@@ -374,13 +349,13 @@ bar((HX, HY0 - HB, HH), (HX, HY1 + HB, HH), 3.5 / 12, 10)
 for yy_, zz_ in ((HY0, 3.5), (HY1, 3.5), ((HY0 + HY1) / 2, HH - .35)):
     for sx_ in (-1, 1): tie_ring(HX + sx_ * .3, yy_, zz_, 'x')
 for yy_ in (WALL_O - .25, WALL_O - (RUN_D - ROCK_T / 2) / 4):   # E: the first two posts of run 1's west fence (x = -12), 5 ft, facing the pad
-    tie_ring(-HL + 36 - .35, yy_, 5.0, 'x')
+    tie_ring(-HL + 24 - .35, yy_, 5.0, 'x')
 # ---- 4 Oct (Will): pose figures for the renders, material `figure` (hidden in the viewer unless a shot asks for them). A horse
 # centred in the EAST bay of the wash pad (between the tie hoop and run 1's fence), head to the wall and tied to the hoop's ring,
 # its near (west) hind leg lifted onto the farrier's thighs; the farrier beside that leg facing the tail, back bent flat; a rider
 # at the horse's head. Plain blockout shapes: they give the painter the place, scale and pose, nothing more. ----
 mat('figure')
-HXc, HY0f = -12.0, WALL_O - 2.6                        # horse centre line, head end (the wall end)
+HXc, HY0f = -18.0, WALL_O - 2.6                        # horse centre line, head end (the wall end)
 BL_, BW_, BZ0, BZ1 = 5.6, 1.9, 3.2, 5.3                # barrel length, width, underside, top (ft)
 by0, by1 = HY0f - 2.2, HY0f - 2.2 - BL_                # barrel front / rear (y falls away from the wall)
 box(HXc - BW_ / 2, HXc + BW_ / 2, by1, by0, BZ0, BZ1)                                         # barrel
@@ -410,9 +385,7 @@ mat('dirt'); box(-HL + ROCK_T / 2, HL - ROCK_T / 2, -HD + ROCK_T / 2, HD - ROCK_
 # ---- concrete floors in the two closed rooms (Will, 28 Sep) ----
 mat('concrete')
 for r in rooms:
-    if r['kind'] in SOLID:
-        ya_, yb_ = (-HD + ROCK_T / 2, -HD + ROW_D - .3) if r['side'] < 0 else (HD - ROW_D + .3, HD - ROCK_T / 2)
-        box(r['x0'] + .3, r['x1'] - .3, ya_, yb_, 0.0, 0.28)
+    if r['kind'] in SOLID: box(r['x0'] + .3, r['x1'] - .3, -HD + ROCK_T / 2, -HD + ROW_D - .3, 0.0, 0.28)
 
 # ---- runs: 12 x 40 ft off every stall on both sides, three-rail black pipe fence at 5 ft 6 in; the south ones climb at RUN_FALL ----
 mat('fence')
@@ -432,7 +405,7 @@ for r in rooms:
 
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'centro-equino-barn.obj')
 with open(out, 'w', newline='\n') as f:
-    f.write(f"# Centro Equino stable, 4 Oct: {L:.0f} x {D:.0f} ft (kitchen NW, bathroom + electrical room SW at the west end) steel trusses on 12 in tube posts, rock 5 ft all round with a floating pipe to 6 ft, open above, big sliding doors at both ends, pipe stall fronts and gates, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls north + 4 south with 12x40 runs, tack/feed (closed, straw bale/cob) + open wash bay at the west end by the barn road\n")
+    f.write(f"# Centro Equino stable, 27 Sep: {L:.0f} x {D:.0f} ft steel trusses on 12 in tube posts, rock 5 ft all round with a floating pipe to 6 ft, open above, big sliding doors at both ends, pipe stall fronts and gates, clerestory monitor {2*MON_X:.0f} ft along the ridge, gable entries, 2 ft overhangs, 6 stalls north + 4 south with 12x40 runs, tack/feed (closed, straw bale/cob) + open wash bay at the west end by the barn road\n")
     f.write(f"# geo {LAT} {LON}\n# unit ft\n# name walker barn 72x40\n")
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
     last = None
