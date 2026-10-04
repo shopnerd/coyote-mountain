@@ -132,7 +132,7 @@ def truss_page():
     fig.text(0.02, 0.385, 'Alzado de dos crujías · Elevation of two bays', fontsize=11, weight='bold', color=INK)
     y = 0.86
     specs = [('Cerchas de acero cada 12 ft sobre los tubos pesados de 12 in de Andrés (12¾ in de diámetro) como postes, cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
-              'Steel trusses every 12 ft on Andrés' heavy 12 in tubes as posts (12¾ in outside diameter), each on its own footing: top chords to the ridge, bottom chord at the eave, verticals and diagonals.'),
+              'Steel trusses every 12 ft on Andrés’ heavy 12 in tubes as posts (12¾ in outside diameter), each on its own footing: top chords to the ridge, bottom chord at the eave, verticals and diagonals.'),
              ('Muro de piedra apilada de 5 ft en todo el perímetro y entre caballerizas. Un tubo negro flota 1 ft arriba del muro sobre postes cortos: 6 ft en total.',
               'Stacked rock wall 5 ft high all round and between the stalls. A black pipe floats 1 ft above it on short posts: 6 ft overall.'),
              ('Del tubo al alero, paneles de 3 ft de ancho con varas horizontales (tipo nido de pájaro) en marco de acero oscuro; cuatro paneles por crujía de 12 ft.',
