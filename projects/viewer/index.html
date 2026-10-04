@@ -97,9 +97,9 @@ body.shot{grid-template-columns:1fr}
       <label class="tog"><input type="checkbox" id="sPhoto" checked> Foto · Photo</label>
       <label class="tog"><input type="checkbox" id="sRoads" checked> Caminos · Roads</label>
       <label class="tog"><input type="checkbox" id="sWater" checked> Agua · Water</label>
-      <label class="tog"><input type="checkbox" id="sContours"> Curvas · Contours</label>
+      <label class="tog"><input type="checkbox" id="sContours" checked> Curvas · Contours</label>
       <label class="tog"><input type="checkbox" id="sFence" checked> Cercas · Fences</label>
-      <label class="tog"><input type="checkbox" id="sLabels" checked> Nombres · Labels</label>
+      <label class="tog"><input type="checkbox" id="sLabels"> Nombres · Labels</label>
     </div>
   </section>
 
@@ -354,6 +354,7 @@ body.shot{grid-template-columns:1fr}
   const vis = (list, on) => list.forEach(m => m.visible = on);
   const sw = { sContours: on => { if (contours) contours.visible = on; }, sRoof: on => vis(groups.roof, on), sTruss: on => vis(groups.truss, on), sPhoto: on => terrain.material = on ? photoMat : plain, sRoads: on => vis(roads, on), sWater: on => vis(water, on), sFence: on => vis(groups.fence, on), sLabels: on => labBox.hidden = !on };
   for (const id in sw) $(id).onchange = e => { sw[id](e.target.checked); draw(); };
+  for (const id in sw) sw[id]($(id).checked);                       // 4 Oct (Will): open with contours on, labels off; the boxes above are the truth
   addEventListener('keydown', e => { if (e.target.closest('input')) return; if (e.key === 'r' || e.key === 'R') { const c = $('sRoof'); c.checked = !c.checked; c.onchange({ target: c }); } if (e.key === 't' || e.key === 'T') { const c = $('sTruss'); c.checked = !c.checked; c.onchange({ target: c }); } });
   $('hour').oninput = e => setSun(+e.target.value);
 
