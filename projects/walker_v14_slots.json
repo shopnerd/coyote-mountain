@@ -186,12 +186,12 @@
   ],
   "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery3/b4-nw-google.png",
   "crop": [
-   0,
-   0,
-   1,
-   1
+   0.0251,
+   0.127,
+   0.9251,
+   1.0
   ],
-  "note": "4 Oct (Walker): replaces b7-plan-openai, which repeated the plan view page",
+  "note": "4 Oct (Walker): replaces b7-plan-openai, which repeated the plan view page · 4 Oct (Will): cropped so the block matches slot 2 in size",
   "paper": true
  },
  "6-0": {

@@ -135,8 +135,10 @@ body.shot{grid-template-columns:1fr}
       <tr><td>Lavado · monturas y alimento, lado del camino, muro macizo (paja o cob) <span class="en">Wash · tack and feed, road end, solid straw-bale or cob infill</span></td><td>12 × 14 ft c/u</td></tr>
       <tr><td>Puerta corrediza de madera del lavado <span class="en">Wash room sliding wooden door</span></td><td>7 × 9 ft · abertura 6 × 9</td></tr>
       <tr><td>Losa de concreto del lavado <span class="en">Wash pad, concrete</span></td><td>12 × 24 ft</td></tr>
+      <tr><td>Pérgola de tubo con parra sobre la losa <span class="en">Pipe trellis with grapes over the wash pad</span></td><td>12 × 24 ft · 10 ft alto</td></tr>
+      <tr><td>Amarres: argolla en la esquina, arco de tubo, cerca del corral <span class="en">Tie-ups: corner ring, bent-pipe hoop, run fence</span></td><td>arco 8 × 4.5 ft</td></tr>
       <tr><td>Bebedero de piedra en la losa <span class="en">Stone trough at the pad</span></td><td>14 × 3 ft</td></tr>
-      <tr><td>Bebedero de piedra en el hastial este, junto al sendero <span class="en">Stone trough at the east gable, by the path</span></td><td>20 × 3.5 ft</td></tr>
+      <tr><td>Bebedero de piedra por fuera de la cerca del corral noreste, canal norte <span class="en">Stone trough outside the north-east run fence, north gutter</span></td><td>32 × 3.5 ft</td></tr>
       <tr><td>Cisternas enterradas C1 · C2 <span class="en">Underground cisterns C1 · C2</span></td><td>40 · 30 m³</td></tr>
       <tr><td>Bebedero largo de piedra, 57 ft frente al hastial <span class="en">Long stone trough, 57 ft off the gable</span></td><td>44 × 3.5 ft</td></tr>
       <tr><td>Entrada bordeada de plantas nativas <span class="en">Entry drive lined with native planting</span></td><td>14 ft de ancho · 14 ft wide</td></tr>
@@ -324,15 +326,16 @@ body.shot{grid-template-columns:1fr}
   // views
   const st = centres['covered stalls'] || new THREE.Vector3(cx, 0, cz), sb = centres['walker barn 72x40'] || st, axis = new THREE.Vector3().subVectors(sb, st).setY(0).normalize();
   const g0 = (x, z) => new THREE.Vector3(x, hAt(x, z), z);
+  const PLAN_UP = [0, -1];   // 4 Oct (Will): plan snaps square to the page = the site grid's top up, as on every plan sheet in the pack (the old .01/.01 offset turned it 45 deg)
   const VIEWS = [
     ['Todo el sitio · Whole site', () => [new THREE.Vector3(cx + N[0] * 120 + E[0] * 260, 230, cz + N[1] * 120 + E[1] * 260), g0(cx, cz)]],
     ['Caballerizas · Stalls', () => [new THREE.Vector3(st.x - axis.x * 55 + axis.z * 30, st.y + 28, st.z - axis.z * 55 - axis.x * 30), st.clone().setY(st.y - 3)]],
     ['Establo · Stable', () => [new THREE.Vector3(sb.x + axis.x * 45 - axis.z * 35, sb.y + 22, sb.z + axis.z * 45 + axis.x * 35), sb.clone().setY(sb.y - 3)]],
     ['A la altura de los ojos · Eye level', () => { const e = new THREE.Vector3(st.x - axis.x * 38, 0, st.z - axis.z * 38); e.y = hAt(e.x, e.z) + 1.7; return [e, new THREE.Vector3(st.x + axis.x * 20, e.y, st.z + axis.z * 20)]; }],
-    ['Planta · Plan', () => [new THREE.Vector3(cx + .01, 520, cz + .01), g0(cx, cz)]],
+    ['Planta · Plan', () => [new THREE.Vector3(cx - .02 * PLAN_UP[0], 520, cz - .02 * PLAN_UP[1]), g0(cx, cz)]],   // screen-up = -(horizontal camera offset)
   ];
   let anim = null; const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function go(k) { const [p, t] = VIEWS[k][1](); if (reduce) { camera.position.copy(p); controls.target.copy(t); controls.update(); draw(); return; }
+  function go(k) { const [p, t] = VIEWS[k][1](); if (reduce || VIEWS[k][0].startsWith('Planta')) { /* 4 Oct: the plan view snaps; a fly-to into a straight-down camera rolls the whole plan on its last frame */ camera.position.copy(p); controls.target.copy(t); controls.update(); draw(); document.querySelectorAll('#views button:not(#moreBtn)').forEach((b, i) => b.setAttribute('aria-pressed', i === k)); return; }
     anim = { p0: camera.position.clone(), t0: controls.target.clone(), p, t, s: performance.now() }; document.querySelectorAll('#views button:not(#moreBtn)').forEach((b, i) => b.setAttribute('aria-pressed', i === k)); }
   VIEWS.forEach(([name], k) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = name; b.setAttribute('aria-pressed', 'false'); b.onclick = () => go(k); $('views').insertBefore(b, $('moreBtn')); });
 
@@ -389,6 +392,7 @@ body.shot{grid-template-columns:1fr}
       g += `<rect x="${ox - 3 * s}" y="${oy + 82 * s}" width="${3 * s}" height="${14 * s}" fill="var(--water)" fill-opacity=".5" stroke="currentColor" stroke-width=".8"/>`;   // 14 x 3 stone trough on the pad's west edge
       g += `<line x1="${ox + 9 * s}" y1="${oy + 82.6 * s}" x2="${ox + 16 * s}" y2="${oy + 82.6 * s}" stroke="#8a6a42" stroke-width="3"/>`;   // wooden sliding door, parked east of the wash opening
       g += T(12, 89, 'losa · pad 12×24', 'var(--muted)', 6) + T(12, 100, 'puerta corrediza · sliding door', 'var(--muted)', 5.6);
+      g += `<rect x="${ox + 73 * s}" y="${oy + 4 * s}" width="${3.5 * s}" height="${32 * s}" fill="var(--water)" fill-opacity=".5" stroke="currentColor" stroke-width=".8"/>`;   // 4 Oct: 32 x 3.5 east trough outside the NE run fence
       g += `<line x1="${ox + 24 * s}" y1="${oy + 122 * s}" x2="${ox + 72 * s}" y2="${oy + 122 * s}" stroke="#8a7d66" stroke-width="3"/>` + T(48, 127, 'muro bajo · low rock wall', 'var(--muted)', 7);
       g += T(48, 106, 'corrales · runs', 'currentColor', 7.5) + T(80, 4, 'N ↑', 'var(--muted)', 8);
       return `<svg viewBox="0 0 300 318" role="img" aria-label="Plano del establo · Stable plan" style="color:var(--ink)">${g}</svg>`; },

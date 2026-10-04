@@ -1,3 +1,5 @@
+import math
+from matplotlib.patches import Circle
 # Stable pages for the pack, 28 Sep 2026 design (exec'd by pack.py after its own helpers; replaces barn_plan() and the
 # pipe-portal structure pages). 72 x 42 ft on a 12 ft grid; wash room at the west corner, tack next to it; steel trusses
 # on 6 in pipe posts; 5 ft rock + pipe rail to 6 ft + 3 ft framed stake panels; open clerestory; tan dirt floor.
@@ -9,31 +11,37 @@ def barn_plan():
     ax = fig.add_axes([0.03, 0.1, 0.62, 0.76]); ax.set_aspect('equal'); ax.set_anchor('E'); ax.axis('off')   # 4 Oct: pushed right so the 3D-model caption clears the runs
     L, D, RUN, ST, AI = 72, 42, 40, 12, 14; HL, HD = L / 2, D / 2; RD = (D - AI) / 2; W5 = 1.5
     for k in range(6):                                       # north runs
-        x = -HL + ST * k; ax.add_patch(Rect((x, HD), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, HD + RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=6.5, color=MUTED)
+        x = -HL + ST * k; ax.add_patch(Rect((x, HD), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, HD + RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=7.5, color=MUTED)
     for k in range(4):                                       # south runs, east end
-        x = -HL + 24 + ST * k; ax.add_patch(Rect((x, -HD - RUN), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, -HD - RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=6.5, color=MUTED)
+        x = -HL + 24 + ST * k; ax.add_patch(Rect((x, -HD - RUN), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, -HD - RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=7.5, color=MUTED)
     ax.plot([-HL + 24, HL], [-HD - RUN, -HD - RUN], color='#8a7d66', lw=4, solid_capstyle='butt')
-    ax.add_patch(Rect((-HL, -HD - W5 / 2 - 12), 24, 12, fc=CONC2, ec=INK, lw=.8)); ax.text(-HL + 12, -HD - 7, 'losa de concreto\nconcrete pad 12 × 24', ha='center', va='center', fontsize=6.3)
-    ax.plot([-HL, HL, HL, -HL, -HL], [-HD - 2, -HD - 2, HD + 2, HD + 2, -HD - 2], color=MUTED, lw=.7, ls=(0, (4, 3)))
+    ax.add_patch(Rect((-HL, -HD - W5 / 2 - 12), 24, 12, fc=CONC2, ec=INK, lw=.8)); ax.text(-HL + 6, -HD - W5 / 2 - 7.5, 'losa · pad\n12 × 24', ha='center', va='center', fontsize=7)
+    ax.add_patch(Rect((-HL, -HD - W5 / 2 - 12), 24, 12, fill=False, ec=STEEL2, lw=1.1, ls=(0, (3, 2))))   # 4 Oct (Walker): pipe trellis with grapes over the whole pad
+    for _x in (-HL + .5, -HL + 12, -HL + 23.5): ax.add_patch(Circle((_x, -HD - W5 / 2 - 11.5), .35, fc=STEEL2, ec='none'))
+    ax.text(-HL + 12, -HD - W5 / 2 - 13.6, 'pérgola de tubo con parra · pipe trellis with grapes', ha='center', va='top', fontsize=6.5, color=STEEL2)
+    ax.plot([-HL + 12, -HL + 12], [-HD - W5 / 2 - 2, -HD - W5 / 2 - 10], color=STEEL2, lw=2.6, solid_capstyle='round')   # 4 Oct: M, the bent-pipe tie hoop
+    for _x, _y in ((-HL + .3, -HD - W5 / 2 - .5), (-HL + 12, -HD - W5 / 2 - 2), (-HL + 12, -HD - W5 / 2 - 10), (-HL + 23.7, -HD - W5 / 2 - .5), (-HL + 23.7, -HD - W5 / 2 - 10.6)):
+        ax.add_patch(Circle((_x, _y), .45, fc='white', ec=CLAY, lw=1.1, zorder=6))   # tie rings: W corner post, M hoop, E run fence
+    ax.text(-HL + 18, -HD - W5 / 2 - 7.5, 'amarres\ntie-ups', ha='center', va='center', fontsize=6.5, color=CLAY)
+    ax.plot([-HL - 2, HL + 2, HL + 2, -HL - 2, -HL - 2], [-HD - 2, -HD - 2, HD + 2, HD + 2, -HD - 2], color=MUTED, lw=.7, ls=(0, (4, 3)))   # 4 Oct: roof overhangs 2 ft on all four sides
     ax.add_patch(Rect((-HL, -HD), L, D, fc=STONE2, ec=INK, lw=2.2))
     ax.add_patch(Rect((-HL + W5, -HD + W5), L - 2 * W5, D - 2 * W5, fc=DIRT2, ec='none'))       # tan dirt floor
     for k in range(6):                                       # north stalls 1-6, rock partitions, pipe fronts + gates, open doorway to the run
-        x = -HL + ST * k; ax.add_patch(Rect((x + (W5 if k == 0 else 0), HD - RD), ST - (W5 if k in (0, 5) else 0), RD - W5, fc=DIRT2, ec=INK, lw=.6)); ax.text(x + 6, HD - RD / 2, f'{k + 1}\ncaballeriza\nstall', ha='center', va='center', fontsize=6.3)
+        x = -HL + ST * k; ax.add_patch(Rect((x + (W5 if k == 0 else 0), HD - RD), ST - (W5 if k in (0, 5) else 0), RD - W5, fc=DIRT2, ec=INK, lw=.6)); ax.text(x + 6, HD - RD / 2, f'{k + 1}\ncaballeriza\nstall', ha='center', va='center', fontsize=7)
         if k: ax.add_patch(Rect((x - .6, HD - RD), 1.2, RD - W5, fc=STONE2, ec=INK, lw=.5))
         ax.add_patch(Rect((x + 3, HD - .9), 6, 1.8, fc='white', ec='none')); ax.plot([x + 3.5, x + 8.5], [HD - RD, HD - RD], color=CLAY, lw=2.2)
     x = -HL
     for es, en, kind in (('lavado', 'wash', 'room'), ('monturas\ny alimento', 'tack / feed', 'room'), ('7\ncaballeriza', 'stall', 's'), ('8\ncaballeriza', 'stall', 's'), ('9\ncaballeriza', 'stall', 's'), ('10\ncaballeriza', 'stall', 's')):
         fc = CONC2 if kind == 'room' else DIRT2
-        ax.add_patch(Rect((x + (W5 if x == -HL else 0), -HD + W5), ST - (W5 if x in (-HL, HL - ST) else 0), RD - W5, fc=fc, ec=INK, lw=1.4 if kind == 'room' else .6)); ax.text(x + 6, -HD + RD / 2, f'{es}\n{en}', ha='center', va='center', fontsize=6.3)
+        ax.add_patch(Rect((x + (W5 if x == -HL else 0), -HD + W5), ST - (W5 if x in (-HL, HL - ST) else 0), RD - W5, fc=fc, ec=INK, lw=1.4 if kind == 'room' else .6)); ax.text(x + 6, -HD + RD / 2, f'{es}\n{en}', ha='center', va='center', fontsize=7)
         if x > -HL: ax.add_patch(Rect((x - .6, -HD + W5), 1.2, RD - W5, fc='#cbb393' if kind == 'room' or x == -HL + 24 else STONE2, ec=INK, lw=.5))
         if kind == 's': ax.add_patch(Rect((x + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.plot([x + 3.5, x + 8.5], [-HD + RD, -HD + RD], color=CLAY, lw=2.2)
         x += ST
-    ax.add_patch(Rect((-HL + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(-HL + 1, -HD - 3, 'puerta corrediza 7×9 · sliding door', ha='left', va='top', fontsize=5.5, color=CLAY); ax.add_patch(Rect((-HL + 9.3, -HD - 1.4), 7, .5, fc='#8a6a42', ec='none'))   # 3 Oct: wooden sliding door, parked east of the opening
+    ax.add_patch(Rect((-HL + 3, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(-HL + 12.8, -HD - 1.9, 'puerta corrediza · sliding door', ha='left', va='top', fontsize=6, color=CLAY); ax.add_patch(Rect((-HL + 9.3, -HD - 1.4), 7, .5, fc='#8a6a42', ec='none'))   # 3 Oct: wooden sliding door, parked east of the opening
     ax.add_patch(Rect((-HL - 3, -HD - 0.75 - 13.5), 3, 13.5, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((-HL - 2.4, -HD - 0.75 - 12.9), 1.8, 12.3, fc='#8fb3c7', ec='none'))   # 3 Oct: 14 x 3 ft stone trough on the pad's west edge
-    ax.text(-HL - 4.5, -HD - 0.75 - 6.75, 'bebedero · trough 14×3', ha='center', va='center', fontsize=5.5, color=CLAY, rotation=90)
-    ax.add_patch(Rect((HL + 30 - 1.75, -25), 3.5, 20, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((HL + 30 - 1.15, -24.4), 2.3, 18.8, fc='#8fb3c7', ec='none'))   # 4 Oct (Will, option B): east trough 20 x 3.5 at the gable where the path arrives
-    ax.text(HL + 26.6, -15, 'bebedero este · east trough 20×3.5', ha='center', va='center', fontsize=5.5, color=CLAY, rotation=90)
-    ax.text(HL + 31.8, -3.4, '← sendero · path', ha='right', va='bottom', fontsize=5.2, color=CLAY)
+    ax.text(-HL - 4.5, -HD - 0.75 - 6.75, 'bebedero · trough 14×3', ha='center', va='center', fontsize=6.5, color=CLAY, rotation=90)
+    ax.add_patch(Rect((HL + 1, HD + 4), 3.5, 32, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((HL + 1.6, HD + 4.6), 2.3, 30.8, fc='#8fb3c7', ec='none'))   # 4 Oct (Will, night): east trough 32 x 3.5 along the outside of the NE run fence, north gutter feeds it
+    ax.text(HL + 5.6, HD + 20, 'bebedero este · east trough 32×3.5', ha='center', va='center', fontsize=6.5, color=CLAY, rotation=90)
     ax.text(0, 0, 'pasillo · aisle 14 ft  (piso de tierra · dirt floor)', ha='center', va='center', fontsize=8.5, color=MUTED)
     for sx in (-1, 1):
         xg = sx * HL; ax.add_patch(Rect((xg - 1, -AI / 2), 2, AI, fc='white', ec='none'))
@@ -46,8 +54,9 @@ def barn_plan():
     ax.annotate('', xy=(HL + 8, -HD), xytext=(HL + 8, HD), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(HL + 10, 0, '42 ft\n(12.8 m)', va='center', fontsize=9)
     ax.annotate('', xy=(HL + 8, HD), xytext=(HL + 8, HD + RUN), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(HL + 10, HD + RUN / 2, '40 ft\ncorrales\nruns', va='center', fontsize=8)
     ax.text(12, -HD - RUN - 3, 'muro bajo de piedra · low rock wall', ha='center', va='top', fontsize=7, color=MUTED)
-    ax.text(-HL - 13, 0, 'camino\nroad →', ha='center', va='center', fontsize=7.5, color=MUTED); ax.text(-HL, HD + RUN + 11, 'N ↑   oeste (camino) ← · → este (estacionamiento)', fontsize=8.5, weight='bold')
-    ax.set_xlim(-57, 72); ax.set_ylim(-HD - RUN - 8, HD + RUN + 13)   # 4 Oct: room for the east trough
+    ax.text(-HL - 13, 0, 'camino\nroad →', ha='center', va='center', fontsize=7.5, color=MUTED); ax.text(-HL + 10, HD + RUN + 11, 'oeste (camino) ← · → este (estacionamiento)', fontsize=8.5, weight='bold')
+    _na = math.radians(24.16); ax.annotate('', xy=(-HL + 1 + 7 * math.sin(_na), HD + RUN + 8 + 7 * math.cos(_na)), xytext=(-HL + 1, HD + RUN + 8), arrowprops=dict(arrowstyle='-|>', lw=1.2, color=INK), annotation_clip=False); ax.text(-HL + 1 + 9.5 * math.sin(_na), HD + RUN + 8 + 9.5 * math.cos(_na), 'N', fontsize=9, weight='bold', ha='center', va='center')   # 4 Oct: true north leans 24 deg east of the stable's axis
+    ax.set_xlim(-57, 60); ax.set_ylim(-HD - RUN - 8, HD + RUN + 13)
     y = 0.85
     specs = [('Planta 72 × 42 ft sobre una retícula de 12 ft: 6 crujías, cerchas de acero cada 12 ft. Pasillo central de 14 ft abierto de punta a punta con una puerta corrediza grande en cada extremo; el camino llega directo a la puerta oeste.',
               '72 × 42 ft on a 12 ft grid: 6 bays, steel trusses every 12 ft. A 14 ft centre aisle open end to end with a big sliding door at each end; the road comes straight into the west door.'),
@@ -59,7 +68,7 @@ def barn_plan():
               'A 5 ft rock wall all round, a black pipe floating 1 ft above it (6 ft overall) and, up to the eave, 3 ft panels of horizontal sticks in dark steel frames.'),
              ('Alero a 12 ft, cumbrera a 17 ft. Techo metálico gris oscuro con una claraboya abierta de 48 × 10 ft sobre el pasillo (sin vidrio) para luz y ventilación.',
               'Eave 12 ft, ridge 17 ft. Dark grey metal roof with an open 48 × 10 ft clerestory over the aisle (no glass) for light and ventilation.')]
-    for es, en in specs: y = para(fig, 0.68, y, es, en, w=64, fs=7.3)
+    for es, en in specs: y = para(fig, 0.68, y, es, en, w=70, fs=8.5)   # 4 Oct: was 64 / 7.3
     fig.text(0.68, 0.1, 'Esquema preliminar a partir del diseño de Walker; no es plano de construcción.', fontsize=8, color=MUTED)
     fig.text(0.68, 0.085, 'Preliminary diagram from Walker’s design; not a construction drawing.', fontsize=8, color=MUTED, style='italic')
     tblock(fig, nxt(), 'Planos arquitectónicos', 'Architectural drawings'); PAGES.append(fig)
@@ -117,7 +126,7 @@ def truss_page():
               'Each stall opens to its run through an open 6 × 9 ft doorway with a steel lintel; toward the aisle, a black pipe front with a gate.'),
              ('Techo metálico gris oscuro, claraboya abierta de 48 × 10 ft, dos puertas corredizas de madera de 7½ × 11½ ft en cada extremo sobre riel de acero.',
               'Dark grey metal roof, an open 48 × 10 ft clerestory, two 7½ × 11½ ft wooden sliding doors at each end on a steel track.')]
-    for es, en in specs: y = para(fig, 0.52, y, es, en, w=74, fs=8.2)
-    fig.text(0.52, 0.12, 'Dimensiones de cerchas, postes y zapatas por el ingeniero estructural.', fontsize=8.5, color=CLAY)
-    fig.text(0.52, 0.105, 'Truss, post and footing sizes to be set by the structural engineer.', fontsize=8.5, color=CLAY, style='italic')
+    for es, en in specs: y = para(fig, 0.52, y, es, en, w=74, fs=10)   # 4 Oct: was 8.2
+    fig.text(0.52, 0.12, 'Dimensiones de cerchas, postes y zapatas por el ingeniero estructural.', fontsize=9.5, color=CLAY)
+    fig.text(0.52, 0.105, 'Truss, post and footing sizes to be set by the structural engineer.', fontsize=9.5, color=CLAY, style='italic')
     tblock(fig, nxt(), 'Estructura', 'Structure'); PAGES.append(fig)

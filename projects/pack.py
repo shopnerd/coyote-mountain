@@ -28,7 +28,7 @@ def tblock(fig,num,es,en,dark=False):
     fig.text(0.70,0.025,'Diseño preliminar · Preliminary design · oct 2026',fontsize=8.5,color=m)
     fig.text(0.98,0.022,f'{num:02d}',fontsize=18,weight='bold',color=CLAY,ha='right')
 def heading(fig,es,en,y=0.945):
-    fig.text(0.02,y,es,fontsize=24,weight='bold',color=INK); fig.text(0.02,y-0.033,en,fontsize=14,color=MUTED,style='italic')
+    fig.text(0.02,y,es,fontsize=30,weight='bold',color=INK); fig.text(0.02,y-0.036,en,fontsize=17,color=MUTED,style='italic')   # 4 Oct: was 24/14
 def para(fig,x,y,es,en,w=80,fs=10.5):
     for line in textwrap.wrap(es,w): fig.text(x,y,line,fontsize=fs,color=INK); y-=fs*0.0021
     y-=.004
@@ -59,12 +59,12 @@ def planview(n):
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
            ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),
            ('Caballerizas techadas','Covered stalls','8 caballerizas de 16 × 20 ft y la alfalfa bajo el mismo techo mariposa, que llena un bebedero redondo','8 stalls of 16 × 20 ft and the alfalfa under one butterfly roof that fills a round trough'),
-           ('Agua','Water','bajo natural abajo de la pista (confirmado en sitio), bebedero largo de piedra de 40 ft junto a la entrada del establo, bebedero redondo en las caballerizas, bebedero redondo existente','natural water sink below the track (confirmed on site), 40 ft stone trough beside the stable drive-in, round trough at the stalls, existing round watering station'),
+           ('Agua','Water','bajo natural abajo de la pista (confirmado en sitio), tres bebederos de piedra en el establo (largo de 44 ft en la entrada, 14 ft en la losa de lavado, 32 ft en la cerca del corral este), bebedero redondo en las caballerizas, bebedero redondo existente','natural water sink below the track (confirmed on site), three stone troughs at the stable (44 ft at the drive-in, 14 ft at the wash pad, 32 ft on the east run fence), round trough at the stalls, existing round watering station'),
            ('Estacionamiento','Parking','franja angosta al extremo este, 13 cajones a 60°','narrow strip at the far east corner, 13 stalls at 60°')]
     y=0.86
     for es,en,tes,ten in items:
-        fig.text(0.74,y,f'{es} · {en}',fontsize=10.5,weight='bold',color=INK); y-=.02
-        y=para(fig,0.74,y,tes,ten,w=52,fs=8.0)
+        fig.text(0.74,y,f'{es} · {en}',fontsize=11,weight='bold',color=INK); y-=.021
+        y=para(fig,0.74,y,tes,ten,w=60,fs=9.0)
     tblock(fig,nxt(),'Vista en planta','Plan view'); PAGES.append(fig)
 X,Y=np.meshgrid(np.arange(W),np.arange(H))
 LOOP=[s for s in S if s.get('shape') and not s.get('name') and len(s['pts'])==10 and abs(s['pts'][0][0]-26.6)<.3][0]
@@ -89,17 +89,17 @@ def existing():
     step=50/cf; spots=[(x,y) for x in np.arange(step/2,W-1,step) for y in np.arange(step/2,H-1,step)]
     for (x,y) in spots:
         if 1<x<W-2 and 1<y<H-2:
-            ax.plot(x,y,'+',color=CLAY,ms=4,mew=.8,zorder=7); ax.text(x+.5,y-.4,f'{samp(b,x,y):.1f}',fontsize=5.2,color=CLAY,zorder=7)
+            ax.plot(x,y,'+',color=CLAY,ms=4,mew=.8,zorder=7); ax.text(x+.5,y-.4,f'{samp(b,x,y):.1f}',fontsize=6.5,color=CLAY,zorder=7)
     north(ax,140,8); scalebar(ax,6,96)
     y=0.86
-    y=para(fig,0.78,y,'Terreno natural antes de cualquier movimiento de tierra. Curvas cada 1 pie, rotuladas cada 5 pies. Las cruces marcan la elevación del terreno cada 50 pies, en pies.','Natural ground before any earthwork. Contours every 1 ft, labelled every 5 ft. Crosses mark ground elevation every 50 ft, in feet.',w=40,fs=9.5)
-    y=para(fig,0.78,y,f'El sitio cae unos {b.max()-b.min():.0f} pies, de {b.max():.0f} ft junto al camino del cerro a {b.min():.0f} ft junto al viñedo (≈ 6 %).',f'The site falls about {b.max()-b.min():.0f} ft, from {b.max():.0f} ft by the scrub-side road to {b.min():.0f} ft by the vineyard (about 6%).',w=40,fs=9.5)
-    y=para(fig,0.78,y,'Fuente: datos públicos de elevación de 30 m; precisión vertical de varios pies. Un levantamiento con dron la mejoraría.','Source: 30 m public elevation data; vertical accuracy of several feet. A drone survey would sharpen it.',w=40,fs=9.5)
+    y=para(fig,0.78,y,'Terreno natural antes de cualquier movimiento de tierra. Curvas cada 1 pie, rotuladas cada 5 pies. Las cruces marcan la elevación del terreno cada 50 pies, en pies.','Natural ground before any earthwork. Contours every 1 ft, labelled every 5 ft. Crosses mark ground elevation every 50 ft, in feet.',w=40,fs=10.5)
+    y=para(fig,0.78,y,f'El sitio cae unos {b.max()-b.min():.0f} pies, de {b.max():.0f} ft junto al camino del cerro a {b.min():.0f} ft junto al viñedo (≈ 6 %).',f'The site falls about {b.max()-b.min():.0f} ft, from {b.max():.0f} ft by the scrub-side road to {b.min():.0f} ft by the vineyard (about 6%).',w=40,fs=10.5)
+    y=para(fig,0.78,y,'Fuente: datos públicos de elevación de 30 m; precisión vertical de varios pies. Un levantamiento con dron la mejoraría.','Source: 30 m public elevation data; vertical accuracy of several feet. A drone survey would sharpen it.',w=40,fs=10.5)
     items=[(INK,'-',.9,'Curva cada 5 ft · 5 ft contour'),('#8a8478','-',.4,'Curva cada 1 ft · 1 ft contour'),('#b9a784','-',6,'Caminos existentes · Existing roads'),(INK,(0,(7,2,1,2)),1.4,'Cerca del predio · Site fence')]
     ly=0.30
     for c,st,lw,t in items:
-        fig.add_artist(matplotlib.lines.Line2D([0.78,0.81],[ly,ly],color=c,lw=lw,ls=st)); fig.text(0.818,ly-.005,t,fontsize=8.5,color=INK); ly-=.025
-    fig.text(0.78,ly-.005,'+ 1082.4   Punto de elevación · Spot elevation (ft)',fontsize=8.5,color=CLAY)
+        fig.add_artist(matplotlib.lines.Line2D([0.78,0.81],[ly,ly],color=c,lw=lw,ls=st)); fig.text(0.818,ly-.005,t,fontsize=9.5,color=INK); ly-=.025
+    fig.text(0.78,ly-.005,'+ 1082.4   Punto de elevación · Spot elevation (ft)',fontsize=9.5,color=CLAY)
     tblock(fig,nxt(),'Topografía existente','Existing topography'); PAGES.append(fig)
 PADS=[('Establo · Barn','1087.6',(107.5,57.5),'1 %'),('Caballerizas · Stalls','1089.3',(84.6,64.8),'0.2 %'),('Bebedero redondo · Round trough','1089.1',(76.2,67.6),'0 %'),('Pista oval · Arena','1073.3',(89.4,38.4),'1 %'),('Corral redondo · Pen','1080.6',(86.4,53.1),'1 %'),('Estacionamiento · Parking','1102.4',(136,60.3),'5 %'),('Bebedero · Trough','1087.1',(100.3,59.8),'0 %')]
 def grading():
@@ -127,19 +127,19 @@ def grading():
         ax.text(x,y,f'{lev}',fontsize=8,weight='bold',color=INK,ha='center',va='center',zorder=12,bbox=dict(boxstyle='round,pad=.25',fc='#fffbe8',ec=INK,lw=.6))
     north(ax,140,8); scalebar(ax,6,96)
     y=0.86
-    y=para(fig,0.78,y,'Rasante terminada con todos los cambios. Curvas terminadas continuas; terreno existente punteado. Gris es corte, ocre es relleno.','Finished grade with every change. Finished contours solid, existing ground dashed. Grey is cut, ochre is fill.',w=40,fs=9.5)
+    y=para(fig,0.78,y,'Rasante terminada con todos los cambios. Curvas terminadas continuas; terreno existente punteado. Gris es corte, ocre es relleno.','Finished grade with every change. Finished contours solid, existing ground dashed. Grey is cut, ochre is fill.',w=40,fs=10.5)
     fig.text(0.78,y,'Plataformas · Pads (nivel terminado, ft)',fontsize=10,weight='bold',color=INK); y-=.024
     for lab,lev,xy,g in PADS:
-        fig.text(0.78,y,lab,fontsize=8.8,color=INK); fig.text(0.95,y,lev,fontsize=8.8,color=INK,weight='bold',ha='right'); fig.text(0.985,y,g,fontsize=8.8,color=MUTED,ha='right'); y-=.021
+        fig.text(0.78,y,lab,fontsize=9.5,color=INK); fig.text(0.95,y,lev,fontsize=9.5,color=INK,weight='bold',ha='right'); fig.text(0.985,y,g,fontsize=9.5,color=MUTED,ha='right'); y-=.021
     y-=.012
     fig.text(0.78,y,'Movimiento de tierra · Earthwork',fontsize=10,weight='bold',color=INK); y-=.024
-    fig.text(0.78,y,f'Corte · Cut   ≈ {cut:,.0f} yd³  ({cut*.7646:,.0f} m³)',fontsize=8.8,color=INK); y-=.02
-    fig.text(0.78,y,f'Relleno · Fill ≈ {fill:,.0f} yd³  ({fill*.7646:,.0f} m³)',fontsize=8.8,color=INK); y-=.028
-    y=para(fig,0.78,y,'Taludes 3:1 con bordes suaves. Volúmenes ±30–50 % sobre terreno de 30 m.','3:1 side slopes with soft edges. Volumes ±30–50% on 30 m terrain.',w=40,fs=8.8)
+    fig.text(0.78,y,f'Corte · Cut   ≈ {cut:,.0f} yd³  ({cut*.7646:,.0f} m³)',fontsize=9.5,color=INK); y-=.021
+    fig.text(0.78,y,f'Relleno · Fill ≈ {fill:,.0f} yd³  ({fill*.7646:,.0f} m³)',fontsize=9.5,color=INK); y-=.029
+    y=para(fig,0.78,y,'Taludes 3:1 con bordes suaves. Volúmenes ±30–50 % sobre terreno de 30 m.','3:1 side slopes with soft edges. Volumes ±30–50% on 30 m terrain.',w=40,fs=9.5)
     items=[(INK,'-',1.1,'Curva terminada · Finished contour'),('#9d978a',(0,(3,2)),.8,'Terreno existente · Existing ground'),(CLAY,'-',5,'Puerta · Gate'),(WATER,'-',5,'Agua · Water'),('#0b4f8a','--',2.2,'Zanja · Swale')]
     ly=0.235
     for c,st,lw,t in items:
-        fig.add_artist(matplotlib.lines.Line2D([0.78,0.81],[ly,ly],color=c,lw=lw,ls=st)); fig.text(0.818,ly-.005,t,fontsize=8.5,color=INK); ly-=.023
+        fig.add_artist(matplotlib.lines.Line2D([0.78,0.81],[ly,ly],color=c,lw=lw,ls=st)); fig.text(0.818,ly-.005,t,fontsize=9.5,color=INK); ly-=.023
     tblock(fig,nxt(),'Plan de terracería','Grading plan'); PAGES.append(fig)
 def sheet(fname,es,en):
     src=open(fname,encoding='utf-8').read().replace("exec(open('drain.py',encoding='utf-8').read())","")
@@ -173,7 +173,7 @@ def text_refs():
     y=0.85
     blocks=[('La idea','The idea','Un centro ecuestre sencillo y bien cuidado en el valle: un establo de piedra y varas bajo un techo oscuro con claraboya, 8 caballerizas techadas entre las palmas, gradas frente a la pista, una pista oval, un corral redondo y una pista de trote que aprovecha el camino existente. Todo acomodado a la pendiente natural, con el agua de lluvia guiada y guardada en lugar de dejarla correr.','A simple, well-kept equestrian centre in the valley: a stable of stone and sticks under a dark roof with a clerestory, 8 covered stalls among the palms, bleachers facing the arena, an oval arena, a round pen and a riding track that uses the existing road. Everything sits into the natural slope, and rainwater is guided and kept instead of left to run off.'),
             ('Materiales','Materials','Cerchas de acero cada 12 ft sobre postes de tubo de 6 in; piedra del lugar apilada hasta 5 ft con un tubo negro que flota arriba; hasta el alero, paneles de varas horizontales como nido de pájaro en marco de acero oscuro; lámina gris oscuro con claraboya abierta; cuartos de lavado y monturas en paca de paja o cob aplanado; cercas de tubo negro; piso de tierra y caminos de tierra compactada; arena rastrillada en pista y corral.','Steel trusses every 12 ft on 6 in pipe posts; local fieldstone stacked to 5 ft with a black pipe floating above; up to the eave, bird’s-nest panels of horizontal sticks in dark steel frames; dark grey sheet roof with an open clerestory; wash and tack rooms in straw bale or plastered cob; black pipe fences; dirt floor and compacted dirt roads; raked sand in the arena and round pen.'),
-            ('Agua','Water','El techo del establo alimenta el bebedero largo y el techo mariposa de las caballerizas llena un bebedero redondo; el agua del cerro se lleva por un canal empastado a un bajo natural abajo de la pista; el excedente sale al oeste.','The stable roof feeds the long trough and the stalls’ butterfly roof fills a round trough; hillside water runs down a grassed waterway to a natural low spot below the track; overflow leaves to the west.')]
+            ('Agua','Water','La mitad sur del techo del establo alimenta el bebedero largo y el de la losa, la mitad norte el bebedero de la cerca este, y el techo mariposa de las caballerizas llena un bebedero redondo; el agua del cerro se lleva por un canal empastado a un bajo natural abajo de la pista; el excedente sale al oeste.','The stable roof’s south half feeds the long trough and the pad trough, its north half the trough on the east run fence, and the stalls’ butterfly roof fills a round trough; hillside water runs down a grassed waterway to a natural low spot below the track; overflow leaves to the west.')]
     for tes,ten,bes,ben in blocks:
         fig.text(0.02,y,f'{tes} · {ten}',fontsize=13,weight='bold',color=INK); y-=.028
         y=para(fig,0.02,y,bes,ben,w=78,fs=10)
@@ -291,6 +291,7 @@ exec(open('structure_pages.py',encoding='utf-8').read())
 exec(open('stalls_page.py',encoding='utf-8').read())
 exec(open('stable_pages_0928.py',encoding='utf-8').read())   # 28 Sep stable: plan + truss structure page
 exec(open('walker_pages.py',encoding='utf-8').read())    # 3 Oct: Walker's v14 photo pages (Giant Nature), photos at native resolution
+plt.rcParams['font.family'] = ['Plus Jakarta Sans', 'DejaVu Sans']   # 4 Oct: one typeface across the pack (drawings were DejaVu); DejaVu only fills missing glyphs
 FIN=DL+'/2026-09-28 finalists/'
 w_cover()
 w_renders(2,[(1,'Alzado oeste: la entrada, el bebedero y las plantas','West elevation: the entry drive, trough and planting'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
@@ -316,13 +317,13 @@ w_inspirations()
 existing()
 grading()
 operator_sheet()
+sheet('sheet2.py','Cortes de terracería','Grading sections')   # 4 Oct (Will): sections right under the operator sheet
 sheet('sheet1.py','Plan de drenaje','Drainage plan')
-sheet('sheet2.py','Cortes de terracería','Grading sections')
 sheet('irrigation.py','Plan de riego y agua','Irrigation and water plan')
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={0:[('Caballerizas del establo: 12 × 14 ft con corrales de 12 × 40 ft (acordado 4 oct). Alfalfa: dos bodegas de 24 × 12 ft; se descarga desde el camino por las rejas de los extremos, el camión no entra al pasillo.','Stable stalls: 12 × 14 ft with 12 × 40 ft runs (agreed 4 Oct). Alfalfa: two 24 × 12 ft bays; unloads from the main road through the end gates, the truck stays out of the aisle.')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v29.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v30.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 with PdfPages(tmp) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)

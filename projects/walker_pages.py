@@ -42,7 +42,7 @@ def slot(fig, key):
 def label(fig, r, es, en, num=None, size=12.5, credit=None):
     x0, y0, x1, y1 = r; t = f'{num}  {es}' if num else es
     wtext(fig, x0 + 2, y1 + 36, t, size, 700); wtext(fig, x0 + 2, y1 + 66, en, size - 2, 400, 'italic', MUTEDW)
-    if credit: wtext(fig, x1, y1 + 66, credit, 7.5, color=MUTEDW, ha='right')
+    if credit: wtext(fig, x1, y1 + 66, credit, 8.5, color=MUTEDW, ha='right')
 def section(fig, y_top, text, x0=80, x1=2470):
     wtext(fig, x0 + 2, y_top - 36, text, 14.5, 700); wrule(fig, x0, x1, y_top - 8)
 
@@ -57,11 +57,11 @@ def w_cover():
     wrule(fig, 134, 976, 1342)
     wtext(fig, 134, 1396, 'DISEÑO · DESIGN', 9, 700, color=TANW)
     wtext(fig, 134, 1470, 'G I A N T   N A T U R E', 22, 700, color=GREEN)
-    wtext(fig, 134, 1532, 'Diseño preliminar · Preliminary design   ·   octubre 2026 · October 2026', 10, color=MUTEDW)
+    wtext(fig, 134, 1532, 'Diseño preliminar · Preliminary design   ·   octubre 2026 · October 2026', 11.5, color=MUTEDW)
     num[0] += 1; PAGES.append(fig)
 def w_renders(page, items):
     fig = wpage(); wtitle(fig, 'Vistas arquitectónicas', 'Architectural renders')
-    for k, (n, es, en) in enumerate(items): label(fig, slot(fig, f'{page}-{k}'), es, en, n)
+    for k, (n, es, en) in enumerate(items): label(fig, slot(fig, f'{page}-{k}'), es, en, n, size=13.5)   # 4 Oct: captions up a step on the 2 x 2 pages
     wfoot(fig, nxt(), 'Vistas arquitectónicas', 'Architectural renders'); PAGES.append(fig)
 def w_site():
     fig = wpage(); wtitle(fig, 'Vistas del sitio', 'Site views')
@@ -70,7 +70,7 @@ def w_site():
                                      (3, 'La maqueta del sitio, desde el noroeste', 'The site model, from the north-west')]):
         label(fig, slot(fig, f'4-{k}'), es, en, n)
     wfoot(fig, nxt(), 'Vistas del sitio', 'Site views'); PAGES.append(fig)
-def wpara(fig, x, y, es, en, w=74, size=9.8, lead=26):
+def wpara(fig, x, y, es, en, w=68, size=10.5, lead=28):   # 4 Oct: was 74 / 9.8 / 26
     for line in textwrap.wrap(es, w): wtext(fig, x, y, line, size); y += lead
     y += 8
     for line in textwrap.wrap(en, w): wtext(fig, x, y, line, size, style='italic', color=MUTEDW); y += lead
@@ -83,8 +83,8 @@ def w_text_refs():
              'Cerchas de acero cada 12 ft sobre postes de tubo; piedra del lugar hasta 5 ft con un tubo negro arriba; paneles de varas horizontales en marco de acero oscuro; lámina gris oscuro con claraboya abierta; lavado y monturas en paca de paja o cob aplanado; cercas de tubo negro; piso de tierra.',
              'Steel trusses every 12 ft on pipe posts; local stone to 5 ft with a black pipe above; panels of horizontal sticks in dark steel frames; dark grey sheet roof with an open clerestory; wash and tack rooms in straw bale or plastered cob; black pipe fences; dirt floors.'),
             ('Agua · Water',
-             'El techo del establo alimenta el bebedero largo y el techo mariposa llena un bebedero redondo; el agua del cerro baja por un canal empastado a un bajo natural abajo de la pista; el excedente sale al oeste.',
-             'The stable roof feeds the long trough and the butterfly roof fills a round trough; hillside water runs down a grassed waterway to a natural low spot below the track; overflow leaves to the west.')]
+             'La mitad sur del techo del establo alimenta el bebedero largo y el de la losa, la mitad norte el bebedero de la cerca este; el techo mariposa llena un bebedero redondo; el agua del cerro baja por un canal empastado a un bajo natural abajo de la pista; el excedente sale al oeste.',
+             'The stable roof’s south half feeds the long trough and the pad trough, its north half the trough on the east run fence; the butterfly roof fills a round trough; hillside water runs down a grassed waterway to a natural low spot below the track; overflow leaves to the west.')]
     for x, (h, es, en) in zip((82, 900, 1717), cols):
         wtext(fig, x, 262, h, 14, 700); wpara(fig, x, 300, es, en)
     section(fig, 668, 'Piedra · Stone')

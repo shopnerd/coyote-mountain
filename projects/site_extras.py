@@ -110,12 +110,33 @@ for fn in FILES:
     if tpl:
         rp = dict(tpl[0]); rp.update(name='stable roof water to the long trough (buried pipe)', pts=[[*b2grid(-37.0, -22.0), .5], [*b2grid(*(B - u * 2)), .5]])
         d['strokes'].append(rp)
+    # ---- 4 Oct (Will, night): the path from the parking meanders gently through the pines and arrives ON AXIS at the east gable's
+    # big doors, so you are brought to the view straight down the aisle. A smooth Hermite curve from the parking end to a point 30 ft
+    # off the gable, with a soft double bend (zero offset and zero slope at both ends), then straight on the centre line. 5 ft wide.
+    # The pines below keep 8 ft clear of it, so a tree in the way moves. ----
+    wp_ = [q for q in d['strokes'] if q.get('name') == 'walking path, parking to barn']
+    if wp_:
+        p0x, p0y = grid2b(*wp_[0]['pts'][0][:2])                      # keep the parking end where it was
+        ax_, ay_ = 36.0 + 2.0 + 30.0, 0.0                              # onto the axis 30 ft before the doors (gable x = 36, overhang 2)
+        ex_, ey_ = 36.0 + 2.5, 0.0                                     # ends at the doors, just past the overhang
+        L_ = math.hypot(ax_ - p0x, ay_ - p0y); m0 = ((ax_ - p0x) * .9, (ay_ - p0y) * .9); m1 = (-L_ * .9, 0.0)
+        nx_, ny_ = -(ay_ - p0y) / L_, (ax_ - p0x) / L_
+        WALK_NEW = []
+        for k in range(41):
+            t = k / 40; h00 = 2*t**3 - 3*t**2 + 1; h10 = t**3 - 2*t**2 + t; h01 = -2*t**3 + 3*t**2; h11 = t**3 - t**2
+            x = h00 * p0x + h10 * m0[0] + h01 * ax_ + h11 * m1[0]; y = h00 * p0y + h10 * m0[1] + h01 * ay_ + h11 * m1[1]
+            off = 7.0 * math.sin(2 * math.pi * t) * math.sin(math.pi * t)          # the meander: two gentle bends, dead flat at both ends
+            WALK_NEW.append((x + nx_ * off, y + ny_ * off))
+        for k in range(1, 11): WALK_NEW.append((ax_ + (ex_ - ax_) * k / 10, 0.0))   # the straight run to the doors
+        wp_[0]['pts'] = [[round(v, 3) for v in b2grid(x, y)] + [.5] for x, y in WALK_NEW]; wp_[0]['c'] = [round(v, 3) for v in b2grid(*WALK_NEW[0])]
+        print(fn, ': walking path re-routed,', len(WALK_NEW), 'pts, parking end (%.0f, %.0f) ft -> doors (%.1f, %.1f)' % (p0x, p0y, ex_, ey_))
+    else: WALK_NEW = None
     # ---- the pine grove between the parking and the stable (Will, 28 Sep: a small outcrop of modest, round-crowned pines),
     # placed where the aerial photo shows dark tree cover, clear of the walking path ----
     from PIL import Image
     AER = np.array(Image.open(os.path.join(HERE, 'viewer', 'aerial-src.jpg')).convert('RGB')).astype(int)
     sx, sy = AER.shape[1] / (W - 1), AER.shape[0] / (H - 1)
-    WALK = [(140, 43), (125, 37), (121, 34), (118, 31), (111, 28), (104, 25), (96, 22), (89, 19), (81, 17), (72, 16), (68, 16), (64, 15), (47, 13)]
+    WALK = WALK_NEW or [(140, 43), (125, 37), (121, 34), (118, 31), (111, 28), (104, 25), (96, 22), (89, 19), (81, 17), (72, 16), (68, 16), (64, 15), (47, 13)]   # 4 Oct: the re-routed path above
     def near_walk(x, y): return min(math.hypot(x - a, y - b) for a, b in WALK) < 8
     rnd = random.Random(11); trees = []
     for _ in range(3000):
@@ -158,22 +179,25 @@ for fn in FILES:
     m.box(x0, x1, y0, y0 + WT2, lip, top, 'rock'); m.box(x0, x1, y1 - WT2, y1, lip, top, 'rock')   # end walls
     wl = fz + 1.65 * FT; m.face([(x0 + WT2, y0 + WT2, wl), (x1 - WT2, y0 + WT2, wl), (x1 - WT2, y1 - WT2, wl), (x0 + WT2, y1 - WT2, wl)], 'water')
     d['strokes'].append(stroke(m, 'wash pad trough', 'wash-pad-trough.obj', z, 'fieldstone trough 14 x 3 ft along the west edge of the wash pad, out from the SW corner, rim 2 ft (Will, 3 Oct)'))
-    # ---- 4 Oct (Will, option B): a third stone trough at the EAST gable, where the path from the parking arrives: parallel to the
-    # gable 30 ft out, on the south side of the path (y -5 .. -25), 20 x 3.5 ft, rim 2 ft above a small level apron; fed by the east
-    # downspouts (irrigation sheet D-3). The ground there is ~4 ft above the pad, so it sits on its own level. ----
-    ex0, ex1, ey0, ey1 = 36.0 + 30.0 - 1.75, 36.0 + 30.0 + 1.75, -25.0, -5.0
+    # ---- 4 Oct (Will, revised that night: red lines on the plan shot): a third stone trough ALONG THE EAST RUN FENCE, just outside
+    # the north-east run's east fence (x = 36), 32 x 3.5 ft, from 4 ft past the wall line out along the run; the horse in that run
+    # drinks through the rails, arrivals from the parking drink from the outside. Fed by the NORTH gutter's east downspout; the
+    # south gutter feeds the west troughs (irrigation sheet D-3). Rim 2 ft above a small level apron on the OUTSIDE only. ----
+    ex0, ex1, ey0, ey1 = 36.0 + 1.0, 36.0 + 1.0 + 3.5, 21.0 + 4.0, 21.0 + 36.0
     ecx, ecy = (ex0 + ex1) / 2, (ey0 + ey1) / 2; efz = ground(z, *m2grid(*b2m(ecx, ecy)))
     for j_ in range(H):
         for i_ in range(W):
-            bx, by = grid2b(i_, j_); o = math.hypot(max(ex0 - 4 - bx, 0, bx - ex1 - 4), max(ey0 - 4 - by, 0, by - ey1 - 4))
-            if o < 8: f = o / 8; z[j_, i_] = efz * (1 - f) + z[j_, i_] * f
+            bx, by = grid2b(i_, j_)
+            if bx < 36.0 + .3: continue                                                                     # never touch the graded run inside the fence
+            o = math.hypot(max(ex0 - .3 - bx, 0, bx - ex1 - 4), max(ey0 - 3 - by, 0, by - ey1 - 3))
+            if o < 6: f = o / 6; z[j_, i_] = efz * (1 - f) + z[j_, i_] * f
     d['z'] = [round(float(q), 3) for q in z.flatten()]
     m = Mesh(); top = efz + 2.0 * FT; lip = efz + .4 * FT
     m.box(ex0, ex1, ey0, ey1, efz - .3, lip, 'rock')
     m.box(ex0, ex0 + WT2, ey0, ey1, lip, top, 'rock'); m.box(ex1 - WT2, ex1, ey0, ey1, lip, top, 'rock')
     m.box(ex0, ex1, ey0, ey0 + WT2, lip, top, 'rock'); m.box(ex0, ex1, ey1 - WT2, ey1, lip, top, 'rock')
     wl = efz + 1.65 * FT; m.face([(ex0 + WT2, ey0 + WT2, wl), (ex1 - WT2, ey0 + WT2, wl), (ex1 - WT2, ey1 - WT2, wl), (ex0 + WT2, ey1 - WT2, wl)], 'water')
-    d['strokes'].append(stroke(m, 'east trough', 'east-trough.obj', z, 'fieldstone trough 20 x 3.5 ft at the east gable, 30 ft out, south of the path from the parking, rim 2 ft (Will, 4 Oct, option B)'))
+    d['strokes'].append(stroke(m, 'east trough', 'east-trough.obj', z, 'fieldstone trough 32 x 3.5 ft along the outside of the north-east run fence, 4 ft off the wall line, rim 2 ft, fed by the north gutter (Will, 4 Oct night)'))
     # ---- the covered stalls' pad (3 Oct: the building grew 8 ft for the through-hallway alfalfa bay): level the ground under its
     # footprint (+3 ft) to its floor, easing back to natural over 8 ft ----
     cvl = [q for q in d['strokes'] if q.get('name') == 'covered stalls']

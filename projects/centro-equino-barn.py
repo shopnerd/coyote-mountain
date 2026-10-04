@@ -294,6 +294,46 @@ for s_ in (1, -1):
 mat('concrete')
 wr = [r for r in rooms if r['kind'] == 'wash'][0]
 box(-HL, -HL + 24, -HD - ROCK_T / 2 - 12, -HD - ROCK_T / 2, 0.0, 0.35)          # along the two rooms, clear of the first run; the wash door opens onto it
+# ---- 4 Oct (Walker, via Will): a pipe trellis over the whole wash pad with grapes on it, like the ranch's other arbours. Steel pipe
+# like the buildings: 4 in posts at the pad's south edge, a 3 in beam there and a 3 in ledger on the wall posts, 2 in cross pipes every
+# 3 ft, three wires; the vine as a loose leaf canopy. Deck at 10.3 ft clears the sliding door's track (9.9 ft); the eave is 12. ----
+import random as _rnd
+TR_H = 10.3
+py0, py1 = -HD - ROCK_T / 2 - 12, -HD - ROCK_T / 2
+mat('steel')
+for x in (-HL + .5, -HL + 12, -HL + 24 - .5): bar((x, py0 + .5, 0), (x, py0 + .5, TR_H), 4.5 / 12, 10)          # posts
+bar((-HL, py0 + .5, TR_H), (-HL + 24, py0 + .5, TR_H), 3.5 / 12, 10)                                              # south beam
+bar((-HL, py1 - .3, TR_H), (-HL + 24, py1 - .3, TR_H), 3.5 / 12, 10)                                              # ledger on the wall posts
+for k in range(9): xx = -HL + 24 * k / 8; bar((xx, py0 + .5, TR_H + .22), (xx, py1 - .3, TR_H + .22), 2.0 / 12, 8)   # cross pipes
+for k in range(1, 4): yy = py0 + .5 + (py1 - .8 - py0) * k / 4; bar((-HL, yy, TR_H + .4), (-HL + 24, yy, TR_H + .4), .6 / 12, 6)   # wires
+mat('sage'); _rv = _rnd.Random(5)
+for _ in range(80):                                                                                                 # the grapevine canopy
+    xx = _rv.uniform(-HL + .4, -HL + 23.6); yy = _rv.uniform(py0 + .9, py1 - .5); rr = _rv.uniform(.9, 1.7)
+    box(xx - rr, xx + rr, yy - rr * .75, yy + rr * .75, TR_H + .4, TR_H + .4 + _rv.uniform(.5, 1.2))
+# ---- tie-ups on the wash pad (Will approved sketch v2, 4 Oct night). The sliding door parks east of the opening, so nothing ties to
+# the wall there: W one ring on the SW corner post (head at the corner, tail to the trough, nothing at the tail end), M a 3 in pipe
+# hoop bent like a big upside-down C on the pad's centre line, 2 ft off the wall so the door passes behind, E rings on run 1's fence ----
+def tie_ring(cx, cy, cz, face):                          # a 5 in steel ring standing off a post, its plane facing `face` ('x' or 'y')
+    mat('steel'); n_ = 10; rr_ = 5 / 24
+    for k in range(n_):
+        a0, a1 = 2 * math.pi * k / n_, 2 * math.pi * (k + 1) / n_
+        if face == 'y': p0, p1 = (cx + rr_ * math.cos(a0), cy, cz + rr_ * math.sin(a0)), (cx + rr_ * math.cos(a1), cy, cz + rr_ * math.sin(a1))
+        else: p0, p1 = (cx, cy + rr_ * math.cos(a0), cz + rr_ * math.sin(a0)), (cx, cy + rr_ * math.cos(a1), cz + rr_ * math.sin(a1))
+        bar(p0, p1, .05, 5)
+WALL_O = -HD - ROCK_T / 2                                # outside face of the south wall
+tie_ring(-HL + .15, WALL_O - .35, 6.0, 'y')              # W: corner post, 6 ft
+mat('steel'); HY0, HY1, HH, HB = WALL_O - 2.0, WALL_O - 10.0, 4.5, 1.0     # M: hoop on x = -24, from 2 ft to 10 ft off the wall
+HX = -HL + 12
+bar((HX, HY0, -.2), (HX, HY0, HH - HB), 3.5 / 12, 10); bar((HX, HY1, -.2), (HX, HY1, HH - HB), 3.5 / 12, 10)
+for k in range(4):                                       # the two 12 in bends, four pieces each
+    a0, a1 = math.pi / 2 * k / 4, math.pi / 2 * (k + 1) / 4
+    bar((HX, HY0 - HB + HB * math.cos(a0), HH - HB + HB * math.sin(a0)), (HX, HY0 - HB + HB * math.cos(a1), HH - HB + HB * math.sin(a1)), 3.5 / 12, 10)
+    bar((HX, HY1 + HB - HB * math.cos(a0), HH - HB + HB * math.sin(a0)), (HX, HY1 + HB - HB * math.cos(a1), HH - HB + HB * math.sin(a1)), 3.5 / 12, 10)
+bar((HX, HY0 - HB, HH), (HX, HY1 + HB, HH), 3.5 / 12, 10)
+for yy_, zz_ in ((HY0, 3.5), (HY1, 3.5), ((HY0 + HY1) / 2, HH - .35)):
+    for sx_ in (-1, 1): tie_ring(HX + sx_ * .3, yy_, zz_, 'x')
+for yy_ in (WALL_O - .25, WALL_O - (RUN_D - ROCK_T / 2) / 4):   # E: the first two posts of run 1's west fence (x = -12), 5 ft, facing the pad
+    tie_ring(-HL + 24 - .35, yy_, 5.0, 'x')
 
 # ---- tan dirt floor over the whole stable inside the walls (Will, 28 Sep); the rooms get concrete on top of it ----
 mat('dirt'); box(-HL + ROCK_T / 2, HL - ROCK_T / 2, -HD + ROCK_T / 2, HD - ROCK_T / 2, 0.0, 0.12)

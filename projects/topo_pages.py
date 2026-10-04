@@ -85,7 +85,7 @@ def operator_sheet():
     fig.text(0.745, 0.845, 'PRIMERO: TRAZAR · STAKE FIRST', fontsize=11, weight='bold', color=CLAY)
     y = 0.822
     y = para(fig, 0.745, y, 'Las elevaciones salen de mapas públicos de terreno de 30 m y NO son exactas (pueden variar varios pies). Antes de mover tierra: estacar, tender hilo y banderear cada esquina de plataforma, eje de camino, zanja y el bajo natural; poner un banco de nivel fijo; medir el terreno real en cada estaca con nivel láser y ajustar corte y relleno.',
-             'Elevations come from 30 m public terrain maps and are NOT exact (they can be off by several feet). Before any earthwork: stake, string and flag every pad corner, road centreline, swale and the water sink; set a fixed benchmark; measure the real ground at every stake with a laser level and adjust cut and fill.', w=52, fs=7.9)
+             'Elevations come from 30 m public terrain maps and are NOT exact (they can be off by several feet). Before any earthwork: stake, string and flag every pad corner, road centreline, swale and the water sink; set a fixed benchmark; measure the real ground at every stake with a laser level and adjust cut and fill.', w=60, fs=8.5)
     y = 0.57
     fig.text(0.745, y, 'Cómo leer · How to read', fontsize=10, weight='bold', color=INK); y -= .025
     rows = [('#9a3a1a', 'C 2.3', 'corte de 2.3 ft · cut 2.3 ft'), ('#1f5f9a', 'F 1.1', 'relleno de 1.1 ft · fill 1.1 ft'),
@@ -94,9 +94,9 @@ def operator_sheet():
         fig.text(0.745, y, a, fontsize=8.5, color=c, weight='bold'); fig.text(0.80, y, t, fontsize=8, color=INK); y -= .021
     y -= .01
     y = para(fig, 0.745, y, f'Cuadrícula de estacas cada 50 ft (columnas A–{chr(64+len(xs))}, filas 1–{len(ys)}). {n} estacas marcadas donde el corte o relleno pasa de 0.3 ft.',
-             f'Stake grid every 50 ft (columns A–{chr(64+len(xs))}, rows 1–{len(ys)}). {n} stakes marked where cut or fill exceeds 0.3 ft.', w=52, fs=7.9)
+             f'Stake grid every 50 ft (columns A–{chr(64+len(xs))}, rows 1–{len(ys)}). {n} stakes marked where cut or fill exceeds 0.3 ft.', w=58, fs=9.0)
     y = para(fig, 0.745, y, 'Revisar: los caminos junto al establo se nivelaron después de las plataformas y bajan sus bordes; confirmar en campo el nivel de cada plataforma y el pasillo de las caballerizas.',
-             'Check: the roads beside the barn were graded after the pads and drop their edges; confirm each pad level and the stall corridor on site.', w=52, fs=7.9)
+             'Check: the roads beside the barn were graded after the pads and drop their edges; confirm each pad level and the stall corridor on site.', w=58, fs=9.0)
     y = para(fig, 0.745, y, 'Curvas continuas: rasante terminada cada 1 ft. Punteadas: terreno existente. Taludes 3:1 con bordes suaves. Descapotar y guardar la tierra vegetal antes de rellenar.',
-             'Solid contours: finished grade every 1 ft. Dashed: existing ground. 3:1 side slopes with soft edges. Strip and stockpile topsoil before filling.', w=52, fs=7.9)
+             'Solid contours: finished grade every 1 ft. Dashed: existing ground. 3:1 side slopes with soft edges. Strip and stockpile topsoil before filling.', w=58, fs=9.0)
     tblock(fig, nxt(), 'Plano para el operador', 'Operator grading sheet'); PAGES.append(fig)

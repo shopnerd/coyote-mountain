@@ -33,16 +33,16 @@ for k,(s,es,en,a,bb) in enumerate(SECS):
     if k==0: ax.legend(loc='lower right',fontsize=8,frameon=False)
     ax.set_xlabel('pies desde '+s+' · ft from '+s,fontsize=8)
 notes=[('A','Corte por las caballerizas techadas y la bodega de alfalfa: desde el 3 oct la plataforma queda a nivel (≈1,089.3 ft) bajo todo el edificio; hasta ≈6 ft de corte del lado alto y ≈5 ft de relleno del lado bajo.','Through the covered stalls and the alfalfa bay: since 3 Oct the pad is level (about 1,089.3 ft) under the whole building; up to about 6 ft of cut on the uphill side and 5 ft of fill downhill.'),
-       ('B','El establo queda en plataforma con 1 % de caída; su techo alimenta el bebedero largo de piedra.','The barn sits on a pad falling 1%; its roof feeds the long stone trough.'),
+       ('B','El establo queda en plataforma con 1 % de caída; su techo alimenta los bebederos de piedra.','The barn sits on a pad falling 1%; its roof feeds the stone troughs.'),
        ('C','La pista oval y el corral redondo quedan casi a nivel (cortes y rellenos menores a 2.5 ft); al final el corte sube al relleno de la plataforma de las caballerizas, hasta ≈6 ft.','The arena and round pen sit nearly level (cut and fill under 2.5 ft); at the far end the section climbs onto the covered stalls’ pad fill, up to about 6 ft.')]
 y=0.54
 for s,es,en in notes:
     fig.text(0.70,y,s,fontsize=11,weight='bold',color='#b5602e')
     ly=y
-    for line in textwrap.wrap(es,52): fig.text(0.715,ly,line,fontsize=8.4,color=INK); ly-=.017
-    for line in textwrap.wrap(en,52): fig.text(0.715,ly,line,fontsize=8.4,color='#6a655a',style='italic'); ly-=.017
+    for line in textwrap.wrap(es,56): fig.text(0.715,ly,line,fontsize=9.5,color=INK); ly-=.0192
+    for line in textwrap.wrap(en,56): fig.text(0.715,ly,line,fontsize=9.5,color='#6a655a',style='italic'); ly-=.0192
     y=ly-.02
-fig.text(0.70,0.2,'Bordes suaves en todos los taludes, pendiente 3:1.',fontsize=8.4,color=INK)
-fig.text(0.70,0.183,'Soft edges on every bank, 3:1 side slopes.',fontsize=8.4,color='#6a655a',style='italic')
+fig.text(0.70,y,'Bordes suaves en todos los taludes, pendiente 3:1.',fontsize=9.5,color=INK)
+fig.text(0.70,y-.0192,'Soft edges on every bank, 3:1 side slopes.',fontsize=9.5,color='#6a655a',style='italic')
 fig.text(0.02,0.03,'31.9999 N, 116.7641 W · Hoja / Sheet D-2 · 26 sep 2026 · Terreno de 30 m, ±30–50 % · 30 m terrain, volumes ±30–50% · Diseño preliminar · Preliminary design',fontsize=8,color='#6a655a')
 if not globals().get('PACK'): fig.savefig('D2-sections.png',dpi=170); print('ok')
