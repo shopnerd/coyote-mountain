@@ -300,6 +300,7 @@ _fig=PAGES[-1]; _ax=_fig.add_axes([0.03,0.115,0.05,0.077]); _ax.imshow(np.asarra
 _fig.text(0.085,0.168,'Modelo 3D del establo · 3D model of the stable',fontsize=10,weight='bold',color=INK)
 _fig.text(0.085,0.150,'Gírelo y explórelo en línea · Turn it and explore it online',fontsize=8.5,color=MUTED)
 _fig.text(0.085,0.133,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
+truss_page()
 w_renders(3,[(5,'Sobre las caballerizas techadas','Over the covered stalls'),(6,'Bajo el techo mariposa','Under the butterfly roof'),
              (7,'El bebedero redondo y el techo mariposa, desde el oeste','The round trough and the butterfly roof, from the west'),(8,'Desde el cerro: las caballerizas y el establo','From the hill: the covered stalls and the stable')])
 stalls_page()
@@ -310,7 +311,6 @@ planview(FIN+'00-plan.png')
 w_text_refs()
 w_site_materials()
 w_inspirations()
-truss_page()
 existing()
 grading()
 operator_sheet()
@@ -319,7 +319,7 @@ sheet('sheet2.py','Cortes de terracería','Grading sections')
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={1:[('Caballerizas del establo: en la v14 Walker puso 12 × 12 ft con corrales de 12 × 30 ft; el modelo y estos planos siguen con 12 × 14 ft y corrales de 12 × 40 ft. ¿Cuál queda?','Stable stalls: in v14 Walker wrote 12 × 12 ft with 12 × 30 ft runs; the model and these drawings still have 12 × 14 ft and 12 × 40 ft runs. Which one stays?')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v21.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v22.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 with PdfPages(tmp) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)
