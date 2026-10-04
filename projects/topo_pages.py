@@ -12,6 +12,8 @@ def existing():
              'Natural ground before any earthwork. Contours every 1 ft; heavy lines every 5 ft.', w=40, fs=9.5)
     y = para(fig, 0.78, y, f'El sitio cae unos {b.max()-b.min():.0f} pies hacia el viñedo, cerca de 6 %.',
              f'The ground falls about {b.max()-b.min():.0f} ft toward the vineyard, about 6%.', w=40, fs=9.5)
+    y = para(fig, 0.78, y, 'Historia: por años este terreno fue un vivero rentado. Los árboles dentro de la pista y entre las caballerizas son lo que dejó, y el suelo todavía guarda sus hileras. El proyecto lo vuelve a hacer vivero.',
+             'History: for years this ground was a rented plant nursery. The trees inside the track and among the stalls are what it left, and the soil still holds its rows. The project makes it a nursery again.', w=40, fs=9.5)   # 4 Oct (Will)
     items = [(INK, '-', .85, 'Curva cada 5 ft · 5 ft contour'), ('#9a9487', '-', .4, 'Curva cada 1 ft · 1 ft contour'),
              ('#b9a784', '-', 6, 'Caminos existentes · Existing roads'), (INK, (0, (7, 2, 1, 2)), 1.4, 'Cerca del predio · Site fence')]
     ly = 0.30

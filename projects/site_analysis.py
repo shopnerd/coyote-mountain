@@ -61,7 +61,7 @@ for k,(key,lab) in enumerate(SEAS):
 fig.text(0.02,0.282,'Rosas de viento por temporada · Seasonal wind roses',fontsize=8.6,weight='bold',color=INK)
 fig.text(0.02,0.268,'Horas por dirección (de donde viene el viento); azul claro < 8 mph, medio 8–16, oscuro ≥ 16. ERA5 2016–25 vía Open-Meteo · Hours by direction the wind comes from; light < 8 mph, mid 8–16, dark ≥ 16.',fontsize=5.4,color='#6a655a',style='italic')
 # ---- sun path ----
-sp=fig.add_axes([0.725,0.085,0.255,0.24])
+sp=fig.add_axes([0.725,0.075,0.255,0.17])
 for dec,col,lab in ((23.44,SUN,'21 jun'),(0,'#d9b65a','equinoccio'),(-23.44,'#b98a2a','21 dic')):
     H=np.radians(np.linspace(-180,180,721)); d_=math.radians(dec)
     alt=np.degrees(np.arcsin(np.sin(lat)*math.sin(d_)+np.cos(lat)*math.cos(d_)*np.cos(H)))
@@ -72,7 +72,7 @@ sp.axvspan(204-45,204+45,color='#1d2b3a',alpha=.06); sp.text(204,4,'techo solar 
 sp.set_xlim(45,315); sp.set_ylim(0,90); sp.set_xticks([60,90,120,150,180,210,240,270,300]); sp.set_xticklabels(['ENE','E','ESE','SE','S','SO','OSO','O','ONO'],fontsize=5.6)
 sp.set_yticks([0,30,60,90]); sp.tick_params(labelsize=5.6); sp.set_ylabel('altura · altitude °',fontsize=6)
 for s_ in ('top','right'): sp.spines[s_].set_visible(False)
-sp.set_facecolor('none'); fig.text(0.70,0.35,'Trayectoria del sol, 32° N · Sun path, 32° N',fontsize=8.6,weight='bold',color=INK)
+sp.set_facecolor('none'); fig.text(0.70,0.272,'Trayectoria del sol, 32° N · Sun path, 32° N',fontsize=8.6,weight='bold',color=INK)
 # ---- notes ----
 px=0.70
 fig.text(px,0.955,'LECTURA DEL SITIO',fontsize=20,weight='bold',color=INK)
@@ -83,6 +83,7 @@ NOTES_A=[
  ('Sun','Sol','At 32° N the summer sun rises at 62° (ENE) and climbs to 81°; in winter it rises at 118° (ESE) and reaches only 35°. Deep eaves, the covered stalls and the grape trellis shade the summer; the low winter sun reaches into the open stalls and dries the runs. The stable’s south roof faces 204° at 13°: the best solar plane on the site.','A 32° N el sol de verano sale a 62° (ENE) y sube a 81°; en invierno sale a 118° (ESE) y solo llega a 35°. Aleros profundos, las caballerizas techadas y la parra dan sombra en verano; el sol bajo de invierno entra en las caballerizas abiertas y seca los corrales. El techo sur del establo ve a 204° a 13°: el mejor plano solar del sitio.'),
  ('Water','Agua','About 16 acres of hillside drain toward the site from the south-east; the water runs north-west down the natural low line to the sink below the track (sheet D-1). Everything that sheds water, roofs, roads and the hill, is slowed, spread and sunk before it leaves.','Unas 6.5 ha de ladera escurren hacia el sitio desde el sureste; el agua corre al noroeste por la línea baja natural hasta el bajo de la pista (hoja D-1). Todo lo que suelta agua, techos, caminos y el cerro, se frena, se reparte y se infiltra antes de salir.'),
  ('Fire','Fuego','The danger comes with the Santa Anas, from the NE and E, dry and fast, across the chaparral of the hill to the south. Stone walls, metal roofs and no hay in the stable already help; keep 30 m of lean, green, watered ground around the buildings, a fire-hose coupling on each cistern (70 m³ on site) and the roads as fire breaks.','El peligro llega con los Santa Ana, del NE y E, secos y rápidos, sobre el chaparral del cerro al sur. Los muros de piedra, techos metálicos y nada de paja en el establo ya ayudan; mantener 30 m de terreno limpio, verde y regado alrededor de los edificios, una toma de bombero en cada cisterna (70 m³ en sitio) y los caminos como cortafuegos.'),
+ ('Frameworks','Marcos','Bill Mollison and David Holmgren, who founded permaculture: its three ethics (care of the earth, care of people, fair share) and the principles used here: observe and interact, catch and store energy, produce no waste, relative location (each thing placed to serve the others), each element with many functions. Geoff Lawton, Will’s teacher: water first, and the problem is the solution (the hill’s runoff becomes the troughs and the trees). Rudolf Steiner: the farm as one living individuality, closing its own cycles, its animals, soil and plants together, read with the rhythms of the year.','Bill Mollison y David Holmgren, fundadores de la permacultura: sus tres éticas (cuidado de la tierra, cuidado de las personas, reparto justo) y los principios usados aquí: observar e interactuar, captar y guardar energía, no producir desperdicio, ubicación relativa (cada cosa puesta para servir a las otras), cada elemento con muchas funciones. Geoff Lawton, maestro de Will: el agua primero, y el problema es la solución (el escurrimiento del cerro se vuelve bebederos y árboles). Rudolf Steiner: la granja como una sola individualidad viva, que cierra sus propios ciclos, con sus animales, suelo y plantas juntos, leída con los ritmos del año.'),
  ('The scale of permanence','La escala de permanencia','Yeomans: decide in the order things are hard to change. Climate (read above) → landform (the slope kept, grading minimal) → water (gully, waterway, cisterns, troughs) → roads (on the contour, with the water) → trees (old nursery, pines and palms kept, natives added) → buildings (on the level ground, out of the flow) → fences (follow the use) → soil (built every year by compost, sheet A-2).','Yeomans: decidir en el orden de lo difícil de cambiar. Clima (arriba) → forma del terreno (la pendiente se respeta, terracería mínima) → agua (zanja, canal, cisternas, bebederos) → caminos (en curva de nivel, con el agua) → árboles (vivero antiguo, pinos y palmas se quedan, nativas se suman) → edificios (en lo plano, fuera del escurrimiento) → cercas (siguen el uso) → suelo (se construye cada año con composta, hoja A-2).'),
 ]
 y=0.902
@@ -90,8 +91,8 @@ for k,(en,es,ten,tes) in enumerate(NOTES_A):
     fig.text(px,y,f'{k+1}',fontsize=10,weight='bold',color='#b5602e')
     fig.text(px+.018,y,f'{es} · {en}',fontsize=8.6,weight='bold',color=INK)
     ly=y-.014
-    for line in textwrap.wrap(tes,107): fig.text(px+.018,ly,line,fontsize=6.1,color=INK); ly-=.0087
-    for line in textwrap.wrap(ten,107): fig.text(px+.018,ly,line,fontsize=6.1,color='#6a655a',style='italic'); ly-=.0087
+    for line in textwrap.wrap(tes,109): fig.text(px+.018,ly,line,fontsize=5.9,color=INK); ly-=.0083
+    for line in textwrap.wrap(ten,109): fig.text(px+.018,ly,line,fontsize=5.9,color='#6a655a',style='italic'); ly-=.0083
     y=ly-.0045
 print('notes end at', round(ly,3))
 fig.text(0.02,0.03,'31.9999 N, 116.7641 W · Hoja / Sheet A-1 · 4 oct 2026 · Viento: Open-Meteo.com (CC BY 4.0), ERA5 · Diseño preliminar · Preliminary design',fontsize=8,color='#6a655a')

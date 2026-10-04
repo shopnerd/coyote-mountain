@@ -43,7 +43,7 @@ def ztag(xy,k,es,en):
 c3=np.array(track.centroid.coords[0])
 ztag(np.array(b2g(8,0)),0,'casa del lugar','home of the place')
 ztag(np.array(b2g(-62,-52)),1,'cada día','every day')
-ztag(np.array(arena.centroid.coords[0])+np.array([0,-11]),2,'trabajo diario','daily work')
+ztag(np.array(arena.centroid.coords[0])+np.array([16,-4]),2,'trabajo diario','daily work')
 ztag(c3+np.array([0,-14]),3,'cada semana · vivero','weekly · nursery')
 ztag(np.array([60,24]),4,'manejo · pastoreo','managed · grazing')
 ztag(np.array([118,86]),5,'el cerro, silvestre','the hill, wild')
@@ -52,7 +52,22 @@ def mark(xy,sym,col,lab,dx=2.2,dy=0,ha='left'):
     ax.scatter([xy[0]],[xy[1]],s=46,marker=sym,c=col,edgecolors='white',linewidths=.8,zorder=15)
     ax.text(xy[0]+dx,xy[1]+dy,lab,fontsize=5.9,color=INK,ha=ha,va='center',zorder=15,bbox=dict(boxstyle='round,pad=.15',fc='white',ec='none',alpha=.82))
 mark(np.array(b2g(-62,34)),'s','#6a8f3a','huerto de cocina · kitchen garden',dx=0,dy=-3,ha='center')
-mark(c3+np.array([-9,5]),'^','#7a4a2a','composta biodinámica · BD compost')
+# the compost yard, located (Will, 4 Oct): by the barn road below the round pen, a short haul from both stables, next to the nursery
+# and the garden, out of the waterway, downhill of nothing it could foul. Four windrows 60 x 8 ft on a 70 x 50 ft pad of compacted
+# earth, a roofed bay for the preparations and the finished pile, a small berm on the downhill side.
+CY=np.array([62.5,66.5]); ux=np.array([math.cos(math.radians(-24)),math.sin(math.radians(-24))]); uy=np.array([-ux[1],ux[0]])
+pad=[CY+ux*a*F(35)+uy*b*F(25) for a,b in ((-1,-1),(1,-1),(1,1),(-1,1))]
+ax.add_patch(MPoly(np.array(pad),closed=True,fc='#c9b48f',ec='#7a4a2a',lw=1.4,zorder=8))
+for k in range(4):
+    o=CY+uy*F(-17+k*11); ax.plot(*np.array([o-ux*F(30),o+ux*F(30)]).T,color='#5c3b22',lw=3.2,solid_capstyle='round',zorder=9)
+ax.text(CY[0],CY[1]+F(42),'PATIO DE COMPOSTA · COMPOST YARD\n4 camellones 60 ft · 4 windrows, 70 × 50 ft',fontsize=6.4,weight='bold',color='#5c3b22',ha='center',va='center',zorder=15,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='#7a4a2a',lw=.8,alpha=.92))
+# market garden for the valley's restaurants: on the flattest open ground beside the main road and its water main, near the compost
+MG=np.array([76,27]); mg=[MG+ux*a*F(60)+uy*b*F(30) for a,b in ((-1,-1),(1,-1),(1,1),(-1,1))]
+ax.add_patch(MPoly(np.array(mg),closed=True,fc='#9bb35a',ec='#4f7a3a',lw=1.2,alpha=.55,zorder=8))
+for k in range(9):
+    o=MG+uy*F(-26+k*6.5); ax.plot(*np.array([o-ux*F(56),o+ux*F(56)]).T,color='#4f7a3a',lw=.6,zorder=9)
+ax.text(MG[0],MG[1]+F(42),'HUERTA PARA RESTAURANTES · MARKET GARDEN\n120 × 60 ft, camas permanentes · permanent beds',fontsize=6.2,weight='bold',color='#3f6b2a',ha='center',va='center',zorder=15,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='#4f7a3a',lw=.8,alpha=.92))
+ax.text(36,14,'← ganado del rancho más allá de la cerca · the ranch’s cattle, beyond the fence',fontsize=6.2,color='#5c3b22',style='italic',zorder=15,bbox=dict(boxstyle='round,pad=.2',fc='white',ec='none',alpha=.85))
 mark(c3+np.array([3,-3]),'o','#4f7a3a','vivero (el antiguo) · the nursery')
 mark(c3+np.array([10,-21]),'h','#e0a020','colmenas · beehives',dx=2.2)
 sc=np.array(stalls.centroid.coords[0]); mark(sc+np.array([-7,0]),'D','#b5602e','gallinas tras los caballos\nchickens behind the horses',dx=-2.2,ha='right')
@@ -65,7 +80,7 @@ fig.text(0.017,0.947,'Zonas y lugares · Zones and places',fontsize=10,weight='b
 # ---- the closed loops ----
 lx=fig.add_axes([0.02,0.055,0.40,0.225]); lx.set_xlim(-1.75,1.75); lx.set_ylim(-1.12,1.12); lx.set_aspect('equal'); lx.axis('off')
 CYC=[('Lluvia','Rain','#1f78c8'),('Techos y cisternas','Roofs, cisterns','#1f78c8'),('Bebederos vivos','Living troughs','#1f78c8'),('Caballos','Horses','#7a4a2a'),
-     ('Estiércol y cama','Manure, bedding','#7a4a2a'),('Composta BD','BD compost','#5f8a6a'),('Vivero','Nursery','#4f7a3a'),('Árboles, viña, nativas','Trees, vines, natives','#4f7a3a'),('Sombra, forraje, fruta','Shade, fodder, fruit','#b5602e')]
+     ('Estiércol y cama','Manure, bedding','#7a4a2a'),('Composta BD','BD compost','#5f8a6a'),('Vivero y huerta','Nursery, garden','#4f7a3a'),('Árboles, viña, comida','Trees, vines, food','#4f7a3a'),('Restaurantes, sombra, forraje','Restaurants, shade, fodder','#b5602e')]
 n=len(CYC); P=[(math.cos(math.pi/2-2*math.pi*k/n)*1.38,math.sin(math.pi/2-2*math.pi*k/n)*.92) for k in range(n)]
 for k in range(n):
     a,b=P[k],P[(k+1)%n]; lx.add_patch(FancyArrowPatch(a,b,connectionstyle='arc3,rad=-.18',arrowstyle='-|>',mutation_scale=9,color='#9b927f',lw=1.1,shrinkA=17,shrinkB=17,zorder=2))
@@ -97,6 +112,9 @@ NOTES_R=[
  ('The vivero','El vivero','This ground was a plant nursery: it becomes one again. Natives, oaks, fruit trees, vetiver for the troughs and the ranch’s grape cuttings, grown in our own compost, for the site, the ranch and for sale at the café; a seed library for the children.','Este terreno fue un vivero: vuelve a serlo. Nativas, encinos, frutales, vetiver para los bebederos y estacas de la viña, crecidos en nuestra propia composta, para el sitio, el rancho y la venta en el café; una biblioteca de semillas para los niños.'),
  ('Biodynamics','Biodinámica','The centre as one living farm: the biodynamic preparations 502–507 go into every compost windrow, 500 and 501 onto the nursery and the meadow, sowing and transplanting by the biodynamic calendar; horses, chickens and bees together; the valley’s biodynamic wineries as neighbours and partners. Will and Walker keep bees: hives in Z3, facing the morning sun, well away from the runs and paths.','El centro como una sola granja viva: las preparaciones biodinámicas 502–507 en cada camellón de composta, 500 y 501 en el vivero y la pradera, siembra y trasplante según el calendario biodinámico; caballos, gallinas y abejas juntos; las vinícolas biodinámicas del valle como vecinas y socias. Will y Walker son apicultores: colmenas en Z3, hacia el sol de la mañana, lejos de corrales y senderos.'),
  ('Natural horsemanship','Horsemanship natural','Horses living as horses: friends, forage and movement. Every stall opens to its run day and night; slow-feed hay nets; turnout as a small herd on a rotation with real rest for the ground (Holistic planned grazing); barefoot trims; the round pen for groundwork and liberty, never force; clinics with natural-horsemanship trainers.','Caballos que viven como caballos: compañía, forraje y movimiento. Cada caballeriza abre a su corral día y noche; redes de heno de comida lenta; salida en pequeña manada con rotación y descanso real para el suelo (pastoreo planificado holístico); recorte sin herraduras; el corral redondo para trabajo pie a tierra y en libertad, nunca a la fuerza; clínicas con entrenadores de horsemanship natural.'),
+ ('Cattle and the whole ranch','Ganado y todo el rancho','The ranch runs cattle: the centre joins that herd’s rotation instead of standing apart. Cattle graze a paddock first and horses follow (they eat what the other leaves and break each other’s parasite cycles); then chickens; then long rest. Planned grazing on the Holistic Management chart, the herd moved by the grass, never by the calendar. Cattle manure into the windrows too: the compost Steiner valued most.','El rancho cría ganado: el centro se suma a la rotación de ese hato en vez de quedar aparte. El ganado pasa primero por un potrero y los caballos lo siguen (comen lo que el otro deja y cortan los ciclos de parásitos del otro); luego las gallinas; luego un largo descanso. Pastoreo planificado con el cuadro del Manejo Holístico, el hato se mueve según el pasto, nunca según el calendario. El estiércol de vaca también a los camellones: la composta que Steiner más valoraba.'),
+ ('Food for restaurants','Comida para restaurantes','A market garden of permanent beds by the main road (its water main and the compost yard beside it): salad greens, herbs, edible flowers and heirloom vegetables for the valley’s restaurants, picked in the morning, delivered by noon; fruit and nuts from the orchard and food forest in Z3 as it grows; eggs from the chickens. Fed with our compost, watered by drip from the cisterns first.','Una huerta de camas permanentes junto al camino principal (con su línea de agua y el patio de composta al lado): verduras de hoja, hierbas, flores comestibles y hortalizas criollas para los restaurantes del valle, cosechadas en la mañana y entregadas al mediodía; fruta y nueces del huerto y el bosque comestible en Z3 conforme crezca; huevos de las gallinas. Alimentada con nuestra composta, regada por goteo primero desde las cisternas.'),
+ ('The compost yard','El patio de composta','Located on the map: beside the barn road below the round pen, a short tractor haul from both stables, next to the nursery and the garden, out of the waterway. Four windrows 60 ft long on a compacted pad, a small berm downhill, a roofed corner for the biodynamic preparations and the finished pile. Turned when hot (55–65 °C), watered from the stalls’ cistern, ready in three to four months.','Ubicado en el mapa: junto al camino del establo abajo del corral redondo, a un viaje corto de tractor de los dos establos, junto al vivero y la huerta, fuera del canal de agua. Cuatro camellones de 60 ft sobre un patio compactado, un bordo pequeño cuesta abajo, una esquina techada para las preparaciones biodinámicas y la composta terminada. Se voltea cuando está caliente (55–65 °C), se riega desde la cisterna de las caballerizas, lista en tres a cuatro meses.'),
  ('Community and children','Comunidad y niños','A place to come back to: the café and the picnic bleachers; school visits and summer days where children brush and feed the horses, plant in the vivero, open a hive with a veil on and turn the compost; animals you can touch; therapeutic riding; workshops on compost, bees and horses; local people working here.','Un lugar al que se regresa: el café y las gradas del día de campo; visitas escolares y días de verano donde los niños cepillan y alimentan a los caballos, siembran en el vivero, abren una colmena con velo y voltean la composta; animales que se dejan tocar; equinoterapia; talleres de composta, abejas y caballos; gente del lugar trabajando aquí.'),
 ]
 y=0.902
@@ -104,9 +122,9 @@ for k,(en,es,ten,tes) in enumerate(NOTES_R):
     fig.text(px,y,f'{k+1}',fontsize=10,weight='bold',color='#5f8a6a')
     fig.text(px+.018,y,f'{es} · {en}',fontsize=8.4,weight='bold',color=INK)
     ly=y-.0135
-    for line in textwrap.wrap(tes,108): fig.text(px+.018,ly,line,fontsize=5.9,color=INK); ly-=.0083
-    for line in textwrap.wrap(ten,108): fig.text(px+.018,ly,line,fontsize=5.9,color='#6a655a',style='italic'); ly-=.0083
-    y=ly-.0042
+    for line in textwrap.wrap(tes,112): fig.text(px+.018,ly,line,fontsize=5.6,color=INK); ly-=.0077
+    for line in textwrap.wrap(ten,112): fig.text(px+.018,ly,line,fontsize=5.6,color='#6a655a',style='italic'); ly-=.0077
+    y=ly-.0036
 print('notes end at', round(ly,3))
 fig.text(0.02,0.03,'Hoja / Sheet A-2 · 4 oct 2026 · Diseño preliminar, propuesta para conversar · Preliminary design, a proposal to talk over',fontsize=8,color='#6a655a')
 if not globals().get('PACK'): fig.savefig('A2-regenerative.png',dpi=170); print('ok')
