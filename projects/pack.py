@@ -327,4 +327,14 @@ rep=place_photos(tmp,out)
 with open('pack_photo_report.txt','w',encoding='utf-8') as fh:
     for pg,src,px,dpi in rep: fh.write(f'p{pg:02d}  {dpi:4d} dpi  {px:>11}  {src}'+chr(10))
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)
+# web copy of the pack (4 Oct): page images for will.100xbtr.com/equino/pack/, refreshed on every build
+import pymupdf as _pm
+_web=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'..','..','will-os','equino','pack'); os.makedirs(_web,exist_ok=True)
+_doc=_pm.open(out); _n=len(_doc)
+for _k,_pg in enumerate(_doc):
+    _pix=_pg.get_pixmap(matrix=_pm.Matrix(2200/_pg.rect.width,2200/_pg.rect.width)); Image.frombytes('RGB',(_pix.width,_pix.height),_pix.samples).save(os.path.join(_web,f'p{_k+1:02d}.jpg'),quality=82)
+for _old in os.listdir(_web):
+    if _old.startswith('p') and _old.endswith('.jpg') and int(_old[1:3])>_n: os.remove(os.path.join(_web,_old))
+import json as _json; _json.dump({'pages':_n,'version':os.path.basename(out),'built':__import__('datetime').date.today().isoformat()},open(os.path.join(_web,'pages.json'),'w'))
+print('web pages:',_n)
 print(out,len(PAGES))
