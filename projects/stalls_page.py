@@ -21,8 +21,8 @@ def stalls_page():
         ax.text(XS+AL/2,sg*(HC+OV/2),'alfalfa\n24 × 12',ha='center',va='center',fontsize=7.5,weight='bold',zorder=6)
         ax.plot([XS,XS+AL],[sg*HC]*2,color='#2c2f33',lw=2.2,zorder=7); ax.plot([XS+AL/2-4,XS+AL/2+4],[sg*HC]*2,color=CLAY,lw=3,zorder=8)   # panel + gate
         ax.plot([HL,HL],[sg*(HC+2),sg*(RE-2)],color=CLAY,lw=3,zorder=8)                                                                   # unloading gate on the road end
-    ax.text(XS+AL/2,-RE-1.5,'reja de tubo con puerta al pasillo · pipe panel + gate to the aisle',ha='center',va='top',fontsize=6.3,color=CLAY)
-    ax.text(XS+AL/2,-RE-5,'descarga por puertas en el extremo, desde el camino · unloading through end gates, from the road',ha='center',va='top',fontsize=6.3,color=CLAY)
+    ax.text(HL,-HD-11.5,'reja de tubo con puerta al pasillo · pipe panel + gate to the aisle',ha='right',va='top',fontsize=6.3,color=CLAY)
+    ax.text(HL,-HD-14.5,'descarga por puertas en el extremo, desde el camino · unloading through end gates, from the road',ha='right',va='top',fontsize=6.3,color=CLAY)
     ax.text(HL+1,-HC-1.5,'pasillo abierto · open end',ha='left',va='top',fontsize=6.3,color=MUTED)
     ax.plot([-HL-2,HL+2,HL+2,-HL-2,-HL-2],[-RE,-RE,RE,RE,-RE],color=CLAY,lw=1.1,ls=(0,(5,3)))            # roof edge
     ax.annotate('',xy=(-HL-2,0),xytext=(HL-4,0),arrowprops=dict(arrowstyle='-|>',color='#1f78c8',lw=1.4))
