@@ -1,10 +1,13 @@
+<string>:18: RuntimeWarning: More than 20 figures have been opened. Figures created through the pyplot interface (`matplotlib.pyplot.figure`) are retained until explicitly closed and may consume too much memory. (To control this warning, see the rcParam `figure.max_open_warning`). Consider using `matplotlib.pyplot.close()`.
 cut 3611 fill 2836 yd3
 notes end at 0.089 (footer rule 0.055)
 PV: stable half 60 panels (4x15), stalls 120; potential 104.4 kWp 165 MWh/yr; use 29.6 kWh/day 10,790/yr; phase 1 7.0 kWp 12.1 MWh
 schedule ends at 0.088
 notes end at 0.192
-zoom hotspots with text: {'p01': 1, 'p02': 4, 'p03': 5, 'p04': 3, 'p05': 4, 'p06': 3, 'p07': 4, 'p08': 3, 'p09': 2, 'p10': 3, 'p13': 2, 'p14': 3, 'p15': 3, 'p16': 1, 'p17': 2, 'p18': 4, 'p19': 8, 'p20': 3}
-zoom hotspots: {'p01': 1, 'p02': 4, 'p03': 5, 'p04': 3, 'p05': 4, 'p06': 3, 'p07': 4, 'p08': 3, 'p09': 2, 'p10': 3, 'p13': 2, 'p14': 3, 'p15': 3, 'p16': 1, 'p17': 2, 'p18': 4, 'p19': 8, 'p20': 3}
-layout map: 43 photos, 23 drawings, 878 texts
-web pages: 20
-G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack\Centro-Equino-pack-11x17-2026-10-04-v43.pdf 20
+notes end at 0.404
+notes end at 0.359
+zoom hotspots with text: {'p01': 1, 'p02': 4, 'p03': 5, 'p04': 3, 'p05': 4, 'p06': 3, 'p07': 4, 'p08': 3, 'p09': 2, 'p10': 3, 'p13': 2, 'p14': 3, 'p15': 3, 'p16': 1, 'p17': 2, 'p18': 4, 'p19': 8, 'p20': 1, 'p21': 3, 'p22': 3}
+zoom hotspots: {'p01': 1, 'p02': 4, 'p03': 5, 'p04': 3, 'p05': 4, 'p06': 3, 'p07': 4, 'p08': 3, 'p09': 2, 'p10': 3, 'p13': 2, 'p14': 3, 'p15': 3, 'p16': 1, 'p17': 2, 'p18': 4, 'p19': 8, 'p20': 1, 'p21': 3, 'p22': 3}
+layout map: 43 photos, 31 drawings, 1065 texts
+web pages: 22
+G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack\Centro-Equino-pack-11x17-2026-10-04-v43.pdf 22
