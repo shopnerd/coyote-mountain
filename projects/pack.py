@@ -15,8 +15,10 @@ def img(n):
     r=np.where(d.mean(1)>.02)[0]; k=np.where(d.mean(0)>.02)[0]
     if len(r) and len(k) and (r[-1]-r[0])>a.shape[0]*.5 and (k[-1]-k[0])>a.shape[1]*.5: im=im.crop((k[0],r[0],k[-1]+1,r[-1]+1))
     return np.asarray(im)
+PAPER='#faf8f3'   # 4 Oct (Walker): every page a soft off-white, on the cream website
+plt.rcParams['axes.facecolor']='none'; plt.rcParams['figure.facecolor']=PAPER   # charts and plans sit on the paper, not on white boxes
 def newpage():
-    fig=plt.figure(figsize=(17,11),dpi=100); fig.patch.set_facecolor('white'); return fig
+    fig=plt.figure(figsize=(17,11),dpi=100); fig.patch.set_facecolor(PAPER); return fig
 def tblock(fig,num,es,en,dark=False):
     c='white' if dark else INK; m='#d8d2c4' if dark else MUTED
     if not dark: fig.add_artist(matplotlib.lines.Line2D([0.02,0.98],[0.055,0.055],color=INK,lw=.8))
@@ -51,7 +53,7 @@ def cover(win):
 # ---- 2 plan view (illustrative)
 def planview(n):
     fig=newpage(); heading(fig,'Vista en planta','Plan view')
-    ax=fig.add_axes([0.02,0.075,0.70,0.81]); ax.imshow(img(n)); ax.axis('off')
+    ax=fig.add_axes([0.02,0.075,0.70,0.81]); ax.imshow((img(n)*(np.array(matplotlib.colors.to_rgb(PAPER)))).astype(np.uint8)); ax.axis('off')   # white studio background takes the paper colour
     items=[('Establo principal','Main stable','72 × 42 ft en retícula de 12 ft · cerchas de acero, piedra a 5 ft con tubo arriba, paneles de varas horizontales, claraboya abierta · 10 caballerizas con corral de 12 × 40 ft, 6 al norte y 4 al sur · lavado y monturas en la esquina oeste','72 × 42 ft on a 12 ft grid · steel trusses, rock to 5 ft with a pipe rail, horizontal stick panels, open clerestory · 10 stalls with 12 × 40 ft runs, 6 north and 4 south · wash and tack at the west corner'),
            ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
            ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
@@ -319,7 +321,7 @@ sheet('sheet2.py','Cortes de terracería','Grading sections')
 placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
             notes={0:[('Caballerizas del establo: 12 × 14 ft con corrales de 12 × 40 ft (acordado 4 oct). Alfalfa: dos bodegas de 24 × 12 ft; se descarga desde el camino por las rejas de los extremos, el camión no entra al pasillo.','Stable stalls: 12 × 14 ft with 12 × 40 ft runs (agreed 4 Oct). Alfalfa: two 24 × 12 ft bays; unloads from the main road through the end gates, the truck stays out of the aisle.')]})
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v26.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v27.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 with PdfPages(tmp) as pdf:
     for f in PAGES: pdf.savefig(f,dpi=200)

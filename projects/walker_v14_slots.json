@@ -174,7 +174,8 @@
    1,
    1
   ],
-  "note": "finalist placed 4 Oct (gallery picks)"
+  "note": "finalist placed 4 Oct (gallery picks)",
+  "paper": true
  },
  "4-2": {
   "rect": [
@@ -190,7 +191,8 @@
    1,
    1
   ],
-  "note": "4 Oct (Walker): replaces b7-plan-openai, which repeated the plan view page"
+  "note": "4 Oct (Walker): replaces b7-plan-openai, which repeated the plan view page",
+  "paper": true
  },
  "6-0": {
   "rect": [

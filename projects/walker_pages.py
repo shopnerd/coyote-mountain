@@ -5,7 +5,7 @@
 import json, matplotlib.font_manager as fm
 for _f in glob.glob(os.path.join(os.path.dirname(os.path.abspath('pack.py')), 'fonts', 'PJS-*.ttf')): fm.fontManager.addfont(_f)
 GF = 'Plus Jakarta Sans'
-BGW = '#ffffff'; INKW = '#2a2220'; MUTEDW = '#6b6258'; GREEN = '#4f6b3a'; RULEW = '#c9b8a0'; TANW = '#a08a70'
+BGW = PAPER; INKW = '#2a2220'; MUTEDW = '#6b6258'; GREEN = '#4f6b3a'; RULEW = '#c9b8a0'; TANW = '#a08a70'
 SLOTS = json.load(open('walker_v14_slots.json', encoding='utf-8'))
 PX = (2550, 1650)
 MAXDPI = 400
@@ -37,7 +37,7 @@ def wsrc(src):                    # slots hold Will's absolute paths; map them o
 def slot(fig, key):
     s = SLOTS[key]; x0, y0, x1, y1 = s['rect']
     fig.add_artist(matplotlib.patches.Rectangle((fx(x0), fy(y1)), fx(x1 - x0), (y1 - y0) / PX[1], color='#ddd3c3', lw=0))   # shows only if a photo is missing
-    PHOTOS.append((len(PAGES), s['rect'], wsrc(s['src']), s['crop']))
+    PHOTOS.append((len(PAGES), s['rect'], wsrc(s['src']), s['crop'], s.get('paper', False)))
     return s['rect']
 def label(fig, r, es, en, num=None, size=12.5, credit=None):
     x0, y0, x1, y1 = r; t = f'{num}  {es}' if num else es
@@ -130,7 +130,7 @@ def place_photos(pdf_path, out_path, q=92):
         import pillow_heif; pillow_heif.register_heif_opener()
     except ImportError: pass
     doc = pymupdf.open(pdf_path); rep = []
-    for pg, (x0, y0, x1, y1), src, cr in PHOTOS:
+    for pg, (x0, y0, x1, y1), src, cr, paper in PHOTOS:
         if not src or not os.path.exists(src): rep.append((pg + 1, src, 'MISSING', 0)); continue
         im = ImageOps.exif_transpose(Image.open(src)).convert('RGB'); W, H = im.size
         a, b, c, d = [min(max(v, 0), 1) for v in cr]
@@ -141,6 +141,8 @@ def place_photos(pdf_path, out_path, q=92):
         im = im.crop([round(v) for v in box])
         cap = round((x1 - x0) / 150 * MAXDPI)                     # no point carrying more than MAXDPI into an 11 x 17 print
         if im.width > cap: im = im.resize((cap, round(im.height * cap / im.width)), Image.LANCZOS)
+        if paper:                                                 # studio-white model renders: multiply by the page colour so their white is the paper
+            from PIL import ImageChops; im = ImageChops.multiply(im, Image.new('RGB', im.size, PAPER))
         buf = io.BytesIO(); im.save(buf, 'JPEG', quality=q, subsampling=0)
         k = 1224 / PX[0]
         doc[pg].insert_image(pymupdf.Rect(x0 * k, y0 * k, x1 * k, y1 * k), stream=buf.getvalue())

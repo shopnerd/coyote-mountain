@@ -1,5 +1,5 @@
 exec(open('drain.py',encoding='utf-8').read())
-fig=plt.figure(figsize=(17,11),dpi=170); fig.patch.set_facecolor('white')
+fig=plt.figure(figsize=(17,11),dpi=170); fig.patch.set_facecolor(globals().get('PAPER','white'))
 ax=base_axes(fig,[0.015,0.14,0.665,0.80],alpha=.42)
 contours(ax,z); features(ax); drainage(ax); works(ax)
 for xy,n in CALL: callout(ax,xy,n)
