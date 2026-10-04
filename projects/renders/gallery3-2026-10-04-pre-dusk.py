@@ -81,8 +81,6 @@ HYB = {
   'sole up; the rider stands at its head holding the lead rope.'),
 }
 STYLE = os.environ.get('GAL_STYLE', '')
-# 4 Oct (Will: 'solar on'): model shots show the phase-1 panels; tell the painter what the dark block on the stable roof is
-SOLAR = ' On the stable’s south roof slope sits one neat block of 16 black solar panels (4 by 4) exactly where the render shows the dark rectangle; no solar panels anywhere else.'
 # 4 Oct (Will: OpenAI looks flat; try other times of day and weather): the light fan. A fan view tagged with one of these keys swaps
 # the brief's light sentence; fan.py --light also moves the model's sun to the matching hour so the shadows are true.
 LIGHT_DEFAULT = 'Light: warm low golden-hour sun, long soft shadows, a sky with big lit cumulus clouds.'
@@ -92,8 +90,6 @@ LIGHT = {
  'storm':  (16.4, 'Light: a winter storm clearing, dark slate clouds breaking up with shafts of low sun through them, roofs and ground wet and glistening, puddles on the dirt roads, dramatic contrast.'),
  'blue':   (18.9, 'Light: blue hour just after sunset, a deep blue sky with a last orange band on the horizon, warm lights glowing inside the stable and the cafe, soft light without hard shadows.'),
  'fog':    (8.6,  'Light: early morning marine fog lifting off the valley, soft diffused light, the far hills fading into mist, damp ground, quiet.'),
- # 4 Oct (Will): sheet E-1's dark-sky lighting, just after sundown: the hero is warm light pouring out between the stable's sticks
- 'dusk':   (18.7, 'Light: early evening just after sundown, the sky a deep clear blue fading to a thin warm orange line over the western hills, the first star or two, the land in soft dusk with no hard shadows. The stable glows from inside: warm amber-gold light (2700 K) pours out between the thin horizontal sticks of its wall panels in fine glowing lines, and spills softly out of its open doorways and the open clerestory onto the dirt just around it; it is the brightest thing in the picture, a lantern. The covered stalls show a soft warm glow under their roof. Small amber lights at knee height dot the walking path between the pines and the stable, and a small shielded downlight over each stable door. Everything else stays DARK: no light on the roads, the arena, the round pen, the trees or the hills, no streetlights, no floodlights, no light shining up into the sky, the hills dark silhouettes. Calm, quiet, a few horses and people near the glowing stable.'),
 }
 
 if __name__ == '__main__':
@@ -109,7 +105,7 @@ if __name__ == '__main__':
         _base = v.split('-fan-')[0]
         if _base.startswith('el-'):                         # 4 Oct: elevations keep their own straight-on brief + site photos, light swapped for fans
             import elevations as EL
-            _pr = EL.BRIEF.format(side=EL.SIDE.get(_base) or EL.SIDE[_base.rsplit('-', 1)[0]]) + EL.EXTRA.get(_base, '') + SOLAR
+            _pr = EL.BRIEF.format(side=EL.SIDE.get(_base) or EL.SIDE[_base.rsplit('-', 1)[0]]) + EL.EXTRA.get(_base, '')
             if _lt in LIGHT: _pr = _pr.replace('Golden hour, warm low sun, long soft shadows, a sky of big lit cumulus clouds.', LIGHT[_lt][1])
             try:
                 im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), _pr, EL.REFS, k)
@@ -119,12 +115,12 @@ if __name__ == '__main__':
         hb = HYB.get(v, HYB.get(v.split('-fan-')[0])) if STYLE == 'hybrid' else None
         if hb:
             try:
-                im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), hb + SOLAR, [AERIAL], k)
+                im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), hb, [AERIAL], k)
                 im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE} (hybrid): ok in {time.time() - t:.0f}s')
             except Exception as e: print(f'{v} {ENGINE} (hybrid): FAILED {str(e)[:160]}')
             continue
         try:
             _pr = None
-            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (lambda t_: t_.replace('The old white semi-trailer keeps its photo texture exactly, with NO sign or lettering on it,', 'The old white semi-trailer is a small café,').replace('(plain weathered white, no sign, no lettering)', '(now a small café with one simple sign)') if v in CAFE else t_)((BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v.split('-fan-')[0] in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else '') + EXTRA.get(v, EXTRA.get(v.split('-fan-')[0], '')) + SOLAR), [], k)   # fans (`<base>-fan-<tag>`) use their base view's notes
+            im = (openai if ENGINE == 'openai' else google)(os.path.join(SRC, f'model-{v}.png'), (lambda t_: t_.replace('The old white semi-trailer keeps its photo texture exactly, with NO sign or lettering on it,', 'The old white semi-trailer is a small café,').replace('(plain weathered white, no sign, no lettering)', '(now a small café with one simple sign)') if v in CAFE else t_)((BLOCK3 + (' This view looks STRAIGHT DOWN from directly above: keep it exactly top-down, a flat plan, no tilt or perspective.' if v == 'b7-plan' else '')) if v.startswith('b') else BRIEF + (PICNIC if v.split('-fan-')[0] in ('14-bleachers-high', '19-spiral', '22-picnic', '23-picnic-side') else '') + EXTRA.get(v, EXTRA.get(v.split('-fan-')[0], ''))), [], k)   # fans (`<base>-fan-<tag>`) use their base view's notes
             im.save(os.path.join(OUT, f'{v}-{ENGINE}.png')); print(f'{v} {ENGINE}: ok in {time.time() - t:.0f}s')
         except Exception as e: print(f'{v} {ENGINE}: FAILED {str(e)[:160]}')

@@ -88,7 +88,7 @@ for eng, lst in done.items():
 MF = os.path.join(WEB, 'fans.json')
 man = json.load(open(MF, encoding='utf-8')) if os.path.exists(MF) else []
 old = next((m for m in man if m.get('base') == BASE), None); man = [m for m in man if m.get('base') != BASE]
-NAMES = {'dawn': ('amanecer', 'dawn'), 'golden': ('hora dorada', 'golden hour'), 'storm': ('tormenta que se despeja', 'clearing storm'), 'blue': ('hora azul', 'blue hour'), 'fog': ('niebla de la mañana', 'morning fog'), 'left': ('a la izquierda', 'step left'), 'right': ('a la derecha', 'step right'), 'high': ('más alto', 'higher'), 'low': ('más bajo', 'lower'), 'closer': ('más cerca', 'closer'), 'wider': ('más abierto', 'wider')}
+NAMES = {'dawn': ('amanecer', 'dawn'), 'golden': ('hora dorada', 'golden hour'), 'storm': ('tormenta que se despeja', 'clearing storm'), 'blue': ('hora azul', 'blue hour'), 'fog': ('niebla de la mañana', 'morning fog'), 'dusk': ('al anochecer, luces encendidas', 'just after sundown, lights on'), 'left': ('a la izquierda', 'step left'), 'right': ('a la derecha', 'step right'), 'high': ('más alto', 'higher'), 'low': ('más bajo', 'lower'), 'closer': ('más cerca', 'closer'), 'wider': ('más abierto', 'wider')}
 man.insert(0, {'base': BASE, 'made': datetime.date.today().isoformat(),
                'views': [{'id': i, 'es': NAMES[i.split('-fan-')[1]][0], 'en': NAMES[i.split('-fan-')[1]][1], 'eng': [e for e in ENGINES if i in done.get(e, [])], 'old': ['model']} for i in ok]})
 if old:                                                   # keep earlier views of this base and add engines to repeated ones

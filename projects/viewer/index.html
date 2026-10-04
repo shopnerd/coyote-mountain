@@ -463,7 +463,7 @@ body.shot{grid-template-columns:1fr}
     document.body.classList.add('shot'); labBox.hidden = true; anim = null; controls.enabled = false; resize();
     if (o.hour) setSun(o.hour);
     whiteModel(!!o.white); if (o.white) { vis(roads, true); labBox.hidden = true; }
-    vis(water, o.water === true); vis(groups.figures, !!o.figures); if (contours) contours.visible = !!o.contours; vis(groups.roof, !o.noroof); vis(groups.solar, !!o.solar && !o.noroof);   /* 4 Oct: solar only when a shot asks for it */          // the drainage lines are engineering marks: off in the money shots
+    vis(water, o.water === true); vis(groups.figures, !!o.figures); if (contours) contours.visible = !!o.contours; vis(groups.roof, !o.noroof); vis(groups.solar, o.solar !== false && !o.noroof);   /* 4 Oct (Will: 'solar on'): model shots show the phase-1 panels unless solar: false */          // the drainage lines are engineering marks: off in the money shots
     if (o.orbit) {                        // {ti, tj, az (deg, grid), el (deg), dist (m), fov}: looking at a target from around it
       const q = o.orbit, tx = q.ti * cs, tz = q.tj * cs, ty = hAt(tx, tz), az = q.az * Math.PI / 180, el = q.el * Math.PI / 180;
       camera.fov = q.fov || 30; camera.up.set(0, 1, 0);
