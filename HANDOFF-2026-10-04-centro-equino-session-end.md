@@ -34,6 +34,15 @@ github shopnerd/coyote-mountain, will-os = shopnerd/will-os); both repos were at
 - Trap: on Windows, stopping a background `python -m http.server` job leaves python running. Three stale servers on 8792 served old
   data.json and made check shots lie. Check `netstat -ano | grep :8792` and kill strays before model shots.
 
+## 0b. END OF DAY 4 Oct (latest)
+- Sticks now sit right on the rock between fixed steel verticals; no floating pipe, no bottom frame (model, drawings, specs, briefs). Elevations + aisle repainted.
+- Café: double-sided, fieldstone risers, gable solar roof 2 ft bigger, stair at the arena end, bar wall + stick face + planted horse-height trough at the road end.
+- Main road = Will's Line Pad trace; solar on every roof (288 panels, 125 kWp); E-1 diagram + totals include the café.
+- Briefs prune to what is in frame (model-<view>.vis.json); OpenAI is the faithful painter, Gemini invents.
+- Final round of all pack views from the current model is in the gallery (golden, OpenAI). PACK STILL HOLDS THE APPROVED PHOTOS: swap only slots Will/Walker name. My picks: walker_v14_slots-2026-10-04-84picks.json (now outdated).
+- Waiting: Walker's review email is a DRAFT in Will's Gmail (not sent); decisions in HANDOFF-2026-10-04-walker-review.md §4; next big piece = trail map for all of Chichihuas (needs area + existing trails from Will/Walker).
+- Push once per round (Netlify credits).
+
 ## 1. (DONE, see §0) what Will asked for last
 **Basic electrical and lighting plan** (Will, 4 Oct, after seeing the blue-hour hill view `4-hill-s-fan-blue-google`, which he likes
 "quite a bit"):
