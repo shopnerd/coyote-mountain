@@ -281,7 +281,7 @@ html[data-depth="simple"] #png{grid-column:1/-1}
         <button data-b="grade" class="planOnly deep" title="set an exact grade between two points">grade a→b</button><button data-b="spot" class="planOnly deep" title="tap to place a spot elevation">spot</button><button data-b="pad" class="planOnly" title="a level pad with balanced cut and fill">pad</button><button data-b="path" class="planOnly" title="draw a path or road: a corridor that follows the ground, raised or sunk so it prints">path</button><button data-b="obj" class="planOnly deep" title="import an stl or obj from any cad program and place it on the ground">object</button><button data-b="section" class="planOnly">section line</button>
       </div>
       <div class="seg deep" id="penRow" style="display:none;margin-top:6px"><button data-pc="ink" class="on">ink</button><button data-pc="ember">red</button><button data-pc="water">blue</button><button id="penDash">dash</button><button id="penClear" title="remove every pen stroke">clear</button><button id="penHide" title="hide or show the freehand sketch lines; drawn shapes, paths, plants and objects stay">hide</button></div>
-      <div class="seg deep" id="penMode" style="display:none;margin-top:6px"><button data-pm="smart" class="on" title="freehand, then snap to a line, circle, rectangle or clean polyline on lift">smart</button><button data-pm="free" title="freehand, no snapping">free</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circ</button></div>
+      <div class="seg wrap" id="penMode" style="display:none;margin-top:6px"><button data-pm="free" class="on">free</button><button data-pm="angle">angle</button><button data-pm="ortho">ortho</button><button data-pm="smart">smart</button><button data-pm="clean">clean</button><button data-pm="line">line</button><button data-pm="rect">rect</button><button data-pm="circle">circ</button><button id="penEditBtn">edit points</button></div>
       <div class="p deep" id="penSizeRow" style="display:none;margin-top:6px"><label>exact size, for line, rect and circ<output id="o_penSize">off</output></label>
         <div class="seg" style="padding:0"><input type="number" id="penLen" min="0" step="any" placeholder="length" style="flex:1;min-width:0"><input type="number" id="penWid" min="0" step="any" placeholder="width" style="flex:1;min-width:0"><button id="penSizeClear" title="back to free dragging">clear</button></div></div>
       <div class="seg" id="plantRow" style="display:none;margin-top:6px"><button data-pm="tree">tree</button><button data-pm="shrub">shrub</button><button class="deep" data-pm="hedge">hedge</button><button class="deep" data-pm="gravel">gravel</button><button class="deep" data-pm="paving">paving</button></div>
@@ -433,6 +433,774 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="toast" id="toast"></div>
   </main>
 </div>
+<script>
+/* ---------- line engine: the stroke fitting of Line Pad (WebDev/line-pad, 3-4 Oct 2026), lifted whole. Schneider curve fit with corners,
+   Free / Angle / Ortho / Smart / Clean fits, clean-up, hold-to-snap shapes. Everything works in screen pixels; the caller converts. ---------- */
+window.LineCore = (function () {
+'use strict';
+const S = { fidelity: 3, corner: 55, smooth: true, close: true, straighten: false };   // Line Pad's defaults; the fits read these
+const V = {
+  sub: (a, b) => ({ x: a.x - b.x, y: a.y - b.y }),
+  add: (a, b) => ({ x: a.x + b.x, y: a.y + b.y }),
+  scale: (a, s) => ({ x: a.x * s, y: a.y * s }),
+  dot: (a, b) => a.x * b.x + a.y * b.y,
+  len: a => Math.hypot(a.x, a.y),
+  dist: (a, b) => Math.hypot(a.x - b.x, a.y - b.y),
+  neg: a => ({ x: -a.x, y: -a.y }),
+  norm: a => { const l = Math.hypot(a.x, a.y); return l < 1e-12 ? { x: 0, y: 0 } : { x: a.x / l, y: a.y / l }; },
+  angle: (a, b) => Math.acos(Math.max(-1, Math.min(1, V.dot(a, b) / ((V.len(a) * V.len(b)) || 1)))),
+};
+function bez3(b, t) { // cubic point
+  const mt = 1 - t, a = mt * mt * mt, bb = 3 * mt * mt * t, c = 3 * mt * t * t, d = t * t * t;
+  return { x: a * b[0].x + bb * b[1].x + c * b[2].x + d * b[3].x, y: a * b[0].y + bb * b[1].y + c * b[2].y + d * b[3].y };
+}
+function bez2(b, t) { const mt = 1 - t; return { x: mt * mt * b[0].x + 2 * mt * t * b[1].x + t * t * b[2].x, y: mt * mt * b[0].y + 2 * mt * t * b[1].y + t * t * b[2].y }; }
+function bez1(b, t) { return { x: b[0].x + (b[1].x - b[0].x) * t, y: b[0].y + (b[1].y - b[0].y) * t }; }
+
+/* ============================================================
+   Schneider, "An Algorithm for Automatically Fitting Digitized
+   Curves", Graphics Gems (1990). Error values are squared px.
+   Output: array of {b:[p0,p1,p2,p3], err:px}
+   ============================================================ */
+function fitCurve(d, errSq, tHat1, tHat2) {
+  const out = [];
+  if (d.length < 2) return out;
+  fitCubic(d, 0, d.length - 1, tHat1, tHat2, errSq, out);
+  return out;
+}
+function fitCubic(d, first, last, tHat1, tHat2, errSq, out) {
+  const nPts = last - first + 1;
+  if (nPts === 2) {                                  // two points: straight-ish cubic, handles at 1/3
+    const dist = V.dist(d[last], d[first]) / 3;
+    out.push({ b: [d[first], V.add(d[first], V.scale(tHat1, dist)), V.add(d[last], V.scale(tHat2, dist)), d[last]], err: 0 });
+    return;
+  }
+  let u = chordLengthParameterize(d, first, last);
+  let bez = generateBezier(d, first, last, u, tHat1, tHat2);
+  let r = computeMaxError(d, first, last, bez, u);
+  if (r.maxErr < errSq) { out.push({ b: bez, err: Math.sqrt(r.maxErr) }); return; }
+  if (r.maxErr < errSq * 16) {                       // close enough: Newton–Raphson reparameterize and retry
+    for (let i = 0; i < 4; i++) {
+      const uP = reparameterize(d, first, last, u, bez);
+      bez = generateBezier(d, first, last, uP, tHat1, tHat2);
+      r = computeMaxError(d, first, last, bez, uP);
+      if (r.maxErr < errSq) { out.push({ b: bez, err: Math.sqrt(r.maxErr) }); return; }
+      u = uP;
+    }
+  }
+  // fitting failed: split at the point of max error. Both halves share the centre
+  // tangent, so the join is G1 (no kink) by construction.
+  let split = r.split;
+  if (split <= first || split >= last) split = first + (nPts >> 1);
+  const tC = centerTangent(d, split, first, last);
+  fitCubic(d, first, split, tHat1, tC, errSq, out);
+  fitCubic(d, split, last, V.neg(tC), tHat2, errSq, out);
+}
+function chordLengthParameterize(d, first, last) {
+  const u = [0];
+  for (let i = first + 1; i <= last; i++) u.push(u[u.length - 1] + V.dist(d[i], d[i - 1]));
+  const L = u[u.length - 1] || 1;
+  return u.map(v => v / L);
+}
+function generateBezier(d, first, last, u, tHat1, tHat2) {
+  const nPts = last - first + 1;
+  let C00 = 0, C01 = 0, C11 = 0, X0 = 0, X1 = 0;
+  const p0 = d[first], p3 = d[last];
+  for (let i = 0; i < nPts; i++) {
+    const t = u[i], mt = 1 - t, b0 = mt * mt * mt, b1 = 3 * mt * mt * t, b2 = 3 * mt * t * t, b3 = t * t * t;
+    const A0x = tHat1.x * b1, A0y = tHat1.y * b1, A1x = tHat2.x * b2, A1y = tHat2.y * b2;
+    C00 += A0x * A0x + A0y * A0y; C01 += A0x * A1x + A0y * A1y; C11 += A1x * A1x + A1y * A1y;
+    const p = d[first + i];
+    const tx = p.x - (p0.x * (b0 + b1) + p3.x * (b2 + b3));
+    const ty = p.y - (p0.y * (b0 + b1) + p3.y * (b2 + b3));
+    X0 += A0x * tx + A0y * ty; X1 += A1x * tx + A1y * ty;
+  }
+  const detC0C1 = C00 * C11 - C01 * C01;
+  const detC0X = C00 * X1 - C01 * X0;
+  const detXC1 = X0 * C11 - X1 * C01;
+  let aL = Math.abs(detC0C1) < 1e-12 ? 0 : detXC1 / detC0C1;
+  let aR = Math.abs(detC0C1) < 1e-12 ? 0 : detC0X / detC0C1;
+  const segLen = V.dist(p3, p0), eps = 1e-6 * segLen;
+  let arc = 0; for (let i = first + 1; i <= last; i++) arc += V.dist(d[i], d[i - 1]);
+  // Wu/Barsky fallback; also when a handle would be longer than the stretch of path it describes (scribbly,
+  // doubling-back input makes the least-squares solve blow up) — the error check then splits the piece.
+  if (aL < eps || aR < eps || aL > arc || aR > arc) { aL = aR = segLen / 3; }
+  return [p0, V.add(p0, V.scale(tHat1, aL)), V.add(p3, V.scale(tHat2, aR)), p3];
+}
+function reparameterize(d, first, last, u, bez) {
+  const Q1 = [0, 1, 2].map(i => ({ x: (bez[i + 1].x - bez[i].x) * 3, y: (bez[i + 1].y - bez[i].y) * 3 }));
+  const Q2 = [0, 1].map(i => ({ x: (Q1[i + 1].x - Q1[i].x) * 2, y: (Q1[i + 1].y - Q1[i].y) * 2 }));
+  const out = new Array(last - first + 1);
+  for (let i = first; i <= last; i++) {
+    const t = u[i - first], P = d[i];
+    const Qu = bez3(bez, t), Q1u = bez2(Q1, t), Q2u = bez1(Q2, t);
+    const num = (Qu.x - P.x) * Q1u.x + (Qu.y - P.y) * Q1u.y;
+    const den = Q1u.x * Q1u.x + Q1u.y * Q1u.y + (Qu.x - P.x) * Q2u.x + (Qu.y - P.y) * Q2u.y;
+    let r = Math.abs(den) < 1e-12 ? t : t - num / den;
+    out[i - first] = r < 0 ? 0 : r > 1 ? 1 : r;
+  }
+  return out;
+}
+function computeMaxError(d, first, last, bez, u) {
+  let maxErr = 0, split = first + ((last - first + 1) >> 1);
+  for (let i = first + 1; i < last; i++) {
+    const P = bez3(bez, u[i - first]);
+    const dx = P.x - d[i].x, dy = P.y - d[i].y, e = dx * dx + dy * dy;
+    if (e >= maxErr) { maxErr = e; split = i; }
+  }
+  return { maxErr, split };
+}
+// Tangent estimate at d[i] looking in direction dir (+1/-1), using the nearest
+// point at least `minLen` px away (robust against pen jitter), clamped to [lo,hi].
+function tangentAt(d, i, dir, lo, hi, minLen) {
+  minLen = minLen || 5;
+  let j = i;
+  while (j + dir >= lo && j + dir <= hi) { j += dir; if (V.dist(d[j], d[i]) >= minLen) break; }
+  const v = V.norm(V.sub(d[j], d[i]));
+  if (V.len(v) < 1e-9) return { x: dir, y: 0 };
+  return v;
+}
+function centerTangent(d, c, lo, hi) {
+  const back = tangentAt(d, c, -1, lo, hi, 4), fwd = tangentAt(d, c, +1, lo, hi, 4);
+  const t = V.norm(V.sub(back, fwd));            // average "backward" direction (original: (V1+V2)/2)
+  return V.len(t) < 1e-9 ? back : t;
+}
+
+/* ============================================================
+   Stroke pre-processing: dedupe, closure snap, corners, smoothing
+   ============================================================ */
+function dedupe(raw, minD) {
+  const out = [];
+  for (const p of raw) { if (!out.length || V.dist(p, out[out.length - 1]) >= minD) out.push({ x: p.x, y: p.y }); }
+  return out;
+}
+// Move one end of a point list onto `target`, blended back along the stroke so there is no kink.
+// The blend runs ~40 px, longer when the end moves farther (an endpoint dragged across the pad).
+function blendTo(pts, target, atEnd) {
+  const n = pts.length, off = V.sub(target, atEnd ? pts[n - 1] : pts[0]), L = V.len(off);
+  if (L < 1e-9) return pts;
+  const cum = new Float64Array(n);
+  for (let i = 1; i < n; i++) cum[i] = cum[i - 1] + V.dist(pts[i], pts[i - 1]);
+  const total = cum[n - 1], span = Math.min(Math.max(40, L * 3), total * (L > 20 ? 0.5 : 0.3));
+  return pts.map((p, i) => {
+    const back = atEnd ? total - cum[i] : cum[i];
+    if (back > span) return p;
+    const s = span <= 0 ? 1 : 1 - back / span;
+    return { ...p, x: p.x + off.x * s, y: p.y + off.y * s };
+  });
+}
+// Blend the end of the stroke onto the start so the closure is smooth.
+function snapClosed(pts) { return blendTo(pts, pts[0], true); }
+// Sharp corners: turning angle between the chord `arm` px behind and `arm` px ahead,
+// thresholded, then non-maximum suppressed so one corner yields one index.
+function findCorners(pts, angleDeg, arm) {
+  const n = pts.length; if (n < 5) return [];
+  const cum = new Float64Array(n);
+  for (let i = 1; i < n; i++) cum[i] = cum[i - 1] + V.dist(pts[i], pts[i - 1]);
+  const thr = angleDeg * Math.PI / 180, cands = [];
+  for (let i = 1; i < n - 1; i++) {
+    if (cum[i] < arm * 0.6 || cum[n - 1] - cum[i] < arm * 0.6) continue;
+    let j = i - 1; while (j > 0 && cum[i] - cum[j] < arm) j--;
+    let k = i + 1; while (k < n - 1 && cum[k] - cum[i] < arm) k++;
+    const a1 = Math.atan2(pts[i].y - pts[j].y, pts[i].x - pts[j].x);
+    const a2 = Math.atan2(pts[k].y - pts[i].y, pts[k].x - pts[i].x);
+    let dA = Math.abs(a2 - a1); if (dA > Math.PI) dA = 2 * Math.PI - dA;
+    if (dA >= thr) cands.push({ i, ang: dA });
+  }
+  const out = []; let g = [];
+  const flush = () => { if (!g.length) return; let b = g[0]; for (const c of g) if (c.ang > b.ang) b = c; out.push(b.i); g = []; };
+  for (const c of cands) { if (g.length && cum[c.i] - cum[g[g.length - 1].i] > arm) flush(); g.push(c); }
+  flush();
+  return out;
+}
+// Light moving average (triangular kernel, radius 2), endpoints pinned.
+function smoothPts(p) {
+  const n = p.length; if (n < 4) return p;
+  return p.map((q, i) => {
+    const r = Math.min(2, i, n - 1 - i); if (r === 0) return q;
+    let x = 0, y = 0, w = 0;
+    for (let k = -r; k <= r; k++) { const wk = r + 1 - Math.abs(k); x += p[i + k].x * wk; y += p[i + k].y * wk; w += wk; }
+    return { x: x / w, y: y / w };
+  });
+}
+
+/* ============================================================
+   Fit a whole stroke → anchors [{p, i, o, corner}], closed flag
+   ============================================================ */
+function fitStroke(raw, S) {
+  let pts = dedupe(raw, 0.75);
+  if (pts.length < 2) return null;
+  const closed = !!S.close && pts.length > 6 && V.dist(pts[0], pts[pts.length - 1]) <= 20;
+  if (closed) pts = snapClosed(pts);
+  const n = pts.length;
+  const corners = findCorners(pts, S.corner, 8);
+  let closeSmooth = false, tc = null;
+  if (closed) {
+    const travelEnd = V.neg(tangentAt(pts, n - 1, -1, 0, n - 1, 6));
+    const dStart = tangentAt(pts, 0, +1, 0, n - 1, 6);
+    if (V.angle(travelEnd, dStart) < S.corner * Math.PI / 180) { closeSmooth = true; tc = V.norm(V.add(travelEnd, dStart)); }
+  }
+  const bounds = [0, ...corners, n - 1];
+  const errSq = S.fidelity * S.fidelity;
+  const plan = S.straighten ? straightPlan(pts, bounds, closed) : null;
+  const segs = []; const cornerStarts = new Set();
+  let maxErr = 0;
+  for (let k = 0; k < bounds.length - 1; k++) {
+    const a = bounds[k], b = bounds[k + 1]; if (b <= a) continue;
+    let sub = pts.slice(a, b + 1);
+    if (S.smooth) sub = smoothPts(sub);
+    const m = sub.length;
+    if (m < 2 || (m === 2 && V.dist(sub[0], sub[1]) < 0.5)) continue;
+    const t1 = (k === 0 && closeSmooth) ? tc : tangentAt(sub, 0, +1, 0, m - 1, 6);
+    const t2 = (k === bounds.length - 2 && closeSmooth) ? V.neg(tc) : tangentAt(sub, m - 1, -1, 0, m - 1, 6);
+    const piece = plan && plan[k] ? [{ b: lineSeg(plan[k].a, plan[k].b), err: plan[k].err }] : fitCurve(sub, errSq, t1, t2);
+    if (!piece.length) continue;
+    if (k > 0) cornerStarts.add(segs.length);
+    for (const s of piece) { segs.push(s); if (s.err > maxErr) maxErr = s.err; }
+  }
+  if (!segs.length) return null;
+  const anchors = [];
+  const last = segs.length - 1;
+  anchors.push({ p: { ...segs[0].b[0] }, i: closed ? { ...segs[last].b[2] } : null, o: { ...segs[0].b[1] }, corner: closed ? !closeSmooth : false });
+  for (let s = 1; s <= last; s++) anchors.push({ p: { ...segs[s].b[0] }, i: { ...segs[s - 1].b[2] }, o: { ...segs[s].b[1] }, corner: cornerStarts.has(s) });
+  if (!closed) anchors.push({ p: { ...segs[last].b[3] }, i: { ...segs[last].b[2] }, o: null, corner: false });
+  return { anchors, closed, maxErr, corners: corners.length + (closed && !closeSmooth ? 1 : 0), nPts: n, kind: plan && plan.some(Boolean) ? 'straightened' : undefined };
+}
+function curveSegments(fit) {
+  const A = fit.anchors, n = A.length, m = fit.closed ? n : n - 1, out = [];
+  for (let s = 0; s < m; s++) { const a = A[s], b = A[(s + 1) % n]; out.push([a.p, a.o || a.p, b.i || b.p, b.p]); }
+  return out;
+}
+
+/* ============================================================
+   Draw modes. free = Schneider fit above. ortho = horizontal/vertical
+   polyline. smart = recognise line / polygon / rectangle / square /
+   circle / ellipse / arc and replace it with the exact shape; anything
+   unrecognised falls back to the free fit.
+   ============================================================ */
+function pathLen(p) { let L = 0; for (let i = 1; i < p.length; i++) L += V.dist(p[i], p[i - 1]); return L; }
+function bbox(p) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const q of p) { x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y); }
+  return { x0, y0, x1, y1, diag: Math.hypot(x1 - x0, y1 - y0) };
+}
+function segDist(p, a, b) {
+  const ab = V.sub(b, a), L2 = V.dot(ab, ab); if (L2 < 1e-12) return V.dist(p, a);
+  const t = Math.max(0, Math.min(1, V.dot(V.sub(p, a), ab) / L2));
+  return V.dist(p, V.add(a, V.scale(ab, t)));
+}
+function rdp(p, tol) {                               // Ramer–Douglas–Peucker → kept indices
+  const keep = new Uint8Array(p.length); keep[0] = keep[p.length - 1] = 1;
+  const st = [[0, p.length - 1]];
+  while (st.length) {
+    const [a, b] = st.pop(); let md = -1, mi = -1;
+    for (let i = a + 1; i < b; i++) { const d = segDist(p[i], p[a], p[b]); if (d > md) { md = d; mi = i; } }
+    if (md > tol) { keep[mi] = 1; st.push([a, mi], [mi, b]); }
+  }
+  const out = []; keep.forEach((k, i) => { if (k) out.push(i); }); return out;
+}
+function resample(p, n) {
+  const L = pathLen(p), out = [p[0]]; if (L < 1e-9) return p.slice();
+  let acc = 0, j = 1;
+  for (let k = 1; k < n; k++) {
+    const target = L * k / n;
+    while (j < p.length - 1 && acc + V.dist(p[j], p[j - 1]) < target) { acc += V.dist(p[j], p[j - 1]); j++; }
+    const seg = V.dist(p[j], p[j - 1]) || 1, t = Math.min(1, (target - acc) / seg);
+    out.push({ x: p[j - 1].x + (p[j].x - p[j - 1].x) * t, y: p[j - 1].y + (p[j].y - p[j - 1].y) * t });
+  }
+  return out;
+}
+function moments(p) {
+  let cx = 0, cy = 0; for (const q of p) { cx += q.x; cy += q.y; } cx /= p.length; cy /= p.length;
+  let xx = 0, yy = 0, xy = 0; for (const q of p) { const dx = q.x - cx, dy = q.y - cy; xx += dx * dx; yy += dy * dy; xy += dx * dy; }
+  return { c: { x: cx, y: cy }, xx: xx / p.length, yy: yy / p.length, xy: xy / p.length };
+}
+function fitLine(p) { const m = moments(p), th = 0.5 * Math.atan2(2 * m.xy, m.xx - m.yy); return { c: m.c, d: { x: Math.cos(th), y: Math.sin(th) } }; }
+function lineDev(p, l) { let m = 0; for (const q of p) m = Math.max(m, Math.abs(V.sub(q, l.c).x * l.d.y - V.sub(q, l.c).y * l.d.x)); return m; }
+function projectOn(p, l) { return V.add(l.c, V.scale(l.d, V.dot(V.sub(p, l.c), l.d))); }
+function intersect(l1, l2) {
+  const cr = l1.d.x * l2.d.y - l1.d.y * l2.d.x; if (Math.abs(cr) < 1e-6) return null;
+  const w = V.sub(l2.c, l1.c), t = (w.x * l2.d.y - w.y * l2.d.x) / cr;
+  return V.add(l1.c, V.scale(l1.d, t));
+}
+function snapDir(d, deg) {                           // pull a direction onto horizontal/vertical when close
+  const a = Math.atan2(d.y, d.x), q = Math.round(a / (Math.PI / 2)) * (Math.PI / 2);
+  return Math.abs(a - q) < deg * Math.PI / 180 ? { x: Math.round(Math.cos(q)), y: Math.round(Math.sin(q)) } : d;
+}
+function lineSeg(a, b) { const d = V.sub(b, a); return [a, V.add(a, V.scale(d, 1 / 3)), V.add(a, V.scale(d, 2 / 3)), b]; }
+function arcSegs(c, r, a0, sw) {                     // circular arc → cubics of ≤ 90°
+  const k = Math.max(1, Math.ceil(Math.abs(sw) / (Math.PI / 2) - 1e-9)), d = sw / k, h = 4 / 3 * Math.tan(d / 4) * r, out = [];
+  for (let i = 0; i < k; i++) {
+    const t0 = a0 + d * i, t1 = t0 + d;
+    const p0 = { x: c.x + r * Math.cos(t0), y: c.y + r * Math.sin(t0) }, p3 = { x: c.x + r * Math.cos(t1), y: c.y + r * Math.sin(t1) };
+    out.push([p0, { x: p0.x - h * Math.sin(t0), y: p0.y + h * Math.cos(t0) }, { x: p3.x + h * Math.sin(t1), y: p3.y - h * Math.cos(t1) }, p3]);
+  }
+  return out;
+}
+function fitFromSegs(segs, closed, corner, kind, pts) {
+  const n = segs.length, anchors = [];
+  for (let k = 0; k < n; k++) anchors.push({ p: { ...segs[k][0] }, i: k > 0 ? { ...segs[k - 1][2] } : closed ? { ...segs[n - 1][2] } : null, o: { ...segs[k][1] }, corner: corner(k) });
+  if (!closed) anchors.push({ p: { ...segs[n - 1][3] }, i: { ...segs[n - 1][2] }, o: null, corner: false });
+  const fit = { anchors, closed, kind, nPts: pts.length, maxErr: 0, corners: anchors.filter(a => a.corner).length };
+  const smp = samplePath(fit, 16), step = Math.max(1, Math.floor(pts.length / 200)); let m = 0;
+  for (let i = 0; i < pts.length; i += step) { let b = Infinity; for (const q of smp) b = Math.min(b, (q.x - pts[i].x) ** 2 + (q.y - pts[i].y) ** 2); m = Math.max(m, b); }
+  fit.maxErr = Math.sqrt(m);
+  return fit;
+}
+function strokeShape(raw, S) {                       // shared prep for ortho/smart
+  const pts = dedupe(raw, 0.75); if (pts.length < 3) return null;
+  const L = pathLen(pts), gap = V.dist(pts[0], pts[pts.length - 1]);
+  return { pts, L, bb: bbox(pts), closed: !!S.close && pts.length > 6 && gap <= Math.max(20, 0.15 * L) };
+}
+
+// Ortho: simplify, give each run the nearest allowed direction (every 90°, or every 45° for ortho45), merge
+// neighbours that share a direction, place each run at the mean offset of its points; corners = run crossings.
+function orthoFit(raw, S, step) {
+  const sh = strokeShape(raw, S); if (!sh) return fitStroke(raw, S);
+  const { pts } = sh, closed = sh.closed, r2 = Math.SQRT1_2;
+  const U = step === 90 ? [{ x: 1, y: 0 }, { x: 0, y: 1 }] : step === 45 ? [{ x: 1, y: 0 }, { x: r2, y: r2 }, { x: 0, y: 1 }, { x: -r2, y: r2 }]
+    : Array.from({ length: Math.round(180 / step) }, (_, k) => {           // every `step` degrees; 0/90 stay exact
+      const a = k * step; return a === 90 ? { x: 0, y: 1 } : { x: Math.cos(a * Math.PI / 180), y: Math.sin(a * Math.PI / 180) }; });
+  const tol = Math.max(5, S.fidelity * 2.5), st = Math.PI / U.length;
+  const P = closed ? pts.concat([pts[0]]) : pts, idx = rdp(P, tol);
+  const dirOf = d => {                                // class, mod 180°
+    if (step !== 5) return ((Math.round(Math.atan2(d.y, d.x) / st) % U.length) + U.length) % U.length;
+    const t = niceAngle(((Math.atan2(d.y, d.x) * 180 / Math.PI) % 180 + 180) % 180);
+    return (Math.round(t / 5) % 36 + 36) % 36;
+  };
+  let runs = [];
+  for (let k = 0; k < idx.length - 1; k++) {
+    const seg = P.slice(idx[k], idx[k + 1] + 1), dir = dirOf(V.sub(seg[seg.length - 1], seg[0]));
+    const r = runs[runs.length - 1];
+    if (r && r.dir === dir) r.pts = r.pts.concat(seg.slice(1)); else runs.push({ dir, pts: seg });
+  }
+  const extent = r => { let lo = Infinity, hi = -Infinity; for (const q of r.pts) { const t = V.dot(q, U[r.dir]); lo = Math.min(lo, t); hi = Math.max(hi, t); } return hi - lo; };
+  const minRuns = closed ? (step === 90 ? 4 : 3) : 1;
+  for (let changed = true; changed;) {               // drop jitter steps, re-merge neighbours that share a direction
+    changed = false;
+    if (closed && runs.length > 1 && runs[0].dir === runs[runs.length - 1].dir) { const l = runs.pop(); runs[0].pts = l.pts.concat(runs[0].pts.slice(1)); changed = true; continue; }
+    for (let k = 0; k < runs.length - 1; k++) if (runs[k].dir === runs[k + 1].dir) { runs[k].pts = runs[k].pts.concat(runs[k + 1].pts.slice(1)); runs.splice(k + 1, 1); changed = true; break; }
+    if (changed) continue;
+    if (runs.length > minRuns) {
+      let mi = -1, me = tol * 1.5;
+      runs.forEach((r, k) => { const e = extent(r); if (e < me && (closed || (k > 0 && k < runs.length - 1))) { me = e; mi = k; } });
+      if (mi >= 0) { runs.splice(mi, 1); changed = true; }
+    }
+  }
+  if (!runs.length || (closed && (runs.length < minRuns || (step === 90 && runs.length % 2)))) return fitStroke(raw, S);
+  for (const r of runs) { r.d = U[r.dir]; r.n = { x: -r.d.y, y: r.d.x }; r.c = r.pts.reduce((acc, q) => acc + V.dot(q, r.n), 0) / r.pts.length; }
+  const cross = (a, b) => { const det = a.n.x * b.n.y - a.n.y * b.n.x; return { x: (a.c * b.n.y - b.c * a.n.y) / det, y: (a.n.x * b.c - b.n.x * a.c) / det }; };
+  const onRun = (r, q) => V.sub(q, V.scale(r.n, V.dot(q, r.n) - r.c));
+  const v = [], n = runs.length;
+  if (closed) for (let k = 0; k < n; k++) v.push(cross(runs[(k - 1 + n) % n], runs[k]));
+  else { v.push(onRun(runs[0], pts[0])); for (let k = 1; k < n; k++) v.push(cross(runs[k - 1], runs[k])); v.push(onRun(runs[n - 1], pts[pts.length - 1])); }
+  const segs = []; for (let k = 0; k < n; k++) segs.push(lineSeg(v[k], v[(k + 1) % v.length]));
+  return fitFromSegs(segs, closed, k => closed || k > 0, step === 90 ? 'ortho' : 'angle', pts);
+}
+
+// Smart: straight sides → polygon (rectangles/squares squared up), round loop → circle/ellipse,
+// open bend of constant radius → arc. Sides within 7° of horizontal/vertical are snapped.
+function polyFit(pts, closed, bb) {
+  const tol = Math.max(4, 0.04 * bb.diag), n = pts.length;
+  const P = closed ? pts.concat([pts[0]]) : pts;
+  const idx = rdp(P, tol); if (closed) idx.pop();
+  const turn = (a, b, c) => V.angle(V.sub(P[b], P[a]), V.sub(P[c], P[b]));
+  for (let changed = true; changed && idx.length > (closed ? 3 : 2);) {
+    changed = false; const m = idx.length;
+    for (let k = closed ? 0 : 1; k < (closed ? m : m - 1); k++) {
+      if (turn(idx[(k - 1 + m) % m], idx[k], idx[(k + 1) % m]) < 25 * Math.PI / 180) { idx.splice(k, 1); changed = true; break; }
+    }
+  }
+  const m = idx.length, nSides = closed ? m : m - 1;
+  if (nSides < (closed ? 3 : 2) || nSides > 6) return null;
+  // A drawn corner turns within a short distance; a smooth curve spreads its turn out. Measure the turn over a
+  // short arm at each vertex and require most of the vertex's total turn to happen there.
+  const cum = new Float64Array(P.length); for (let i = 1; i < P.length; i++) cum[i] = cum[i - 1] + V.dist(P[i], P[i - 1]);
+  const total = cum[P.length - 1];
+  const at = (i, ds) => {                            // point ds px along the path from index i (wraps when closed)
+    let target = cum[i] + ds;
+    if (closed) target = ((target % total) + total) % total; else target = Math.max(0, Math.min(total, target));
+    let j = 1; while (j < P.length - 1 && cum[j] < target) j++;
+    const t = (target - cum[j - 1]) / ((cum[j] - cum[j - 1]) || 1);
+    return { x: P[j - 1].x + (P[j].x - P[j - 1].x) * t, y: P[j - 1].y + (P[j].y - P[j - 1].y) * t };
+  };
+  for (let k = closed ? 0 : 1; k < (closed ? m : m - 1); k++) {
+    const a = idx[(k - 1 + m) % m], b = idx[k], c = idx[(k + 1) % m];
+    const side = Math.min(V.dist(P[a], P[b]), V.dist(P[b], P[c])), arm = Math.max(8, side * 0.15);
+    const local = V.angle(V.sub(P[b], at(b, -arm)), V.sub(at(b, arm), P[b]));
+    if (local < 0.5 * turn(a, b, c)) return null;
+  }
+  const lines = [];
+  for (let k = 0; k < nSides; k++) {
+    const i0 = idx[k], i1 = closed ? (k + 1 < m ? idx[k + 1] : idx[0] + n) : idx[k + 1], side = [];
+    for (let i = i0; i <= i1; i++) side.push(pts[i % n]);
+    if (side.length < 3) return null;
+    const lo = Math.floor(side.length * 0.15), hi = Math.ceil(side.length * 0.85), inner = side.slice(lo, Math.max(hi, lo + 2));
+    const l = fitLine(inner), len = V.dist(side[0], side[side.length - 1]);
+    if (len < 8 || lineDev(inner, l) / len > 0.08) return null;   // a curve, not a straight side
+    l.d = snapDir(l.d, 7); lines.push(l);
+  }
+  let kind = closed ? ({ 3: 'triangle', 4: 'quad' }[nSides] || 'polygon') : 'polyline';
+  if (closed && nSides === 4) {                      // nearly square corners → exact rectangle
+    const ang = lines.map(l => Math.atan2(l.d.y, l.d.x));
+    const right = ang.every((a, k) => { const d = Math.abs(Math.sin(a - ang[(k + 1) % 4])); return d > Math.cos(15 * Math.PI / 180); });
+    if (right) {
+      let sx = 0, sy = 0; for (const a of ang) { sx += Math.cos(4 * a); sy += Math.sin(4 * a); }
+      let phi = Math.atan2(sy, sx) / 4; if (Math.abs(phi) < 7 * Math.PI / 180) phi = 0;
+      const u = { x: Math.cos(phi), y: Math.sin(phi) }, w = { x: -u.y, y: u.x };
+      const corners = []; for (let k = 0; k < 4; k++) { const q = intersect(lines[(k + 3) % 4], lines[k]); if (!q) return null; corners.push(q); }
+      let u0 = Infinity, u1 = -Infinity, w0 = Infinity, w1 = -Infinity;
+      for (const q of corners) { const a = V.dot(q, u), b = V.dot(q, w); u0 = Math.min(u0, a); u1 = Math.max(u1, a); w0 = Math.min(w0, b); w1 = Math.max(w1, b); }
+      kind = 'rectangle';
+      if (Math.abs((u1 - u0) - (w1 - w0)) / Math.max(u1 - u0, w1 - w0) < 0.12) {
+        const cu = (u0 + u1) / 2, cw = (w0 + w1) / 2, h = ((u1 - u0) + (w1 - w0)) / 4;
+        u0 = cu - h; u1 = cu + h; w0 = cw - h; w1 = cw + h; kind = 'square';
+      }
+      const at = (a, b) => V.add(V.scale(u, a), V.scale(w, b));
+      const box = [at(u0, w0), at(u1, w0), at(u1, w1), at(u0, w1)];
+      // keep the drawn direction (clockwise or not) so joins and the start point stay sensible
+      const area = (q) => q.reduce((acc, a, k) => acc + a.x * q[(k + 1) % 4].y - q[(k + 1) % 4].x * a.y, 0);
+      if (Math.sign(area(box)) !== Math.sign(area(corners))) box.reverse();
+      let s0 = 0, bd = Infinity; box.forEach((q, k) => { const d = V.dist(q, pts[0]); if (d < bd) { bd = d; s0 = k; } });
+      const ord = box.slice(s0).concat(box.slice(0, s0));
+      return fitFromSegs(ord.map((q, k) => lineSeg(q, ord[(k + 1) % 4])), true, () => true, kind, pts);
+    }
+  }
+  const v = [];
+  if (closed) for (let k = 0; k < nSides; k++) v.push(intersect(lines[(k - 1 + nSides) % nSides], lines[k]));
+  else { v.push(projectOn(pts[0], lines[0])); for (let k = 1; k < nSides; k++) v.push(intersect(lines[k - 1], lines[k])); v.push(projectOn(pts[n - 1], lines[nSides - 1])); }
+  if (v.some((q, k) => !q || V.dist(q, P[idx[Math.min(k, m - 1)]]) > bb.diag * 0.5)) return null;
+  const segs = []; for (let k = 0; k < nSides; k++) segs.push(lineSeg(v[k], v[(k + 1) % v.length]));
+  return fitFromSegs(segs, closed, k => closed || k > 0, kind, pts);
+}
+// Direct least-squares ellipse fit (Fitzgibbon 1999, numerically stable form of Halíř & Flusser 1998). Unlike averaging
+// the points, it isn't pulled off-centre when the loop has a gap or runs past its start. → {c, a, b, th} or null.
+function conicEllipse(P) {
+  const n = P.length; if (n < 6) return null;
+  let mx = 0, my = 0; for (const q of P) { mx += q.x; my += q.y; } mx /= n; my /= n;
+  let sc = 0; for (const q of P) sc += (q.x - mx) ** 2 + (q.y - my) ** 2; sc = Math.sqrt(sc / n / 2) || 1;
+  const S1 = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], S2 = [[0, 0, 0], [0, 0, 0], [0, 0, 0]], S3 = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+  for (const q of P) {
+    const x = (q.x - mx) / sc, y = (q.y - my) / sc, d1 = [x * x, x * y, y * y], d2 = [x, y, 1];
+    for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) { S1[i][j] += d1[i] * d1[j]; S2[i][j] += d1[i] * d2[j]; S3[i][j] += d2[i] * d2[j]; }
+  }
+  const det3 = m => m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+  const inv3 = m => { const d = det3(m); if (Math.abs(d) < 1e-12) return null; const c = (r1, c1, r2, c2) => m[r1][c1] * m[r2][c2] - m[r1][c2] * m[r2][c1];
+    return [[c(1, 1, 2, 2) / d, -c(0, 1, 2, 2) / d, c(0, 1, 1, 2) / d], [-c(1, 0, 2, 2) / d, c(0, 0, 2, 2) / d, -c(0, 0, 1, 2) / d], [c(1, 0, 2, 1) / d, -c(0, 0, 2, 1) / d, c(0, 0, 1, 1) / d]]; };
+  const mul = (A, B) => A.map((r, i) => B[0].map((_, j) => r.reduce((t, _, k) => t + A[i][k] * B[k][j], 0)));
+  const tp = A => A[0].map((_, j) => A.map(r => r[j]));
+  const S3i = inv3(S3); if (!S3i) return null;
+  const T = mul(S3i, tp(S2)).map(r => r.map(v => -v));            // a2 = T a1
+  const Mx = S1.map((r, i) => r.map((v, j) => v + mul(S2, T)[i][j]));
+  const M = [Mx[2].map(v => v / 2), Mx[1].map(v => -v), Mx[0].map(v => v / 2)];   // C1⁻¹ · M
+  // eigenvalues of the 3×3: λ³ − tr λ² + c1 λ − det = 0
+  const tr = M[0][0] + M[1][1] + M[2][2], c1 = M[0][0] * M[1][1] - M[0][1] * M[1][0] + M[0][0] * M[2][2] - M[0][2] * M[2][0] + M[1][1] * M[2][2] - M[1][2] * M[2][1], dt = det3(M);
+  const roots = [], f = l => ((l - tr) * l + c1) * l - dt;
+  { const B = -tr, C = c1, D = -dt, p3 = C - B * B / 3, q3 = 2 * B * B * B / 27 - B * C / 3 + D, disc = (q3 / 2) ** 2 + (p3 / 3) ** 3;
+    if (disc > 0) { const u = Math.cbrt(-q3 / 2 + Math.sqrt(disc)), v = Math.cbrt(-q3 / 2 - Math.sqrt(disc)); roots.push(u + v - B / 3); }
+    else { const r = Math.sqrt(-((p3 / 3) ** 3)), ph = Math.acos(Math.max(-1, Math.min(1, -q3 / (2 * r)))), m2 = 2 * Math.cbrt(r);
+      for (let k = 0; k < 3; k++) roots.push(m2 * Math.cos((ph + 2 * Math.PI * k) / 3) - B / 3); } }
+  let a1 = null;
+  for (const l of roots) {
+    if (!isFinite(f(l))) continue;
+    const R = M.map((r, i) => r.map((v, j) => v - (i === j ? l : 0)));
+    const cr = (u, v) => [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const cands = [cr(R[0], R[1]), cr(R[0], R[2]), cr(R[1], R[2])].sort((u, v) => Math.hypot(...v) - Math.hypot(...u));
+    const e = cands[0]; if (Math.hypot(...e) < 1e-12) continue;
+    if (4 * e[0] * e[2] - e[1] * e[1] > 0) { a1 = e; break; }
+  }
+  if (!a1) return null;
+  const a2 = T.map(r => r[0] * a1[0] + r[1] * a1[1] + r[2] * a1[2]);
+  const [A, Bq, C] = a1, [D, E, F] = a2;
+  const den = 4 * A * C - Bq * Bq; if (Math.abs(den) < 1e-12) return null;
+  const x0 = (Bq * E - 2 * C * D) / den, y0 = (Bq * D - 2 * A * E) / den;
+  const F0 = A * x0 * x0 + Bq * x0 * y0 + C * y0 * y0 + D * x0 + E * y0 + F;
+  const th = 0.5 * Math.atan2(Bq, A - C), ct = Math.cos(th), st = Math.sin(th);
+  const Ar = A * ct * ct + Bq * ct * st + C * st * st, Cr = A * st * st - Bq * ct * st + C * ct * ct;
+  const a2r = -F0 / Ar, b2r = -F0 / Cr; if (!(a2r > 0 && b2r > 0)) return null;
+  let ax = Math.sqrt(a2r) * sc, bx = Math.sqrt(b2r) * sc, an = th;
+  if (bx > ax) { [ax, bx] = [bx, ax]; an += Math.PI / 2; }
+  return { c: { x: x0 * sc + mx, y: y0 * sc + my }, a: ax, b: bx, th: an };
+}
+// Circle when the shape is roughly round (short axis ≥ 78 % of the long one — hand circles are rarely rounder than
+// that); an oval only when it is clearly one. A little egg/wobble is fine; a blob is not.
+function ellipseFit(pts, force) {
+  const Q = resample(pts, 96);
+  let g = conicEllipse(Q);
+  if (!g) {                                          // fall back: centroid + principal axes
+    const m = moments(Q), tr = (m.xx + m.yy) / 2, df = Math.sqrt(((m.xx - m.yy) / 2) ** 2 + m.xy ** 2);
+    g = { c: m.c, a: Math.sqrt(2 * (tr + df)), b: Math.sqrt(2 * Math.max(tr - df, 1e-9)), th: 0.5 * Math.atan2(2 * m.xy, m.xx - m.yy) };
+  }
+  let { c: C0, a, b, th } = g, ct = Math.cos(th), st = Math.sin(th);
+  const rs = Q.map(q => { const dx = q.x - C0.x, dy = q.y - C0.y; return Math.hypot((dx * ct + dy * st) / a, (-dx * st + dy * ct) / b); });
+  const sc = rs.reduce((x, y) => x + y, 0) / rs.length, res = rs.reduce((x, r) => x + Math.abs(r / sc - 1), 0) / rs.length;
+  if (res > 0.1 && !force) return null;
+  a *= sc; b *= sc;
+  let kind = 'ellipse';
+  if (b / a >= 0.78) { a = b = (a + b) / 2; th = 0; kind = 'circle'; }
+  else { const q = Math.round(th / (Math.PI / 2)) * (Math.PI / 2); if (Math.abs(th - q) < 10 * Math.PI / 180) th = q; }
+  const c = Math.cos(th), s = Math.sin(th);
+  // start the loop nearest where the pen started, in the drawn direction
+  const d0 = V.sub(pts[0], C0), a0 = Math.atan2((-d0.x * s + d0.y * c) / b, (d0.x * c + d0.y * s) / a);
+  const mid = V.sub(pts[Math.floor(pts.length / 4)], C0), cw = (d0.x * mid.y - d0.y * mid.x) >= 0 ? 1 : -1;
+  const T = q => ({ x: C0.x + c * a * q.x - s * b * q.y, y: C0.y + s * a * q.x + c * b * q.y });
+  const segs = arcSegs({ x: 0, y: 0 }, 1, a0, cw * 2 * Math.PI).map(g2 => g2.map(T));
+  return fitFromSegs(segs, true, () => false, kind, pts);
+}
+function fitCircle(p) {                              // algebraic (Kåsa) circle fit
+  const mm = moments(p); let a11 = 0, a12 = 0, a13 = 0, a22 = 0, a23 = 0, b1 = 0, b2 = 0, b3 = 0; const n = p.length;
+  for (const q of p) { const x = q.x - mm.c.x, y = q.y - mm.c.y, z = x * x + y * y;
+    a11 += x * x; a12 += x * y; a13 += x; a22 += y * y; a23 += y; b1 -= x * z; b2 -= y * z; b3 -= z; }
+  const M = [[a11, a12, a13], [a12, a22, a23], [a13, a23, n]], B = [b1, b2, b3];
+  const det = A => A[0][0] * (A[1][1] * A[2][2] - A[1][2] * A[2][1]) - A[0][1] * (A[1][0] * A[2][2] - A[1][2] * A[2][0]) + A[0][2] * (A[1][0] * A[2][1] - A[1][1] * A[2][0]);
+  const D = det(M); if (Math.abs(D) < 1e-9) return null;
+  const sol = [0, 1, 2].map(j => det(M.map((row, i) => row.map((v, k) => k === j ? B[i] : v))) / D);
+  const cx = -sol[0] / 2, cy = -sol[1] / 2, r2 = cx * cx + cy * cy - sol[2];
+  return r2 > 0 ? { c: { x: cx + mm.c.x, y: cy + mm.c.y }, r: Math.sqrt(r2) } : null;
+}
+function arcFit(pts, bb, force) {
+  const f = fitCircle(pts); if (!f || f.r > 3 * bb.diag) return null;
+  let res = 0; for (const q of pts) res += Math.abs(V.dist(q, f.c) - f.r); res /= pts.length * f.r;
+  if (res > 0.035 && !force) return null;
+  const ang = q => Math.atan2(q.y - f.c.y, q.x - f.c.x), a0 = ang(pts[0]);
+  let sw = 0, prev = a0;
+  for (const q of pts) { let d = ang(q) - prev; if (d > Math.PI) d -= 2 * Math.PI; if (d < -Math.PI) d += 2 * Math.PI; sw += d; prev = ang(q); }
+  if (Math.abs(sw) < 30 * Math.PI / 180 || Math.abs(sw) > 1.95 * Math.PI) return null;
+  return fitFromSegs(arcSegs(f.c, f.r, a0, sw), false, () => false, 'arc', pts);
+}
+// Straight pieces of a stroke (between corners): nearly straight → exactly straight. A straight piece whose
+// neighbours are also straight (or the stroke's ends) gets a best-fit line, levelled/plumbed within 4°, and its
+// corners move to where the neighbouring lines cross. Next to a curve, the corner stays where it was drawn.
+function straightPlan(pts, bounds, closed) {
+  const n = bounds.length - 1, info = [];
+  for (let k = 0; k < n; k++) {
+    const a = bounds[k], b = bounds[k + 1], sub = pts.slice(a, b + 1), A = pts[a], B = pts[b], chord = V.dist(A, B);
+    let md = 0; for (const q of sub) md = Math.max(md, segDist(q, A, B));
+    info.push(b > a && chord > 25 && pathLen(sub) < chord * 1.05 && md < Math.max(3.5, 0.035 * chord) ? { sub, chord, md } : null);
+  }
+  const at = j => closed ? info[((j % n) + n) % n] : (j < 0 || j >= n ? 'end' : info[j]);
+  info.forEach((g, k) => {
+    if (!g || !at(k - 1) || !at(k + 1)) return;
+    const lo = Math.floor(g.sub.length * 0.1), inner = g.sub.slice(lo, Math.max(lo + 2, Math.ceil(g.sub.length * 0.9)));
+    g.line = fitLine(inner); g.line.d = snapDir(g.line.d, 4);
+  });
+  const vert = k => {                                // the point between piece k-1 and piece k
+    const p = pts[bounds[k]], L = at(k - 1), R = at(k);
+    if (L && R && L !== 'end' && R !== 'end' && L.line && R.line) {
+      const q = intersect(L.line, R.line);
+      return q && V.dist(q, p) < Math.max(10, 0.35 * Math.min(L.chord, R.chord)) ? q : p;
+    }
+    if (L === 'end' && R && R.line) return projectOn(p, R.line);
+    if (R === 'end' && L && L.line) return projectOn(p, L.line);
+    return p;
+  };
+  const verts = []; for (let k = 0; k <= n; k++) verts.push(closed && k === n ? verts[0] : vert(k));
+  return info.map((g, k) => g ? { a: verts[k], b: verts[k + 1], err: g.md } : null);
+}
+// Smart: the whole stroke becomes a named shape (line, square, circle, arc…) only when that shape follows the
+// drawing about as well as the piece-by-piece straightened version does; otherwise the straightened version wins
+// (straight bits exact, curves and waves kept). That keeps a wedge a wedge instead of forcing it into a triangle.
+function smartFit(raw, S) {
+  const sh = strokeShape(raw, S); if (!sh) return fitStroke(raw, S);
+  const { pts, L, bb, closed } = sh, n = pts.length;
+  const base = fitStroke(raw, { ...S, straighten: true });
+  // A named shape may sit up to ~5 % of its size off the drawing (that is the "perfecting"); a wrong guess is far
+  // worse (the canopy wedge as a triangle: 77 px off on a 610 px shape). Open zig-zags are held tighter, since the
+  // straightened version already gives them straight sides.
+  const ok = (f, loose) => f && (!base || f.maxErr <= Math.max(8, 2 * base.maxErr + 3, loose ? 0.05 * bb.diag : 0));
+  if (closed) {
+    const P = polyFit(pts, true, bb); if (ok(P, true)) return P;
+    const E = ellipseFit(pts); if (ok(E, true)) return E;
+    return base;
+  }
+  const chord = V.dist(pts[0], pts[n - 1]);
+  if (chord <= 0.22 * L) {                           // most of the way round with a gap: a loop if an ellipse/circle fits it
+    const E = ellipseFit(pts); if (ok(E, true)) return E;
+  }
+  let md = 0; for (const q of pts) md = Math.max(md, segDist(q, pts[0], pts[n - 1]));
+  if (L < chord * 1.06 && md < Math.max(4, 0.05 * chord)) {        // a wobbly line is barely longer than its chord; a wave is not
+    const l = fitLine(pts); l.d = snapDir(l.d, 7);
+    return fitFromSegs([lineSeg(projectOn(pts[0], l), projectOn(pts[n - 1], l))], false, () => false, 'line', pts);
+  }
+  const A = arcFit(pts, bb); if (ok(A, true)) return A;
+  const P = polyFit(pts, false, bb); if (ok(P)) return P;
+  return base;
+}
+// Clean up (trace): after each line is straightened, make the drawing agree with itself. Straight edges within 6°
+// of level/plumb become exactly level/plumb; level edges at almost the same height share one height (plumb edges
+// one x); loose ends that nearly meet another end, or an edge, are moved onto it. Sloped edges and curves keep
+// their shape. tol = how near counts (pad px).
+function isStraightSeg(a, b) {
+  if (!a.o || !b.i) return false;
+  const d = V.sub(b.p, a.p); if (V.len(d) < 1) return false;
+  return V.dist(a.o, V.add(a.p, V.scale(d, 1 / 3))) < 0.6 && V.dist(b.i, V.add(a.p, V.scale(d, 2 / 3))) < 0.6;
+}
+function cleanUp(fits, tol, fixed) {
+  fixed = fixed || new Set();                        // anchors that stay put (hand-edited / other modes); others align to them
+  const shift = (a, x, y) => { if (fixed.has(a) || !isFinite(x) || !isFinite(y)) return; const dx = x - a.p.x, dy = y - a.p.y; a.p = { x, y }; if (a.i) a.i = { x: a.i.x + dx, y: a.i.y + dy }; if (a.o) a.o = { x: a.o.x + dx, y: a.o.y + dy }; };
+  const segs = [], owner = new Map();               // anchor → its straight segments
+  for (const f of fits) {
+    if (!f) continue; const A = f.anchors, n = A.length, m = f.closed ? n : n - 1;
+    for (let k = 0; k < m; k++) {
+      const a = A[k], b = A[(k + 1) % n]; if (!isStraightSeg(a, b)) continue;
+      const g = { a, b, f }; segs.push(g);
+      for (const q of [a, b]) { if (!owner.has(q)) owner.set(q, []); owner.get(q).push(g); }
+    }
+  }
+  const axis = g => { let t = Math.atan2(g.b.p.y - g.a.p.y, g.b.p.x - g.a.p.x) * 180 / Math.PI; t = ((t % 180) + 180) % 180; return t < 6 || t > 174 ? 'H' : Math.abs(t - 90) < 6 ? 'V' : null; };
+  const align = () => { for (const g of segs) g.ax = axis(g);
+  for (const [ax, key] of [['H', 'y'], ['V', 'x']]) {   // level/plumb, then share heights (x's) that are within tol
+    const L = segs.filter(g => g.ax === ax).map(g => ({ g, c: (g.a.p[key] + g.b.p[key]) / 2, w: V.dist(g.a.p, g.b.p) })).sort((p, q) => p.c - q.c);
+    const groups = []; for (const e of L) { const G = groups[groups.length - 1]; if (G && e.c - G.first <= tol) G.items.push(e); else groups.push({ items: [e], first: e.c }); }   // a group spans ≤ tol (no chaining)
+    for (const G of groups) {
+      const pinned = G.items.filter(e => fixed.has(e.g.a) || fixed.has(e.g.b)), use = pinned.length ? pinned : G.items;
+      let sw = 0, sc = 0; for (const e of use) { sw += e.w; sc += e.c * e.w; } if (!(sw > 0)) continue; const v = sc / sw;
+      for (const e of G.items) { e.g[key] = v; for (const q of [e.g.a, e.g.b]) shift(q, key === 'x' ? v : q.p.x, key === 'y' ? v : q.p.y); }
+    }
+  } };
+  align();
+  // loose ends
+  const ends = []; fits.forEach(f => { if (f && !f.closed && f.anchors.length > 1) ends.push({ f, a: f.anchors[0], nb: f.anchors[1] }, { f, a: f.anchors[f.anchors.length - 1], nb: f.anchors[f.anchors.length - 2] }); });
+  const keep = (a, t) => {                           // an end on a level/plumb edge only moves along that edge
+    for (const g of owner.get(a) || []) { if (g.ax === 'H' && isFinite(g.y)) t.y = g.y; if (g.ax === 'V' && isFinite(g.x)) t.x = g.x; }
+    return t;
+  };
+  const done = new Set();
+  for (let i = 0; i < ends.length; i++) for (let j = i + 1; j < ends.length; j++) {
+    const E1 = ends[i], E2 = ends[j]; if (done.has(E1) || done.has(E2) || E1.a === E2.a) continue;
+    // also one interrupted line: two level (or plumb) pieces end to end, nearly in line, small gap → one line
+    const o1 = (owner.get(E1.a) || []).find(g => g.f === E1.f), o2 = (owner.get(E2.a) || []).find(g => g.f === E2.f);
+    const key = o1 && o2 && o1.ax && o1.ax === o2.ax ? (o1.ax === 'H' ? 'y' : 'x') : null, along = key === 'y' ? 'x' : 'y';
+    const inLine = key && isFinite(o1[key]) && isFinite(o2[key]) && Math.abs(o1[key] - o2[key]) <= tol * 1.5 && Math.abs(E1.a.p[along] - E2.a.p[along]) <= tol * 4;
+    if (V.dist(E1.a.p, E2.a.p) > tol * 1.5 && !inLine) continue;
+    if (inLine) {
+      const w1 = V.dist(o1.a.p, o1.b.p), w2 = V.dist(o2.a.p, o2.b.p), v = (o1[key] * w1 + o2[key] * w2) / (w1 + w2);
+      for (const g of [o1, o2]) { g[key] = v; for (const q of [g.a, g.b]) shift(q, key === 'x' ? v : q.p.x, key === 'y' ? v : q.p.y); }
+    }
+    const f1 = fixed.has(E1.a), f2 = fixed.has(E2.a); if (f1 && f2) continue;
+    let t = f1 ? { ...E1.a.p } : f2 ? { ...E2.a.p } : { x: (E1.a.p.x + E2.a.p.x) / 2, y: (E1.a.p.y + E2.a.p.y) / 2 };
+    if (!f1 && !f2) { t = keep(E1.a, t); t = keep(E2.a, t); }
+    shift(E1.a, t.x, t.y); shift(E2.a, t.x, t.y); done.add(E1); done.add(E2);
+  }
+  for (const E of ends) {                            // an end that stops short of (or runs past) an edge: onto the edge
+    if (done.has(E) || fixed.has(E.a)) continue;
+    let best = null, bd = tol * 1.5;
+    const own = (owner.get(E.a) || []).find(g => g.f === E.f);
+    const dir = own ? V.norm(V.sub(own.b.p, own.a.p)) : V.norm(V.sub(E.a.p, E.nb.p));
+    for (const g of segs) {
+      if (g.a === E.a || g.b === E.a) continue;
+      if (Math.abs(V.dot(dir, V.norm(V.sub(g.b.p, g.a.p)))) > Math.cos(25 * Math.PI / 180)) continue;   // runs alongside, not into
+      const d = V.sub(g.b.p, g.a.p), L2 = V.dot(d, d); if (L2 < 1) continue;
+      const t = V.dot(V.sub(E.a.p, g.a.p), d) / L2; if (t < -0.02 || t > 1.02) continue;
+      const q = V.add(g.a.p, V.scale(d, t)), dist = V.dist(q, E.a.p);
+      if (dist < bd) { bd = dist; best = { g, q }; }
+    }
+    if (!best) {                                     // no straight edge: any other line it is heading into (a curve)
+      for (const f of fits) {
+        if (!f || f === E.f) continue;
+        const q = nearestOnFit(f, E.a.p);
+        if (q && q.d < bd && V.dist(E.nb.p, q.p) > q.d) { bd = q.d; best = { q: q.p, curve: true }; }
+      }
+      if (!best) continue;
+      const t = keep(E.a, { ...best.q }); shift(E.a, t.x, t.y); done.add(E); continue;
+    }
+    let t = best.q;
+    if (own) { const hit = intersect({ c: own.a.p, d: V.norm(V.sub(own.b.p, own.a.p)) }, { c: best.g.a.p, d: V.norm(V.sub(best.g.b.p, best.g.a.p)) }); if (hit && V.dist(hit, E.a.p) < tol * 2) t = hit; }
+    shift(E.a, t.x, t.y); done.add(E);
+  }
+  align();                                           // joins may have nudged an edge; level/plumb has the last word
+  for (const g of segs) { if (fixed.has(g.a) && fixed.has(g.b)) continue; const d = V.sub(g.b.p, g.a.p); g.a.o = V.add(g.a.p, V.scale(d, 1 / 3)); g.b.i = V.add(g.a.p, V.scale(d, 2 / 3)); }
+  for (const f of fits) {                            // pieces squeezed to nothing by the moves: drop them
+    if (!f || f.anchors.some(a => fixed.has(a))) continue; const out = [f.anchors[0]];
+    for (let k = 1; k < f.anchors.length; k++) {
+      const a = f.anchors[k], last = out[out.length - 1];
+      if (V.dist(a.p, last.p) < 0.5) { last.o = a.o; last.corner = last.corner || a.corner; } else out.push(a);
+    }
+    if (out.length >= 2) f.anchors = out;
+  }
+  return fits;
+}
+// Hold-to-snap: the best named shape for a stroke, no "is it really one?" test — the hold says it is.
+function quickShapeFit(raw, S) {
+  const pts = dedupe(raw, 0.75); if (pts.length < 6) return null;
+  const n = pts.length, L = pathLen(pts), bb = bbox(pts), gap = V.dist(pts[0], pts[n - 1]);
+  if (gap <= Math.max(25, 0.25 * L)) {               // a loop: polygon (square, rectangle, triangle…) or ellipse/circle
+    const P = polyFit(pts, true, bb), E = ellipseFit(pts, true);
+    return P && (!E || P.maxErr <= E.maxErr * 1.15) ? P : (E || P);
+  }
+  if (gap > 0.75 * L) {                              // nearly straight: a line
+    const l = fitLine(pts); l.d = snapDir(l.d, 7);
+    return fitFromSegs([lineSeg(projectOn(pts[0], l), projectOn(pts[n - 1], l))], false, () => false, 'line', pts);
+  }
+  const A = arcFit(pts, bb, true), P = polyFit(pts, false, bb);
+  return P && (!A || P.maxErr <= A.maxErr) ? P : (A || P || smartFit(raw, S));
+}
+// A "nice" angle (degrees): the stronger ones pull from farther away — level/plumb ±4°, 45s ±3°, 15° steps ±2°,
+// otherwise the nearest 5°.
+function niceAngle(a) {
+  const near = m => Math.round(a / m) * m;
+  return Math.abs(a - near(90)) <= 4 ? near(90) : Math.abs(a - near(45)) <= 3 ? near(45) : Math.abs(a - near(15)) <= 2 ? near(15) : near(5);
+}
+// Angle mode: one straight line per stroke, like dragging out a ruler — from where the pen went down, at the nice
+// angle nearest the pen-down → pen-up direction, as long as the pen-up point projects onto it.
+function angleFit(raw, S) {
+  const pts = dedupe(raw, 0.75); if (pts.length < 2) return null;
+  const A = pts[0], Z = pts[pts.length - 1], v = V.sub(Z, A); if (V.len(v) < 4) return null;
+  const t = niceAngle(Math.atan2(v.y, v.x) * 180 / Math.PI) * Math.PI / 180;
+  let d = { x: Math.cos(t), y: Math.sin(t) }; if (Math.abs(d.x) < 1e-12) d.x = 0; if (Math.abs(d.y) < 1e-12) d.y = 0;
+  const B = V.add(A, V.scale(d, V.dot(v, d)));
+  return fitFromSegs([lineSeg(A, B)], false, () => false, 'angle', pts);
+}
+function fitFor(raw, S, mode) {
+  return mode === 'ortho' ? orthoFit(raw, S, 90) : mode === 'ortho45' ? angleFit(raw, S) : mode === 'smart' || mode === 'clean' ? smartFit(raw, S) : fitStroke(raw, S);
+}
+function scaleFit(f, k) {                           // scale a fit about the origin
+  if (!f || k === 1) return f;
+  const m = q => q && { x: q.x * k, y: q.y * k };
+  f.anchors = f.anchors.map(a => ({ p: m(a.p), i: m(a.i), o: m(a.o), corner: a.corner })); f.maxErr *= k;
+  return f;
+}
+function fitAt(raw, S, mode, k) {
+  k = k || 1; if (k === 1) return fitFor(raw, S, mode);
+  return scaleFit(fitFor(raw.map(q => ({ ...q, x: q.x * k, y: q.y * k })), S, mode), 1 / k);
+}
+function samplePath(fit, n) {
+  const segs = curveSegments(fit), out = [];
+  segs.forEach((s, si) => { for (let k = (si === 0 ? 0 : 1); k <= n; k++) out.push(bez3(s, k / n)); });
+  if (fit.closed && out.length > 1) out.pop();
+  return out;
+}
+function nearestOnFit(fit, p) {
+  let best = null, bd = Infinity;
+  for (const seg of curveSegments(fit)) for (let k = 0; k <= 48; k++) {
+    const q = bez3(seg, k / 48), d = (q.x - p.x) ** 2 + (q.y - p.y) ** 2;
+    if (d < bd) { bd = d; best = q; }
+  }
+  return best && { p: best, d: Math.sqrt(bd) };
+}
+function toggleCorner(s, idx) {
+  const a = s.fit.anchors[idx];
+  a.corner = !a.corner;
+  if (!a.corner && a.i && a.o) {      // becoming smooth: align the two handles on a shared tangent
+    const di = V.norm(V.sub(a.p, a.i)), dO = V.norm(V.sub(a.o, a.p));
+    let t = V.norm(V.add(di, dO)); if (V.len(t) < 1e-9) t = dO;
+    const li = V.dist(a.i, a.p), lo = V.dist(a.o, a.p);
+    a.i = V.sub(a.p, V.scale(t, li)); a.o = V.add(a.p, V.scale(t, lo));
+  }
+  s.fit.corners = s.fit.anchors.filter(q => q.corner).length;
+  s.edited = true;
+}
+function moveAnchor(a, p) {
+  const dx = p.x - a.p.x, dy = p.y - a.p.y;
+  a.p = { ...p };
+  if (a.i) a.i = { x: a.i.x + dx, y: a.i.y + dy };
+  if (a.o) a.o = { x: a.o.x + dx, y: a.o.y + dy };
+}
+function reversed(anchors) { return anchors.slice().reverse().map(a => ({ p: a.p, i: a.o, o: a.i, corner: a.corner })); }
+function setCorner(v) { S.corner = v; }
+return { S, V, bez3, curveSegments, fitAt, fitFor, fitStroke, quickShapeFit, cleanUp, isStraightSeg, samplePath, nearestOnFit, toggleCorner, moveAnchor, reversed, lineSeg, fitFromSegs, niceAngle, dedupe };
+})();
+</script>
 <script>
 (() => {
 'use strict';
@@ -611,7 +1379,7 @@ let base = new Float32Array(W * H);     // existing grade, m
 let z = new Float32Array(W * H);        // proposed grade, m
 let waterMask = null, waterLevel = null, wF = null, zvKey = '', waterLoopCache = { key: '' }, zv = z, modelSurf = false, rendCutSide = null;   // modelSurf: true while the model, the print or the cuts are being made, so footprints carry their pedestal or recess   // water: mask, level per cell, shoreline field (>0 wet, <0 dry), and the display surface
 const S = { mode: 'plan', brush: 'raise', radius: 4, strength: 50, siteW: 60, relief: 2, ivl: 2, hach: 15, ve: 1.5, mm: 150,
-  seed: 7, sec: null, secs: [], secI: 0, geo: false, paintOn: false, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'smart', plant: null, gradeV: 2, sideV: 3, gline: null, padShape: 'rect', padLevel: 'balance', padEdge: 'slopes', padSoft: 6, padGradeV: 0, showCF: true, pathW: 1.5, pathH: -.15, pathSurf: 'none', rendOn: false, rendCut: 'none', rendSky: 'cumulus', bldMode: 'mapped', bldMM: 3, labelUp: false, showBase: true, strip: 0, swell: .2, runoff: .7, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false, wet: false, land: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null, cloudNight: false };
+  seed: 7, sec: null, secs: [], secI: 0, geo: false, paintOn: false, rain: false, strokes: [], penColor: 'ink', strokeVer: 0, penMode: 'free', penEdit: false, penAxis: 0, plant: null, gradeV: 2, sideV: 3, gline: null, padShape: 'rect', padLevel: 'balance', padEdge: 'slopes', padSoft: 6, padGradeV: 0, showCF: true, pathW: 1.5, pathH: -.15, pathSurf: 'none', rendOn: false, rendCut: 'none', rendSky: 'cumulus', bldMode: 'mapped', bldMM: 3, labelUp: false, showBase: true, strip: 0, swell: .2, runoff: .7, penDash: false, penW: 1, penA: 1, rainPaused: false, sunHeld: null, thick: 3, sheet: [300, 450], world: null, unit: 'ft', rot: 0, boundary: null, trim: false, overlay: null, overlayOn: true, seaClip: false, hasSea: false, hasWater: false, seaRise: 0, waterVer: 0, coast: null, showBld: true, showRoads: true, aerial: false, aerialM: false, aop: .55, ledge: 12, modelStyle: 'smooth', terrainVer: 0, pipZoom: 1.55, pipView: '3d', sculpt: false, pick: null, colorMode: 'paper', labels: true, an: { flow: true, catch: true, ridge: true, keys: true, keyline: true, swales: false, dam: true, flood: false, plow: false, wet: false, land: false }, thrV: 35, plowV: 25, keyPt: null, keyAuto: true, damPt: null, tapMode: 'key', swaleV: 30, damH: 2, rainV: 35, sunPlay: null, sunClock: 0, sunMode: 'hour', month: 6, hour: 15, cam: { yaw: -.7, pitch: .95, zoom: 1, pan: { x: 0, y: 0 } }, pipPan: { x: 0, y: 0 }, dirty: true, w: 0, h: 0, ptr: null, cloudNight: false };
 const cs = () => S.siteW / (W - 1);     // cell size, m
 const idx = (i, j) => j * W + i;
 
@@ -860,6 +1628,8 @@ function drawPlan() {                     // cached picture + live overlay; the 
   if (drag && drag.kind === 'pad') drawPadPreview();
   if (drag && drag.kind === 'path') drawPathPreview();
   if (drag && drag.kind === 'shape' && drag.p1) { const st = shapeFromDrag(S.plant === 'tree' ? 'tree' : S.penMode, drag.p0, drag.p1); ctx.strokeStyle = PEN[st.color] || INK; ctx.globalAlpha = st.a; ctx.lineWidth = 2.2 * Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * st.w; ctx.lineJoin = 'round'; ctx.setLineDash([6, 4]); ctx.beginPath(); st.pts.forEach((q, t) => { const sp = toSheet(q[0], q[1]); t ? ctx.lineTo(sp[0], sp[1]) : ctx.moveTo(sp[0], sp[1]); }); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+  if (drag && drag.kind === 'pen' && !drag.z3) penLiveDraw();
+  peDraw();
   // brush cursor
   if (S.ptr && S.mode === 'plan' && !S.hideRing && S.brush !== 'section' && S.brush !== 'pen' && S.brush !== 'erase' && S.brush !== 'spot' && S.brush !== 'pad' && S.brush !== 'path') {
     const p = toSheet(S.ptr[0], S.ptr[1]); ctx.strokeStyle = ACC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
@@ -1936,7 +2706,7 @@ pip.addEventListener('dblclick', e => { if (pipFolded || inTarget(e) || inTabs(e
 
 /* ---------- undo ---------- */
 const undoStack = [];
-function snapshot(keepRedo) { if (!keepRedo) redoStack.length = 0; undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, secs: S.secs.map(q => [q[0].slice(), q[1].slice()]), secI: S.secI, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, solid: st.solid ? JSON.parse(JSON.stringify(st.solid)) : undefined, fill: st.fill, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, z3: st.z3 || undefined, by: st.by, text: st.text, at: st.at, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
+function snapshot(keepRedo) { if (!keepRedo) redoStack.length = 0; undoStack.push({ z: z.slice(), base: base.slice(), world: S.world, secs: S.secs.map(q => [q[0].slice(), q[1].slice()]), secI: S.secI, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, solid: st.solid ? JSON.parse(JSON.stringify(st.solid)) : undefined, fill: st.fill, fit: st.fit ? JSON.parse(JSON.stringify(st.fit)) : undefined, lm: st.lm, ed: st.ed || undefined, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, z3: st.z3 || undefined, by: st.by, text: st.text, at: st.at, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, pts: st.pts.map(q => q.slice()) })) }); if (undoStack.length > 40) undoStack.shift(); }
 function setGrid(f, quiet) {              // rebuild the ground at 150f × 100f; everything in grid coords is rescaled; terrain refetches
   const nw = Math.round(150 * f), nh = Math.round(100 * f); if (nw === W && nh === H) return; const k = nw / W;
   W = nw; H = nh; base = new Float32Array(W * H); z = new Float32Array(W * H); zv = z; zvKey = ''; rawBase = null; waterMask = null; waterLevel = null; wF = null; S.hasSea = S.hasWater = false; S.coast = null;
@@ -1962,7 +2732,7 @@ let drag = null, pinch = null; const pts = new Map();
 const pt = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
 cv.addEventListener('pointerdown', e => {
   cv.setPointerCapture(e.pointerId); const p = pt(e); pts.set(e.pointerId, p);
-  if (pts.size === 2) { if (drag && drag.kind === 'pen') { S.strokes.pop(); S.strokeVer++; } if (drag && drag.kind === 'shape') { drag = null; S.dirty = true; } const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, pz: PV.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
+  if (pts.size === 2) { if (drag && drag.kind === 'pen') { clearTimeout(drag.holdT); S.strokes.pop(); S.strokeVer++; } if (drag && drag.kind === 'shape') { drag = null; S.dirty = true; } const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]), z: S.cam.zoom, pz: PV.zoom, mid: [(a[0][0] + a[1][0]) / 2, (a[0][1] + a[1][1]) / 2] }; drag = null; return; }
   if (S.mode === 'model') {
     const btn = e.button;
     if (btn === 1 || e.shiftKey) { drag = { p, kind: 'pan' }; S.lowQ = true; return; }
@@ -1981,11 +2751,12 @@ cv.addEventListener('pointerdown', e => {
   if (S.mode === 'section') { if (S.secs.length > 1) { const i = Math.max(0, Math.min(S.secs.length - 1, Math.floor(p[1] / (S.h / S.secs.length)))); if (i !== S.secI) { S.secI = i; secSync(); GEO.key = ''; S.dirty = true; toast(`section ${secLetters(i).join('–')} active`); } } return; }
   if (S.mode !== 'plan') return;
   if (S.brush === 'look') { drag = { p, kind: 'planpan' }; return; }   /* tools that only read the plan: a drag moves the sheet, nothing is drawn or dug */
+  if (S.brush === 'pen' && S.penEdit && !S.notePlace && e.button === 0) { peDown(p); return; }
   const g = toGrid(p[0], p[1]);
   snapshot();
   if (S.notePlace) { noteAdd([g[0], g[1], sample(zv, g[0], g[1])]); return; }
   if (S.brush === 'pen' && (S.plant === 'tree' || S.penMode === 'line' || S.penMode === 'rect' || S.penMode === 'circle')) { drag = { kind: 'shape', p0: p, p1: null }; return; }
-  if (S.brush === 'pen') { const st = { color: penFor(), by: S.author || undefined, w: S.penW, a: S.penA, dash: S.penDash, pts: [[g[0], g[1], e.pointerType === 'pen' ? Math.max(.15, e.pressure || .5) : .5]] }; S.strokes.push(st); drag = { kind: 'pen', st, last: p }; return; }
+  if (S.brush === 'pen') { const st = { color: penFor(), by: S.author || undefined, w: S.penW, a: S.penA, dash: S.penDash, pts: [[g[0], g[1], .5]] }; S.strokes.push(st); drag = { kind: 'pen', st, last: p, raw: [{ x: p[0], y: p[1] }], still: { x: p[0], y: p[1] }, holdT: 0 }; return; }
   if (S.brush === 'erase') { drag = { kind: 'erase' }; eraseAt(g); return; }
   if (S.brush === 'obj') { const i = objAt(g); if (i >= 0) { S.objSel = i; objUI(); const st = S.strokes[i]; drag = { kind: 'obj', st, off: [st.c[0] - g[0], st.c[1] - g[1]] }; S.strokeVer++; S.dirty = true; } else if (objSel()) { const st = objSel(); st.c = [g[0], g[1]]; st.pts = [[g[0], g[1], .5]]; drag = { kind: 'obj', st, off: [0, 0] }; S.strokeVer++; S.dirty = true; } else toast('import an stl or obj first'); return; }
   if (S.brush === 'section') { const near = secNear(g); if (near >= 0) { S.secI = near; secSync(); GEO.key = ''; S.dirty = true; toast(`section ${secLetters(near).join('–')} selected · drag elsewhere for a new one`); return; } secAdd([g, g]); drag = { g, kind: 'section' }; S.dirty = true; return; }
@@ -2013,6 +2784,8 @@ cv.addEventListener('pointermove', e => {
   else if (drag.kind === 'obj') { const g = toGrid(p[0], p[1]); drag.st.c = [g[0] + drag.off[0], g[1] + drag.off[1]]; drag.st.pts = [[drag.st.c[0], drag.st.c[1], .5]]; S.strokeVer++; S.dirty = true; }
   else if (drag.kind === 'path') { if (Math.hypot(p[0] - drag.last[0], p[1] - drag.last[1]) > 3) { drag.pts.push(toGrid(p[0], p[1])); drag.last = p; S.dirty = true; } }
   else if (drag.kind === 'pad') { drag.p1 = p; if (S.padShape === 'draw') { const g = toGrid(p[0], p[1]), l = drag.pts[drag.pts.length - 1]; if (Math.hypot(g[0] - l[0], g[1] - l[1]) > .5) drag.pts.push(g); } S.dirty = true; }
+  else if (drag.kind === 'pen' && !drag.z3) penMove(e);
+  else if (drag.kind === 'pted') peMove(p, e);
   else if (drag.kind === 'pen') { const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; if (!evs.length) evs.push(e);
     ctx.strokeStyle = PEN[drag.st.color] || INK; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.globalAlpha = drag.st.a; ctx.setLineDash(drag.st.dash ? [7 * drag.st.w + 2, 5 * drag.st.w + 2] : []);
     for (const ev of evs) { const q = pt(ev), g = drag.z3 ? ray3(q[0], q[1]) : toGrid(q[0], q[1]), last = drag.st.pts[drag.st.pts.length - 1]; if (!g || Math.hypot(q[0] - drag.last[0], q[1] - drag.last[1]) < 1.5) continue;
@@ -2023,40 +2796,6 @@ cv.addEventListener('pointermove', e => {
   else if (drag.kind === 'shape') { drag.p1 = p; S.dirty = true; }
   else { const g = toGrid(p[0], p[1]); strokeLine(drag.g, g, S.brush, drag.z0); drag.g = g; S.dirty = true; }
 });
-function simplifyDP(P, tol) {             // douglas-peucker on [x,y] points
-  if (P.length < 3) return P.slice(); const keep = new Uint8Array(P.length); keep[0] = keep[P.length - 1] = 1; const stack = [[0, P.length - 1]];
-  while (stack.length) { const [a, b] = stack.pop(); const ax = P[a][0], ay = P[a][1], bx = P[b][0], by = P[b][1], L = Math.hypot(bx - ax, by - ay) || 1; let md = -1, mi = -1;
-    for (let q = a + 1; q < b; q++) { const d = Math.abs((by - ay) * P[q][0] - (bx - ax) * P[q][1] + bx * ay - by * ax) / L; if (d > md) { md = d; mi = q; } }
-    if (md > tol && mi > 0) { keep[mi] = 1; stack.push([a, mi], [mi, b]); } }
-  return P.filter((_, q) => keep[q]);
-}
-function recognizeStroke(st) {            // turn a freehand stroke into a clean shape when it clearly is one; sheet-space tolerances
-  const P = st.pts.map(q => toSheet(q[0], q[1])); if (P.length < 4) return null;
-  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of P) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
-  const bw = x1 - x0, bh = y1 - y0, diag = Math.hypot(bw, bh); if (diag < 14) return null;
-  const closed = Math.hypot(P[0][0] - P[P.length - 1][0], P[0][1] - P[P.length - 1][1]) < Math.max(14, diag * .18), pr = .5;
-  const toG = q => { const g = toGrid(q[0], q[1]); return [g[0], g[1], pr]; };
-  if (closed) {
-    // circle / ellipse: points sit near the ellipse inscribed in the bounding box
-    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = bw / 2, ry = bh / 2; let err = 0;
-    for (const q of P) err += Math.abs(Math.hypot((q[0] - cx) / rx, (q[1] - cy) / ry) - 1); err /= P.length;
-    if (err < .13 && rx > 5 && ry > 5) { const pts = []; for (let t = 0; t <= 48; t++) { const a = t / 48 * TAU; pts.push(toG([cx + Math.cos(a) * rx, cy + Math.sin(a) * ry])); } return { color: st.color, w: st.w, a: st.a, dash: st.dash, shape: true, pts }; }
-    // rectangle / triangle / clean polygon: few corners after simplification
-    const sim = simplifyDP(P, Math.max(6, diag * .06)); const corners = sim.length - 1;   // last point ~ first
-    if (corners === 4 || corners === 3 || corners === 5 || corners === 6) {
-      let pts = sim.slice(0, corners);
-      if (corners === 4) { const axisish = pts.every((q, i) => { const n = pts[(i + 1) % 4]; const a = Math.abs(Math.atan2(n[1] - q[1], n[0] - q[0])) % (Math.PI / 2); return a < .2 || a > Math.PI / 2 - .2; }); if (axisish) pts = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]; }
-      return { color: st.color, w: st.w, a: st.a, dash: st.dash, shape: true, pts: pts.concat([pts[0]]).map(toG) }; }
-    return null;
-  }
-  // straight line: everything close to the chord
-  const a = P[0], b = P[P.length - 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]); let md = 0;
-  for (const q of P) md = Math.max(md, Math.abs((b[1] - a[1]) * q[0] - (b[0] - a[0]) * q[1] + b[0] * a[1] - b[1] * a[0]) / (L || 1));
-  if (L > 18 && md < Math.max(4, L * .045)) return { color: st.color, w: st.w, a: st.a, dash: st.dash, shape: true, pts: [toG(a), toG(b)] };
-  // clean polyline: a handful of straight legs
-  const sim = simplifyDP(P, Math.max(6, diag * .05)); if (sim.length >= 3 && sim.length <= 7) return { color: st.color, w: st.w, a: st.a, dash: st.dash, shape: true, pts: sim.map(toG) };
-  return null;
-}
 function snapEnds(st) {                   // auto-connect: endpoints jump to a nearby vertex of another stroke
   const r = 10 / sheet.k; for (const e of [0, st.pts.length - 1]) { const q = st.pts[e]; let best = null, bd = r * r;
     for (const o of S.strokes) { if (o === st) continue; for (const v of (o.shape ? o.pts : [o.pts[0], o.pts[o.pts.length - 1]])) { const d = (v[0] - q[0]) ** 2 + (v[1] - q[1]) ** 2; if (d < bd) { bd = d; best = v; } } }
@@ -2078,13 +2817,215 @@ function shapeFromDrag(mode, p0, p1) {   // primitives dragged out on the sheet
   const r = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), pts = []; for (let t = 0; t <= 48; t++) { const a = t / 48 * TAU; pts.push(toG([p0[0] + Math.cos(a) * r, p0[1] + Math.sin(a) * r])); } return { ...sty, pts };
 }
 function eraseAt(g) { const r = 8 / sheet.k; const before = S.strokes.length; S.strokes = S.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - g[0], q[1] - g[1]) < r)); if (S.strokes.length !== before) { S.strokeVer++; S.dirty = true; } }
+/* ---------- sketch lines (4 Oct 2026): every plan pen line is fitted by Line Pad's engine (LineCore) into anchors and handles, kept as st.fit in grid
+   coordinates; st.pts is rebuilt from the fit after every change, so everything that reads pts (plants, select, measure, the 3d drape, exports) works as
+   before. Modes: free (as drawn, as a clean line), angle (one straight line at a clean angle), ortho (square runs), smart (the shape it clearly is), clean
+   (smart, then agreeing with the other clean lines). In any mode, holding the pen still for half a second turns the stroke into the exact shape; keep
+   holding and drag to size it. Edit points (e): drag points and handles, join ends, type lengths and bearings in the panel. A wall or shape made from a
+   line keeps the line (solid.path), so its points edit the same way. ---------- */
+const LC = window.LineCore, LP_MODE = { free: 'free', angle: 'ortho45', ortho: 'ortho', smart: 'smart', clean: 'clean' };
+const r4 = v => Math.round(v * 1e4) / 1e4;
+const fitMapF = (f, fn) => ({ closed: !!f.closed, anchors: f.anchors.map(a => ({ p: fn(a.p), i: a.i && fn(a.i), o: a.o && fn(a.o), corner: !!a.corner })) });
+const fitToPx = f => fitMapF(f, q => ({ x: sheet.x + q.x * sheet.k, y: sheet.y + q.y * sheet.k }));
+const fitToGrid = f => fitMapF(f, q => ({ x: r4((q.x - sheet.x) / sheet.k), y: r4((q.y - sheet.y) / sheet.k) }));
+const penEditable = st => !!st && !st.z3 && !!st.pts && st.pts.length >= 2 && (!st.kind || st.kind === 'hedge' || st.kind === 'shrub' || st.kind === 'gravel' || st.kind === 'paving');
+const pieceStraight = (a, b) => { const c1 = a.o || a.p, c2 = b.i || b.p, L = Math.hypot(b.p.x - a.p.x, b.p.y - a.p.y) || 1, off = q => Math.abs((b.p.y - a.p.y) * (q.x - a.p.x) - (b.p.x - a.p.x) * (q.y - a.p.y)) / L; return off(c1) < L * 1e-3 + 1e-4 && off(c2) < L * 1e-3 + 1e-4; };
+const shiftA = (a, vx, vy) => { a.p = { x: a.p.x + vx, y: a.p.y + vy }; if (a.i) a.i = { x: a.i.x + vx, y: a.i.y + vy }; if (a.o) a.o = { x: a.o.x + vx, y: a.o.y + vy }; };
+const restraight = (A, k, closed) => { const n = A.length; if (!closed && k >= n - 1) return; const a = A[k], b = A[(k + 1) % n], dx = b.p.x - a.p.x, dy = b.p.y - a.p.y; a.o = { x: a.p.x + dx / 3, y: a.p.y + dy / 3 }; b.i = { x: a.p.x + dx * 2 / 3, y: a.p.y + dy * 2 / 3 }; };
+function strokeSetFit(st, f) {            // the fit becomes the line: its points rebuilt, closed or open, drawn as straight pieces and sampled curves
+  st.fit = f; const { pts } = pathSample(f); if (f.closed && pts.length) pts.push(pts[0].slice());
+  st.pts = pts.map(q => [q[0], q[1], .5]); if (f.closed) st.closed = true; else delete st.closed;
+  if (!st.kind) st.shape = !!st.lm && st.lm !== 'free'; S.strokeVer++; S.dirty = true;
+}
+function ensureFit(st) {                  // a line from before the fitting, a primitive or a planting outline gets points: a circle as four curves, a clean shape as its corners, a freehand line fitted afresh
+  if (st.fit) return st.fit; const P = st.pts.map(q => ({ x: q[0], y: q[1] })), n = P.length, closed = n > 3 && Math.hypot(P[0].x - P[n - 1].x, P[0].y - P[n - 1].y) < 1e-6; let f = null;
+  if (closed && n > 20) { const Q = P.slice(0, -1); let cx = 0, cy = 0; for (const q of Q) { cx += q.x; cy += q.y; } cx /= Q.length; cy /= Q.length; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const q of Q) { x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
+    const rx = (x1 - x0) / 2, ry = (y1 - y0) / 2; let err = 0; for (const q of Q) err = Math.max(err, Math.abs(Math.hypot((q.x - cx) / rx, (q.y - cy) / ry) - 1));
+    if (err < .02) { const K = .5523; f = { closed: true, anchors: [[1, 0], [0, 1], [-1, 0], [0, -1]].map(([u, v]) => ({ p: { x: cx + u * rx, y: cy + v * ry }, i: { x: cx + u * rx + v * rx * K, y: cy + v * ry - u * ry * K }, o: { x: cx + u * rx - v * rx * K, y: cy + v * ry + u * ry * K }, corner: false })) }; } }
+  if (!f && (st.shape || n <= 12)) { const Q = closed ? P.slice(0, -1) : P, m = Q.length; f = { closed, anchors: Q.map(p => ({ p, i: null, o: null, corner: true })) }; for (let k = 0; k < (closed ? m : m - 1); k++) restraight(f.anchors, k, closed); }
+  if (!f) { const raw = st.pts.map(q => { const v = toSheet(q[0], q[1]); return { x: v[0], y: v[1] }; }), fp = LC.fitAt(raw, LC.S, 'free', 1); f = fp ? fitToGrid(fp) : null; }
+  if (!f) return null; st.lm = st.lm || (st.shape ? 'smart' : 'free'); const kind = st.kind, sh = st.shape; strokeSetFit(st, f); if (kind) st.shape = sh; return st.fit;
+}
+const rotFit = (f, c, a) => { const ca = Math.cos(a), sa = Math.sin(a); return fitMapF(f, q => ({ x: c.x + (q.x - c.x) * ca - (q.y - c.y) * sa, y: c.y + (q.x - c.x) * sa + (q.y - c.y) * ca })); };
+function penFit(raw, mode) {              // a fit in screen pixels; angle, ortho, smart and clean square up to S.penAxis (0 = the site, or the angle of a picked edge)
+  const lm = LP_MODE[mode] || 'free', ax = lm === 'free' ? 0 : (S.penAxis || 0) * D2R;
+  if (!ax) return LC.fitAt(raw, LC.S, lm, 1);
+  const c = raw[0], R = raw.map(q => ({ x: c.x + (q.x - c.x) * Math.cos(-ax) - (q.y - c.y) * Math.sin(-ax), y: c.y + (q.x - c.x) * Math.sin(-ax) + (q.y - c.y) * Math.cos(-ax) })), f = LC.fitAt(R, LC.S, lm, 1);
+  return f && Object.assign(rotFit(f, c, ax), { kind: f.kind });
+}
+function pathFitPx(c, f) { const A = f.anchors, n = A.length, m = f.closed ? n : n - 1; c.beginPath(); c.moveTo(A[0].p.x, A[0].p.y); for (let k = 0; k < m; k++) { const a = A[k], b = A[(k + 1) % n], c1 = a.o || a.p, c2 = b.i || b.p; c.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, b.p.x, b.p.y); } if (f.closed) c.closePath(); }
+function liveTag(c, txt, x, y, col) { c.save(); c.font = font(11, 600); c.textAlign = 'left'; c.textBaseline = 'middle'; c.lineJoin = 'round'; c.strokeStyle = 'rgba(250,249,245,.95)'; c.lineWidth = 4; c.strokeText(txt, x, y); c.fillStyle = col || ACC; c.fillText(txt, x, y); c.restore(); }
+function bearingTxt(dx, dy) { const b = ((Math.atan2(dx, -dy) / D2R + (S.rot || 0)) % 360 + 360) % 360; return Math.round(b) + '° ' + ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(b / 45) % 8]; }   // from north, clockwise, true to the site's turn
+const pxM = () => cs() / sheet.k;          // metres per screen pixel on the plan
+function penMove(e) {                     // the plan pen: screen points for the fit; held still, the stroke turns into its exact shape and the next moves size it
+  const d = drag, evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; for (const ev of (evs.length ? evs : [e])) { const q = pt(ev), l = d.raw[d.raw.length - 1]; if (Math.hypot(q[0] - l.x, q[1] - l.y) >= .75) d.raw.push({ x: q[0], y: q[1] }); }
+  const P = d.raw[d.raw.length - 1];
+  if (d.hold) { const h = d.hold, k = Math.max(.05, Math.hypot(P.x - h.c.x, P.y - h.c.y) / h.r0); h.fit = fitMapF(h.base, q => ({ x: h.c.x + (q.x - h.c.x) * k, y: h.c.y + (q.y - h.c.y) * k })); h.fit.kind = h.kind; }
+  else if (Math.hypot(P.x - d.still.x, P.y - d.still.y) > 6) { d.still = { x: P.x, y: P.y }; clearTimeout(d.holdT); d.holdT = setTimeout(() => penHold(d), 480); }
+  S.dirty = true;
+}
+function penHold(d) {
+  if (drag !== d || d.hold || d.raw.length < 8) return; const f = LC.quickShapeFit(d.raw, LC.S); if (!f) return;
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of LC.samplePath(f, 12)) { x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y); }
+  const c = { x: (x0 + x1) / 2, y: (y0 + y1) / 2 }, P = d.raw[d.raw.length - 1]; d.hold = { base: f, fit: f, c, r0: Math.max(Math.hypot(P.x - c.x, P.y - c.y), 12), kind: f.kind || 'shape' };
+  try { navigator.vibrate && navigator.vibrate(8); } catch (_) {} S.dirty = true;
+}
+function fitSize(f) {                     // a few words on a fit's size, in screen pixels in, the site's units out
+  const A = f.anchors, n = A.length, m = f.closed ? n : n - 1, M = pxM(); let L = 0; for (const sg of LC.curveSegments(f)) { let q0 = sg[0]; for (let t = 1; t <= 16; t++) { const q = LC.bez3(sg, t / 16); L += Math.hypot(q.x - q0.x, q.y - q0.y); q0 = q; } }
+  if (!f.closed && m === 1 && pieceStraight(A[0], A[1])) return `${fL(L * M, 2)} · ${bearingTxt(A[1].p.x - A[0].p.x, A[1].p.y - A[0].p.y)}`;
+  if (f.closed) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const q of LC.samplePath(f, 8)) { x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); x1 = Math.max(x1, q.x); y1 = Math.max(y1, q.y); } return `${fL((x1 - x0) * M, 1)} × ${fL((y1 - y0) * M, 1)}`; }
+  return fL(L * M, 1) + ' long';
+}
+function penLiveDraw() {                  // the stroke being drawn (or its held shape, or in angle mode its straight line) and its size as you go
+  const d = drag, c = ctx, col = PEN[d.st.color] || INK, wk = Math.max(.8, Math.min(2.5, sheet.k / sheetBase.k)) * d.st.w;
+  const live = d.hold ? d.hold.fit : S.penMode === 'angle' && d.raw.length > 2 ? penFit(d.raw, 'angle') : null;
+  c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.setLineDash([]);
+  c.globalAlpha = (live ? .3 : 1) * d.st.a; c.strokeStyle = col; c.lineWidth = 2.2 * wk; c.beginPath(); d.raw.forEach((q, k) => k ? c.lineTo(q.x, q.y) : c.moveTo(q.x, q.y)); c.stroke();
+  if (live) { c.globalAlpha = 1; c.strokeStyle = ACC; c.lineWidth = 1.8; c.setLineDash(d.hold ? [6, 4] : []); pathFitPx(c, live); c.stroke(); c.setLineDash([]); }
+  c.restore(); const Z = d.raw[d.raw.length - 1], A = d.raw[0];
+  liveTag(c, d.hold ? `${d.hold.kind} · ${fitSize(d.hold.fit)} · drag to size, lift to place` : live ? fitSize(live) : `${fL(Math.hypot(Z.x - A.x, Z.y - A.y) * pxM(), 1)} · ${bearingTxt(Z.x - A.x, Z.y - A.y)}`, Z.x + 14, Z.y - 14);
+}
+function snapTargets(excl) {              // points worth landing on (line ends, corners, midpoints of straight pieces, the lot's corners) and the lines themselves, in screen pixels
+  const P = [], G = [], seg = (a, b) => { G.push([a, b]); if (Math.hypot(b[0] - a[0], b[1] - a[1]) > 40) P.push([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]); };
+  for (const o of S.strokes) { if (o === excl || !o.pts || o.z3 || o.kind === 'note' || o.kind === 'tree') continue;
+    if (o.kind === 'obj') { if (o.solid && o.c) { const F = objFoot(o).map(q => toSheet(q[0], q[1])); F.forEach((q, k) => { P.push(q); seg(q, F[(k + 1) % F.length]); }); } continue; }
+    if (o.pts.length < 2) continue; const Q = o.pts.map(q => toSheet(q[0], q[1]));
+    if (o.fit) for (const a of o.fit.anchors) P.push(toSheet(a.p.x, a.p.y)); else if (o.shape) P.push(...Q); else P.push(Q[0], Q[Q.length - 1]);
+    for (let k = 1; k < Q.length; k++) (o.fit || o.shape ? seg : (a, b) => G.push([a, b]))(Q[k - 1], Q[k]); }
+  for (const b of boundaryGrid()) { const Q = b.pts.map(q => toSheet(q[0], q[1])); P.push(...Q); for (let k = 1; k < Q.length; k++) seg(Q[k - 1], Q[k]); if (b.closed && Q.length > 2) seg(Q[Q.length - 1], Q[0]); }
+  return { P, G };
+}
+function snapAt(q, T, r = 12) {           // the nearest point to land on within r px, else the nearest spot on a line
+  let best = null, bd = r; for (const v of T.P) { const d = Math.hypot(v[0] - q[0], v[1] - q[1]); if (d < bd) { bd = d; best = v; } } if (best) return { p: best, on: 'point' };
+  bd = r; for (const [a, b] of T.G) { const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy || 1, t = Math.max(0, Math.min(1, ((q[0] - a[0]) * dx + (q[1] - a[1]) * dy) / L)), x = a[0] + dx * t, y = a[1] + dy * t, d = Math.hypot(x - q[0], y - q[1]); if (d < bd) { bd = d; best = [x, y]; } }
+  return best ? { p: best, on: 'line' } : null;
+}
+function cleanStrokes() {                 // clean mode: clean lines agree with each other (level, plumb, shared heights, ends that meet); hand-edited and other lines hold still
+  const all = S.strokes.filter(o => o.fit && penEditable(o)), pxs = all.map(o => fitToPx(o.fit)), fixed = new Set();
+  all.forEach((o, k) => { if (o.lm !== 'clean' || o.ed) for (const a of pxs[k].anchors) fixed.add(a); });
+  LC.cleanUp(pxs, 10, fixed); all.forEach((o, k) => { if (o.lm === 'clean' && !o.ed) { const kind = o.kind, sh = o.shape; strokeSetFit(o, fitToGrid(pxs[k])); if (kind) o.shape = sh; } });
+}
+function penEnd(d) {                      // lift: fit the stroke (or place the held shape), land its ends on what they nearly touch, and pick it so the panel shows its sizes
+  clearTimeout(d.holdT); const st = d.st, raw = d.raw; let L = 0; for (let k = 1; k < raw.length; k++) L += Math.hypot(raw[k].x - raw[k - 1].x, raw[k].y - raw[k - 1].y);
+  const drop = () => { const i = S.strokes.indexOf(st); if (i >= 0) S.strokes.splice(i, 1); undoStack.pop(); S.dirty = true; };
+  if (!d.hold && (raw.length < 3 || L < 4)) { drop(); return; }
+  let f = d.hold ? d.hold.fit : penFit(raw, S.penMode); if (!f) f = penFit(raw, 'free'); if (!f || !f.anchors || f.anchors.length < 2) { drop(); return; }
+  if (!S.plant && !f.closed) { const T = snapTargets(st); for (const e of [0, f.anchors.length - 1]) { const a = f.anchors[e], s2 = snapAt([a.p.x, a.p.y], T, 12); if (s2) LC.moveAnchor(a, { x: s2.p[0], y: s2.p[1] }); } }
+  const words = (d.hold ? d.hold.kind + ' · ' : f.kind && f.kind !== 'line' && f.kind !== 'straightened' && f.kind !== 'ortho' && f.kind !== 'angle' ? f.kind + ' · ' : '') + fitSize(f);
+  st.lm = d.hold && S.penMode === 'free' ? 'smart' : S.penMode; strokeSetFit(st, fitToGrid(f));
+  if (S.plant && st.closed) st.shape = true; applyPlant(st); if (st.lm === 'clean') cleanStrokes();
+  PE.sel = penEditable(st) ? st : null; PE.anc = -1; if (window.__sketchRefresh) window.__sketchRefresh(); toast(words);
+}
+/* ---- edit points: a picked line (or a wall or shape made from one) shows its points; drag a point or a handle, join ends, double-click for corner/smooth or a new point ---- */
+const PE = { sel: null, anc: -1 };
+const peAlive = t => !!t && S.strokes.includes(t) && (t.kind === 'obj' ? !!(t.solid && t.solid.path) : penEditable(t));
+const gOfLocal = (st, x, y) => { const sz = cs(), r = (st.rot || 0) * D2R; return [st.c[0] + (x * Math.cos(r) - y * Math.sin(r)) / sz, st.c[1] - (x * Math.sin(r) + y * Math.cos(r)) / sz]; };
+const localOfG = (st, gx, gy) => { const sz = cs(), r = (st.rot || 0) * D2R, dx = (gx - st.c[0]) * sz, dy = -(gy - st.c[1]) * sz; return [dx * Math.cos(r) + dy * Math.sin(r), -dx * Math.sin(r) + dy * Math.cos(r)]; };
+function peGet(t) { if (t.kind === 'obj') return pathMap(t.solid.path, q => { const g = gOfLocal(t, q.x, q.y); return { x: g[0], y: g[1] }; }); return ensureFit(t); }   // the line in grid coordinates
+function peSet(t, f) {                    // write a changed line back: a stroke rebuilds its points; a wall or shape its outline and triangles
+  if (t.kind === 'obj') { t.solid.path = pathMap(f, q => { const l = localOfG(t, q.x, q.y); return { x: r4(l[0]), y: r4(l[1]) }; }); solidSync(t); S.strokeVer++; S.dirty = true; updateStats(); return; }
+  const kind = t.kind, sh = t.shape; strokeSetFit(t, f); if (kind) t.shape = sh; t.ed = true;
+}
+const peStyle = t => t.kind === 'obj' ? 'straight' : t.lm === 'ortho' || t.lm === 'angle' ? 'dir' : t.lm === 'smart' || t.lm === 'clean' ? 'straight' : 'free';
+function peHandlesShown(f, k, side) { const A = f.anchors, n = A.length, j = side < 0 ? k - 1 : k; if (!f.closed && (j < 0 || j >= n - 1)) return false; const a = A[(j + n) % n], b = A[(j + 1) % n]; return !pieceStraight(a, b) || !A[k].corner; }   // handles show where the line curves
+function peHit(t, p) {                    // a point (9 px), then a shown handle (12 px), on the picked line
+  const f = fitToPx(peGet(t)), A = f.anchors; let best = null, bd = 9;
+  A.forEach((a, k) => { const d = Math.hypot(a.p.x - p[0], a.p.y - p[1]); if (d < bd) { bd = d; best = { k: 'p', idx: k }; } }); if (best) return best; bd = 12;
+  A.forEach((a, k) => { for (const [h, sd] of [['i', -1], ['o', 1]]) { if (!a[h] || !peHandlesShown(f, k, sd)) continue; const d = Math.hypot(a[h].x - p[0], a[h].y - p[1]); if (d < bd) { bd = d; best = { k: h, idx: k }; } } });
+  return best;
+}
+function pePick(p) {                      // the line under the pointer (10 px), or a wall or shape made from a line
+  let best = null, bd = 10;
+  for (const st of S.strokes) { if (!peAlive(st)) continue; const Q = st.kind === 'obj' ? objFoot(st).map(q => toSheet(q[0], q[1])) : st.pts.map(q => toSheet(q[0], q[1])); if (st.kind === 'obj') Q.push(Q[0]);
+    for (let k = 1; k < Q.length; k++) { const [ax, ay] = Q[k - 1], [bx, by] = Q[k], dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy || 1, t = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / L)), d = Math.hypot(p[0] - ax - t * dx, p[1] - ay - t * dy); if (d < bd) { bd = d; best = st; } } }
+  return best;
+}
+function peDown(p) { const t = peAlive(PE.sel) ? PE.sel : null; if (t) { const h = peHit(t, p); if (h) { snapshot(); peStart(t, h, p); return; } } PE.sel = pePick(p); PE.anc = -1; S.dirty = true; if (window.__sketchRefresh) window.__sketchRefresh(); }
+window.__peTry = (t, p) => { const h = peHit(t, p); if (!h) return false; snapshot(); PE.sel = t; peStart(t, h, p); return true; };   // the 3d shapes tool lets a shape's points be dragged too
+function peStart(t, h, p) {
+  const f0 = fitToPx(peGet(t)), A = f0.anchors, n = A.length, ends = [];
+  if (h.k === 'p' && !f0.closed && (h.idx === 0 || h.idx === n - 1)) { ends.push({ self: true, e: h.idx === 0 ? n - 1 : 0, p: A[h.idx === 0 ? n - 1 : 0].p });   // an open end can close the line, or join another line's open end
+    if (t.kind !== 'obj') for (const o of S.strokes) { if (o === t || !o.fit || !penEditable(o) || o.fit.closed || (o.kind || '') !== (t.kind || '')) continue; const F = fitToPx(o.fit).anchors; ends.push({ o, e: 0, p: F[0].p }, { o, e: F.length - 1, p: F[F.length - 1].p }); } }
+  drag = { kind: 'pted', t, h, p0: p, f0, cur: f0, moved: false, T: snapTargets(t), ends, join: null, snap: null }; PE.anc = h.k === 'p' ? h.idx : -1; S.dirty = true;
+}
+function peMove(p, e) {                   // from the drag-start shape every time, so nothing drifts; straight pieces stay straight unless the line is free
+  const d = drag, f = fitMapF(d.f0, q => ({ x: q.x, y: q.y })), A = f.anchors, A0 = d.f0.anchors, n = A.length, idx = d.h.idx; let Dx = p[0] - d.p0[0], Dy = p[1] - d.p0[1];
+  d.snap = null; d.join = null;
+  if (d.h.k === 'p') { const q = [A0[idx].p.x + Dx, A0[idx].p.y + Dy];
+    for (const en of d.ends) if (Math.hypot(en.p.x - q[0], en.p.y - q[1]) < 12) { d.join = en; Dx = en.p.x - A0[idx].p.x; Dy = en.p.y - A0[idx].p.y; break; }
+    if (!d.join && !(e && e.altKey)) { const sn = snapAt(q, d.T, 12); if (sn) { d.snap = sn; Dx = sn.p[0] - A0[idx].p.x; Dy = sn.p[1] - A0[idx].p.y; } }
+    const style = peStyle(d.t), done = new Set([idx]), str = [], segS = k0 => LC.isStraightSeg(A0[k0], A0[(k0 + 1) % n]), nb = (k, sd) => { const j = k + sd; return f.closed ? (j + n) % n : j < 0 || j >= n ? -1 : j; };
+    shiftA(A[idx], Dx, Dy);
+    if (style !== 'free') for (const sd of [-1, 1]) { const j = nb(idx, sd); if (j < 0 || j === idx) continue; const k0 = sd > 0 ? idx : j; if (!segS(k0)) continue; str.push(k0);
+      if (style !== 'dir' || done.has(j)) continue; const oA = A0[idx].p, oN = A0[j].p, dl = Math.hypot(oN.x - oA.x, oN.y - oA.y) || 1, dir = { x: (oN.x - oA.x) / dl, y: (oN.y - oA.y) / dl }, A2 = { x: oA.x + Dx, y: oA.y + Dy }, fI = nb(j, sd); let ed = null;
+      if (fI >= 0 && fI !== idx && segS(sd > 0 ? j : fI)) { const el = Math.hypot(A0[fI].p.x - oN.x, A0[fI].p.y - oN.y) || 1; ed = { x: (A0[fI].p.x - oN.x) / el, y: (A0[fI].p.y - oN.y) / el }; str.push(sd > 0 ? j : fI); }
+      const cr = (u, v) => u.x * v.y - u.y * v.x; let v; if (ed && Math.abs(cr(ed, dir)) > .1) { const s2 = cr({ x: A2.x - oN.x, y: A2.y - oN.y }, dir) / cr(ed, dir); v = { x: ed.x * s2, y: ed.y * s2 }; } else { const dd = Dx * dir.x + Dy * dir.y; v = { x: Dx - dir.x * dd, y: Dy - dir.y * dd }; }
+      shiftA(A[j], v.x, v.y); done.add(j); }
+    for (const k0 of str) restraight(A, k0, f.closed);
+  } else { const a = A[idx], h0 = A0[idx][d.h.k]; a[d.h.k] = { x: h0.x + Dx, y: h0.y + Dy }; const other = d.h.k === 'i' ? 'o' : 'i';   // a handle; on a smooth point the other handle stays in line
+    if (!a.corner && a[other]) { const vx = a.p.x - a[d.h.k].x, vy = a.p.y - a[d.h.k].y, vl = Math.hypot(vx, vy) || 1, ol = Math.hypot(A0[idx][other].x - a.p.x, A0[idx][other].y - a.p.y); a[other] = { x: a.p.x + vx / vl * ol, y: a.p.y + vy / vl * ol }; } }
+  d.cur = f; d.moved = d.moved || Math.hypot(Dx, Dy) > .5; S.dirty = true;
+}
+function peEnd() {                        // write the drag back; an end let go on the other end closes the line, on another line's end joins the two into one
+  const d = drag; if (!d.moved) { undoStack.pop(); S.dirty = true; return; }
+  let f = d.cur; const A = f.anchors, n = A.length, idx = d.h.idx;
+  if (d.join && d.join.self) { const first = A[0], end = A[n - 1]; A[0] = { p: { ...first.p }, i: end.i, o: first.o, corner: true }; A.pop(); f.closed = true; toast('closed'); }
+  else if (d.join) { const o = d.join.o, a1 = idx === n - 1 ? A : LC.reversed(A), B = fitToPx(o.fit).anchors, b1 = d.join.e === 0 ? B : LC.reversed(B), joint = { p: { ...b1[0].p }, i: a1[a1.length - 1].i, o: b1[0].o, corner: true };
+    f = { closed: false, anchors: [...a1.slice(0, -1), joint, ...b1.slice(1)] }; if ((o.lm || 'free') !== (d.t.lm || 'free')) d.t.lm = 'free'; S.strokes.splice(S.strokes.indexOf(o), 1); toast('joined into one line'); }
+  peSet(d.t, fitToGrid(f)); if (window.__sketchRefresh) window.__sketchRefresh();
+}
+function peDraw() {                       // the picked line in the accent colour with the length of each straight piece; in edit mode its points and handles, and where a dragged point will land
+  const sdT = window.__sdCurPath ? window.__sdCurPath() : null, t = sdT || (S.brush === 'pen' && peAlive(PE.sel) ? PE.sel : null); if (!t || S.mode !== 'plan') return;
+  const edit = !!sdT || S.penEdit, f = drag && drag.kind === 'pted' && drag.t === t ? drag.cur : fitToPx(peGet(t)), c = ctx, A = f.anchors, n = A.length, m = f.closed ? n : n - 1, M = pxM();
+  c.save(); c.strokeStyle = ACC; c.lineWidth = 1.4; c.setLineDash(edit ? [] : [5, 3]); pathFitPx(c, f); c.stroke(); c.setLineDash([]);
+  for (let k = 0; k < m; k++) { const a = A[k], b = A[(k + 1) % n]; if (!pieceStraight(a, b)) continue; const dx = b.p.x - a.p.x, dy = b.p.y - a.p.y, L = Math.hypot(dx, dy); if (L < 46) continue;
+    c.save(); c.translate((a.p.x + b.p.x) / 2, (a.p.y + b.p.y) / 2); let an = Math.atan2(dy, dx); if (an > Math.PI / 2 || an < -Math.PI / 2) an += Math.PI; c.rotate(an); c.font = font(10, 600); c.textAlign = 'center'; c.textBaseline = 'bottom'; c.lineJoin = 'round'; c.strokeStyle = 'rgba(250,249,245,.95)'; c.lineWidth = 4; const tx = fL(L * M, 2); c.strokeText(tx, 0, -4); c.fillStyle = ACC; c.fillText(tx, 0, -4); c.restore(); }
+  if (edit) { c.lineWidth = 1; A.forEach((a, k) => { for (const [h, sd] of [['i', -1], ['o', 1]]) { if (!a[h] || !peHandlesShown(f, k, sd)) continue; c.strokeStyle = 'rgba(201,107,58,.6)'; c.beginPath(); c.moveTo(a.p.x, a.p.y); c.lineTo(a[h].x, a[h].y); c.stroke(); c.fillStyle = PAPER; c.beginPath(); c.arc(a[h].x, a[h].y, 3, 0, TAU); c.fill(); c.strokeStyle = ACC; c.stroke(); } });
+    A.forEach((a, k) => { const on = k === PE.anc; c.fillStyle = on ? ACC : PAPER; c.strokeStyle = ACC; c.lineWidth = 1.4; c.beginPath(); if (a.corner) c.rect(a.p.x - 4, a.p.y - 4, 8, 8); else c.arc(a.p.x, a.p.y, 4.5, 0, TAU); c.fill(); c.stroke(); }); }
+  if (drag && drag.kind === 'pted' && (drag.snap || drag.join)) { const q = drag.join ? [drag.join.p.x, drag.join.p.y] : drag.snap.p; c.strokeStyle = '#2a7a55'; c.lineWidth = 2; c.beginPath(); c.arc(q[0], q[1], 8, 0, TAU); c.stroke(); if (drag.join) liveTag(c, drag.join.self ? 'close' : 'join', q[0] + 12, q[1] - 12, '#2a7a55'); }
+  if (drag && drag.kind === 'pted' && drag.h.k === 'p') { const a = A[drag.h.idx], nbs = [drag.h.idx - 1, drag.h.idx + 1].map(j => f.closed ? (j + n) % n : j).filter(j => j >= 0 && j < n && j !== drag.h.idx);   // the pieces either side of the dragged point, as it moves
+    liveTag(c, nbs.map(j => fL(Math.hypot(A[j].p.x - a.p.x, A[j].p.y - a.p.y) * M, 2)).join(' · '), a.p.x + 14, a.p.y + 16); }
+  c.restore();
+}
+function peSplit(f, k, t) { const A = f.anchors, n = A.length, a = A[k], b = A[(k + 1) % n], st = pieceStraight(a, b), P1 = a.o || a.p, P2 = b.i || b.p, L = (u, v) => ({ x: u.x + (v.x - u.x) * t, y: u.y + (v.y - u.y) * t }), q0 = L(a.p, P1), q1 = L(P1, P2), q2 = L(P2, b.p), r0 = L(q0, q1), r1 = L(q1, q2), s0 = L(r0, r1); a.o = q0; b.i = q2; A.splice(k + 1, 0, { p: s0, i: r0, o: r1, corner: st }); }
+cv.addEventListener('dblclick', e => {   // edit points: on a point, corner ↔ smooth; on the line, a new point there
+  const sdT = window.__sdCurPath ? window.__sdCurPath() : null, t = sdT || (S.brush === 'pen' && S.penEdit && peAlive(PE.sel) ? PE.sel : null); if (!t || S.mode !== 'plan') return;
+  const p = pt(e), h = peHit(t, p), f = fitToPx(peGet(t)), A = f.anchors, n = A.length, m = f.closed ? n : n - 1;
+  if (h && h.k === 'p') { snapshot(); LC.toggleCorner({ fit: f }, h.idx); PE.anc = h.idx; peSet(t, fitToGrid(f)); toast(A[h.idx].corner ? 'corner' : 'smooth'); return; }
+  let best = null, bd = 10; for (let k = 0; k < m; k++) { const a = A[k], b = A[(k + 1) % n], sg = [a.p, a.o || a.p, b.i || b.p, b.p]; for (let s2 = 1; s2 < 48; s2++) { const q = LC.bez3(sg, s2 / 48), d = Math.hypot(q.x - p[0], q.y - p[1]); if (d < bd) { bd = d; best = [k, s2 / 48]; } } }
+  if (best) { snapshot(); peSplit(f, best[0], best[1]); PE.anc = best[0] + 1; peSet(t, fitToGrid(f)); toast('point added'); }
+});
+addEventListener('keydown', e => {      // e: edit points on and off (pen); delete: the picked point, else the picked line; esc: let go
+  if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || e.ctrlKey || e.metaKey) return; if (S.mode !== 'plan' || S.brush !== 'pen') return;
+  if (e.key === 'e') { document.getElementById('penEditBtn').click(); return; }
+  const t = peAlive(PE.sel) ? PE.sel : null; if (!t) return;
+  if (e.key === 'Escape') { PE.sel = null; PE.anc = -1; S.dirty = true; if (window.__sketchRefresh) window.__sketchRefresh(); return; }
+  if ((e.key === 'Delete' || e.key === 'Backspace') && S.penEdit) { e.preventDefault(); snapshot(); const f = peGet(t), A = f.anchors;
+    if (PE.anc >= 0 && A.length > (f.closed ? 3 : 2)) { A.splice(PE.anc, 1); if (!f.closed && PE.anc === 0) A[0].i = null; if (!f.closed && PE.anc === A.length) A[A.length - 1].o = null; PE.anc = -1; peSet(t, f); toast('point removed'); }
+    else { S.strokes.splice(S.strokes.indexOf(t), 1); PE.sel = null; PE.anc = -1; S.strokeVer++; S.dirty = true; toast('line removed'); }
+    if (window.__sketchRefresh) window.__sketchRefresh(); }
+});
+function peSegLen(t, k, Lm) {             // a straight piece set to a typed length: its far end moves along it (an open line carries everything after it along)
+  const f = peGet(t), A = f.anchors, n = A.length, a = A[k], b = A[(k + 1) % n], dx = b.p.x - a.p.x, dy = b.p.y - a.p.y, L = Math.hypot(dx, dy) || 1, nl = Lm / cs(), vx = dx / L * nl - dx, vy = dy / L * nl - dy;
+  const was = A.map((q, j) => j < (f.closed ? n : n - 1) && pieceStraight(q, A[(j + 1) % n])); snapshot();
+  if (f.closed) { shiftA(b, vx, vy); for (const j of [k, (k + 1) % n]) if (was[j]) restraight(A, j, true); } else { for (let j = k + 1; j < n; j++) shiftA(A[j], vx, vy); restraight(A, k, false); }
+  peSet(t, f);
+}
+function peSegBearing(t, k, deg) {        // a straight piece turned to a typed bearing about its start (an open line turns everything after it with it)
+  const f = peGet(t), A = f.anchors, n = A.length, a = A[k], b = A[(k + 1) % n], dx = b.p.x - a.p.x, dy = b.p.y - a.p.y, L = Math.hypot(dx, dy), g = (deg - (S.rot || 0)) * D2R, nx = Math.sin(g) * L, ny = -Math.cos(g) * L;
+  const was = A.map((q, j) => j < (f.closed ? n : n - 1) && pieceStraight(q, A[(j + 1) % n])); snapshot();
+  if (f.closed) { shiftA(b, a.p.x + nx - b.p.x, a.p.y + ny - b.p.y); for (const j of [k, (k + 1) % n]) if (was[j]) restraight(A, j, true); }
+  else { const an = Math.atan2(ny, nx) - Math.atan2(dy, dx), ca = Math.cos(an), sa = Math.sin(an), o = a.p, rt = q => q && { x: o.x + (q.x - o.x) * ca - (q.y - o.y) * sa, y: o.y + (q.x - o.x) * sa + (q.y - o.y) * ca }; a.o = rt(a.o); for (let j = k + 1; j < n; j++) { const q = A[j]; q.p = rt(q.p); q.i = rt(q.i); q.o = rt(q.o); } }
+  peSet(t, f);
+}
 function endPointer(e) {
   if (S.lowQ) { S.lowQ = false; S.dirty = true; }
   if (drag && drag.kind === 'shape' && S.exLen > 0 && S.plant !== 'tree' && drag.p1) toast(S.penMode + ' \u00b7 ' + (S.exWid > 0 && S.penMode === 'rect' ? fL(S.exLen, 1) + ' \u00d7 ' + fL(S.exWid, 1) : fL(S.exLen, 1)) + ' \u00b7 drag again to point it another way');
-  if (drag && drag.kind === 'shape') { const far = drag.p1 && Math.hypot(drag.p1[0] - drag.p0[0], drag.p1[1] - drag.p0[1]) > 4; if (S.plant === 'tree') S.strokes.push(shapeFromDrag('tree', drag.p0, far ? drag.p1 : null)); else if (far || (S.exLen > 0 && drag.p1)) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); if (!S.plant && !(S.exLen > 0)) snapEnds(st); S.strokes.push(applyPlant(st)); } S.strokeVer++; S.dirty = true; }
-  if (drag && drag.kind === 'pen') { const st = drag.st; if (st.pts.length < 2) S.strokes.pop(); else { if (st.pts.length > 3) { const sm = st.pts.map((q, i) => i === 0 || i === st.pts.length - 1 ? q : [(st.pts[i - 1][0] + 2 * q[0] + st.pts[i + 1][0]) / 4, (st.pts[i - 1][1] + 2 * q[1] + st.pts[i + 1][1]) / 4, q[2]].concat(q.length > 3 ? [(st.pts[i - 1][3] + 2 * q[3] + st.pts[i + 1][3]) / 4] : [])); st.pts = sm; }
+  if (drag && drag.kind === 'shape') { const far = drag.p1 && Math.hypot(drag.p1[0] - drag.p0[0], drag.p1[1] - drag.p0[1]) > 4; if (S.plant === 'tree') S.strokes.push(shapeFromDrag('tree', drag.p0, far ? drag.p1 : null)); else if (far || (S.exLen > 0 && drag.p1)) { const st = shapeFromDrag(S.penMode, drag.p0, drag.p1); if (!S.plant && !(S.exLen > 0)) snapEnds(st); st.lm = 'smart'; ensureFit(st); S.strokes.push(applyPlant(st)); PE.sel = st; PE.anc = -1; if (window.__sketchRefresh) window.__sketchRefresh(); } S.strokeVer++; S.dirty = true; }
+  if (drag && drag.kind === 'pted') peEnd();
+  if (drag && drag.kind === 'pen' && !drag.z3) penEnd(drag);
+  else if (drag && drag.kind === 'pen') { const st = drag.st; if (st.pts.length < 2) S.strokes.pop(); else { if (st.pts.length > 3) { const sm = st.pts.map((q, i) => i === 0 || i === st.pts.length - 1 ? q : [(st.pts[i - 1][0] + 2 * q[0] + st.pts[i + 1][0]) / 4, (st.pts[i - 1][1] + 2 * q[1] + st.pts[i + 1][1]) / 4, q[2]].concat(q.length > 3 ? [(st.pts[i - 1][3] + 2 * q[3] + st.pts[i + 1][3]) / 4] : [])); st.pts = sm; }
       if (st.z3) { const lo = Math.min(...st.pts.map(q => q[3])), hi = Math.max(...st.pts.map(q => q[3])); toast(`3d line · ${fL(lo, 1)} to ${fL(hi, 1)} · it keeps its height; erase it in plan`); }
-      else if (S.penMode === 'smart') { const rec = recognizeStroke(st); if (rec) { if (!S.plant) snapEnds(rec); S.strokes[S.strokes.length - 1] = applyPlant(rec); if (!S.plant) toast(rec.pts.length === 2 ? 'straightened' : rec.pts.length === 49 ? 'circle' : 'shape'); } else { if (!S.plant) snapEnds(st); applyPlant(st); } }
       else applyPlant(st); }
     S.strokeVer++; S.dirty = true; }
   pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
@@ -2122,7 +3063,7 @@ const TIPS = {
   'cl:1': 'the loaded point cloud drawn over the model as dust: every point a speck of its own colour, brighter near the eye, thinner far away. from a drone survey or a lidar file, converted with tools/cloud2bin.py', 'cl:0': 'no points', cloudLoad: 'open a points file (.bin from cloud2bin.py). it stays in this browser and reloads with the page; needs real terrain so the points know where they sit',
   'b:raise': 'brush that lifts the ground where you drag', 'b:lower': 'brush that cuts the ground where you drag', 'b:smooth': 'brush that softens bumps and steps', 'b:flatten': 'brush that pulls the ground toward the level where you started the stroke', 'b:pen': 'draw on the sheet; strokes drape over the 3d ground', 'b:erase': 'drag across pen strokes to remove them', 'b:section': 'section lines: drag across the sheet to cut one; drag again elsewhere for a second, up to four (a–b, c–d, e–f, g–h). tap a line to make it the active one; the render cut and the geology follow it', sandBtn: 'live sand: the bridge script reads the depth camera over the sandbox and this page turns it into ground, ten times a second. run python sandbox/bridge.py first', sandProj: 'the projector window: the plan sheet alone, full screen, warped to the box with k', sandCal: 'flatten the sand, then press: that height becomes zero', sandFlipX: 'mirror the sand left to right if the projection is backwards', sandFlipY: 'mirror the sand top to bottom', 'sm:shape': 'the sand is the ground: contours, water and rain follow your hands', 'sm:match': 'the ground on screen becomes the design to build in sand: ember means take sand away, grey means add', 'p:boxW': 'the real width of the sand the camera sees; the site width stands for it', 'p:sandGain': 'multiply the sand heights; 1 is true to the box scale', 'b:obj': 'an object from your cad program: import an stl or obj, it lands at the centre of the sheet; drag it into place, turn, scale and lift it in the rail. it shows in the model, the render, the painter and the printed stl', objBtn: 'open an stl or obj (binary or text). files over 40,000 faces are simplified on the way in', objDel: 'remove the selected object; the eraser on its centre does the same', 'p:objUnit': 'what one unit in the file means; cad usually exports millimetres', 'p:objRot': 'turn the selected object on the sheet', 'p:objScale': 'scale the selected object; 1 is the file as exported', 'p:objLift': 'raise the selected object above the ground at its centre, or sink it', 'b:path': 'a path or road: draw its centreline on the sheet. a corridor of the width below follows the ground, smoothed along its length, raised or sunk by the amount below so it shows in the model and the print; the sides run to daylight', 'rd:0': 'the working model: paper tones, contour lines, labels', 'rd:1': 'the render: real sun for the month and hour, a sky, trees standing, the ground cut open along the section line', aiBtn: 'send this view to an image model to paint over it. with the aerial photo on, the photo goes along as a reference and the ground cover read off it goes into the prompt: the ground, the cut, the sun and the sky stay where they are; the surfaces, plants and light get painted. needs your Google AI key', aiKey: 'paste a Google AI Studio key; it stays in this browser only', sec3d: 'paint the active section as the drawing sheet does: square to the line, no perspective, the cut face black; without a key it is drawn instead', 'ai:photo': 'painted as a photograph', 'ai:watercolour': 'painted as a loose watercolour over ink', 'ai:ink': 'painted as an ink wash, a few tones, no colour', 'ai:mashup': 'the surface colour stays as the data map it is, and real vegetation, buildings, water and shadows are painted standing on it', aiRefBtn: 'up to three photographs to paint from: this place or one like it, the look you want, or the building to be built. each goes to the painter beside the view', aiRefClear: 'drop every reference photo', 'rm:place': 'the photo is the place: its materials, plants, ground colours, weather and light are taken, its composition and landforms are not', 'ln:1': 'pen lines and the lot line are in the picture the painter gets, so they come back painted', 'ln:0': 'pen lines and the lot line are left out of the picture the painter gets; planting, paths and placed objects still go', 'rm:look': 'the photo is the look: its medium, palette, brushwork and mood are matched, its content is not', 'rm:building': 'the photo is the building: wherever the view shows a building or a placed object, it is painted as this one; nothing else is taken from the photo', 'ai:white': 'a photograph of a white card model: ground and buildings matte white with the contour steps, only the planting and the water painted in', 'p:aiWords': 'what should be in the picture that the model cannot know: species, ground cover, season, mood', 'eye:1.47': 'the camera near the ground, looking in: the section-perspective view', 'eye:1.25': 'a little above the ground', 'eye:0.95': 'a high viewpoint', 'p:cutSel': 'no cut shows the whole site as a model on a table; black or white cuts the earth away in front of the active section line and shows the face', 'pt:0': 'the render as drawn', 'pt:1': 'paint: send the render to an image model in the style chosen above; the reference photo, the words and the paint button appear below', 'p:skySel': 'the background: four skies with real sun and cloud, or a studio backdrop (seamless, white, charcoal) with no horizon at all', 'sky:cumulus': 'tall fair-weather cumulus', 'sky:marine': 'a low flat marine layer along the horizon', 'sky:overcast': 'a flat grey ceiling', 'sky:seamless': 'a photographer\'s seamless: a plain warm-grey sweep behind the model, no sky, no horizon', 'sky:white': 'a pure white studio background, the model alone', 'sky:dark': 'a charcoal sweep: the model lit against the dark', 'p:rMonth': 'month for the sun and the sky', 'p:rHour': 'hour for the sun and the sky; the shadows are true for the site', 'bm:mapped': 'buildings as blocks at their mapped height, in the model view only', 'bm:pedestal': 'each footprint stands proud of the ground by the amount below, in the model, the print and the cnc file: a flat-topped pad a mill can leave', 'bm:recess': 'each footprint is sunk by the amount below: a pocket a mill can cut, for a separately made block to sit in', 'bm:engrave': 'no relief: footprints go out as lines in the cnc dxf, and show as outlines on the model', 'p:bldMM': 'how far the pedestal stands up, or the recess goes down, measured on the finished model in the units you have set', 'p:pathW': 'how wide the path is, edge to edge', 'sf:none': 'plain edges', 'sf:gravel': 'the corridor fills with gravel stipple on the sheet', 'sf:paving': 'the corridor fills with paving on the sheet', 'p:pathH': 'raised for a berm or a built-up road, sunk for a trail or a swale; sunk about 6 in is easy to see on a print', 'b:pad': 'a pad: drag a rectangle, an oval, or draw a shape. the ground inside becomes a flat pad with side slopes that daylight; by default its height is set so cut equals fill', 'ps:rect': 'drag corner to corner', 'ps:oval': 'drag the box the oval fits in', 'ps:draw': 'draw the outline freehand; it closes when you let go', 'pl:balance': 'the pad height is found so the cut equals the fill: no earth to bring in or haul off', 'pe:slopes': 'the pad edges run out to daylight at the side slope', 'pe:auto': 'a retaining wall wherever the edge drops or rises more than 2 ft, slopes elsewhere; the wall is drawn, measured and noted', 'pe:walls': 'a retaining wall all round: the ground outside stays as it is', 'pl:ground': 'the pad sits at the ground height where you started the drag', 'p:padGrade': 'tilt the pad along the direction you dragged, for drainage; 0 is dead level', 'cf:1': 'ember hatching is fill, grey is cut, stronger with depth; the same wash the model shows', 'cf:0': 'no cut and fill wash on the sheet', 'b:spot': 'tap to place a spot elevation that follows the ground as you grade; the grade tool places its own at A and B with a slope arrow', 'b:grade': 'exact grade: drag A to B and the ground between is set to the fall in the rail, starting from the ground at A; radius is the width', 'p:grade': 'percent fall from A to B along the grade line; negative rises, 0 makes it level', 'p:side': 'how the sides of the graded strip meet the ground: 3:1 is three across for one down. fill slopes down, cut slopes up, until they daylight', 'p:strip': 'topsoil taken off every disturbed area before grading and set aside; reported separately from cut and fill', 'p:swell': 'how much dug earth bulks up when loose; the haul volume uses it', 'p:runoff': 'the share of storm rain that runs over the ground; the rest soaks in. flood and rain volumes use it',
   'pm:tree': 'tap to plant a tree with a 20 ft canopy, or drag from the trunk to size it. click again for plain ink', 'pm:shrub': 'shrub mass: trace a bed, or use rect / circ for a clean one. click again for plain ink', 'pm:hedge': 'hedge row along a line, or around a rect / circ. click again for plain ink', 'pm:gravel': 'gravel stipple inside a traced or rect / circ area. click again for plain ink', 'pm:paving': 'flagstone paving inside a traced or rect / circ area. click again for plain ink',
-  'pm:smart': 'freehand that tidies itself on lift: straight lines, circles, boxes, clean polylines', 'pm:free': 'freehand kept exactly as drawn', 'pm:line': 'drag a straight line', 'pm:rect': 'drag a rectangle corner to corner', 'pm:circle': 'drag a circle from its centre',
+  'pm:free': 'draws what you draw, as a clean line with points you can edit. hold the pen still for half a second and the stroke becomes the exact shape', 'pm:angle': 'one straight line at a clean angle: level, plumb, 45s, 15s, else the nearest 5', 'pm:ortho': 'square runs only: every stroke becomes straight legs at right angles', 'pm:smart': 'the stroke becomes the shape it clearly is: line, arc, circle, ellipse, rectangle, triangle, or straight pieces', 'pm:clean': 'smart, then agrees with the other clean lines: near-level becomes level, ends that nearly meet join', 'pm:line': 'drag a straight line', 'pm:rect': 'drag a rectangle corner to corner', 'pm:circle': 'drag a circle from its centre',
   'pc:ink': 'black pen', 'pc:ember': 'red pen', 'pc:water': 'blue pen', penDash: 'dashed strokes on or off', penClear: 'remove every pen stroke',
   'a:flow': 'blue lines where water runs, thicker with more ground feeding them', 'a:catch': 'each outlet\'s basin, tinted, with its area', 'a:ridge': 'dashed ember lines along the ridges', 'a:keys': 'keypoints: where a valley\'s steep upper slope eases, the classic small-dam site', 'a:keyline': 'the contour through the keypoint plus parallel plow lines in its catchment', 'a:swales': 'on-contour ditches stepping down from the keyline', 'a:dam': 'a dam at the keypoint or wherever you place it, with the pond it holds', 'a:flood': 'one storm\'s rain pooled in every hollow, worst case, no soak-in', 'a:sun': 'shadows at an hour, or sun hours per day, for the site\'s latitude', 'a:plow': 'rain follows the plow furrows: water drifts from the valley toward the ridges', 'a:wet': 'topographic wetness: where water gathers and lingers, from how much ground drains to each spot and how flat it is; deeper blue is wetter', 'a:land': 'landforms read from the ground alone, ten kinds: peak, ridge, shoulder, spur, slope, hollow, footslope, valley, pit and flat',
   't:key': 'a tap on the sheet sets the keyline point', 't:dam': 'a tap on the sheet places the dam', rainBtn: 'animated raindrops running downhill and pooling, here and on the model (r)', rainPause: 'freeze the drops and pools (p)', rainBtnM: 'rain on the model while you sculpt: drops follow the new ground and pools stay where they were (r)', rainPauseM: 'freeze the drops and pools (p)',
@@ -2354,7 +3295,7 @@ function hintText() {
   let h = '';
   if (S.mode === 'plan' && HIST.on) return HIST.frames ? `looking back · ${HIST.frames.length} pictures of this place since ${HIST.frames[0].date.slice(0, 4)} · press animate history again to stop` : 'looking back · fetching the pictures';
   if (S.mode === 'plan') {
-    if (S.brush === 'pen') { const m = S.penMode; h = m === 'smart' ? 'pen · freehand; on lift, wobbly lines straighten, loops close, corners snap' : m === 'free' ? 'pen · freehand, kept as drawn' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : 'circle · drag from the centre outward'; if (S.plant) h = S.plant === 'tree' ? PLANT_HINT.tree : PLANT_HINT[S.plant] + (m === 'smart' ? ' · smart tidies the outline' : m === 'free' ? ' · traced as drawn' : ' · ' + m + ' gives it a clean shape'); }
+    if (S.brush === 'pen') { const m = S.penMode; h = S.penEdit ? 'edit points · click a line · drag a point or handle · double-click: corner/smooth or a new point · delete removes a point · e/esc to stop' : m === 'free' ? 'free · draw; hold still half a second to snap to the exact shape · e edits points' : m === 'angle' ? 'angle · one straight line at a clean angle' : m === 'ortho' ? 'ortho · square runs' : m === 'smart' ? 'smart · the shape you meant: line, arc, circle, box' : m === 'clean' ? 'clean · smart, then lines up with the other clean lines' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : 'circle · drag from the centre outward'; if (S.plant) h = S.plant === 'tree' ? PLANT_HINT.tree : PLANT_HINT[S.plant] + (m === 'free' ? ' · traced as drawn' : ' · ' + m + ' gives it a clean shape'); }
     else if (S.brush === 'erase') h = 'eraser · drag across pen strokes to remove them';
     else if (S.brush === 'section') h = 'section · drag from A to B; the section view opens when you let go';
     else if (S.brush === 'path') h = `path · draw the centreline; a ${fL(S.pathW, 1)} corridor, ${S.pathH === 0 ? 'flush' : S.pathH > 0 ? 'raised ' + fL(S.pathH, 2) : 'sunk ' + fL(-S.pathH, 2)}, follows it`;
@@ -2396,7 +3337,7 @@ function setMode(m) {
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
 for (const id of ['brushes', 'sculptBrushes']) document.getElementById(id).onclick = e => { const b = e.target.closest('button'); if (!b) return; setBrush(b.dataset.b); S.dirty = true; };
-document.getElementById('penMode').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.penMode = b.dataset.pm; document.querySelectorAll('#penMode button').forEach(x => x.classList.toggle('on', x === b)); };
+document.getElementById('penMode').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'penEditBtn') { S.penEdit = !S.penEdit; b.classList.toggle('on', S.penEdit); S.dirty = true; toast(S.penEdit ? 'edit points · click a line, drag its points · double-click a point: corner or smooth, on the line: a new point · delete removes a point · e or esc to stop' : 'drawing again'); if (window.__sketchRefresh) window.__sketchRefresh(); return; } if (!b.dataset.pm) return; if (S.penEdit) { S.penEdit = false; document.getElementById('penEditBtn').classList.remove('on'); } S.penMode = b.dataset.pm; document.querySelectorAll('#penMode button').forEach(x => x.classList.toggle('on', x === b)); };
 document.getElementById('plantRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.plant = S.plant === b.dataset.pm ? null : b.dataset.pm; document.querySelectorAll('#plantRow button').forEach(x => x.classList.toggle('on', x.dataset.pm === S.plant)); };   // click again to go back to plain ink
 function applyPlant(st) {                 // give a finished stroke its planting kind, from the plant row and the drawing mode that made it
   const k = S.plant; if (!k || st.kind) return st;
@@ -2512,7 +3453,7 @@ function drawStrokes(c, toXY, k, dense) {   // pen strokes through any projectio
   c.lineCap = 'round'; c.lineJoin = 'round';
   for (const st of S.strokes) { if (st.kind) { drawPlant(c, st, toXY, k, dense); continue; } if (st.pts.length < 2 || S.hideStrokes || (S.hideSketch && !st.shape)) continue; c.strokeStyle = PEN[st.color] || INK; const sw = st.w || 1; c.globalAlpha = st.a == null ? 1 : st.a; c.setLineDash(st.dash ? [7 * sw + 2, 5 * sw + 2] : []);
     const pts = dense && !st.z3 ? densify(st.pts, .3) : st.pts, P = pts.map(q => toXY(q[0], q[1], q[3]));
-    if (st.shape) { c.lineWidth = 2.2 * k * sw; c.beginPath(); P.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); continue; }
+    if (st.shape || st.fit) { c.lineWidth = 2.2 * k * sw; c.beginPath(); P.forEach((q, t) => t ? c.lineTo(q[0], q[1]) : c.moveTo(q[0], q[1])); c.stroke(); continue; }
     if ((st.a != null && st.a < 1) || st.dash) {   // one continuous path: no overlap darkening, unbroken dash pattern
       let pr = 0; for (const q of pts) pr += q[2]; pr /= pts.length; c.lineWidth = (1 + 2.4 * pr) * k * sw; c.beginPath(); c.moveTo(P[0][0], P[0][1]);
       for (let q = 1; q < P.length - 1; q++) { const mx = (P[q][0] + P[q + 1][0]) / 2, my = (P[q][1] + P[q + 1][1]) / 2; c.quadraticCurveTo(P[q][0], P[q][1], mx, my); }
@@ -2617,10 +3558,46 @@ function solidGround(st) {                 // on the ground: the base at the low
   const s = st.solid, g0 = gAt(st.c[0], st.c[1]); if (s.zb != null) { st.lift = s.zb - g0; return; }
   let lo = g0; for (const q of objFoot(st)) lo = Math.min(lo, gAt(q[0], q[1])); st.lift = lo - g0 + (s.raise || 0);
 }
+/* a solid drawn from a sketch line keeps that line (s.path: Line Pad anchors {p,i,o,corner} in local metres, x east, y north): an outline shape is the closed line pushed up; a wall is the line given a thickness (s.t). Its outline and triangles are rebuilt from the line, and s.fmap says what each outline edge is, so pulling a face moves the right part of the line */
+const pathMap = (path, f) => ({ closed: path.closed, anchors: path.anchors.map(a => ({ p: f(a.p), i: a.i && f(a.i), o: a.o && f(a.o), corner: a.corner })) });
+function pathSample(path) {               // the line as points: a straight piece is its two ends, a curve 12 steps; seg[k] = the piece each point starts, -1 inside a curve
+  const A = path.anchors, n = A.length, m = path.closed ? n : n - 1, pts = [], seg = [];
+  for (let k = 0; k < m; k++) { const a = A[k], b = A[(k + 1) % n], c1 = a.o || a.p, c2 = b.i || b.p, L = Math.hypot(b.p.x - a.p.x, b.p.y - a.p.y) || 1;
+    const off = q => Math.abs((b.p.y - a.p.y) * (q.x - a.p.x) - (b.p.x - a.p.x) * (q.y - a.p.y)) / L, straight = off(c1) < L * 1e-3 + 1e-4 && off(c2) < L * 1e-3 + 1e-4, N = straight ? 1 : 12;
+    for (let t = 0; t < N; t++) { const u = t / N, v = 1 - u; pts.push([v * v * v * a.p.x + 3 * v * v * u * c1.x + 3 * v * u * u * c2.x + u * u * u * b.p.x, v * v * v * a.p.y + 3 * v * v * u * c1.y + 3 * v * u * u * c2.y + u * u * u * b.p.y]); seg.push(straight ? k : -1); } }
+  if (!path.closed) { pts.push([A[n - 1].p.x, A[n - 1].p.y]); seg.push(-1); }
+  return { pts, seg };
+}
+function wallRings(pts, closed, t) {      // the two faces of a wall along a centreline: right (-) and left (+) offsets, mitred, the mitre held to 3 thicknesses
+  const n = pts.length, nrm = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1; return [-dy / L, dx / L]; }, R = [], Lf = [];
+  for (let k = 0; k < n; k++) { const pv = closed ? pts[(k - 1 + n) % n] : pts[Math.max(0, k - 1)], nx = closed ? pts[(k + 1) % n] : pts[Math.min(n - 1, k + 1)];
+    const n1 = k > 0 || closed ? nrm(pv, pts[k]) : nrm(pts[k], nx), n2 = k < n - 1 || closed ? nrm(pts[k], nx) : n1; let mx = n1[0] + n2[0], my = n1[1] + n2[1]; const ml = Math.hypot(mx, my) || 1; mx /= ml; my /= ml;
+    const sc = Math.min(3, 1 / Math.max(.2, mx * n1[0] + my * n1[1])) * t / 2; Lf.push([pts[k][0] + mx * sc, pts[k][1] + my * sc]); R.push([pts[k][0] - mx * sc, pts[k][1] - my * sc]); }
+  return { R, L: Lf };
+}
+function solidFromPath(s) {               // outline (s.foot), what each outline edge is (s.fmap) and, for a wall, its two faces (s.rings), from the kept line
+  if (s.shape === 'wall') { const { pts } = pathSample(s.path), rg = wallRings(pts, s.path.closed, s.t || .3), n = pts.length; s.rings = rg;
+    if (s.path.closed) { const outer = Math.abs(polyAreaS(rg.L)) >= Math.abs(polyAreaS(rg.R)) ? rg.L : rg.R; s.foot = polyAreaS(outer) < 0 ? outer.slice().reverse() : outer.slice(); s.fmap = s.foot.map(() => ({ side: outer === rg.L ? 1 : -1 })); }
+    else { s.foot = rg.R.concat(rg.L.slice().reverse()); s.fmap = []; for (let k = 0; k < n - 1; k++) s.fmap.push({ side: -1 }); s.fmap.push({ end: 1 }); for (let k = 0; k < n - 1; k++) s.fmap.push({ side: 1 }); s.fmap.push({ end: 0 }); }
+    return; }
+  const { pts, seg } = pathSample(s.path); s.rings = null; if (polyAreaS(pts) < 0) { s.path = { closed: true, anchors: LineCore.reversed(s.path.anchors) }; return solidFromPath(s); }
+  s.foot = pts; s.fmap = seg.map(k => ({ seg: k }));
+}
+function wallTris(s) {                    // a wall from its two faces: top, bottom, both sides, and the two end caps of an open wall; every face turned outward
+  const { R, L } = s.rings, n = R.length, h = s.h, t = [], cl = s.path.closed, m = cl ? n : n - 1, P = (q, z) => [q[0], q[1], z];
+  const tri = (a, b, c, out) => { const ux = b[0] - a[0], uy = b[1] - a[1], uz = b[2] - a[2], vx = c[0] - a[0], vy = c[1] - a[1], vz = c[2] - a[2], nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+    if (nx * out[0] + ny * out[1] + nz * out[2] < 0) t.push(...a, ...c, ...b); else t.push(...a, ...b, ...c); };
+  const quad = (a, b, c, d, out) => { tri(a, b, c, out); tri(a, c, d, out); };
+  for (let k = 0; k < m; k++) { const k1 = (k + 1) % n, cx = (R[k][0] + R[k1][0] + L[k][0] + L[k1][0]) / 4, cy = (R[k][1] + R[k1][1] + L[k][1] + L[k1][1]) / 4;
+    quad(P(R[k], h), P(R[k1], h), P(L[k1], h), P(L[k], h), [0, 0, 1]); quad(P(R[k], 0), P(R[k1], 0), P(L[k1], 0), P(L[k], 0), [0, 0, -1]);
+    for (const F of [R, L]) { const mx = (F[k][0] + F[k1][0]) / 2 - cx, my = (F[k][1] + F[k1][1]) / 2 - cy; quad(P(F[k], 0), P(F[k1], 0), P(F[k1], h), P(F[k], h), [mx, my, 0]); } }
+  if (!cl) for (const [k, k2] of [[0, 1], [n - 1, n - 2]]) { const mx = (R[k][0] + L[k][0]) / 2 - (R[k2][0] + L[k2][0]) / 2, my = (R[k][1] + L[k][1]) / 2 - (R[k2][1] + L[k2][1]) / 2; quad(P(R[k], 0), P(L[k], 0), P(L[k], h), P(R[k], h), [mx, my, 0]); }
+  return t.map(v => Math.round(v * 1000) / 1000);
+}
 function solidSync(st) {                   // after an edit: centre the outline on its centroid (moving the object so nothing shifts on the ground), rebuild the triangles, sit it down
-  const s = st.solid; if (polyAreaS(s.foot) < 0) s.foot.reverse(); const [mx, my] = polyCentroid(s.foot);
-  if (Math.hypot(mx, my) > 1e-6) { s.foot = s.foot.map(q => [q[0] - mx, q[1] - my]); const sz = cs(), r = (st.rot || 0) * D2R; st.c = [st.c[0] + (mx * Math.cos(r) - my * Math.sin(r)) / sz, st.c[1] - (mx * Math.sin(r) + my * Math.cos(r)) / sz]; }
-  s.h = Math.max(.05, s.h); st.sc = 1; st.pts = [[st.c[0], st.c[1], .5]]; st.tris = solidTris(s.foot, s.h); st.foot = s.foot.map(q => q.slice()); st.h = s.h; if ('_k' in st) st._k = ''; solidGround(st); return st;
+  const s = st.solid; if (s.path) solidFromPath(s); else if (polyAreaS(s.foot) < 0) s.foot.reverse(); const [mx, my] = polyCentroid(s.foot);
+  if (Math.hypot(mx, my) > 1e-6) { s.foot = s.foot.map(q => [q[0] - mx, q[1] - my]); if (s.path) { s.path = pathMap(s.path, q => ({ x: q.x - mx, y: q.y - my })); solidFromPath(s); } const sz = cs(), r = (st.rot || 0) * D2R; st.c = [st.c[0] + (mx * Math.cos(r) - my * Math.sin(r)) / sz, st.c[1] - (mx * Math.sin(r) + my * Math.cos(r)) / sz]; }
+  s.h = Math.max(.05, s.h); st.sc = 1; st.pts = [[st.c[0], st.c[1], .5]]; st.tris = s.path && s.shape === 'wall' ? wallTris(s) : solidTris(s.foot, s.h); st.foot = s.foot.map(q => q.slice()); st.h = s.h; if ('_k' in st) st._k = ''; solidGround(st); return st;
 }
 function solidMake(g, foot, h, o = {}) { return solidSync({ kind: 'obj', name: o.name || 'shape', unit: 'm', rot: o.rot || 0, sc: 1, lift: 0, color: 'ink', w: 1, a: 1, c: [g[0], g[1]], pts: [], o: [0, 0], fill: o.fill, solid: { id: o.id || Math.random().toString(36).slice(2, 7), shape: o.shape || 'outline', foot, h, zb: o.zb == null ? null : o.zb, raise: o.raise || 0 } }); }
 const solidBox = (w, d) => [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]];
@@ -2629,6 +3606,14 @@ function solidPull(st, e, d) {             // push or pull one face by d metres:
   const s = st.solid;
   if (e === 'top') s.h = Math.max(.05, s.h + d);
   else if (e === 'bottom') { const nh = Math.max(.05, s.h - d); if (s.zb != null) s.zb += s.h - nh; else s.raise = (s.raise || 0) + (s.h - nh); s.h = nh; }
+  else if (s.path) { const fm = s.fmap && s.fmap[e], A = s.path.anchors, sh = (a, vx, vy) => { a.p = { x: a.p.x + vx, y: a.p.y + vy }; if (a.i) a.i = { x: a.i.x + vx, y: a.i.y + vy }; if (a.o) a.o = { x: a.o.x + vx, y: a.o.y + vy }; };
+    if (!fm) return solidSync(st);
+    if (fm.side) { const t0 = s.t || .3, nt = Math.max(.02, t0 + d); s.t = nt;   // a side face: the wall gets thicker or thinner and the other face stays where it is, so the line slides half the change
+      if (!s.path.closed) { const { pts } = pathSample(s.path), rg = wallRings(pts, false, 2), F = fm.side > 0 ? rg.L : rg.R;
+        for (const a of A) { const j = pts.findIndex(q => Math.abs(q[0] - a.p.x) < 1e-6 && Math.abs(q[1] - a.p.y) < 1e-6); if (j >= 0) sh(a, (F[j][0] - pts[j][0]) * (nt - t0) / 2, (F[j][1] - pts[j][1]) * (nt - t0) / 2); } } }
+    else if (fm.end != null) { const k = fm.end ? A.length - 1 : 0, nb = A[fm.end ? A.length - 2 : 1], a = A[k], dx = a.p.x - nb.p.x, dy = a.p.y - nb.p.y, L = Math.hypot(dx, dy) || 1; sh(a, dx / L * d, dy / L * d); }   // an end face: the wall runs longer or shorter
+    else if (fm.seg >= 0) { const a = A[fm.seg], b = A[(fm.seg + 1) % A.length], L = Math.hypot(b.p.x - a.p.x, b.p.y - a.p.y) || 1, nx = (b.p.y - a.p.y) / L, ny = -(b.p.x - a.p.x) / L; sh(a, nx * d, ny * d); sh(b, nx * d, ny * d); }   // a straight side of a drawn outline moves out or in
+  }
   else if (s.shape === 'cylinder') { const r = Math.hypot(s.foot[0][0], s.foot[0][1]), k = Math.max(.05, r + d) / r; s.foot = s.foot.map(q => [q[0] * k, q[1] * k]); }
   else { const n = s.foot.length, a = s.foot[e], b = s.foot[(e + 1) % n], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, nx = (b[1] - a[1]) / L, ny = -(b[0] - a[0]) / L;   // counter-clockwise: outward is to the right of a→b
     s.foot[e] = [a[0] + nx * d, a[1] + ny * d]; s.foot[(e + 1) % n] = [b[0] + nx * d, b[1] + ny * d]; if (polyAreaS(s.foot) < .01) { s.foot[e] = a; s.foot[(e + 1) % n] = b; } }
@@ -4807,7 +5792,7 @@ setTimeout(sheetInfo, 0);
 const SLIDERS = ['siteW', 'rot', 'interval', 'hach', 've', 'radius', 'strength', 'mm', 'thick', 'ledge', 'thr', 'plow', 'swale', 'dam', 'rain', 'month', 'hour', 'aop', 'rise', 'grade', 'strip', 'swell', 'runoff', 'side', 'padGrade', 'pathW', 'pathH', 'bldMM', 'boxW', 'sandGain'];
 function snapshotProject() {
   const r3 = a => Array.from(a, v => Math.round(v * 1000) / 1000);
-  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, secs: S.secs, secI: S.secI, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, solid: st.solid ? JSON.parse(JSON.stringify(st.solid)) : undefined, fill: st.fill, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, z3: st.z3 || undefined, by: st.by, text: st.text, at: st.at, pts: st.pts.map(q => q.length > 3 ? [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100, Math.round(q[3] * 1000) / 1000] : [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, bldMode: S.bldMode, rendOn: S.rendOn, rendCut: S.rendCut, rendSky: S.rendSky, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, hideSketch: S.hideSketch || undefined, labelUp: S.labelUp, showBase: S.showBase, showCF: S.showCF, cam: S.cam, sheet: S.sheet,
+  return { app: 'coyote-topo', v: 1, saved: new Date().toISOString(), homeSaved: S.homeSaved || '', grid: [W, H], base: r3(rawBase || base), z: r3(z), seaClip: S.seaClip, coast: S.coast ? { segs: S.coast.segs.map(q => q.map(v => Math.round(v * 100) / 100)), seeds: S.coast.seeds, lakes: S.coast.lakes.map(l => l.map(q => [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100])), blds: S.coast.blds || [], roads: S.coast.roads || [] } : null, showBld: S.showBld, showRoads: S.showRoads, world: S.world, unit: S.unit, sec: S.sec, secs: S.secs, secI: S.secI, keyPt: S.keyPt, damPt: S.damPt, brush: S.brush, sculpt: S.sculpt, boundary: S.boundary, trim: S.trim, overlay: S.overlay ? { src: S.overlay.src, north: S.overlay.north, south: S.overlay.south, east: S.overlay.east, west: S.overlay.west, rot: S.overlay.rot } : null, overlayOn: S.overlayOn, strokes: S.strokes.map(st => ({ color: st.color, shape: !!st.shape, kind: st.kind, c: st.c, r: st.r, pct: st.pct, name: st.name, unit: st.unit, rot: st.rot, sc: st.sc, lift: st.lift, tris: st.tris, foot: st.foot, h: st.h, solid: st.solid ? JSON.parse(JSON.stringify(st.solid)) : undefined, fill: st.fill, fit: st.fit ? JSON.parse(JSON.stringify(st.fit)) : undefined, lm: st.lm, ed: st.ed || undefined, pw: st.pw, ph: st.ph, sf: st.sf, top: st.top, bot: st.bot, sp: st.sp, closed: st.closed || undefined, w: st.w || 1, a: st.a == null ? 1 : st.a, dash: !!st.dash, z3: st.z3 || undefined, by: st.by, text: st.text, at: st.at, pts: st.pts.map(q => q.length > 3 ? [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100, Math.round(q[3] * 1000) / 1000] : [Math.round(q[0] * 100) / 100, Math.round(q[1] * 100) / 100, Math.round(q[2] * 100) / 100]) })), aerial: S.aerial, aerialM: S.aerialM, bldMode: S.bldMode, rendOn: S.rendOn, rendCut: S.rendCut, rendSky: S.rendSky, an: S.an, modelStyle: S.modelStyle, colorMode: S.colorMode, sunMode: S.sunMode, labels: S.labels, hideSketch: S.hideSketch || undefined, labelUp: S.labelUp, showBase: S.showBase, showCF: S.showCF, cam: S.cam, sheet: S.sheet,
     sliders: Object.fromEntries(SLIDERS.map(id => [id, document.getElementById(id).value])), place: document.getElementById('place').value, records: S.rec || {} };
 }
 function loadProject(pr, fromHome) {
@@ -4978,7 +5963,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'select', name: 'select', view: 'plan', panel: box => selectPanel(box), note: 'click a drawing, a plant or an object on the plan to pick it; drag to move it, turn or scale it in the panel' },
       { id: 'measure', name: 'measure', view: 'plan', panel: box => measurePanel(box), note: 'click point to point for distances; click the first point again to close a shape and read its area' },
       { id: 'sculpt', name: 'sculpt', pick: '#sculptBrushes button[data-b=raise]', keepBrush: ['raise', 'lower', 'smooth', 'flatten'], rows: ['#sculptBrushes', '#brushParams'], sculpt3d: true, note: 'drag on the ground, in plan or 3d' },
-      { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', unplant: true, rows: ['#penRow', '#brushParams'], more: ['#penMode', '#penSizeRow'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']], panel: box => sketchPanel(box), note: 'draw in plan, or in 3d: there the line lands on the ground or on an object and keeps its height (left drag draws, right drag orbits)' },
+      { id: 'sketch', name: 'sketch', pick: '#brushes button[data-b=pen]', unplant: true, rows: ['#penMode', '#penRow', '#brushParams'], more: ['#penSizeRow'], acts: [['eraser', '#brushes button[data-b=erase]'], ['spot height', '#brushes button[data-b=spot]']], panel: box => sketchPanel(box), note: 'draw in plan, or in 3d: there the line lands on the ground or on an object and keeps its height (left drag draws, right drag orbits)' },
       { id: 'pad', name: 'pad', pick: '#brushes button[data-b=pad]', view: 'plan', rows: ['=footprint', '#padRow', '=level and grade', '#padLevelRow', '#padGradeRow', '=edges', '#padEdgeRow', '#padSoftRow', '#sideRow', '=earthwork', '#strip', '#swell'] },
       { id: 'grade', name: 'grade a→b', pick: '#brushes button[data-b=grade]', view: 'plan', rows: ['#gradeRow'], more: ['#sideRow'] },
       { id: 'spots', name: 'spot grading', view: 'plan', planLabel: 'draw in plan', panel: box => sgPanel(box), note: 'a design surface from spot heights, breaklines and a boundary, with slopes coloured and flow arrows, then applied to the ground' },
@@ -8351,7 +9336,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     S.strokes.forEach((st, i) => { const d = strokeDist(st, px, py); if (d > bd) return; const a = isObjFoot(st) ? -1 : strokeArea(st); if (d < bd || a < ba) { bd = d; ba = a; best = i; } });   // inside several shapes: a placed object wins, then the smallest shape, so a barn inside a site outline can be picked
     if (SEL.i !== best) { SEL.turn = 0; SEL.scale = 1; } SEL.i = best; if (best >= 0) { snapshot(); SEL.drag = { p: toGrid(px, py) }; cv.setPointerCapture(e.pointerId); } renderSelPanel(); drawSel(); }, true);
   cv.addEventListener('pointermove', e => { if (!selTool() || !SEL.drag) return; e.stopImmediatePropagation(); const [px, py] = cvPt(e), g = toGrid(px, py), dx = g[0] - SEL.drag.p[0], dy = g[1] - SEL.drag.p[1]; SEL.drag.p = g; const st = S.strokes[SEL.i]; if (!st) return;
-    st.pts = st.pts.map(q => [q[0] + dx, q[1] + dy, ...q.slice(2)]); if (st.c) st.c = [st.c[0] + dx, st.c[1] + dy]; if (st.foot) st._k = ''; S.strokeVer++; S.dirty = true; drawSel(); }, true);
+    st.pts = st.pts.map(q => [q[0] + dx, q[1] + dy, ...q.slice(2)]); if (st.fit) st.fit = fitMapF(st.fit, q => ({ x: q.x + dx, y: q.y + dy })); if (st.c) st.c = [st.c[0] + dx, st.c[1] + dy]; if (st.foot) st._k = ''; S.strokeVer++; S.dirty = true; drawSel(); }, true);
   cv.addEventListener('pointerup', e => { if (!selTool()) return; if (SEL.drag) { e.stopImmediatePropagation(); SEL.drag = null; } }, true);
   let selBox = null;
   let skBox = null;
@@ -8365,6 +9350,27 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     row.append(make('span', { text: 'who is drawing' }), who); w.append(row);
     const pin = make('button', { cls: 'btn', type: 'button', text: S.notePlace ? 'tap where the note goes…' : 'pin a note', 'data-tip': 'then tap the ground or the model, in 3d or on the plan, and type a few words; it keeps that spot and height' });
     pin.onclick = () => { S.notePlace = !S.notePlace; renderSketchPanel(); if (S.notePlace) toast('tap where the note goes, in 3d or on the plan'); }; w.append(pin);
+    { const t = peAlive(PE.sel) && PE.sel.kind !== 'obj' ? PE.sel : null;
+      if (S.penMode !== 'free' || S.penAxis) { const ax = make('div', { cls: 'sdrow' }), lab = make('span', { text: S.penAxis ? `squares up to a line at ${Math.round(S.penAxis * 10) / 10}°` : 'squares up to the site' }); ax.append(lab);
+        if (S.penAxis) ax.append(ghBtn('to the site', 'angle, ortho, smart and clean line up with the site again', () => { S.penAxis = 0; renderSketchPanel(); toast('squares up to the site'); })); w.append(ax); }
+      if (t) { const f = peGet(t), A = f.anchors, n = A.length, m = f.closed ? n : n - 1, sz = cs(), un = isFt() ? 'ft' : 'm', k2u = isFt() ? FT : 1;
+        w.append(make('div', { cls: 'u2group', text: `the picked line · ${t.lm || 'free'}${f.closed ? ' · closed' : ''}` }));
+        const tb = make('div', { style: 'display:grid;grid-template-columns:18px 1fr 1fr;gap:3px 6px;align-items:center;font-size:11px' }); tb.append(make('span'), make('span', { text: 'length · ' + un, style: 'color:var(--ink3)' }), make('span', { text: 'bearing °', style: 'color:var(--ink3)' }));
+        let total = 0, longest = -1, lmax = 0;
+        for (let k = 0; k < m; k++) { const a = A[k], b = A[(k + 1) % n], dx = b.p.x - a.p.x, dy = b.p.y - a.p.y, L = Math.hypot(dx, dy) * sz;
+          if (!pieceStraight(a, b)) { let cl = 0, q0 = a.p; for (let s2 = 1; s2 <= 24; s2++) { const q = LineCore.bez3([a.p, a.o || a.p, b.i || b.p, b.p], s2 / 24); cl += Math.hypot(q.x - q0.x, q.y - q0.y); q0 = q; } total += cl * sz; if (k < 30) tb.append(make('span', { text: String(k + 1) }), make('span', { text: 'curve · ' + fL(cl * sz, 1), style: 'grid-column:span 2;color:var(--ink2)' })); continue; }
+          total += L; if (L > lmax) { lmax = L; longest = k; } if (k >= 30) continue;
+          const li = make('input', { type: 'number', step: 'any', 'aria-label': `piece ${k + 1} length`, value: String(+(L * k2u).toFixed(2)) }), bi = make('input', { type: 'number', step: 'any', 'aria-label': `piece ${k + 1} bearing`, value: String(Math.round(((Math.atan2(dx, -dy) / D2R + (S.rot || 0)) % 360 + 360) % 360 * 10) / 10) });
+          for (const x of [li, bi]) { x.style.cssText = 'width:100%;min-width:0;font:inherit;padding:2px 4px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:3px'; x.onkeydown = e => e.stopPropagation(); }
+          li.onchange = () => { const v = +li.value; if (v > 0) { peSegLen(t, k, v / k2u); renderSketchPanel(); } }; bi.onchange = () => { const v = +bi.value; if (isFinite(v)) { peSegBearing(t, k, v); renderSketchPanel(); } };
+          tb.append(make('span', { text: String(k + 1) }), li, bi); }
+        w.append(tb); if (m > 30) w.append(make('p', { cls: 'u2note', text: `first 30 of ${m} pieces` }));
+        let ar = ''; if (f.closed) { const P = t.pts; let a2 = 0; for (let k = 0, j = P.length - 1; k < P.length; j = k++) a2 += (P[j][0] + P[k][0]) * (P[j][1] - P[k][1]); ar = ' · area ' + fA(Math.abs(a2) / 2 * sz * sz); }
+        w.append(make('p', { cls: 'u2note', text: `total ${fL(total, 2)}${ar} · bearings from north, clockwise` }));
+        const acts = make('div', { cls: 'u2acts' }); acts.append(ghBtn('make wall', 'the line becomes a wall along it, with a height, a thickness and a top elevation you can set; its points keep editing it', () => lineToSolid(t, 'wall')));
+        if (f.closed) acts.append(ghBtn('make shape', 'the closed line is pushed up into a shape you can pull by its faces; its points keep editing it', () => lineToSolid(t, 'shape')));
+        if (longest >= 0) acts.append(ghBtn('square up to it', 'angle, ortho, smart and clean line up with this line\'s longest straight piece instead of the site', () => { const a = A[longest], b = A[(longest + 1) % n]; let an = Math.atan2(b.p.y - a.p.y, b.p.x - a.p.x) / D2R; an = ((an % 90) + 135) % 90 - 45; S.penAxis = Math.round(an * 100) / 100; renderSketchPanel(); toast(`squaring up to ${S.penAxis}°`); }));
+        w.append(acts); } }
     const notes = S.strokes.filter(st => st.kind === 'note');
     if (notes.length) { w.append(make('div', { cls: 'u2group', text: `notes · ${notes.length}` })); const list = make('div', { style: 'display:grid;gap:2px' });
       for (const st of notes.slice().reverse().slice(0, 40)) { const b = make('button', { type: 'button', style: `display:grid;grid-template-columns:8px 1fr auto;gap:6px;align-items:center;text-align:left;font:inherit;font-size:11px;padding:3px 2px;border:0;background:transparent;color:var(--ink);cursor:pointer;width:100%`, 'data-tip': (st.at || '') + (st.z3 ? ' · ' + fL(st.pts[0][3], 1) : '') });
@@ -8400,7 +9406,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     const meas = measureText(st); if (meas) selBox.append(make('p', { cls: 'u2note', text: meas }));
     const acts = make('div', { cls: 'u2acts' }), del = make('button', { cls: 'btn', type: 'button', text: 'delete' }), dup = make('button', { cls: 'btn', type: 'button', text: 'duplicate' });
     del.onclick = () => { snapshot(); S.strokes.splice(SEL.i, 1); if (S.objSel === SEL.i) S.objSel = null; SEL.i = -1; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel(); };
-    dup.onclick = () => { snapshot(); const c = JSON.parse(JSON.stringify(st)); c.pts = c.pts.map(q => [q[0] + 3, q[1] + 3, ...q.slice(2)]); if (c.c) c.c = [c.c[0] + 3, c.c[1] + 3]; S.strokes.push(c); SEL.i = S.strokes.length - 1; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel(); };
+    dup.onclick = () => { snapshot(); const c = JSON.parse(JSON.stringify(st)); c.pts = c.pts.map(q => [q[0] + 3, q[1] + 3, ...q.slice(2)]); if (c.fit) c.fit = fitMapF(c.fit, q => ({ x: q.x + 3, y: q.y + 3 })); if (c.c) c.c = [c.c[0] + 3, c.c[1] + 3]; S.strokes.push(c); SEL.i = S.strokes.length - 1; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel(); };
     acts.append(dup, del); selBox.append(acts);
   }
   function rotateSel(deg) {                // clockwise on the sheet, about the middle of the picked thing; an object turns about its own centre
@@ -8408,16 +9414,16 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     if (st.kind === 'obj' && st.c) { st.rot = ((st.rot || 0) - deg) % 360; if (st.rot < 0) st.rot += 360; }   // obj rot runs counter-clockwise on the sheet
     else { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const q of st.pts) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
       const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, a = deg * D2R, ca = Math.cos(a), sa = Math.sin(a), turnPt = q => [cx + (q[0] - cx) * ca - (q[1] - cy) * sa, cy + (q[0] - cx) * sa + (q[1] - cy) * ca];
-      st.pts = st.pts.map(q => [...turnPt(q), ...q.slice(2)]); if (st.c) st.c = turnPt(st.c); }
+      st.pts = st.pts.map(q => [...turnPt(q), ...q.slice(2)]); if (st.fit) st.fit = fitMapF(st.fit, q => { const r = turnPt([q.x, q.y]); return { x: r[0], y: r[1] }; }); if (st.c) st.c = turnPt(st.c); }
     SEL.turn = (SEL.turn || 0) + deg; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel();
   }
   function scaleSel(k) {                   // grow or shrink about the middle; an object keeps its own scale, a tree its crown
     const st = S.strokes[SEL.i]; if (!st || !(k > 0)) return; snapshot();
-    if (st.kind === 'obj' && st.solid) { st.solid.foot = st.solid.foot.map(q => [q[0] * k, q[1] * k]); st.solid.h *= k; solidSync(st); }   // a solid keeps real sizes: its outline and height grow, not a scale factor
+    if (st.kind === 'obj' && st.solid) { st.solid.foot = st.solid.foot.map(q => [q[0] * k, q[1] * k]); if (st.solid.path) st.solid.path = pathMap(st.solid.path, q => ({ x: q.x * k, y: q.y * k })); st.solid.h *= k; solidSync(st); }   // a solid keeps real sizes: its outline and height grow, not a scale factor
     else if (st.kind === 'obj' && st.c) st.sc = Math.round((st.sc || 1) * k * 1e4) / 1e4;
     else { let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity; for (const q of st.pts) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); }
       const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, sc = q => [cx + (q[0] - cx) * k, cy + (q[1] - cy) * k];
-      st.pts = st.pts.map(q => [...sc(q), ...q.slice(2)]); if (st.c) st.c = sc(st.c); if (st.r) st.r *= k; }
+      st.pts = st.pts.map(q => [...sc(q), ...q.slice(2)]); if (st.fit) st.fit = fitMapF(st.fit, q => { const r = sc([q.x, q.y]); return { x: r[0], y: r[1] }; }); if (st.c) st.c = sc(st.c); if (st.r) st.r *= k; }
     SEL.scale = (SEL.scale || 1) * k; S.strokeVer++; S.dirty = true; renderSelPanel(); drawSel();
   }
   const fAreaFull = m2 => isFt() ? `${Math.round(m2 * FT * FT).toLocaleString()} ft² (${(m2 / 4046.86).toFixed(2)} ac)` : `${Math.round(m2).toLocaleString()} m² (${(m2 / 1e4).toFixed(2)} ha)`;
@@ -8573,7 +9579,11 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   const sdToGrid = (st, x, y) => { const sz = cs(), r = (st.rot || 0) * D2R, cr = Math.cos(r), sr = Math.sin(r); return [st.c[0] + (x * cr - y * sr) / sz, st.c[1] - (x * sr + y * cr) / sz]; };
   const sdNormG = (st, nx, ny) => { const r = (st.rot || 0) * D2R, X = nx * Math.cos(r) - ny * Math.sin(r), Y = nx * Math.sin(r) + ny * Math.cos(r); return [X, -Y]; };   // a local direction as a grid direction (per metre)
   const sdEdges = st => { const P = st.solid.foot, out = []; for (let k = 0; k < P.length; k++) { const a = P[k], b = P[(k + 1) % P.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; out.push({ k, a, b, L, mid: [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], n: [(b[1] - a[1]) / L, -(b[0] - a[0]) / L] }); } return out; };
-  const sdHandles = st => st.solid.shape === 'cylinder' ? [{ k: 0, mid: [Math.hypot(st.solid.foot[0][0], st.solid.foot[0][1]), 0], n: [1, 0] }] : sdEdges(st);
+  const sdHandles = st => { const s0 = st.solid; if (s0.shape === 'cylinder') return [{ k: 0, mid: [Math.hypot(s0.foot[0][0], s0.foot[0][1]), 0], n: [1, 0] }];
+    if (!s0.path) return sdEdges(st); const E = sdEdges(st), fm = s0.fmap || [];   // from a line: a drawn outline's straight sides; a wall's two ends and one handle on each face
+    if (s0.shape !== 'wall') return E.filter(ed => fm[ed.k] && fm[ed.k].seg >= 0);
+    const out = E.filter(ed => fm[ed.k] && fm[ed.k].end != null); for (const sd of [-1, 1]) { let best = null; for (const ed of E) if (fm[ed.k] && fm[ed.k].side === sd && (!best || ed.L > best.L)) best = ed; if (best) out.push(best); } return out; };
+  window.__sdCurPath = () => { if (!window.__sdActive()) return null; const c0 = sdCur(); return c0 && c0.solid.path ? c0 : null; };
   const sdChanged = () => { S.strokeVer++; SD.ver++; S.dirty = true; updateStats(); if (sdBoxEl && sdBoxEl.isConnected) sdRender(); };
   const inPolyXY = (x, y, Q) => { let ins = false; for (let a = 0, b = Q.length - 1; a < Q.length; b = a++) if ((Q[a][1] > y) !== (Q[b][1] > y) && x < (Q[b][0] - Q[a][0]) * (y - Q[a][1]) / (Q[b][1] - Q[a][1]) + Q[a][0]) ins = !ins; return ins; };
   function sdHit(g) { let best = null; for (const st of sdList()) { const P = objFoot(st); if (inPolyXY(g[0], g[1], P) && (!best || st.solid.h < best.solid.h)) best = st; } return best; }
@@ -8637,6 +9647,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     if (S.mode !== 'plan') return;
     const g = ghGrid(e); e.stopImmediatePropagation(); e.preventDefault(); try { cv.setPointerCapture(e.pointerId); } catch (_) {}
     if (SD.draw && SD.draw.kind === 'outline') { const P = SD.draw.pts, f = toSheet(P[0][0], P[0][1]); if (P.length >= 3 && Math.hypot(f[0] - px, f[1] - py) < 10) sdFinishOutline(); else { P.push(g); SD.ver++; S.dirty = true; } return; }
+    { const c0 = sdCur(); if (c0 && c0.solid.path && window.__peTry(c0, [px, py])) return; }   // the round and square points of a shape made from a line come first
     const cur = sdCur(), hd = cur && sdHandleAt(cur, px, py);
     if (hd) { snapshot(); SD.drag = { kind: 'pull', st: cur, e: hd.k, n: sdNormG(cur, hd.n[0], hd.n[1]), g0: g, done: 0 }; return; }
     const hit = sdHit(g); if (hit) { SD.sel = hit; snapshot(); SD.drag = { kind: 'move', st: hit, g0: g, c0: hit.c.slice() }; sdChanged(); return; }
@@ -8675,8 +9686,9 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     { const row = make('div', { cls: 'sdrow' }), inp = make('input', { type: 'text', 'aria-label': 'name', value: cur.name }); inp.onkeydown = e => e.stopPropagation(); inp.onchange = () => { snapshot(); cur.name = inp.value.trim().slice(0, 40) || 'shape'; sdChanged(); }; row.append(make('span', { text: 'name' }), inp); w.append(row); }
     const xs = s.foot.map(q => q[0]), ys = s.foot.map(q => q[1]), bw = Math.max(...xs) - Math.min(...xs), bd = Math.max(...ys) - Math.min(...ys);
     if (s.shape === 'cylinder') w.append(sdNumRow('radius', () => bw / 2, v => { const k = Math.max(.05, v) / (bw / 2); s.foot = s.foot.map(q => [q[0] * k, q[1] * k]); solidSync(cur); }));
+    else if (s.path) { if (s.shape === 'wall') w.append(sdNumRow('thickness', () => s.t || .3, v => { s.t = Math.max(.02, v); solidSync(cur); })); w.append(make('p', { cls: 'u2note', text: 'made from a line: drag its points to reshape it, double-click a point for corner or smooth, on the line for a new point' })); }
     else if (s.shape === 'box' || s.shape === 'wall') { w.append(sdNumRow(s.shape === 'wall' ? 'length' : 'width', () => bw, v => { s.foot = solidBox(Math.max(.02, v), bd); solidSync(cur); }), sdNumRow(s.shape === 'wall' ? 'thickness' : 'depth', () => bd, v => { s.foot = solidBox(bw, Math.max(.02, v)); solidSync(cur); })); }
-    w.append(sdNumRow('height', () => s.h, v => { s.h = Math.max(.05, v); solidSync(cur); }));
+    w.append(sdNumRow('height', () => s.h, v => { s.h = Math.max(.05, v); solidSync(cur); }), sdNumRow('top elevation', () => gAt(cur.c[0], cur.c[1]) + cur.lift + s.h, v => { const b0 = gAt(cur.c[0], cur.c[1]) + cur.lift; if (v - b0 < .05) toast(`the ground under it is at ${fL(b0, 1)}: the top has to be above that`); s.h = Math.max(.05, v - b0); solidSync(cur); }));   /* the top at a set elevation: a retaining wall's TW */
     const base = make('div', { cls: 'seg' }); for (const [m, t] of [['ground', 'on the ground'], ['level', 'at an elevation']]) { const b = make('button', { type: 'button', cls: (s.zb == null) === (m === 'ground') ? 'on' : '', text: t }); b.onclick = () => { snapshot(); if (m === 'ground') s.zb = null; else if (s.zb == null) s.zb = gAt(cur.c[0], cur.c[1]) + cur.lift; solidSync(cur); sdChanged(); }; base.append(b); } w.append(base);
     if (s.zb == null) w.append(sdNumRow('raise above the ground', () => s.raise || 0, v => { s.raise = v; solidSync(cur); })); else w.append(sdNumRow('base elevation', () => s.zb, v => { s.zb = v; solidSync(cur); }));
     w.append(sdNumRow('turn', () => cur.rot || 0, v => { cur.rot = ((v % 360) + 360) % 360; solidSync(cur); }, false));
@@ -8686,6 +9698,14 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
     w.append(acts); w.append(make('p', { cls: 'u2note', text: `footprint ${fA(Math.abs(polyAreaS(s.foot)))} · volume ${fV(Math.abs(polyAreaS(s.foot)) * s.h)}` }));
   }
   function sdPanel(box) { sdBoxEl = box; sdRender(); }
+  function lineToSolid(t, kind) {        // the picked line becomes a wall (any line) or a shape (a closed line); the line goes inside it, so its points keep editing it
+    const f = peGet(t); if (!f) return; if (kind === 'shape' && !f.closed) { toast('close the line first: in edit points, drag one end onto the other'); return; }
+    let cx = 0, cy = 0; for (const a of f.anchors) { cx += a.p.x; cy += a.p.y; } cx /= f.anchors.length; cy /= f.anchors.length; const sz = cs();
+    const st = { kind: 'obj', name: kind === 'wall' ? 'wall' : 'shape', unit: 'm', rot: 0, sc: 1, lift: 0, color: 'ink', w: 1, a: 1, c: [cx, cy], pts: [], o: [0, 0], fill: kind === 'wall' ? SD_FILL.concrete : undefined,
+      solid: { id: Math.random().toString(36).slice(2, 7), shape: kind === 'wall' ? 'wall' : 'outline', path: pathMap(f, q => ({ x: r4((q.x - cx) * sz), y: r4(-(q.y - cy) * sz) })), t: SD.thick, foot: [], h: kind === 'wall' ? SD.wallH : SD.h, zb: null, raise: 0 } };
+    snapshot(); solidSync(st); S.strokes[S.strokes.indexOf(t)] = st; PE.sel = null; SD.sel = st; sdChanged(); state.task = 'shape'; chooseTool('solid');
+    toast(`${kind} made · ${fL(st.solid.h, 1)} high · drag its round points to reshape it, its squares to pull a face`);
+  }
   /* the design tools in 3d: solar tables and the dam's wall and lake, built from the tools' own layouts as objects that are drawn but never saved or printed (the tools keep the real data) */
   let d3C = { key: '', list: [] };
   window.__derived3d = () => {
