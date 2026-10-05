@@ -112,6 +112,8 @@ LIGHT = {
  'storm':  (16.4, 'Light: a winter storm clearing, dark slate clouds breaking up with shafts of low sun through them, roofs and ground wet and glistening, puddles on the dirt roads, dramatic contrast.'),
  'blue':   (18.9, 'Light: blue hour just after sunset, a deep blue sky with a last orange band on the horizon, warm lights glowing inside the stable and the cafe, soft light without hard shadows.'),
  'fog':    (8.6,  'Light: early morning marine fog lifting off the valley, soft diffused light, the far hills fading into mist, damp ground, quiet.'),
+ # 4 Oct (Will, night): the stable as a lantern, moody twilight
+ 'lantern': (19.1, 'Light: moody deep twilight, the last cold blue light after sunset, a dusky violet-blue sky with a faint ember line on the far hills, the land almost dark, no sun, no shadows. THE STABLE IS A LANTERN: soft warm amber light (2200 K) glows from INSIDE the stable and seeps out between the hundreds of thin, wiggly, irregular horizontal sticks of every wall panel and the gable ends, so each stick reads as a dark crooked silhouette against warm glowing gaps, like light through a bird nest or a woven basket; the glow is soft and diffuse, not bright beams; a little warm light spills onto the dirt and the fieldstone just below the walls and out of the open aisle doors, and a faint glow comes up through the open clerestory under the roof edge. Everything else stays dark and cool: no floodlights, no lamps outside, the hills and sky dark, maybe one or two quiet figures or a horse silhouetted at a doorway.'),
  # 4 Oct (Will): sheet E-1's dark-sky lighting, just after sundown: the hero is warm light pouring out between the stable's sticks
  'dusk':   (18.7, 'Light: early evening just after sundown, the sky a deep clear blue fading to a thin warm orange line over the western hills, the first star or two, the land in soft dusk with no hard shadows. The stable glows from inside: warm amber-gold light (2700 K) pours out between the thin horizontal sticks of its wall panels in fine glowing lines, and spills softly out of its open doorways and the open clerestory onto the dirt just around it; it is the brightest thing in the picture, a lantern. The covered stalls show a soft warm glow under their roof. Small amber lights at knee height dot the walking path between the pines and the stable, and a small shielded downlight over each stable door. Everything else stays DARK: no light on the roads, the arena, the round pen, the trees or the hills, no streetlights, no floodlights, no light shining up into the sky, the hills dark silhouettes. Calm, quiet, a few horses and people near the glowing stable.'),
 }
@@ -127,7 +129,7 @@ if __name__ == '__main__':
     for v in (ONLY or VIEWS):
         CUR[0] = v
         t = time.time()
-        _lt = v.split('-fan-')[1] if '-fan-' in v else ''
+        _lt = os.environ.get('GAL_LIGHT') or (v.split('-fan-')[1] if '-fan-' in v else '')   # 4 Oct: GAL_LIGHT = one light for a whole camera fan
         BRIEF = _BRIEF0.replace(LIGHT_DEFAULT, LIGHT[_lt][1]) if _lt in LIGHT else _BRIEF0
         HYB = {k_: (v_.replace('October, late afternoon golden hour before sunset, fair-weather cumulus clouds.', LIGHT[_lt][1]) if _lt in LIGHT else v_) for k_, v_ in _HYB0.items()}
         _base = v.split('-fan-')[0]

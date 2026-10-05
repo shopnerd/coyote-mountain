@@ -62,6 +62,11 @@ else:
     fan = (orbit_fan(v) if 'orbit' in v else walk_fan(v))
     if '--tags' in args: fan = [f for f in fan if f['id'].split('-fan-')[1] in args[args.index('--tags') + 1].split(',')]
     fan = fan[:N]
+if '--light-as' in args:                                # 4 Oct: a camera fan in one chosen light (e.g. --light-as lantern)
+    sys.argv = [sys.argv[0], 'google']; import gallery3 as _G2; LA = args[args.index('--light-as') + 1]
+    for f in fan: f['hour'] = _G2.LIGHT[LA][0]; f['id'] = f['id'].replace('-fan-', f'-{LA}-fan-')
+    os.environ['GAL_LIGHT'] = LA
+    BASE = f'{BASE}-{LA}'                                 # its own block in the gallery
 FF = os.path.join(HERE, f'fan-views-{BASE}-{os.getpid()}.json'); json.dump(fan, open(FF, 'w'))   # one per run, so fans can run side by side
 ids = [f['id'] for f in fan]
 print('fan:', ', '.join(ids))
