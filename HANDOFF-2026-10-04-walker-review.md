@@ -61,7 +61,7 @@ swapped until you two say so.
 2. **East doors:** the coldest winter wind and the Santa Anas come from the **north-east**. Back the east doors too (fixed or removable panels), or leave them open?
 3. **Solar:** tie into the ranch's existing grid-tied system, or the centre's own inverter + battery for outages? (page 19 note 5)
 4. **Café:** the old trailer is the café on both sides. The Airstream (already a café) could pair with it, or become a guest stay / WWOOF base in the pine grove near the stable. Which?
-5. **Alfalfa field:** labelled just west of the site fence on page 21; correct the spot if it's elsewhere.
+5. **Alfalfa field and the pond:** the big fenced field south-west of the site (page 21, now labelled), with the pond across the road where all the animals drink and the wild hilly land around it the horses like. Next big piece: **a trail map for all of Chichihuas** (horses, hiking, bikes), with short loops around the pond. What area should it cover, and are there trails or tracks you already use?
 6. **Grazing:** page 21 proposes the centre's horses joining the ranch cattle as one herd on planned grazing (Holistic Management). The ranch's call.
 
 ## 5. Making changes
