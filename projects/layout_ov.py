@@ -48,7 +48,7 @@ def normalize_page(fig, k, M=80 / 2550, GMAX=.03, GMIN=.018):
     items.sort(key=lambda q: q['x0']); cols = []
     if getattr(fig, '_norm_single', False): cols = [dict(x0=min(q['x0'] for q in items), x1=max(q['x1'] for q in items), it=items)]; items = []   # 4 Oct: multi-row sheets (E-1) move as one block
     for q in items:
-        if cols and q['x0'] < cols[-1]['x1'] - .012: cols[-1]['x1'] = max(cols[-1]['x1'], q['x1']); cols[-1]['it'].append(q)   # 4 Oct: touching or barely overlapping blocks stay separate columns
+        if cols and q['x0'] < cols[-1]['x1'] + .022: cols[-1]['x1'] = max(cols[-1]['x1'], q['x1']); cols[-1]['it'].append(q)   # 4 Oct: blocks closer than .022 (table columns, right-aligned numbers) stay ONE column; real gutters are wider
         else: cols.append(dict(x0=q['x0'], x1=q['x1'], it=[q]))
     A = 1 - 2 * M; n = len(cols); W = sum(c['x1'] - c['x0'] for c in cols)
     for c in cols:
