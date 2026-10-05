@@ -127,8 +127,17 @@ def truss_page():
     ax.text(-8, 2.6, 'caballeriza · stall', ha='center', fontsize=7.5, color=MUTED); ax.text(8, 2.6, 'pasillo · aisle', ha='center', fontsize=7.5, color=MUTED)
     fig.text(0.341, 0.462, 'Corte por una cercha · Section through a truss', fontsize=12, weight='bold', color=INK, ha='center')
     # ---- elevation of two bays: rock, the floating pipe, 3 ft frames of real sticks; the 6 x 9 doorway OPEN (Will) ----
-    ae = fig.add_axes([0.031, 0.115, 0.62, 0.31]); ae.set_aspect('equal'); ae.set_anchor('C'); ae.axis('off'); ae.set_gid('two-bays'); ae.set_xlim(-1, 25); ae.set_ylim(-1.8, 13.5)
-    lw_ground(ae, -1, 25, tick=.35, step=.6, lw=1.0)
+    ae = fig.add_axes([0.031, 0.11, 0.62, 0.32]); ae.set_aspect('equal'); ae.set_anchor('C'); ae.axis('off'); ae.set_gid('two-bays'); ae.set_xlim(-13, 25); ae.set_ylim(-1.8, 13.5)
+    lw_ground(ae, -13, 25, tick=.35, step=.6, lw=1.0)
+    # 4 Oct (Will): a third bay on the left, the filled-in condition: the wash room, rock to 5 ft and plastered bale/cob above, its 6 x 9 ft
+    # opening closed by the wooden sliding door on its steel track
+    lw_stones(ae, -11.75, -9.0, 0, 5, rng, big=2.0, small=.85, lw=.5); lw_stones(ae, -3.0, -.25, 0, 5, rng, big=2.0, small=.85, lw=.5)
+    lw_box(ae, -11.75, 5.0, -.25, EAVE - .1, lw=.8)
+    ae.add_patch(matplotlib.patches.Rectangle((-9.6, .1), 7.2, 9.3, fc=PAPER, ec='none', zorder=4)); lw_planks(ae, -9.6, .1, -2.4, 9.4, rng, lw=.6)
+    lw_line(ae, [-10.3, -1.0], [9.9, 9.9], lw=1.4, zorder=7)
+    for xh in (-8.8, -3.2): lw_line(ae, [xh, xh], [9.4, 9.9], lw=.8, zorder=7)
+    ae.text(-6, 4.4, 'lavado: puerta corrediza'+chr(10)+'de madera, cerrada'+chr(10)+'wash room: wooden'+chr(10)+'sliding door, closed', ha='center', va='center', fontsize=7.2, color=INK, zorder=8, bbox=dict(boxstyle='round,pad=.25', fc=PAPER, ec='none'))
+    ae.text(-6, 10.9, 'aplanado de cal · lime plaster', ha='center', fontsize=6.8, color=MUTED)
     DX0, DX1 = 15, 21                                                                                   # the doorway to the run
     for x0 in (0, 12):
         for a, b in ((x0, x0 + 12),) if x0 == 0 else ((12, DX0), (DX1, 24)):
@@ -141,11 +150,11 @@ def truss_page():
         lw_sticks(ae, px, px + 3.0, 9.35, EAVE - .1, rng, gap=.2, lw=(.35, .55), amp=.06, frame_lw=1.1, outline=True)
     lw_box(ae, DX0, 0, DX1, 9.1, lw=1.0); lw_line(ae, [DX0 - .1, DX1 + .1], [9.2, 9.2], lw=2.2)         # the open doorway and its steel lintel
     ae.text(18, 4.4, 'abertura libre al corral\n6 × 9 ft\nopen doorway to the run', ha='center', va='center', fontsize=7.5, color=INK)
-    for x in (0, 12, 24): lw_pipe(ae, x, 0, EAVE, d=.5, lw=.9)
-    lw_line(ae, [-1, 25], [EAVE + .1, EAVE + .1], lw=2.0)
+    for x in (-12, 0, 12, 24): lw_pipe(ae, x, 0, EAVE, d=.5, lw=.9)
+    lw_line(ae, [-13, 25], [EAVE + .1, EAVE + .1], lw=2.0)
     ae.annotate('', xy=(0, -1.1), xytext=(12, -1.1), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(6, -1.4, '12 ft', ha='center', va='top', fontsize=8)
     ae.annotate('', xy=(12, 12.8), xytext=(15, 12.8), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(13.5, 13.1, '3 ft', ha='center', fontsize=7.5)
-    fig.text(0.341, 0.088, 'Alzado de dos crujías · Elevation of two bays', fontsize=12, weight='bold', color=INK, ha='center')
+    fig.text(0.341, 0.088, 'Alzado de tres crujías: cerrada, varas y abertura · Elevation of three bays: closed, sticks, doorway', fontsize=12, weight='bold', color=INK, ha='center')
     y = 0.86
     specs = [('Cerchas de acero cada 12 ft sobre los tubos pesados de 12 in de Andrés (12¾ in de diámetro) como postes, cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
               'Steel trusses every 12 ft on Andrés’ heavy 12 in tubes as posts (12¾ in outside diameter), each on its own footing: top chords to the ridge, bottom chord at the eave, verticals and diagonals.'),
