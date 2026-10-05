@@ -11,7 +11,7 @@ def stable_elevations(fig):
     SG = dict(gap=.42, lw=(.25, .5), amp=.08, frame_lw=.7)                      # sticks at this small scale: fewer, finer
     def frames(ax, x0, x1, z0, z1):                                               # 3 ft stick frames between two posts
         n = max(1, round((x1 - x0) / 3)); w = (x1 - x0) / n
-        for k in range(n): lw_sticks(ax, x0 + k * w, x0 + (k + 1) * w, z0, z1, rng, **SG)
+        for k in range(n): lw_sticks(ax, x0 + k * w, x0 + (k + 1) * w, z0, z1, rng, frame='sides', **SG)
     def fence(ax, x0, x1):
         for h in (1.8, 3.6, 5.5): lw_line(ax, [x0, x1], [h, h], lw=.55)
         k = x0; s = 10 if x1 > x0 else -10
@@ -25,8 +25,8 @@ def stable_elevations(fig):
     lw_ground(ax, -28.5, 60.5)
     W = HD + RT
     for a, b in ((-W, -7), (7, W)):
-        lw_stones(ax, a, b, 0, 5, rng, big=2.0, small=.9, lw=.45); lw_line(ax, [a, b], [6, 6], lw=1.3)          # rock and the floating pipe
-        frames(ax, a + .3, b - .3, 6.25, EAVE - .1)
+        lw_stones(ax, a, b, 0, 5, rng, big=2.0, small=.9, lw=.45)                                     # rock; 4 Oct (Will): the sticks sit right on it
+        frames(ax, a + .3, b - .3, 5.0, EAVE - .1)
     gable = lambda x: RIDGE - slope * abs(x) - .1
     for k in range(-7, 7):                                                         # the gable triangle, 3 ft frames under the roof
         a, b = k * 3, (k + 1) * 3; zt = min(gable(a), gable(b))
@@ -61,8 +61,7 @@ def stable_elevations(fig):
     L = HL + RT
     lw_stones(ax, XW - RT, L, 0, 5, rng, big=2.0, small=.9, lw=.45)
     lw_box(ax, XW, 5.0, -12, EAVE, lw=.7)                                          # wash + tack rooms: plastered bale / cob to the eave
-    lw_line(ax, [-12, L], [6, 6], lw=1.3)
-    for k in range(4): frames(ax, -12 + 12 * k + .3, -12 + 12 * (k + 1) - .3, 6.25, EAVE - .1)
+    for k in range(4): frames(ax, -12 + 12 * k + .3, -12 + 12 * (k + 1) - .3, 5.0, EAVE - .1)
     for c in (-6, 6, 18, 30):                                                       # stall doorways to the runs: open, steel lintel
         opening(ax, c - 3, 0, c + 3, 9); lw_line(ax, [c - 3.1, c + 3.1], [9.1, 9.1], lw=1.4, zorder=4)
     opening(ax, -33, 0, -27, 9)                                                     # wash room opening

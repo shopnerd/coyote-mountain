@@ -9,7 +9,8 @@ def lw_box(ax, x0, y0, x1, y1, lw=.8, color=LW_INK): lw_line(ax, [x0, x1, x1, x0
 
 def lw_sticks(ax, x0, x1, z0, z1, rng, gap=.19, lw=(.35, .8), amp=.045, frame=True, frame_lw=1.0, outline=False, dia=(.15, .22)):
     """horizontal natural sticks in a frame: each one wavy, slightly bowed, its own thickness; ends tucked into the frame"""
-    if frame: lw_box(ax, x0, z0, x1, z1, lw=frame_lw)
+    if frame == 'sides': lw_line(ax, [x0, x0], [z0, z1], lw=frame_lw); lw_line(ax, [x1, x1], [z0, z1], lw=frame_lw)   # 4 Oct (Will): fixed verticals only
+    elif frame: lw_box(ax, x0, z0, x1, z1, lw=frame_lw)
     z = z0 + gap * .7
     while z < z1 - gap * .4:
         n = 14; xs = _np.linspace(x0 + .03, x1 - .03, n)

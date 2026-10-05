@@ -17,9 +17,9 @@ SIDE = {
 }
 BRIEF = ('Turn the FIRST image, an exact 3D model render, into an architectural photograph taken at standing eye level, perfectly STRAIGHT ON: the camera is level and square to the facade, verticals stay vertical, the roof line stays horizontal and centred, a true frontal elevation. It shows {side}. '
  'STRICT: keep the camera, the horizon, the terrain and every wall, roof, truss, opening, fence, gate, trough and tree exactly where they are, '
- 'same size, shape and count; add no building. The stable: walls of light tan stacked fieldstone to 5 ft, a black steel pipe rail floating 1 ft above '
- 'the stone, then up to the eave panels of thin HORIZONTAL wooden branches (bird nest style) in slim dark steel frames, 3 ft wide; 6 in black steel '
- 'pipe posts; the big sliding doors and the gable triangles above the trusses are clad in the same horizontal sticks in steel frames, every stick cut to the same length; dark charcoal corrugated metal roof; a small raised open clerestory roof along the ridge; the plastered rooms are warm lime-washed '
+ 'same size, shape and count; add no building. The stable: walls of light tan stacked fieldstone to 5 ft, then, sitting RIGHT ON the stone with no gap, no rail and no bottom frame, '
+ 'thin HORIZONTAL wooden branches (bird nest style) up to the eave, fitted between slim fixed dark steel verticals every 3 ft; heavy 12 in black steel '
+ 'tube posts; the big sliding doors and the gable triangles above the trusses are clad in the same horizontal sticks in steel frames, every stick cut to the same length; dark charcoal corrugated metal roof; a small raised open clerestory roof along the ridge; the plastered rooms are warm lime-washed '
  'straw bale. All fences and gates are black steel pipe. '
  'The OTHER images are real photos of this exact site in Baja California: use them ONLY for the landscape, light and colour: the rounded granite '
  'hills, the soil, the shrubs, the vineyards. Do not copy any building from them. Season: late spring, a little green: fresh green in the low '

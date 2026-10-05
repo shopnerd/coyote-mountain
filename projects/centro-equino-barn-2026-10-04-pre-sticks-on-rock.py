@@ -84,18 +84,21 @@ for r in rooms: r['c'] = (r['x0'] + r['x1']) / 2
 def sticks_x(xa, xb, y, z0, z1, holes):      # 3 Oct (Will + Walker): sticks cut to ONE common length, laid horizontal in 3 ft
     n = max(1, round((xb - xa) / 3))               # steel-framed panels; each course is a row of panel-length sticks, a little in/out
     edges = [xa + (xb - xa) * q / n for q in range(n + 1)]
-    zz, k = z0 + .02, 0                            # 4 Oct (Will): the first course sits right on the rock, no gap
+    zz, k = z0 + .25, 0
     while zz < z1 - .1:
         w = .06 * (1, -1, .5, -.5)[k % 4]
         for pa, pb in zip(edges, edges[1:]):
             if any(ha < (pa + pb) / 2 < hb and zz < top for ha, hb, top in holes): continue
             box(pa + .12, pb - .12, y - STAKE_T / 2 + w, y + STAKE_T / 2 + w, zz, zz + STAKE_H)
         zz += STAKE_P; k += 1
-    keep = CUR[0]; mat('steel')                     # 4 Oct (Will): only the fixed steel verticals; the sticks fit between them, no bottom member
+    keep = CUR[0]; mat('steel')                     # dark steel frame: posts every ~4 ft, top and bottom members
     n = max(1, round((xb - xa) / 3))                # stake panels 3 ft wide (Walker)
     for k in range(n + 1):
         xv = xa + (xb - xa) * k / n; zb_ = max([top for a, b, top in holes if a + .05 < xv < b - .05] + [z0])
         box(xv - .1, xv + .1, y - .12, y + .12, zb_, z1)
+    xs_ = xa
+    for a, b, top in sorted(holes): box(xs_, a, y - .12, y + .12, z0, z0 + .15); xs_ = b
+    box(xs_, xb, y - .12, y + .12, z0, z0 + .15); box(xa, xb, y - .12, y + .12, z1 - .15, z1)
     mat(keep)
 
 # ---- walls (27 Sep, Will): rock 5 ft all round, a black pipe floating 1 ft above on short pipe posts, open above;
@@ -130,8 +133,9 @@ for s in (1, -1):
     xs = -HL
     for a, b in sorted(solid) + [(HL, HL)]:
         xx = xs
-        # 4 Oct (Will): no floating pipe on the outer walls; the sticks start right on the rock
-        if STAKES and a > xs: mat('stakes'); sticks_x(xs, a, y, ROCK_H, EAVE - .3, [(ha, hb, DOOR[1] + .25) for ha, hb, t in holes if t == 99 and xs <= ha < a])   # stakes stop at the doorways, carry on above the lintel
+        for ha, hb, _ in sorted(h for h in holes if h[2] == 99 and xs <= h[0] < a): rail_x(xx, ha, y); xx = hb
+        rail_x(xx, a, y)
+        if STAKES and a > xs: mat('stakes'); sticks_x(xs, a, y, RAIL_Z, EAVE - .3, [(ha, hb, DOOR[1] + .25) for ha, hb, t in holes if t == 99 and xs <= ha < a])   # stakes stop at the doorways, carry on above the lintel
         KW = [(-HL + 3.0, -HL + 9.0, 8.4)] if (s == 1 and abs(a + HL) < .1) else []   # 4 Oct (Will): kitchen window in the north wall, 6 x 2.6 ft
         if b > a: mat('cob'); wall_x(a, b, y, ROCK_T * .8, ROCK_H, EAVE - .3, [h for h in holes if a <= h[0] < b] + KW)
         for wa, wb, wt in KW:
@@ -175,14 +179,16 @@ for sx in (-1, 1):
         cob = any(r['side'] == s and r['kind'] in SOLID and abs(r['x0' if sx < 0 else 'x1'] - x) < .1 for r in rooms)
         if cob: mat('cob'); gable_wall(x, ROCK_T * .4, y0, y1, ROCK_H, EAVE - .3, hg)
         else:
+            rail_y(y0, y1, x)
             if STAKES:                         # framed stakes on the gable bays too, up to the eave
-                mat('stakes'); zz, k = ROCK_H + .02, 0; n = max(1, round((y1 - y0) / 3)); E = [y0 + (y1 - y0) * q / n for q in range(n + 1)]
+                mat('stakes'); zz, k = RAIL_Z + .25, 0; n = max(1, round((y1 - y0) / 3)); E = [y0 + (y1 - y0) * q / n for q in range(n + 1)]
                 while zz < EAVE - .4:
                     w = .06 * (1, -1, .5, -.5)[k % 4]
                     for pa, pb in zip(E, E[1:]): box(x - STAKE_T / 2 + w, x + STAKE_T / 2 + w, pa + .12, pb - .12, zz, zz + STAKE_H)
                     zz += STAKE_P; k += 1
                 mat('steel')
-                for q in range(n + 1): yv = y0 + (y1 - y0) * q / n; box(x - .12, x + .12, yv - .1, yv + .1, ROCK_H, EAVE - .3)
+                for q in range(n + 1): yv = y0 + (y1 - y0) * q / n; box(x - .12, x + .12, yv - .1, yv + .1, RAIL_Z, EAVE - .3)
+                for zz in (RAIL_Z, EAVE - .45): box(x - .12, x + .12, y0, y1, zz, zz + .15)
     xo = x + sx * (ROCK_T / 2 + .35)
     mat('steel'); box(min(xo, xo + sx * .2), max(xo, xo + sx * .2), -HD + 1, HD - 1, EAVE - .2, EAVE + .2)          # the door track
     for s in (-1, 1):                          # leaves 7.5 x 11.5 ft: a steel frame clad in the same common-length sticks (3 Oct)

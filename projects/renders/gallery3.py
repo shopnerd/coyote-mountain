@@ -20,7 +20,7 @@ BRIEF = (
     'materials, add light, sky and life.\n'
     'THE BACKGROUND IS THE RENDER’S TOO: everything behind the subject, the hills, the skyline, roads, fences and any buildings, stays exactly as the render shows it, in the same place and size. The descriptions below say what each thing is made of, NOT that it is in this view: if a building described below does not appear in the render, it is not in this picture, so do not paint it. Never invent a stable, barn, shed, car park, trees or a second building in the background.\n'
     'Materials: the ground is dry golden grass, sage scrub and granite boulders, with the colours of the aerial photo it is draped with; dirt roads '
-    'are pale compacted earth. The large stable has walls of light tan stacked fieldstone to about 5 ft, a black pipe rail above, panels of thin '
+    'are pale compacted earth. The large stable has walls of light tan stacked fieldstone to about 5 ft and, sitting right on the stone with no gap and no rail, thin '
     'horizontal wooden branches in dark steel frames up to the eave, a dark charcoal corrugated roof with an open clerestory along the ridge, and '
     'two plastered rooms at one end. The open shed with the butterfly (V) roof is the covered stalls: matte galvanised corrugated roof, dark steel '
     'posts, black pipe panels, and a round fieldstone water trough at its end. All fences and gates everywhere are BLACK steel pipe. The long low box '

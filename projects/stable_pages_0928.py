@@ -83,8 +83,8 @@ def barn_plan():
               '10 stalls of 12 × 14 ft, 6 north and 4 south, divided by 5 ft rock walls with a pipe on top; black pipe fronts with a gate to the aisle; each opens through a 6 × 9 ft open doorway to its 12 × 40 ft run. Tan dirt floor.'),
              ('Junto a ellos, del lado sur: el lavado (abertura de 6 × 9 ft con puerta corrediza de madera sobre riel, hacia una losa de concreto de 12 × 36 ft bajo una pérgola con parra, con un bebedero de piedra en la esquina del edificio) y monturas y alimento; todos los cuartos cerrados con paca de paja o cob aplanado, con piso de concreto.',
               'Next to them on the south side: the wash room (a 6 × 9 ft opening with a wooden sliding door on a track, onto a 12 × 36 ft concrete pad under a grape trellis, with a stone trough at the building’s corner) and tack and feed; all the rooms closed in straw bale or plastered cob, with concrete floors.'),
-             ('Muro de piedra de 5 ft en todo el perímetro, un tubo negro que flota 1 ft arriba (6 ft en total) y, hasta el alero, paneles de 3 ft de varas horizontales en marco de acero oscuro.',
-              'A 5 ft rock wall all round, a black pipe floating 1 ft above it (6 ft overall) and, up to the eave, 3 ft panels of horizontal sticks in dark steel frames.'),
+             ('Muro de piedra de 5 ft en todo el perímetro, y, directo sobre la piedra hasta el alero, varas horizontales que encajan entre verticales fijas de acero oscuro cada 3 ft, sin marco abajo.',
+              'A 5 ft rock wall all round, and, sitting right on the rock up to the eave, horizontal sticks fitted between fixed dark steel verticals every 3 ft, no frame below.'),
              ('Alero a 12 ft, cumbrera a 17 ft. Techo metálico gris oscuro con una claraboya abierta de 76 × 10 ft sobre el pasillo (sin vidrio) para luz y ventilación.',
               'Eave 12 ft, ridge 17 ft. Dark grey metal roof with an open 76 × 10 ft clerestory over the aisle (no glass) for light and ventilation.')]
     for es, en in specs: y = para(fig, 0.672, y, es, en, w=88, fs=7.6)   # 4 Oct: wider column, closer to the plan (Will)   # 4 Oct: 84 ft adds a paragraph (was 70 / 8.5)
@@ -107,8 +107,7 @@ def truss_page():
         lw_box(ax, x - POSTR, -3, x + POSTR, EAVE, lw=.8)                                                    # 12 in tube post (12 3/4 in OD)
         lw_box(ax, x - 1.2, -3.8, x + 1.2, -2.9, lw=.6)                                                # footing
         for k in range(5): lw_line(ax, [x - 1.1 + k * .5, x - .85 + k * .5], [-3.8, -2.9], lw=.25)
-        lw_line(ax, [x - .6, x + .6], [6, 6], lw=2.0)                                                  # the floating pipe, in section
-        for yy in np.arange(6.4, EAVE - .15, .32):                                                     # sticks cut through: little irregular circles
+        for yy in np.arange(5.15, EAVE - .15, .32):                                                    # 4 Oct (Will): sticks start on the rock                                                     # sticks cut through: little irregular circles
             r = rng.uniform(.09, .14); t = np.linspace(0, 2 * np.pi, 9)
             ax.plot(x + rng.uniform(-.12, .12) + r * np.cos(t) * rng.uniform(.8, 1.2), yy + r * np.sin(t), color=LW_STICK, lw=.5)
         lw_box(ax, x - .35, 6.2, x + .35, EAVE - .05, lw=.6)                                           # the steel frame around them
@@ -142,12 +141,11 @@ def truss_page():
     for x0 in (0, 12):
         for a, b in ((x0, x0 + 12),) if x0 == 0 else ((12, DX0), (DX1, 24)):
             lw_stones(ae, a + .25, b - .25, 0, 5, rng, big=2.0, small=.85, lw=.5)
-            lw_line(ae, [a + .25, b - .25], [6, 6], lw=1.8)                                           # the floating pipe
             for px in np.arange(a + .25, b - .3, 3.0 if b - a >= 3 else b - a):
                 q = min(px + 3.0, b - .25)
-                if q - px > .6: lw_sticks(ae, px, q, 6.25, EAVE - .1, rng, gap=.2, lw=(.35, .55), amp=.06, frame_lw=1.1, outline=True)
+                if q - px > .6: lw_sticks(ae, px, q, 5.0, EAVE - .1, rng, gap=.2, lw=(.35, .55), amp=.06, frame='sides', frame_lw=1.1, outline=True)
     for px in np.arange(DX0, DX1 - .1, 3.0):                                                            # above the doorway: sticks from the lintel up
-        lw_sticks(ae, px, px + 3.0, 9.35, EAVE - .1, rng, gap=.2, lw=(.35, .55), amp=.06, frame_lw=1.1, outline=True)
+        lw_sticks(ae, px, px + 3.0, 9.35, EAVE - .1, rng, gap=.2, lw=(.35, .55), amp=.06, frame='sides', frame_lw=1.1, outline=True)
     lw_box(ae, DX0, 0, DX1, 9.1, lw=1.0); lw_line(ae, [DX0 - .1, DX1 + .1], [9.2, 9.2], lw=2.2)         # the open doorway and its steel lintel
     ae.text(18, 4.4, 'abertura libre al corral\n6 × 9 ft\nopen doorway to the run', ha='center', va='center', fontsize=7.5, color=INK)
     for x in (-12, 0, 12, 24): lw_pipe(ae, x, 0, EAVE, d=.5, lw=.9)
@@ -158,8 +156,8 @@ def truss_page():
     y = 0.86
     specs = [('Cerchas de acero cada 12 ft sobre los tubos pesados de 12 in de Andrés (12¾ in de diámetro) como postes, cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
               'Steel trusses every 12 ft on Andrés’ heavy 12 in tubes as posts (12¾ in outside diameter), each on its own footing: top chords to the ridge, bottom chord at the eave, verticals and diagonals.'),
-             ('Muro de piedra apilada de 5 ft en todo el perímetro y entre caballerizas. Un tubo negro flota 1 ft arriba del muro sobre postes cortos: 6 ft en total.',
-              'Stacked rock wall 5 ft high all round and between the stalls. A black pipe floats 1 ft above it on short posts: 6 ft overall.'),
+             ('Muro de piedra apilada de 5 ft en todo el perímetro y entre caballerizas. Las varas arrancan directo sobre la piedra, sin hueco.',
+              'Stacked rock wall 5 ft high all round and between the stalls. The sticks start right on the rock, no gap.'),
              ('Del tubo al alero, paneles de 3 ft de ancho con varas horizontales (tipo nido de pájaro) en marco de acero oscuro; cuatro paneles por crujía de 12 ft.',
               'From the pipe to the eave, 3 ft wide panels of horizontal sticks (bird’s-nest style) in dark steel frames; four panels to each 12 ft bay.'),
              ('Cada caballeriza abre a su corral por una abertura libre de 6 × 9 ft con dintel de acero; hacia el pasillo, frente de tubo negro con puerta.',
