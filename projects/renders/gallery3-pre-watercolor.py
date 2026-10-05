@@ -118,27 +118,14 @@ LIGHT = {
  'dusk':   (18.7, 'Light: early evening just after sundown, the sky a deep clear blue fading to a thin warm orange line over the western hills, the first star or two, the land in soft dusk with no hard shadows. The stable glows from inside: warm amber-gold light (2700 K) pours out between the thin horizontal sticks of its wall panels in fine glowing lines, and spills softly out of its open doorways and the open clerestory onto the dirt just around it; it is the brightest thing in the picture, a lantern. The covered stalls show a soft warm glow under their roof. Small amber lights at knee height dot the walking path between the pines and the stable, and a small shielded downlight over each stable door. Everything else stays DARK: no light on the roads, the arena, the round pen, the trees or the hills, no streetlights, no floodlights, no light shining up into the sky, the hills dark silhouettes. Calm, quiet, a few horses and people near the glowing stable.'),
 }
 
-# 5 Oct (Will): 'a few watercolor renderings'. The geometry rules above still hold; only the medium changes.
-ART_STYLES = {
- 'watercolor': ' STYLE, MOST IMPORTANT: this is NOT a photograph. Paint it as a loose, luminous hand-made architectural WATERCOLOR on '
-   'cold-press cotton paper, like a landscape architect’s presentation sketch: transparent layered washes, a soft wet-in-wet sky with '
-   'blooms, a light graphite pencil underdrawing still visible on the buildings, roof lines and fences, crisp dry-brush edges on the '
-   'roofs and posts, granulating pigment in the shadows, white paper left bare for the brightest highlights, a little paint spatter, and '
-   'the wash fading out into bare white paper toward the edges and corners (a vignette, no frame, no border, no signature, no text). '
-   'Warm ochres, burnt sienna, sap green and ultramarine, the dry hills simplified into broad washes. Figures and horses as a few deft brush '
-   'strokes. Every building, roof, wall, fence, road and trough stays exactly where and as the render shows: the same composition and camera.',
-}
-
 if __name__ == '__main__':
     k = key('OPENAI_API_KEY') if ENGINE == 'openai' else gemini_key()
     if not k: sys.exit('no key for ' + ENGINE)
     CAFE = {'23-picnic-side', 'cafe-end'}   # 4 Oct (Will): the trailer is a small cafe in these views, so drop the 'no sign' lines
     _BRIEF0, _HYB0 = BRIEF, dict(HYB)
     _o, _g = openai, google; CUR = ['']
-    ART = ART_STYLES.get(os.environ.get('GAL_ART', ''), '')        # 5 Oct (Will): watercolor renderings; GAL_ART=watercolor
-    art = lambda pr: (pr.replace('Photoreal, like a high-end architectural photograph.', '').replace('Photoreal, high-end architectural photography.', '') + ART) if ART else pr
-    openai = lambda src, pr, refs, k_: _o(src, art(fit_brief(pr, CUR[0])), refs, k_)
-    google = lambda src, pr, refs, k_, **kw: _g(src, art(fit_brief(pr, CUR[0])), refs, k_, **kw)
+    openai = lambda src, pr, refs, k_: _o(src, fit_brief(pr, CUR[0]), refs, k_)
+    google = lambda src, pr, refs, k_, **kw: _g(src, fit_brief(pr, CUR[0]), refs, k_, **kw)
     for v in (ONLY or VIEWS):
         CUR[0] = v
         t = time.time()
