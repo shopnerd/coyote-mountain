@@ -104,7 +104,7 @@ def platform(poly, top):                                   # a flat polygon top 
         face([(cx, cy, top), (xa, ya, top), (xb, yb, top)], 'wood')
         face([(xa, ya, -0.1), (xb, yb, -0.1), (xb, yb, top), (xa, ya, top)], 'wood')
 for poly, k in ((B1, 1), (B2, 2), (B3, 3)): platform(poly, H - k * RISE)   # largest (blade 1) just below the deck, smallest (blade 3) lowest (Will)
-prism([(X0, YS), (X1, YS), (X0 + DR * FT, YD), (X0, YD)], -0.1, H, 'wood')          # the 6 ft deck, solid to the ground, right end slanted as drawn
+prism([(X0, YS), (X1, YS), (X1, YD), (X0, YD)], -0.1, H, 'wood')   # 4 Oct: squared at the X1 end so the end stairs land on it          # the 6 ft deck, solid to the ground, right end slanted as drawn
 # ---- shade roof the full length over the deck: from the trailer's top edge down to a front beam on four posts at the deck front ----
 RX0, RX1, RZ0, RZ1 = X0 - .3, X1 + .3, 3.96, 3.2
 fy = lambda x: YD + .15
@@ -112,6 +112,12 @@ for x in [X0 + .1 + (X1 - X0 - .2) * k / 3 for k in range(4)]:
     prism([(x - .07, fy(x) - .07), (x + .07, fy(x) - .07), (x + .07, fy(x) + .07), (x - .07, fy(x) + .07)], H, RZ1 - .02, 'steel') if x < X0 + (DR - .5) * FT else None
 beam((RX0, fy(RX0), RZ1 - .1), (RX1, fy(RX1), RZ1 - .1), .16, 'steel')
 for dz in (0, .03): quad((RX0, YS, RZ0 + dz), (RX1, YS, RZ0 + dz), (RX1, fy(RX1) - .4, RZ1 + dz), (RX0, fy(RX0) - .4, RZ1 + dz), 'roof')
+# ---- 4 Oct (Will, red lines on the model): steps at the trailer's end, one stair up to each side's deck (built here for the arena
+# side and mirrored below), and between them, in front of the trailer's end, a few deeper steps to sit on ----
+SX = X1                                                          # the trailer end the stairs land on (Will's red lines: the end facing the road)
+for k in range(3):                                               # 3 steps + the deck = 4 risers of H/4 (~12 in), 14 in treads, the deck's full width
+    x0_ = SX + k * .36; x1_ = x0_ + .36
+    prism([(x0_, YD), (x1_, YD), (x1_, YS), (x0_, YS)], -0.1, H * (3 - k) / 4, 'wood')
 # ---- 4 Oct (Will): the same deck, three stepped blades and shade roof mirrored onto the trailer's other long side, so the
 # trailer works as a double-sided café with a kiosk window and a picnic stair on each side (mirrored across its centre line y = 0) ----
 MIRROR_BOTH = True
@@ -136,6 +142,9 @@ def bend_road(d):
                 if y < need: x2, y2 = x, need; q = [*unlocal(x2, y2), *q[2:]]
             out_.append(q)
         s_['pts'] = out_
+for k in range(3):                                               # the sitting steps between the stairs: 3 deep steps, 18 in tread
+    x0_ = SX + .05 + k * .46; x1_ = x0_ + .46
+    prism([(x0_, YS + .02), (x1_, YS + .02), (x1_, -YS - .02), (x0_, -YS - .02)], -0.1, H * (3 - k) / 4, 'wood')
 out = os.path.join(HERE, 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
     f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved blades tiled like a pinwheel, each one step lower (exactly per her sketch), shade roof over the deck\n# unit m\n# name bleachers\n')
