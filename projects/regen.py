@@ -65,7 +65,8 @@ for k in range(4):
     o=CY+uy*F(-17+k*11); ax.plot(*np.array([o-ux*F(30),o+ux*F(30)]).T,color='#5c3b22',lw=3.2,solid_capstyle='round',zorder=9)
 ax.text(CY[0],CY[1]+F(42),'PATIO DE COMPOSTA · COMPOST YARD\n4 camellones 60 ft · 4 windrows, 70 × 50 ft',fontsize=6.4,weight='bold',color='#5c3b22',ha='center',va='center',zorder=15,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='#7a4a2a',lw=.8,alpha=.92))
 # market garden for the valley's restaurants: on the flattest open ground beside the main road and its water main, near the compost
-MG=np.array([76,27]); ux,uy=road_axes('main road, north-east gate to south gate',MG); mg=[MG+ux*a*F(60)+uy*b*F(30) for a,b in ((-1,-1),(1,-1),(1,1),(-1,1))]
+MG=np.array([81.5,26.5]); _V=pts_of('existing vineyard road'); _V=_V[(abs(_V[:,0]-MG[0])<25)]; _p=np.polyfit(_V[:,0],_V[:,1],1); ux=np.array([1,_p[0]])/math.hypot(1,_p[0]); uy=np.array([-ux[1],ux[0]]);   # 4 Oct (Will): along the vineyard road, in the open ground above the arena
+mg=[MG+ux*a*F(60)+uy*b*F(30) for a,b in ((-1,-1),(1,-1),(1,1),(-1,1))]
 ax.add_patch(MPoly(np.array(mg),closed=True,fc='#9bb35a',ec='#4f7a3a',lw=1.2,alpha=.55,zorder=8))
 for k in range(9):
     o=MG+uy*F(-26+k*6.5); ax.plot(*np.array([o-ux*F(56),o+ux*F(56)]).T,color='#4f7a3a',lw=.6,zorder=9)
