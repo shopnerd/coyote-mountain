@@ -168,21 +168,22 @@ prism([(WX0, YD), (WX1, YD), (WX1, -YD), (WX0, -YD)], -0.15, H + 1.0, 'rock')
 prism([(WX0 - .25, YD - .05), (WX1 + .05, YD - .05), (WX1 + .05, -YD + .05), (WX0 - .25, -YD + .05)], H + 1.0, H + 1.07, 'wood')
 # 4 Oct (Will): no seating on this side; above the wall's wood cap, the stable's horizontal sticks in 3 ft dark steel frames up to
 # the roof, so the old trailer end is hidden from the road
-XM = (WX0 + WX1) / 2; Z0S = H + 1.07
-yy_ = -abs(YD)
-while yy_ < abs(YD) - .05:
-    ya_, yb_ = yy_, min(yy_ + .9, abs(YD))
-    zt = rz(-max(abs(ya_), abs(yb_))) - .05
-    prism([(XM - .06, ya_), (XM + .06, ya_), (XM + .06, ya_ + .04), (XM - .06, ya_ + .04)], Z0S, zt, 'steel')
-    z_ = Z0S + .06; k_ = 0
-    while z_ < zt - .05:
+XM = (WX0 + WX1) / 2; Z0S = H + 1.07; AY = abs(YD)
+def half_w(z):                                                     # half width under the roof at height z (the gable: lowest at the sides)
+    L = -(YS + (z - .05 - RZ0) * (YO0 - YS) / (RZ1 - RZ0)); return min(AY, max(0.0, L))
+ZTOP = rz(0) - .08
+ny = int(round(2 * AY / .9)); EDG = [-AY + 2 * AY * k / ny for k in range(ny + 1)]
+for y_ in EDG:                                                     # 4 Oct (Will): the whole face, eave to ridge; frames up to the roof
+    prism([(XM - .06, y_ - .03), (XM + .06, y_ - .03), (XM + .06, y_ + .03), (XM - .06, y_ + .03)], Z0S, rz(-abs(y_)) - .05, 'steel')
+z_ = Z0S + .06; k_ = 0
+while z_ < ZTOP:
+    hw = half_w(z_ + .05)
+    if hw > .1:
         w = .015 * (1, -1)[k_ % 2]
-        prism([(XM - .025 + w, ya_ + .05), (XM + .025 + w, ya_ + .05), (XM + .025 + w, yb_ - .02), (XM - .025 + w, yb_ - .02)], z_, z_ + .035, 'stakes')
-        z_ += .09; k_ += 1
-    yy_ = yb_
-prism([(XM - .06, abs(YD) - .04), (XM + .06, abs(YD) - .04), (XM + .06, abs(YD)), (XM - .06, abs(YD))], Z0S, rz(-abs(YD)) - .05, 'steel')
+        prism([(XM - .025 + w, -hw), (XM + .025 + w, -hw), (XM + .025 + w, hw), (XM - .025 + w, hw)], z_, z_ + .05, 'stakes')
+    z_ += .068; k_ += 1   # tight: the trailer end reads only as shadow behind
 for y_ in (-YD + .2, YD - .2): prism([(X1 + BARD - .1, y_ - .07), (X1 + BARD + .04, y_ - .07), (X1 + BARD + .04, y_ + .07), (X1 + BARD - .1, y_ + .07)], H, rz(-abs(YD)) - .02, 'steel')   # roof posts at the bar
-TX0 = WX1 + .02; TX1 = TX0 + 3.5 * FT; TY = 10 * FT; TW_ = .7 * FT; TZ = 2 * FT
+TX0 = WX1 + .02; TX1 = TX0 + 3.5 * FT; TY = 8.5 * FT; TW_ = .7 * FT; TZ = 2.5 * FT   # 4 Oct (Will): horse height, 30 in; 17 ft so the downspouts land beside its ends
 prism([(TX0, -TY), (TX1, -TY), (TX1, TY), (TX0, TY)], -0.15, .12, 'rock')                       # base
 for pts in ([(TX0, -TY), (TX0 + TW_, -TY), (TX0 + TW_, TY), (TX0, TY)], [(TX1 - TW_, -TY), (TX1, -TY), (TX1, TY), (TX1 - TW_, TY)],
             [(TX0, -TY), (TX1, -TY), (TX1, -TY + TW_), (TX0, -TY + TW_)], [(TX0, TY - TW_), (TX1, TY - TW_), (TX1, TY), (TX0, TY)]):
@@ -200,7 +201,7 @@ for _ in range(140):                                                            
     beam((x_, y_, WL - .05), (x_ + lean, y_ + lean * .6, WL + h_), w_, 'sage')
 for sy in (-1, 1):                                                                             # gutters + downspouts at the road end
     beam((RX0, sy * YO, rz(YO) - .08), (RX1, sy * YO, rz(YO) - .08), .12, 'steel')
-    beam((RX1 - .1, sy * YO, rz(YO) - .1), (RX1 - .1, sy * YO, -0.05), .09, 'steel')
+    beam((WX1 + .08, sy * YO, rz(YO) - .1), (WX1 + .08, sy * YO, -0.05), .09, 'steel')   # beside the trough's ends, not in it
 out = os.path.join(HERE, 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
     f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved blades tiled like a pinwheel, each one step lower (exactly per her sketch), shade roof over the deck\n# unit m\n# name bleachers\n')
