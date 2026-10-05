@@ -366,6 +366,7 @@ for _pgi, (_x0, _y0, _x1, _y1), _src, _cr, _paper in PHOTOS:
 for _pgi in sorted(ZOOMPG):
     _f = PAGES[_pgi]; _f.canvas.draw()
     for _ax in _f.axes:
+        if _ax.get_gid() == 'skipzoom': continue                                 # part of a grouped graphic (e.g. the wind roses)
         _b = _ax.get_tightbbox(_f.canvas.get_renderer()).transformed(_f.transFigure.inverted())
         _bx0, _by0, _bx1, _by1 = max(_b.x0, 0), max(_b.y0, 0), min(_b.x1, 1), min(_b.y1, 1)
         if (_bx1 - _bx0) * (_by1 - _by0) < .012: continue                      # skip QR codes, legends, small keys

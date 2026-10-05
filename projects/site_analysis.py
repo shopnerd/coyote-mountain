@@ -57,7 +57,8 @@ for k,(key,lab) in enumerate(SEAS):
         pa.bar(th,h_,width=np.radians(20),bottom=bot,color=BIN[b],edgecolor='white',lw=.3); bot+=h_
     pa.set_ylim(0,max(12,bot.max()*1.05)); pa.set_yticks([]); pa.set_xticks(np.radians([0])); pa.set_xticklabels(['N'],fontsize=6)
     pa.tick_params(pad=-2); pa.set_facecolor('none'); pa.spines['polar'].set_color('#b9b2a6'); pa.grid(color='#d8d2c4',lw=.4)
-    pa.set_title(lab,fontsize=7.5,pad=4)
+    pa.set_title(lab,fontsize=7.5,pad=4); pa.set_gid('skipzoom')
+_wr=fig.add_axes([0.012,0.068,0.672,0.232]); _wr.axis('off'); _wr.set_gid('windroses'); _wr.add_patch(matplotlib.patches.Rectangle((0,0),1,1,transform=_wr.transAxes,fc='none',ec='none'))   # 4 Oct (Will): the four roses enlarge as ONE graphic
 fig.text(0.02,0.282,'Rosas de viento por temporada · Seasonal wind roses',fontsize=8.6,weight='bold',color=INK)
 fig.text(0.02,0.268,'Horas por dirección (de donde viene el viento); azul claro < 8 mph, medio 8–16, oscuro ≥ 16. ERA5 2016–25 vía Open-Meteo · Hours by direction the wind comes from; light < 8 mph, mid 8–16, dark ≥ 16.',fontsize=5.4,color='#6a655a',style='italic')
 # ---- sun path ----
