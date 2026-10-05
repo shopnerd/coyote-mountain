@@ -55,14 +55,17 @@ mark(np.array(b2g(-62,34)),'s','#6a8f3a','huerto de cocina · kitchen garden',dx
 # the compost yard, located (Will, 4 Oct): by the barn road below the round pen, a short haul from both stables, next to the nursery
 # and the garden, out of the waterway, downhill of nothing it could foul. Four windrows 60 x 8 ft on a 70 x 50 ft pad of compacted
 # earth, a roofed bay for the preparations and the finished pile, a small berm on the downhill side.
-CY=np.array([44.0,76.0]); ux=np.array([math.cos(math.radians(-24)),math.sin(math.radians(-24))]); uy=np.array([-ux[1],ux[0]])
+def road_axes(road,at):                                   # 4 Oct (Will): long sides parallel to the nearest stretch of road
+    R_=pts_of(road); k=int(np.argmin(np.hypot(*(R_-at).T))); a_,b_=R_[max(k-2,0)],R_[min(k+2,len(R_)-1)]
+    u_=(b_-a_)/np.linalg.norm(b_-a_); return u_,np.array([-u_[1],u_[0]])
+CY=np.array([44.0,76.0]); ux,uy=road_axes('existing scrub-side road',CY)
 pad=[CY+ux*a*F(35)+uy*b*F(25) for a,b in ((-1,-1),(1,-1),(1,1),(-1,1))]
 ax.add_patch(MPoly(np.array(pad),closed=True,fc='#c9b48f',ec='#7a4a2a',lw=1.4,zorder=8))
 for k in range(4):
     o=CY+uy*F(-17+k*11); ax.plot(*np.array([o-ux*F(30),o+ux*F(30)]).T,color='#5c3b22',lw=3.2,solid_capstyle='round',zorder=9)
 ax.text(CY[0],CY[1]+F(42),'PATIO DE COMPOSTA · COMPOST YARD\n4 camellones 60 ft · 4 windrows, 70 × 50 ft',fontsize=6.4,weight='bold',color='#5c3b22',ha='center',va='center',zorder=15,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='#7a4a2a',lw=.8,alpha=.92))
 # market garden for the valley's restaurants: on the flattest open ground beside the main road and its water main, near the compost
-MG=np.array([76,27]); mg=[MG+ux*a*F(60)+uy*b*F(30) for a,b in ((-1,-1),(1,-1),(1,1),(-1,1))]
+MG=np.array([76,27]); ux,uy=road_axes('main road, north-east gate to south gate',MG); mg=[MG+ux*a*F(60)+uy*b*F(30) for a,b in ((-1,-1),(1,-1),(1,1),(-1,1))]
 ax.add_patch(MPoly(np.array(mg),closed=True,fc='#9bb35a',ec='#4f7a3a',lw=1.2,alpha=.55,zorder=8))
 for k in range(9):
     o=MG+uy*F(-26+k*6.5); ax.plot(*np.array([o-ux*F(56),o+ux*F(56)]).T,color='#4f7a3a',lw=.6,zorder=9)

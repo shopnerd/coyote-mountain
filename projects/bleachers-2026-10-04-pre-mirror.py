@@ -112,12 +112,6 @@ for x in [X0 + .1 + (X1 - X0 - .2) * k / 3 for k in range(4)]:
     prism([(x - .07, fy(x) - .07), (x + .07, fy(x) - .07), (x + .07, fy(x) + .07), (x - .07, fy(x) + .07)], H, RZ1 - .02, 'steel') if x < X0 + (DR - .5) * FT else None
 beam((RX0, fy(RX0), RZ1 - .1), (RX1, fy(RX1), RZ1 - .1), .16, 'steel')
 for dz in (0, .03): quad((RX0, YS, RZ0 + dz), (RX1, YS, RZ0 + dz), (RX1, fy(RX1) - .4, RZ1 + dz), (RX0, fy(RX0) - .4, RZ1 + dz), 'roof')
-# ---- 4 Oct (Will): the same deck, three stepped blades and shade roof mirrored onto the trailer's other long side, so the
-# trailer works as a double-sided café with a kiosk window and a picnic stair on each side (mirrored across its centre line y = 0) ----
-MIRROR_BOTH = True
-if MIRROR_BOTH:
-    for fc, m in list(zip(F, MAT)):
-        face([(x, -y, z) for x, y, z in (V[i - 1] for i in fc)][::-1], m)
 out = os.path.join(HERE, 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
     f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved blades tiled like a pinwheel, each one step lower (exactly per her sketch), shade roof over the deck\n# unit m\n# name bleachers\n')
