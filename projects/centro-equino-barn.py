@@ -25,7 +25,7 @@ COL_D, PURL_D = 12.75 / 12, 8.625 / 12
 ENTRY_W = AISLE                          # the big gable entries, open up to the rafters
 DOOR = (6.0, 9.0)                        # open doorways stall -> run, no gate (27 Sep): 6 ft wide between two 3 ft panel posts, 9 ft tall
 RAIL_H = 5.5
-MON_HW, MON_H, MON_X = 5.0, 2.5, 24.0   # clerestory monitor: half width, glazing height, half length (27 Sep)
+MON_HW, MON_H, MON_X = 5.0, 2.5, 38.0   # clerestory monitor: half width, glazing height, half length (4 Oct, Will: almost the whole length, 76 of 84 ft; was 24)
 STAKE_H, STAKE_T, STAKE_P = .12, .16, .3   # tomato stakes, horizontal: height, thickness, course spacing (gaps between)
 NORTH = ['kitchen'] + ['stall'] * 6      # 4 Oct (Will): the small kitchen in the new NW corner bay; 6 stalls, one per truss bay
 SOUTH = [('bath', 12), ('wash', 12), ('tack / feed', 12)] + [('stall', 12)] * 4   # 4 Oct (Will): new SW corner bay = bathroom (inner 8 ft) + electrical room (outer 6 ft, its own door in the west gable)   # 28 Sep (Will markup): wash room at the west corner, its 6 x 9 door right by the entry   # 27 Sep (Will): rooms at the WEST end by the barn road, so the open ground is by the road; 4 stalls with runs east of them
@@ -278,7 +278,7 @@ for s in (-1, 1):
 
 # ---- clerestory monitor along the ridge: glazing on both long sides, its own low gable roof above (27 Sep) ----
 zb = roof_z(MON_HW) + zr
-MON_C = -XOFF                                    # 4 Oct: stays over the horses (the old 72 ft centre), not over the new rooms
+MON_C = 0.0                                      # 4 Oct (Will): the clerestory runs almost the whole ridge, centred on the building
 for sgn in (-1, 1):
     mat('truss')   # 4 Oct: clerestory mullions are roof structure too
     for k in range(int(2 * MON_X / 6) + 1): xm = MON_C - MON_X + 6 * k; box(xm - .2, xm + .2, sgn * MON_HW - .2, sgn * MON_HW + .2, zb, zb + MON_H)   # mullions
@@ -296,10 +296,11 @@ SOLAR_PH1 = True
 PNL_L, PNL_W, PNL_T = 5.64, 3.71, .13
 if SOLAR_PH1:
     mat('solar'); _cr = math.cos(math.atan(slope)); _zo = zr + T + .33
+    NC_ = int((L + 2 * GOH - 3) // PNL_L)                                                       # 4 Oct (Will): the whole south half, 4 x 15
     for r_ in range(4):
         ya = -(HD + OH) + 1.5 + r_ * PNL_W * _cr; yb = ya + PNL_W * _cr - .08
-        for c_ in range(4):
-            xa = MON_C - 2 * PNL_L + c_ * PNL_L + .04; xb = xa + PNL_L - .08; za, zb_ = roof_z(ya) + _zo, roof_z(yb) + _zo
+        for c_ in range(NC_):
+            xa = -NC_ * PNL_L / 2 + c_ * PNL_L + .04; xb = xa + PNL_L - .08; za, zb_ = roof_z(ya) + _zo, roof_z(yb) + _zo
             quad((xa, ya, za), (xb, ya, za), (xb, yb, zb_), (xa, yb, zb_))
             quad((xa, yb, zb_ - PNL_T), (xb, yb, zb_ - PNL_T), (xb, ya, za - PNL_T), (xa, ya, za - PNL_T))
             for (p0, p1, z0_, z1_) in (((xa, ya), (xb, ya), za, za), ((xb, yb), (xa, yb), zb_, zb_), ((xb, ya), (xb, yb), za, zb_), ((xa, yb), (xa, ya), zb_, za)):

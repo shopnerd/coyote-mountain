@@ -73,9 +73,9 @@ def stable_elevations(fig):
     ax.add_patch(matplotlib.patches.Rectangle((XW - OH, r0), HL - XW + 2 * OH, RIDGE + .6 - r0, fc=BG, ec=LW_INK, lw=.9, zorder=5))   # roof plane to the ridge
     for x in _np.arange(XW - OH + 2, HL + OH, 2.0): lw_line(ax, [x, x], [r0 + .45, RIDGE + .6], lw=.18, color=MUTED, zorder=6)  # standing seams
     zb = rz(5.0)
-    ax.add_patch(matplotlib.patches.Rectangle((-24, zb), 48, 2.5, fc=BG, ec=LW_INK, lw=.7, zorder=6))
-    for k in range(9): lw_line(ax, [-24 + 6 * k] * 2, [zb, zb + 2.5], lw=.45, zorder=7)
-    ax.add_patch(matplotlib.patches.Rectangle((-24.8, zb + 2.5), 49.6, .35 + slope * 5, fc=BG, ec=LW_INK, lw=.8, zorder=7))
+    ax.add_patch(matplotlib.patches.Rectangle((-44, zb), 76, 2.5, fc=BG, ec=LW_INK, lw=.7, zorder=6))
+    for k in range(14): lw_line(ax, [-44 + 76 / 13 * k] * 2, [zb, zb + 2.5], lw=.45, zorder=7)
+    ax.add_patch(matplotlib.patches.Rectangle((-44.8, zb + 2.5), 77.6, .35 + slope * 5, fc=BG, ec=LW_INK, lw=.8, zorder=7))
     lw_line(ax, [XW, -12], [.35, .35], lw=.6, zorder=5)                             # wash pad, 36 ft now
     for x in (XW + .5, -36, -24, -12.5): lw_pipe(ax, x, 0, 10.3, d=.35, lw=.6)      # trellis posts (in front of the wall)
     lw_line(ax, [XW - .3, -11.7], [10.3, 10.3], lw=1.0, zorder=5)

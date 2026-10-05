@@ -183,9 +183,9 @@ def panels(ax_,x0,y0,nr,nc,dy,col,alpha,lw=.3,sel=None):
 # stable roof (76 x 46 with overhangs), the open clerestory, ridge; plan y up = north
 Y0=52                                                                                              # stable roof on top (y 52..98), stalls roof below (y 0..36)
 rx.add_patch(MRect((-44,Y0),88,46,fc='#cfcac0',ec=INK,lw=.8)); rx.plot([-44,44],[Y0+23,Y0+23],color=INK,lw=.5)
-rx.add_patch(MRect((-18,Y0+18),48,10,fc='#f7f1e3',ec=INK,lw=.6)); rx.text(6,Y0+23,'claraboya · clerestory',fontsize=4.8,ha='center',va='center',color='#6a655a')
+rx.add_patch(MRect((-38,Y0+18),76,10,fc='#f7f1e3',ec=INK,lw=.6)); rx.text(0,Y0+23,'claraboya · clerestory',fontsize=4.8,ha='center',va='center',color='#6a655a')
 w0=-st_c*PANEL[0]/2
-panels(rx,w0,Y0+1.5,st_r,st_c,1,PV,.95,sel=lambda r_,c_:abs(w0+(c_+.5)*PANEL[0]-6)<=2*PANEL[0])                    # south half: phase 1 = the middle 4 x 4
+panels(rx,w0,Y0+1.5,st_r,st_c,1,PV,.95,sel=lambda r_,c_:abs(w0+(c_+.5)*PANEL[0])<=2*PANEL[0])                    # south half: phase 1 = the middle 4 x 4
 panels(rx,w0,Y0+44.5,st_r,st_c,-1,PV,.95,sel=lambda r_,c_:False)                                   # north half: optional
 rx.text(50,Y0+40,'Establo · Stable',fontsize=6.4,weight='bold',va='center'); rx.text(50,Y0+34.5,'88 × 46 ft',fontsize=5.4,va='center')
 rx.text(50,Y0+29,f'{st_r}×{st_c} paneles por mitad · panels per half',fontsize=5.0,va='center')

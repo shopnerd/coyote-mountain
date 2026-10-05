@@ -85,8 +85,8 @@ def barn_plan():
               'Next to them on the south side: the wash room (a 6 × 9 ft opening with a wooden sliding door on a track, onto a 12 × 36 ft concrete pad under a grape trellis, with a stone trough at the building’s corner) and tack and feed; all the rooms closed in straw bale or plastered cob, with concrete floors.'),
              ('Muro de piedra de 5 ft en todo el perímetro, un tubo negro que flota 1 ft arriba (6 ft en total) y, hasta el alero, paneles de 3 ft de varas horizontales en marco de acero oscuro.',
               'A 5 ft rock wall all round, a black pipe floating 1 ft above it (6 ft overall) and, up to the eave, 3 ft panels of horizontal sticks in dark steel frames.'),
-             ('Alero a 12 ft, cumbrera a 17 ft. Techo metálico gris oscuro con una claraboya abierta de 48 × 10 ft sobre el pasillo (sin vidrio) para luz y ventilación.',
-              'Eave 12 ft, ridge 17 ft. Dark grey metal roof with an open 48 × 10 ft clerestory over the aisle (no glass) for light and ventilation.')]
+             ('Alero a 12 ft, cumbrera a 17 ft. Techo metálico gris oscuro con una claraboya abierta de 76 × 10 ft sobre el pasillo (sin vidrio) para luz y ventilación.',
+              'Eave 12 ft, ridge 17 ft. Dark grey metal roof with an open 76 × 10 ft clerestory over the aisle (no glass) for light and ventilation.')]
     for es, en in specs: y = para(fig, 0.672, y, es, en, w=88, fs=7.6)   # 4 Oct: wider column, closer to the plan (Will)   # 4 Oct: 84 ft adds a paragraph (was 70 / 8.5)
     fig.text(0.672, 0.075, 'Esquema preliminar a partir del diseño de Walker; no es plano de construcción.', fontsize=8, color=MUTED)
     fig.text(0.672, 0.062, 'Preliminary diagram from Walker’s design; not a construction drawing.', fontsize=8, color=MUTED, style='italic')
@@ -164,8 +164,8 @@ def truss_page():
               'From the pipe to the eave, 3 ft wide panels of horizontal sticks (bird’s-nest style) in dark steel frames; four panels to each 12 ft bay.'),
              ('Cada caballeriza abre a su corral por una abertura libre de 6 × 9 ft con dintel de acero; hacia el pasillo, frente de tubo negro con puerta.',
               'Each stall opens to its run through an open 6 × 9 ft doorway with a steel lintel; toward the aisle, a black pipe front with a gate.'),
-             ('Techo metálico gris oscuro, claraboya abierta de 48 × 10 ft, dos puertas corredizas de madera de 7½ × 11½ ft en cada extremo sobre riel de acero. Las del oeste y el triángulo del hastial oeste llevan por dentro lámina corrugada translúcida de policarbonato: rompevientos contra la brisa del oeste de cada tarde, luz de día y de noche un brillo entre las varas.',
-              'Dark grey metal roof, an open 48 × 10 ft clerestory, two 7½ × 11½ ft wooden sliding doors at each end on a steel track. The west doors and the west gable triangle are backed inside with translucent corrugated polycarbonate: a windbreak against the afternoon west wind, daylight by day, a glow between the sticks at night.')]
+             ('Techo metálico gris oscuro, claraboya abierta de 76 × 10 ft, dos puertas corredizas de madera de 7½ × 11½ ft en cada extremo sobre riel de acero. Las del oeste y el triángulo del hastial oeste llevan por dentro lámina corrugada translúcida de policarbonato: rompevientos contra la brisa del oeste de cada tarde, luz de día y de noche un brillo entre las varas.',
+              'Dark grey metal roof, an open 76 × 10 ft clerestory, two 7½ × 11½ ft wooden sliding doors at each end on a steel track. The west doors and the west gable triangle are backed inside with translucent corrugated polycarbonate: a windbreak against the afternoon west wind, daylight by day, a glow between the sticks at night.')]
     for es, en in specs: y = para(fig, 0.685, y, es, en, w=70, fs=9.3)   # 4 Oct: was 8.2
     yn = min(0.12, y - .005)                                    # 4 Oct: below the last spec, never on it
     fig.text(0.685, yn, 'Dimensiones de cerchas, postes y zapatas por el ingeniero estructural.', fontsize=9.5, color=CLAY)

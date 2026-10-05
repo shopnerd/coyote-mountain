@@ -49,9 +49,25 @@ for s in (-1, 1):
     for y in (RE * .33, RE * .66, RE - .4):                                                                 # purlins along the slope
         yy = s * y; bar((-RX, yy, roof_z(-RX, yy) - UNDER), (RX, yy, roof_z(RX, yy) - UNDER), PURL)
     bar((-RX, s * RE, roof_z(-RX, s * RE) - UNDER - BEAM / 2), (RX, s * RE, roof_z(RX, s * RE) - UNDER - BEAM / 2), BEAM)   # eave beams
-out = [MARK, 'usemtl truss'] + ['v %.3f %.3f %.3f' % tuple(v) for v in V] + ['f %d %d %d' % f for f in F]
+FT_ = list(F); F.clear()
+# 4 Oct (Will): solar on the butterfly roof too, both planes: 4 rows x 15 all-black panels each (5.64 x 3.71 ft), on rails 4 in up
+PL, PW, ZO = 5.64, 3.71, .45
+NC = int((2 * RX - 3) // PL)
+def slab(x0, x1, y0, y1):
+    c = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]; base = len(V) + nv + 1
+    for x, y in c: V.append(np.array(world(x, y, roof_z(x, y) + ZO)))
+    for x, y in c: V.append(np.array(world(x, y, roof_z(x, y) + ZO - .13)))
+    for q in ((0, 1, 2, 3), (7, 6, 5, 4), (0, 4, 5, 1), (1, 5, 6, 2), (2, 6, 7, 3), (3, 7, 4, 0)):
+        F.append((base + q[0], base + q[1], base + q[2])); F.append((base + q[0], base + q[2], base + q[3]))
+for s in (-1, 1):
+    for r in range(4):
+        y0 = s * (RE - 1.2 - r * PW); y1 = s * (RE - 1.2 - (r + 1) * PW + .08)
+        for c in range(NC):
+            x0 = -NC * PL / 2 + c * PL + .04; slab(x0, x0 + PL - .08, min(y0, y1), max(y0, y1))
+FS = list(F)
+out = [MARK, 'usemtl truss'] + ['v %.3f %.3f %.3f' % tuple(v) for v in V] + ['f %d %d %d' % f for f in FT_] + ['usemtl solar'] + ['f %d %d %d' % f for f in FS]
 open(OBJ, 'w', encoding='utf-8', newline='\n').write(src + '\n'.join(out) + '\n')
-print(f'{len(F)} triangles of roof structure appended to covered-stalls.obj')
+print(f'{len(FT_)} triangles of roof structure and {len(FS)} of solar appended to covered-stalls.obj')
 
 # refresh the stroke everywhere, keeping its place: re-centre the whole mesh exactly as the stroke was centred before
 import sys; sys.path.insert(0, HERE)
