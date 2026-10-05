@@ -18,7 +18,6 @@ BRIEF = (
     'STRICT: this is an exact model. Keep the camera, the terrain and every building, roof, road, fence, trough, tree and vehicle exactly where it is, '
     'with the same size, shape and count. Do not move, add, remove or redesign anything built. Only replace the flat model colours with real '
     'materials, add light, sky and life.\n'
-    'THE BACKGROUND IS THE RENDER’S TOO: everything behind the subject, the hills, the skyline, roads, fences and any buildings, stays exactly as the render shows it, in the same place and size. The descriptions below say what each thing is made of, NOT that it is in this view: if a building described below does not appear in the render, it is not in this picture, so do not paint it. Never invent a stable, barn, shed, car park, trees or a second building in the background.\n'
     'Materials: the ground is dry golden grass, sage scrub and granite boulders, with the colours of the aerial photo it is draped with; dirt roads '
     'are pale compacted earth. The large stable has walls of light tan stacked fieldstone to about 5 ft, a black pipe rail above, panels of thin '
     'horizontal wooden branches in dark steel frames up to the eave, a dark charcoal corrugated roof with an open clerestory along the ridge, and '

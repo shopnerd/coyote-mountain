@@ -108,10 +108,23 @@ prism([(X0, YS), (X1, YS), (X1, YD), (X0, YD)], -0.1, H, 'wood')   # 4 Oct: squa
 # ---- shade roof the full length over the deck: from the trailer's top edge down to a front beam on four posts at the deck front ----
 RX0, RX1, RZ0, RZ1 = X0 - .3, X1 + .3, 3.96, 3.2
 fy = lambda x: YD + .15
+# 4 Oct (Will): the roof 2 ft bigger all round and carried over the trailer to a ridge on its centre line, one gable over the
+# whole café (the mirror below makes the other half); solar panels over all of it
+EXT = 2 * FT
+RX0, RX1 = RX0 - EXT, RX1 + EXT
+YO0 = fy(0) - .4; YO = YO0 - EXT                                   # the old and new outer edge
+rz = lambda y: RZ0 + (RZ1 - RZ0) * (y - YS) / (YO0 - YS)           # same pitch as before, continued to the ridge (y = 0) and the new edge
 for x in [X0 + .1 + (X1 - X0 - .2) * k / 3 for k in range(4)]:
-    prism([(x - .07, fy(x) - .07), (x + .07, fy(x) - .07), (x + .07, fy(x) + .07), (x - .07, fy(x) + .07)], H, RZ1 - .02, 'steel') if x < X0 + (DR - .5) * FT else None
-beam((RX0, fy(RX0), RZ1 - .1), (RX1, fy(RX1), RZ1 - .1), .16, 'steel')
-for dz in (0, .03): quad((RX0, YS, RZ0 + dz), (RX1, YS, RZ0 + dz), (RX1, fy(RX1) - .4, RZ1 + dz), (RX0, fy(RX0) - .4, RZ1 + dz), 'roof')
+    prism([(x - .07, fy(x) - .07), (x + .07, fy(x) - .07), (x + .07, fy(x) + .07), (x - .07, fy(x) + .07)], H, rz(fy(x)) - .02, 'steel')
+beam((RX0, fy(RX0), rz(fy(0)) - .1), (RX1, fy(RX1), rz(fy(0)) - .1), .16, 'steel')
+for dz in (0, .03): quad((RX0, 0, rz(0) + dz), (RX1, 0, rz(0) + dz), (RX1, YO, rz(YO) + dz), (RX0, YO, rz(YO) + dz), 'roof')
+PLm, PWm = 5.64 * FT, 3.71 * FT
+ncol = int((RX1 - RX0 - .2) // PLm); nrow = int((abs(YO) - .25) // PWm); xs0 = (RX0 + RX1) / 2 - ncol * PLm / 2
+for r in range(nrow):
+    ya, yb = -.15 - r * PWm, -.15 - (r + 1) * PWm + .03
+    for c in range(ncol):
+        xa = xs0 + c * PLm + .02; xb = xa + PLm - .04
+        for dz in (.12, .16): quad((xa, ya, rz(ya) + dz), (xb, ya, rz(ya) + dz), (xb, yb, rz(yb) + dz), (xa, yb, rz(yb) + dz), 'solar')
 # ---- 4 Oct (Will, red lines on the model): steps at the trailer's end, one stair up to each side's deck (built here for the arena
 # side and mirrored below), and between them, in front of the trailer's end, a few deeper steps to sit on ----
 SX = X1                                                          # the trailer end the stairs land on (Will's red lines: the end facing the road)
