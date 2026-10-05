@@ -18,13 +18,14 @@ def pts_of(name): return np.array([q[:2] for q in byname(name)[0]['pts']])
 POW='#6a3d9a'; AMBER='#e39a2d'; WARM='#f2c14e'; PV='#1d2b3a'; PVF='#3c5878'
 # ---------------- numbers ----------------
 PANEL=(5.64,3.71,435)                                  # 1722 x 1134 mm all-black module, 435 W
-YIELD=dict(stS=1743,stN=1390,stalls=1600)              # kWh per kWp a year, PVGIS (NSRDB) 31.9999 N 116.7641 W, 14 % losses: stable S half 13.4° az 204°, N half az 24°, butterfly 4.8° both ways (1565/1634)
+YIELD=dict(stS=1743,stN=1390,stalls=1600,cafW=1567,cafE=1518)   # café roof 20° facing 273° / 93° (PVGIS, 4 Oct)              # kWh per kWp a year, PVGIS (NSRDB) 31.9999 N 116.7641 W, 14 % losses: stable S half 13.4° az 204°, N half az 24°, butterfly 4.8° both ways (1565/1634)
 def rows_cols(depth,length,margin=(1.5,1.0)):
     return int((depth-margin[0]-margin[1])//PANEL[1]), int((length-3)//PANEL[0])
 st_r,st_c=rows_cols(18/math.cos(math.radians(13.4)),88)          # 4 Oct: the stable is 84 ft (88 with overhangs)          # stable half: eave (with overhang) to the clerestory edge, along the slope
 sl_r,sl_c=rows_cols(18,92)                                        # each butterfly plane: eave to valley
-N_ST=st_r*st_c; N_SL=2*sl_r*sl_c; kw=lambda n:n*PANEL[2]/1000
-PV_ROWS=[('Establo, mitad sur · Stable, south half','13° SSO · SSW',N_ST,YIELD['stS']),('Establo, mitad norte · Stable, north half','13° NNE',N_ST,YIELD['stN']),('Caballerizas, techo mariposa · Covered stalls, butterfly','5° NO/SE · NW/SE',N_SL,YIELD['stalls'])]
+N_ST=st_r*st_c; N_SL=2*sl_r*sl_c; N_CF=8*3;   # café: 8 x 3 per slope on its 46 x 26 ft gable (bleachers.py)
+kw=lambda n:n*PANEL[2]/1000
+PV_ROWS=[('Establo, mitad sur · Stable, south half','13° SSO · SSW',N_ST,YIELD['stS']),('Establo, mitad norte · Stable, north half','13° NNE',N_ST,YIELD['stN']),('Caballerizas, techo mariposa · Covered stalls, butterfly','5° NO/SE · NW/SE',N_SL,YIELD['stalls']),('Café, techo a dos aguas · Café gable roof','20° O/E · W/E',2*N_CF,(YIELD['cafW']+YIELD['cafE'])/2)]
 PH1=16; PH1_KW=kw(PH1); PH1_MWH=PH1_KW*YIELD['stS']/1000
 LOADS=[('Luces interiores · Indoor lights',0.6,3),('Luces exteriores bajas · Low outdoor lights',.15,5),('Pista y corral redondo, 3 noches/sem · Arena + round pen, 3 nights/wk',1.7,1.5*3/7),
        ('Bombas de bebederos (4) · Trough pumps (4)',.16,12),('Bombas de cisternas (2) · Cistern pumps (2)',1.5,1),('Ventiladores, verano · Stall fans, summer',1.8,10/2),
@@ -172,31 +173,40 @@ cx_.text(XS+12,-RE-3,'nada eléctrico dentro de las bodegas de alfalfa\nnothing 
 cx_.text(-HL+32,HD+1.2,'corredor 12 ft · corridor',fontsize=5.2,ha='center',color='#6a655a'); cx_.annotate('',xy=(46,21.5),xytext=(30,21.5),arrowprops=dict(arrowstyle='-|>',lw=.6)); cx_.text(38,22.5,'NE · establo',fontsize=4.8,ha='center',va='bottom')
 
 # ---------------- roof plans: solar ----------------
-rx=fig.add_axes([0.252,0.302,0.258,0.228]); rx.set_aspect('equal'); rx.axis('off'); rx.set_xlim(-50,120); rx.set_ylim(-2,100)   # 4 Oct (Will): the two roofs stacked, bigger
+rx=fig.add_axes([0.252,0.302,0.258,0.228]); rx.set_aspect('equal'); rx.axis('off'); rx.set_xlim(-50,124); rx.set_ylim(-34,100)   # 4 Oct (Will): three roofs, all modelled panels shown
 fig.text(0.254,0.538,'Techos solares · Solar roofs',fontsize=10,weight='bold',color=INK)
-def panels(ax_,x0,y0,nr,nc,dy,col,alpha,lw=.3,sel=None):
-    pw,ph=PANEL[0],PANEL[1]*(math.cos(math.radians(13.4)) if dy else 1)
+def panels(ax_,x0,y0,nr,nc,dy,cosf=1.0):
+    pw,ph=PANEL[0],PANEL[1]*cosf
     for r_ in range(nr):
         for c_ in range(nc):
-            on=sel is None or sel(r_,c_)
-            yy=y0+(r_*ph if dy>0 else -(r_+1)*ph); ax_.add_patch(MRect((x0+c_*pw,yy),pw,ph,fc=PV if on else 'none',ec=PVF if on else PV,lw=lw if on else .35,alpha=alpha if on else .55,ls='-' if on else (0,(2,1.2))))
-# stable roof (76 x 46 with overhangs), the open clerestory, ridge; plan y up = north
-Y0=52                                                                                              # stable roof on top (y 52..98), stalls roof below (y 0..36)
-rx.add_patch(MRect((-44,Y0),88,46,fc='#cfcac0',ec=INK,lw=.8)); rx.plot([-44,44],[Y0+23,Y0+23],color=INK,lw=.5)
-rx.add_patch(MRect((-38,Y0+18),76,10,fc='#f7f1e3',ec=INK,lw=.6)); rx.text(0,Y0+23,'claraboya · clerestory',fontsize=4.8,ha='center',va='center',color='#6a655a')
+            yy=y0+(r_*ph if dy>0 else -(r_+1)*ph); ax_.add_patch(MRect((x0+c_*pw,yy),pw,ph,fc=PV,ec=PVF,lw=.3,alpha=.95))
+CS13=math.cos(math.radians(13.4))
+# stable roof 88 x 46 with overhangs, the 76 ft open clerestory along the ridge; plan y up = north
+Y0=52
+rx.add_patch(MRect((-44,Y0),88,46,fc='#cfcac0',ec=INK,lw=.8))
 w0=-st_c*PANEL[0]/2
-panels(rx,w0,Y0+1.5,st_r,st_c,1,PV,.95,sel=lambda r_,c_:abs(w0+(c_+.5)*PANEL[0])<=2*PANEL[0])                    # south half: phase 1 = the middle 4 x 4
-panels(rx,w0,Y0+44.5,st_r,st_c,-1,PV,.95,sel=lambda r_,c_:False)                                   # north half: optional
-rx.text(50,Y0+40,'Establo · Stable',fontsize=6.4,weight='bold',va='center'); rx.text(50,Y0+34.5,'88 × 46 ft',fontsize=5.4,va='center')
-rx.text(50,Y0+29,f'{st_r}×{st_c} paneles por mitad · panels per half',fontsize=5.0,va='center')
-rx.text(50,Y0+15,'mitad sur (abajo), cae al SSO\nsouth half (below), falls SSW',fontsize=5.0,va='center',color='#6a655a')
-rx.add_patch(MRect((-46,0),92,36,fc='#cfcac0',ec=INK,lw=.8)); rx.plot([-46,46],[18,18],color='#1f78c8',lw=.8)
-s0=-sl_c*PANEL[0]/2; panels(rx,s0,1.5,sl_r,sl_c,1,PV,.95,sel=lambda r_,c_:False); panels(rx,s0,36-1.5,sl_r,sl_c,-1,PV,.95,sel=lambda r_,c_:False)
-rx.text(0,18,'valle · valley',fontsize=4.8,ha='center',va='center',color='#1f78c8',bbox=dict(fc='#cfcac0',ec='none',pad=.6))
-rx.text(52,28,'Caballerizas · Covered stalls',fontsize=6.4,weight='bold',va='center'); rx.text(52,22.5,'92 × 36 ft, techo mariposa · butterfly roof',fontsize=5.4,va='center')
-rx.text(52,17,f'2 × {sl_r}×{sl_c} paneles, a futuro · panels, future',fontsize=5.0,va='center')
-rx.add_patch(MRect((50,Y0+1.5),5,3.4,fc=PV,ec=PVF,lw=.3)); rx.text(57,Y0+3.2,f'fase 1 · phase 1: {PH1} paneles · panels, {PH1_KW:.1f} kWp',fontsize=5.0,va='center')
-rx.add_patch(MRect((50,Y0-5),5,3.4,fc='none',ec=PV,lw=.35,ls=(0,(2,1.2)))); rx.text(57,Y0-3.3,'después · later',fontsize=5.0,va='center')
+panels(rx,w0,Y0+1.5,st_r,st_c,1,CS13); panels(rx,w0,Y0+44.5,st_r,st_c,-1,CS13)
+rx.add_patch(MRect((-38,Y0+18),76,10,fc='#f7f1e3',ec=INK,lw=.6)); rx.text(0,Y0+23,'claraboya abierta · open clerestory',fontsize=4.8,ha='center',va='center',color='#6a655a')
+p1x=w0+(st_c//2-2)*PANEL[0]; rx.add_patch(MRect((p1x,Y0+1.5),4*PANEL[0],4*PANEL[1]*CS13,fill=False,ec='#e8892c',lw=1.6))   # phase 1 outlined
+rx.text(50,Y0+40,'Establo · Stable',fontsize=6.4,weight='bold',va='center'); rx.text(50,Y0+34.5,'88 × 46 ft, 2 aguas · gable',fontsize=5.4,va='center')
+rx.text(50,Y0+29,f'2 × {st_r}×{st_c} = {2*N_ST} paneles · panels',fontsize=5.0,va='center')
+rx.text(50,Y0+15,'norte arriba, sur abajo (cae al SSO)'+chr(10)+'north up, south below (falls SSW)',fontsize=5.0,va='center',color='#6a655a')
+# covered stalls, butterfly
+rx.add_patch(MRect((-46,0),92,36,fc='#cfcac0',ec=INK,lw=.8))
+s0=-sl_c*PANEL[0]/2; panels(rx,s0,1.5,sl_r,sl_c,1); panels(rx,s0,36-1.5,sl_r,sl_c,-1)
+rx.plot([-46,46],[18,18],color='#1f78c8',lw=.8); rx.text(0,18,'valle · valley',fontsize=4.8,ha='center',va='center',color='#1f78c8',bbox=dict(fc='#cfcac0',ec='none',pad=.6))
+rx.text(52,28,'Caballerizas · Covered stalls',fontsize=6.4,weight='bold',va='center'); rx.text(52,22.5,'92 × 36 ft, techo mariposa · butterfly',fontsize=5.4,va='center')
+rx.text(52,17,f'2 × {sl_r}×{sl_c} = {N_SL} paneles · panels',fontsize=5.0,va='center')
+# café gable over the trailer and both decks: 46 x 26 ft, ridge on the trailer's centre line
+CW,CD=46,25.6
+rx.add_patch(MRect((-CW/2,-32),CW,CD,fc='#cfcac0',ec=INK,lw=.8))
+c0x=-8*PANEL[0]/2; panels(rx,c0x,-32+.6,3,8,1,math.cos(math.radians(20))); panels(rx,c0x,-32+CD-.6,3,8,-1,math.cos(math.radians(20)))
+rx.plot([-CW/2,CW/2],[-32+CD/2]*2,color=INK,lw=.5)
+rx.text(30,-9,'Café · Café',fontsize=6.4,weight='bold',va='center'); rx.text(30,-14.5,'46 × 26 ft, 2 aguas · gable',fontsize=5.4,va='center')
+rx.text(30,-20,f'2 × 3×8 = {2*N_CF} paneles · panels',fontsize=5.0,va='center')
+# legend
+rx.add_patch(MRect((50,Y0-4),5,3.4,fc=PV,ec=PVF,lw=.3)); rx.text(57,Y0-2.3,'paneles modelados · panels as modelled',fontsize=5.0,va='center')
+rx.add_patch(MRect((50,Y0-10),5,3.4,fill=False,ec='#e8892c',lw=1.4)); rx.text(57,Y0-8.3,f'fase 1 · phase 1: {PH1} paneles · panels, {PH1_KW:.1f} kWp',fontsize=5.0,va='center')
 # ---------------- solar + load table ----------------
 tx0=0.512; ty=0.538
 fig.text(tx0,ty,'Potencial solar · Solar potential',fontsize=8.6,weight='bold',color=INK); ty-=.017
@@ -205,9 +215,9 @@ for x,t in ((.105,'paneles'),(.135,'kWp'),(.162,'MWh/año·yr')): fig.text(tx0+x
 ty-=.0125
 for nm,orient,n,y in PV_ROWS:
     fig.text(tx0,ty,nm.split(' · ')[1],fontsize=6,color=INK); fig.text(tx0,ty-.0098,f'{nm.split(" · ")[0]} · {orient}',fontsize=5.0,color='#6a655a',style='italic')
-    fig.text(tx0+.105,ty,f'{n}',fontsize=6.4,ha='right'); fig.text(tx0+.135,ty,f'{kw(n):.1f}',fontsize=6.4,ha='right'); fig.text(tx0+.175,ty,f'{kw(n)*y/1000:.0f}',fontsize=6.4,ha='right'); ty-=.0235
-ty-=.005; fig.add_artist(matplotlib.lines.Line2D([tx0,tx0+.19],[ty+.0165,ty+.0165],color=INK,lw=.6))
-fig.text(tx0,ty+.003,'Todo · All',fontsize=6.4,weight='bold'); fig.text(tx0+.105,ty+.003,f'{N_ST*2+N_SL}',fontsize=6.4,ha='right',weight='bold'); fig.text(tx0+.135,ty+.003,f'{POT_KW:.0f}',fontsize=6.4,ha='right',weight='bold'); fig.text(tx0+.175,ty+.003,f'{POT_MWH:.0f}',fontsize=6.4,ha='right',weight='bold')
+    fig.text(tx0+.105,ty,f'{n}',fontsize=6.4,ha='right'); fig.text(tx0+.135,ty,f'{kw(n):.1f}',fontsize=6.4,ha='right'); fig.text(tx0+.175,ty,f'{kw(n)*y/1000:.0f}',fontsize=6.4,ha='right'); ty-=.0205
+ty-=.009; fig.add_artist(matplotlib.lines.Line2D([tx0,tx0+.19],[ty+.0135,ty+.0135],color=INK,lw=.6))
+fig.text(tx0,ty+.003,'Todo · All',fontsize=6.4,weight='bold'); fig.text(tx0+.105,ty+.003,f'{N_ST*2+N_SL+2*N_CF}',fontsize=6.4,ha='right',weight='bold'); fig.text(tx0+.135,ty+.003,f'{POT_KW:.0f}',fontsize=6.4,ha='right',weight='bold'); fig.text(tx0+.175,ty+.003,f'{POT_MWH:.0f}',fontsize=6.4,ha='right',weight='bold')
 ty-=.016; fig.text(tx0,ty,'Fase 1 · Phase 1',fontsize=6.4,weight='bold',color='#b5602e'); fig.text(tx0+.105,ty,f'{PH1}',fontsize=6.4,ha='right',color='#b5602e'); fig.text(tx0+.135,ty,f'{PH1_KW:.1f}',fontsize=6.4,ha='right',color='#b5602e'); fig.text(tx0+.175,ty,f'{PH1_MWH:.1f}',fontsize=6.4,ha='right',color='#b5602e')
 ty-=.02; fig.text(tx0,ty,f'Uso estimado · Est. use ≈ {DAY:.0f} kWh/día·day ≈ {YEAR/1000:.1f} MWh/año·yr',fontsize=6.6,weight='bold',color=INK); ty-=.0125
 for i_,(nm,kwh,h) in enumerate(LOADS):
@@ -248,7 +258,7 @@ FX=[('L1','Pasillos · Aisles','2700 K · 1,500 lm · regulable · dimmable','ba
     ('L7','Pista oval · Arena',f'3000 K · 15,000 lm · lente plana · flat lens','postes 18 ft, 2 c/u · poles, 2 each','llave + 2 h · key + 2 h',2*NARENA),
     ('L8','Corral redondo · Round pen','3000 K · 15,000 lm · lente plana · flat lens','postes 16 ft · poles','llave + 2 h · key + 2 h',NRP),
     ('L9','Gradas · Bleachers','ámbar · amber · 50 lm','escalón · step riser','reloj · timer',8)]
-fx0=0.405; fy0=0.322
+fx0=0.405; fy0=0.298
 fig.text(fx0,fy0,'Cuadro de luminarias · Fixture schedule',fontsize=8.6,weight='bold',color=INK); fy0-=.016
 COLX=[0,.02,.10,.178,.24,.292]
 for x,t in zip(COLX,['tipo','dónde · where','luz · light','montaje · mount','control','#']): fig.text(fx0+x,fy0,t,fontsize=5.2,color='#6a655a')
@@ -271,7 +281,7 @@ NOTES_E=[
  ('Electrical room','Cuarto eléctrico','In the stable’s new south-west corner bay (12 × 6 ft, beside the bathroom; Will, 4 Oct), away from all hay, with its own outside door in the west gable: main panel (MP), room for the solar inverter and battery (option b, note 5), C1’s pump control, the timers. Beside its door a second shut-off and the solar rapid-shutdown switch for the firefighters. It feeds the stable, SP-2 at the covered stalls and SP-3 at the bleachers.','En la nueva crujía suroeste del establo (12 × 6 ft, junto al baño; Will, 4 oct), lejos de toda la paja, con su propia puerta exterior en el hastial oeste: tablero principal (MP), lugar para el inversor y la batería solar (opción b, nota 5), control de la bomba de C1, los relojes. Junto a su puerta, una segunda desconexión y el paro rápido solar para los bomberos. Alimenta al establo, el SP-2 de las caballerizas y el SP-3 de las gradas.'),
  ('Both stables','Los dos establos','One caged light in every stall on its own switch, with an amber setting for night checks that doesn’t blind the horses; dimmable lights along both aisles; work lights in wash and tack; a GFCI outlet in a steel box at each stall front, aisle side, 5 ft up, for fans and clippers. Wash and bathroom: GFCI outlets and the water heater; tack and feed: four outlets and the fridge; kitchen: counter outlets, induction top and fridge. All wiring in metal conduit out of reach of teeth; no extension cords. At the covered stalls, nothing electrical inside the alfalfa bays.','Una luz enrejada en cada caballeriza con su apagador y un modo ámbar para las rondas nocturnas que no deslumbra a los caballos; luces regulables en los dos pasillos; luces de trabajo en lavado y monturas; un contacto GFCI en caja de acero en cada frente, lado pasillo, a 1.5 m, para ventiladores y rasuradoras. Lavado y baño: contactos GFCI y calentador; monturas y alimento: cuatro contactos y el refri; cocina: contactos en la barra, parrilla de inducción y refri. Todo el cableado en tubo metálico fuera del alcance de los dientes; sin extensiones. En las caballerizas techadas, nada eléctrico dentro de las bodegas de alfalfa.'),
  ('Site lighting','Luz del sitio',f'Roads and the riding track stay dark (reflectors on fence posts). Knee-high amber bollards along the walking path and the parking edge; a motion light on the north-east and east gate posts. Arena: {NARENA} poles with two flat-lens heads each, round pen: {NRP}; aimed in with back shields, on a key switch at the gate that turns them off after 2 hours. Amber step lights on the bleachers; a 50 A pedestal for the café trailer. No light on trees, walls or water.',f'Los caminos y la pista de paseo quedan oscuros (reflejantes en los postes). Bolardos ámbar a la rodilla en el sendero y la orilla del estacionamiento; luz con sensor en los postes de las puertas noreste y este. Pista oval: {NARENA} postes con dos cabezas de lente plana; corral redondo: {NRP}; apuntados hacia adentro con pantalla trasera, con llave en la puerta y apagado a las 2 horas. Luces ámbar en los escalones de las gradas; un pedestal de 50 A para el café. Sin luz sobre árboles, muros o agua.'),
- ('Solar on the roofs','Solar en los techos',f'The stable’s south half (SSW, 13°) is the best plane. Full, the three roof planes hold {N_ST*2+N_SL} panels, about {POT_KW:.0f} kWp and {POT_MWH:.0f} MWh a year, some {POT_MWH*1000/YEAR:.0f} times what the centre uses. Phase 1: {PH1} all-black panels ({PH1_KW:.1f} kWp) over the horses cover the year. The ranch already has a grid-tied system, so the ranch decides: (a) tie in through the ranch feed, simplest; or (b) the centre’s own hybrid inverter and a 15 kWh battery in the electrical room, for outages. The panels also shade the dark roof, with air under them: a cooler stable in summer. Frames checked for about 3 lb/ft².',f'La mitad sur del establo (SSO, 13°) es el mejor plano. Completos, los tres planos llevan {N_ST*2+N_SL} paneles, unos {POT_KW:.0f} kWp y {POT_MWH:.0f} MWh al año, unas {POT_MWH*1000/YEAR:.0f} veces lo que usa el centro. Fase 1: {PH1} paneles negros ({PH1_KW:.1f} kWp) sobre los caballos cubren el año. El rancho ya tiene un sistema interconectado, así que el rancho decide: (a) sumarlos por la alimentación del rancho, lo más sencillo; o (b) un inversor híbrido propio y una batería de 15 kWh en el cuarto eléctrico, para los apagones. Los paneles además dan sombra al techo oscuro, con aire por debajo: un establo más fresco en verano. Revisar estructuras para unos 15 kg/m².'),
+ ('Solar on the roofs','Solar en los techos',f'The stable’s south half (SSW, 13°) is the best plane. Full, the five roof planes (stable, covered stalls and café) hold {N_ST*2+N_SL+2*N_CF} panels, about {POT_KW:.0f} kWp and {POT_MWH:.0f} MWh a year, some {POT_MWH*1000/YEAR:.0f} times what the centre uses. Phase 1: {PH1} all-black panels ({PH1_KW:.1f} kWp) over the horses cover the year. The ranch already has a grid-tied system, so the ranch decides: (a) tie in through the ranch feed, simplest; or (b) the centre’s own hybrid inverter and a 15 kWh battery in the electrical room, for outages. The panels also shade the dark roof, with air under them: a cooler stable in summer. Frames checked for about 3 lb/ft².',f'La mitad sur del establo (SSO, 13°) es el mejor plano. Completos, los cinco planos (establo, caballerizas y café) llevan {N_ST*2+N_SL+2*N_CF} paneles, unos {POT_KW:.0f} kWp y {POT_MWH:.0f} MWh al año, unas {POT_MWH*1000/YEAR:.0f} veces lo que usa el centro. Fase 1: {PH1} paneles negros ({PH1_KW:.1f} kWp) sobre los caballos cubren el año. El rancho ya tiene un sistema interconectado, así que el rancho decide: (a) sumarlos por la alimentación del rancho, lo más sencillo; o (b) un inversor híbrido propio y una batería de 15 kWh en el cuarto eléctrico, para los apagones. Los paneles además dan sombra al techo oscuro, con aire por debajo: un establo más fresco en verano. Revisar estructuras para unos 15 kg/m².'),
  ('Dark sky','Cielo oscuro','Ensenada’s light-pollution regulation (2006) protects the sky of the San Pedro Mártir observatory: no light above the horizon. Every fixture shielded and aimed down, 2200–3000 K (amber outdoors), as low and dim as works, on timers or motion; outdoor lights off at 10 pm except motion lights. The one glow we keep is the one Will imagined: at dusk the aisle lights at 30 % so warm light pours out between the sticks, while the fixtures hang under the chords so none shines up through the open clerestory (below).','El reglamento de contaminación lumínica de Ensenada (2006) protege el cielo del observatorio de San Pedro Mártir: nada de luz arriba del horizonte. Cada luminaria blindada y hacia abajo, 2200–3000 K (ámbar afuera), tan baja y tenue como funcione, con reloj o sensor; las luces exteriores se apagan a las 22:00 salvo las de sensor. El único resplandor que guardamos es el que Will imaginó: al anochecer los pasillos al 30 % y la luz cálida sale entre las varas, con las luminarias colgadas bajo las cuerdas para que nada brille hacia arriba por la claraboya abierta (abajo).'),
 ]
 y=0.905

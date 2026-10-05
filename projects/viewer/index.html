@@ -198,7 +198,7 @@ body.shot{grid-template-columns:1fr}
     scene.add(new THREE.Mesh(sg, new THREE.MeshLambertMaterial({ color: 0x8a6f52, side: THREE.DoubleSide }))); }
 
   // objects: body + roof, grouped for the switches
-  const groups = { roof: [], fence: [], truss: [], figures: [], solar: [] }, centres = {};
+  const groups = { roof: [], fence: [], truss: [], figures: [], solar: [] }, centres = {}, boxes = {}; window.__boxes = boxes;   /* 4 Oct: per-object boxes, so render shots can list what is in frame */
   const tex = (draw, rep = 1) => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); draw(x); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.encoding = THREE.sRGBEncoding; t.rep = rep; return t; };
   let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const TEX = {
@@ -282,12 +282,12 @@ body.shot{grid-template-columns:1fr}
       const ctr = new THREE.Vector3(); { let n = 0; for (const a of Object.values(arrs)) for (let k = 0; k < a.length; k += 3) { ctr.x += a[k]; ctr.z += a[k + 2]; n++; } ctr.multiplyScalar(1 / n); }
       let all = []; for (const [m, arr] of Object.entries(arrs)) { const mesh = part(arr, m, axis, ROOF[o.name], ctr); if (m === 'roof' || m === 'glass') groups.roof.push(mesh); if (m === 'truss') groups.truss.push(mesh); if (m === 'solar') groups.solar.push(mesh); if (m === 'figure') { groups.figures.push(mesh); mesh.visible = false; /* pose figures: render shots only */ } all.push(arr); }
       const b = all.reduce((acc, a) => { const c = new Float32Array(acc.length + a.length); c.set(acc); c.set(a, acc.length); return c; }, new Float32Array(0));
-      let sx = 0, sz = 0, sy = 0, n = b.length / 3; for (let k = 0; k < b.length; k += 3) { sx += b[k]; sy = Math.max(sy, b[k + 1]); sz += b[k + 2]; } centres[o.name] = new THREE.Vector3(sx / n, sy, sz / n); continue;
+      let sx = 0, sz = 0, sy = 0, n = b.length / 3; for (let k = 0; k < b.length; k += 3) { sx += b[k]; sy = Math.max(sy, b[k + 1]); sz += b[k + 2]; } centres[o.name] = new THREE.Vector3(sx / n, sy, sz / n); boxes[o.name] = new THREE.Box3().setFromArray(b); continue;
     }
     const b = f32(o.body), m = soup(b, o.color); if (o.group === 'fence') groups.fence.push(m);
     if (o.roof) { const r = soup(f32(o.roof), o.roofColor); groups.roof.push(r); }
     let sx = 0, sz = 0, sy = 0, n = b.length / 3; for (let k = 0; k < b.length; k += 3) { sx += b[k]; sy = Math.max(sy, b[k + 1]); sz += b[k + 2]; }
-    centres[o.name] = new THREE.Vector3(sx / n, sy, sz / n);
+    centres[o.name] = new THREE.Vector3(sx / n, sy, sz / n); boxes[o.name] = new THREE.Box3().setFromArray(b);
   }
   // roads, ditches, the natural sink: ribbons draped on the ground
   const ribbon = (pts, w, color, lift, op = 1) => { const P = []; for (let k = 0; k < pts.length - 1; k++) { const [x1, z1] = pts[k], [x2, z2] = pts[k + 1], L = Math.hypot(x2 - x1, z2 - z1), n = Math.max(1, Math.ceil(L / 1.5)); for (let q = 0; q < n; q++) P.push([x1 + (x2 - x1) * q / n, z1 + (z2 - z1) * q / n]); } P.push(pts[pts.length - 1]);

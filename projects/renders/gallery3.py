@@ -59,7 +59,7 @@ EXTRA = {   # per-view fixes from the gallery notes (28 Sep)
     'b3-sw': ' The small boxes in the parking strip are CARS and PICKUPS, never tanks or farm machinery. The riding track and its infield are well vegetated with sage scrub and grasses. The blue area in the low spot below the track is shallow standing water in a natural sink: paint it as water.',
     'wash-farrier': ' THE SCENE: the concrete wash pad beside the stable under a steel pipe pergola covered by a living GRAPEVINE: broad green vine leaves overhead and ripe pale GREEN grape bunches (white wine grapes, no purple) hanging down through the pipes, dappled golden light on the concrete. On the pad a calm bay horse stands on all four legs, its whole body side-on to the camera and parallel to the stable wall, its head tied short to the bent black steel pipe hoop. The farrier works at its hind end the real way: he stands beside the hind leg facing the horse’s tail, bent forward with his back flat, the horse’s lower hind leg lifted and cradled across his thighs just above his knees, hoof sole up, rasp in hand; his leather apron on, his tool box on the concrete behind him. A rider stands at the horse’s head holding the lead rope. Horse and people at true scale, fully on the concrete pad, nothing floating or overlapping. At the end of the stone trough a small lower stone basin catches a thin stream of water pouring from a stone spout. Keep the plastered wash room wall, its wooden plank sliding door and every pipe exactly where the render has them.',
     '1-hero-sw': ' The covered stalls corridor runs straight through and is OPEN at this end: no wall, block, pillar or stone mass closes it; between the last two stall posts there is only open air, with the round fieldstone trough standing free in front of the opening and the roof chute pouring into it. Pipe stall fronts and panels only, no stone walls anywhere on the covered stalls.',
-    'cafe-end': ' THE VIEW: the end of the old white semi-trailer (a plain weathered box trailer, keep its rusty rear doors exactly), now a DOUBLE-SIDED café: one wide wooden stair across the whole end leads up to a wooden deck on EACH long side, each deck under its own light corrugated shade roof with a serving window and stools, and each side fanning out into three curved stepped wooden picnic platforms with families on blankets; the shade roofs are plain metal, no solar panels. Keep the trailer, decks, stairs and platforms exactly as the render shows.',
+    'cafe-end': ' THE VIEW: the end of the old white semi-trailer (a plain weathered box trailer, keep its rusty rear doors exactly), now a DOUBLE-SIDED café: one wide wooden stair across the whole end leads up to a wooden deck on EACH long side, one gable roof over the trailer and both decks, covered on both slopes with black solar panels (the dark roof in the render), with a serving window and stools on each side, and each side fanning out into three curved stepped wooden picnic platforms with families on blankets; Keep the trailer, decks, stairs and platforms exactly as the render shows.',
     '23-picnic-side': ' The old white trailer is a DOUBLE-SIDED café: a serving window on BOTH long sides, each side with its own wooden deck, shade roof and three curved stepped wooden picnic platforms, and at each end of the trailer one wide wooden stair up to the decks, exactly as the render shows. The ground inside the fenced arena is groomed riding sand, freshly raked in fine even parallel lines (harrowed footing), pale and clean, no grass and no weeds inside the fence. The old white trailer has become a small café: a serving window opened in its side with a hinged wooden awning, a few stools at a narrow wooden counter, warm light inside, and ONE small, simple, tasteful hand-painted wooden sign above the window reading CAFÉ in plain lettering, nothing else, no logos, no neon, no banners.',
     '5-corridor-out': ' The camera is under the butterfly roof at eye level looking down the corridor, which runs straight through to the far open end; the alfalfa bales sit behind pipe panels on BOTH sides of the far bay, never across the corridor.',
 
@@ -83,8 +83,26 @@ HYB = {
   'sole up; the rider stands at its head holding the lead rope.'),
 }
 STYLE = os.environ.get('GAL_STYLE', '')
+# 4 Oct (Will: "the background seems like the wrong view"): the brief describes every building on the site, and the painters paint
+# them into empty backgrounds. modelshots.mjs now writes model-<view>.vis.json (objects in frame and their share of the picture);
+# fit_brief() drops the sentences about things outside the frame and says what the frame does contain.
+import json as _js, re as _re
+VIS_WORDS = {'walker barn 72x40': ('The large stable', 'stable'), 'covered stalls': ('The open shed with the butterfly', 'covered stalls'),
+             'trailer 8 x 40': ('The old white semi-trailer', 'café trailer'), 'bleachers': ('The old white semi-trailer', 'café decks and picnic platforms'),
+             'stone trough (long)': ('The long low box', 'long stone trough'), 'arena fence': ('The oval with the fence', 'riding arena'),
+             'round pen fence': ('The oval with the fence', 'round pen'), 'pine forest': ('The round trees', 'pine grove')}
+def fit_brief(text, vid):
+    f = os.path.join(SRC, f'model-{vid}.vis.json')
+    if not os.path.exists(f): return text
+    vis = _js.load(open(f)); keep = {k for k in vis if k in VIS_WORDS}
+    for name, (lead, _) in VIS_WORDS.items():
+        if any(VIS_WORDS[k][0] == lead for k in keep): continue
+        text = _re.sub(_re.escape(lead) + r'[^.]*\.\s*', '', text)                     # the sentence about something not in frame
+    seen = sorted({VIS_WORDS[k][1] for k in keep}, key=lambda s: -max(vis[k] for k in keep if VIS_WORDS[k][1] == s))
+    return text + (' IN THIS FRAME there is only: ' + ', '.join(seen) + ', plus open ground, roads and fences. Nothing else is built in this picture: the background is open land, scrub and hills.' if seen else
+                   ' Nothing built is in this frame beyond what the render shows: the background is open land, scrub and hills.')
 # 4 Oct (Will: 'solar on'): model shots show the phase-1 panels; tell the painter what the dark block on the stable roof is
-SOLAR = ' Black solar panels cover both slopes of the stable roof (either side of the long open clerestory) and both planes of the covered stalls’ butterfly roof, exactly where the render shows the dark panel fields; NO solar panels on the café’s shade roofs or anywhere else.'
+SOLAR = ' Black solar panels cover both slopes of the stable roof (either side of the long open clerestory) and both planes of the covered stalls’ butterfly roof, exactly where the render shows the dark panel fields; and on the café’s gable roof where the render shows them; nowhere else.'
 # 4 Oct (Will: OpenAI looks flat; try other times of day and weather): the light fan. A fan view tagged with one of these keys swaps
 # the brief's light sentence; fan.py --light also moves the model's sun to the matching hour so the shadows are true.
 LIGHT_DEFAULT = 'Light: warm low golden-hour sun, long soft shadows, a sky with big lit cumulus clouds.'
@@ -103,7 +121,11 @@ if __name__ == '__main__':
     if not k: sys.exit('no key for ' + ENGINE)
     CAFE = {'23-picnic-side', 'cafe-end'}   # 4 Oct (Will): the trailer is a small cafe in these views, so drop the 'no sign' lines
     _BRIEF0, _HYB0 = BRIEF, dict(HYB)
+    _o, _g = openai, google; CUR = ['']
+    openai = lambda src, pr, refs, k_: _o(src, fit_brief(pr, CUR[0]), refs, k_)
+    google = lambda src, pr, refs, k_, **kw: _g(src, fit_brief(pr, CUR[0]), refs, k_, **kw)
     for v in (ONLY or VIEWS):
+        CUR[0] = v
         t = time.time()
         _lt = v.split('-fan-')[1] if '-fan-' in v else ''
         BRIEF = _BRIEF0.replace(LIGHT_DEFAULT, LIGHT[_lt][1]) if _lt in LIGHT else _BRIEF0

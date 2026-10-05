@@ -66,7 +66,14 @@ await page.goto(URL_); await page.waitForFunction(() => window.__shot && !docume
 await page.waitForTimeout(1500);                                                   // the photo texture
 for (const v of VIEWS) {
   if (ONLY && !ONLY.split(',').includes(v.id)) continue;
-  await page.evaluate(v => window.__shot({ fov: 70, hour: v.white ? 16.6 : 17.4, ...v }), v);
+  // 4 Oct: the shot and the in-frame list in ONE evaluate: the viewer's loop moves the camera object afterwards (the picture is already drawn)
+  const vis = await page.evaluate(async v => { await window.__shot({ fov: 70, hour: v.white ? 16.6 : 17.4, ...v }); const c = window.__cam, out = {}; if (!c || !window.__boxes) return out; c.updateMatrixWorld(); const V3 = c.position.constructor;
+    for (const [n, b] of Object.entries(window.__boxes)) { let x0 = 9, x1 = -9, y0 = 9, y1 = -9, front = 0;
+      for (const xx of [b.min.x, b.max.x]) for (const yy of [b.min.y, b.max.y]) for (const zz of [b.min.z, b.max.z]) { const p = new V3(xx, yy, zz).project(c); if (p.z < 1 && p.z > -1) { front++; x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); } }
+      if (!front) continue; const w = Math.max(0, Math.min(1, x1) - Math.max(-1, x0)), h = Math.max(0, Math.min(1, y1) - Math.max(-1, y0)); const a = w * h / 4; if (a > .0015) out[n] = +a.toFixed(4); }
+    return out; }, v);
+  // 4 Oct (Will: backgrounds invented): which objects are actually in this frame, and how big, for the painter's brief
+  fs.writeFileSync(path.join(OUT, `model-${v.id}.vis.json`), JSON.stringify(vis));
   await page.waitForTimeout(400);
   await page.locator('#view canvas').screenshot({ path: path.join(OUT, `model-${v.id}.png`) });
   console.log(v.id, 'ok');
