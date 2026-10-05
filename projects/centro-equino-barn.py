@@ -136,7 +136,14 @@ for s in (1, -1):
         for ha, hb, _ in sorted(h for h in holes if h[2] == 99 and xs <= h[0] < a): rail_x(xx, ha, y); xx = hb
         rail_x(xx, a, y)
         if STAKES and a > xs: mat('stakes'); sticks_x(xs, a, y, RAIL_Z, EAVE - .3, [(ha, hb, DOOR[1] + .25) for ha, hb, t in holes if t == 99 and xs <= ha < a])   # stakes stop at the doorways, carry on above the lintel
-        if b > a: mat('cob'); wall_x(a, b, y, ROCK_T * .8, ROCK_H, EAVE - .3, [h for h in holes if a <= h[0] < b])
+        KW = [(-HL + 3.0, -HL + 9.0, 8.4)] if (s == 1 and abs(a + HL) < .1) else []   # 4 Oct (Will): kitchen window in the north wall, 6 x 2.6 ft
+        if b > a: mat('cob'); wall_x(a, b, y, ROCK_T * .8, ROCK_H, EAVE - .3, [h for h in holes if a <= h[0] < b] + KW)
+        for wa, wb, wt in KW:
+            mat('cob'); box(wa, wb, y - ROCK_T * .4, y + ROCK_T * .4, ROCK_H, 5.8)                         # sill wall under the window
+            mat('glass'); box(wa, wb, y - .06, y + .06, 5.8, wt)
+            mat('steel')
+            for xx in (wa, (wa + wb) / 2, wb): box(xx - .08, xx + .08, y - .12, y + .12, 5.8, wt)
+            for zz in (5.8, wt): box(wa, wb, y - .12, y + .12, zz - .08, zz + .08)
         xs = b
 
 # ---- gable ends: rock and rail either side of the big entry; the tack room's gable bay solid up to the truss;

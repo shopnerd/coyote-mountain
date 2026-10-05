@@ -118,6 +118,24 @@ MIRROR_BOTH = True
 if MIRROR_BOTH:
     for fc, m in list(zip(F, MAT)):
         face([(x, -y, z) for x, y, z in (V[i - 1] for i in fc)][::-1], m)
+# 4 Oct (Will): with platforms on both sides the main road ran over the new side; bend it out round the café, clear of the deepest
+# platform by 1 m plus its half width, easing back over 15 m each way (applied to the three working drawings below)
+YCLR = -YS + DECK_D + DMAX + 1.0 + 1.83
+def unlocal(x, y):
+    a = x * math.cos(rr) - y * math.sin(rr); b = x * math.sin(rr) + y * math.cos(rr)
+    return c0[0] + a / cs, c0[1] - b / cs
+def bend_road(d):
+    for s_ in d['strokes']:
+        if s_.get('kind') != 'path' or (s_.get('name') or '') not in ('main road, north-east gate to south gate', 'arena ring road'): continue
+        out_ = []
+        for q in s_['pts']:
+            x, y = local(q[0], q[1])
+            if y > 0:
+                gx = max(0.0, X0 - x, x - X1); w_ = max(0.0, 1 - gx / 15.0)
+                need = YCLR * w_ + y * (1 - w_)
+                if y < need: x2, y2 = x, need; q = [*unlocal(x2, y2), *q[2:]]
+            out_.append(q)
+        s_['pts'] = out_
 out = os.path.join(HERE, 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
     f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved blades tiled like a pinwheel, each one step lower (exactly per her sketch), shade roof over the deck\n# unit m\n# name bleachers\n')
@@ -140,5 +158,5 @@ for fn in ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.j
     st = dict(color='ink', shape=False, kind='obj', c=list(tr['c']), name='bleachers', unit='m', rot=tr['rot'], sc=1, lift=float(tr.get('lift', 0) + zmin),
               tris=[round(float(v), 3) for v in Tz.flatten()], foot=[[float(xy[:, 0].min()), float(xy[:, 1].min())], [float(xy[:, 0].max()), float(xy[:, 1].min())], [float(xy[:, 0].max()), float(xy[:, 1].max())], [float(xy[:, 0].min()), float(xy[:, 1].max())]],
               h=float(Tz[:, 2].max()), w=1, a=1, dash=False, pts=[list(tr['pts'][0])])
-    d['strokes'].append(st); json.dump(d, open(p, 'w', encoding='utf-8'))
+    d['strokes'].append(st); bend_road(d); json.dump(d, open(p, 'w', encoding='utf-8'))
 print(out, len(F), 'faces; blades per sketch, deepest 16.1 ft ->', round(DMAX / FT, 1), 'ft past the 6 ft deck;', NT, 'tiers; deck', round(H / FT, 1), 'ft high')
