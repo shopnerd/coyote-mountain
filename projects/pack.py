@@ -152,6 +152,7 @@ def sheet(fname,es,en):
     src='\n'.join(l for l in src.split('\n') if not l.startswith('fig.text(0.02,0.03,'))
     g=dict(globals()); exec(src,g); fig=g['fig']; fig.set_dpi(100)
     tblock(fig,nxt(),es,en); PAGES.append(fig)
+    if 'ZOOMPG' in globals(): ZOOMPG.add(len(PAGES) - 1)   # 4 Oct (Will): the sheets' drawings and diagrams enlarge on the web page too
 def views(items,es,en):
     fig=newpage(); heading(fig,es,en)
     n=len(items); cols=2 if n<=4 else 3; rows=math.ceil(n/cols)

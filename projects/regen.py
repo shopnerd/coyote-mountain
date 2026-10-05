@@ -83,19 +83,30 @@ mark(tr[len(tr)//4],'>','#5f8a6a','paseo y pista · riding and the track',dx=2.2
 north(ax,143,15); scalebar(ax,22,88)
 fig.text(0.017,0.947,'Zonas y lugares · Zones and places',fontsize=10,weight='bold',color=INK)
 # ---- the closed loops ----
-lx=fig.add_axes([0.02,0.055,0.40,0.225]); lx.set_xlim(-1.75,1.75); lx.set_ylim(-1.12,1.12); lx.set_aspect('equal'); lx.axis('off')
-CYC=[('Lluvia','Rain','#1f78c8'),('Techos y cisternas','Roofs, cisterns','#1f78c8'),('Bebederos vivos','Living troughs','#1f78c8'),('Caballos','Horses','#7a4a2a'),
-     ('Estiércol y cama','Manure, bedding','#7a4a2a'),('Composta BD','BD compost','#5f8a6a'),('Vivero y huerta','Nursery, garden','#4f7a3a'),('Árboles, viña, comida','Trees, vines, food','#4f7a3a'),('Restaurantes, sombra, forraje','Restaurants, shade, fodder','#b5602e')]
-n=len(CYC); P=[(math.cos(math.pi/2-2*math.pi*k/n)*1.38,math.sin(math.pi/2-2*math.pi*k/n)*.92) for k in range(n)]
+lx=fig.add_axes([0.012,0.045,0.42,0.235]); lx.set_xlim(-3.3,3.3); lx.set_ylim(-1.2,1.2); lx.set_aspect('equal'); lx.axis('off'); lx.set_gid('loops')
+# 4 Oct (Will: "this graphic needs work"): boxes sized to their words, one clean ring, each feed-in lands on the step it feeds
+CYC=[('Lluvia','Rain','#1f78c8'),('Techos y cisternas','Roofs, cisterns','#1f78c8'),('Bebederos vivos','Living troughs','#1f78c8'),('Caballos y ganado','Horses, cattle','#7a4a2a'),
+     ('Estiércol y cama','Manure, bedding','#7a4a2a'),('Composta biodinámica','Biodynamic compost','#5f8a6a'),('Vivero y huerta','Nursery, garden','#4f7a3a'),('Árboles, viña, alfalfa','Trees, vines, alfalfa','#4f7a3a'),
+     ('Comida, sombra, forraje','Food, shade, fodder','#b5602e')]
+n=len(CYC); RX_, RY_ = 2.55, .93
+P=[(math.cos(math.pi/2-2*math.pi*k/n)*RX_,math.sin(math.pi/2-2*math.pi*k/n)*RY_) for k in range(n)]
+def bw(es,en,fs): return max(len(es)*.052*fs/6,len(en)*.046*fs/6)+.16
+from matplotlib.patches import Ellipse as _El
+lx.add_patch(_El((0,0),2*RX_,2*RY_,fill=False,ec='#cfc6b4',lw=6,alpha=.55,zorder=1))                      # the ring itself
 for k in range(n):
-    a,b=P[k],P[(k+1)%n]; lx.add_patch(FancyArrowPatch(a,b,connectionstyle='arc3,rad=-.18',arrowstyle='-|>',mutation_scale=9,color='#9b927f',lw=1.1,shrinkA=17,shrinkB=17,zorder=2))
+    a=math.pi/2-2*math.pi*(k+.5)/n; x,y=math.cos(a)*RX_,math.sin(a)*RY_; t=(math.sin(a)*RX_,-math.cos(a)*RY_); L=math.hypot(*t)
+    lx.annotate('',xy=(x+t[0]/L*.06,y+t[1]/L*.06),xytext=(x-t[0]/L*.06,y-t[1]/L*.06),arrowprops=dict(arrowstyle='-|>',color='#8f8571',lw=1.2,mutation_scale=11),zorder=2)
 for (es,en,col),(x,y) in zip(CYC,P):
-    lx.add_patch(FancyBboxPatch((x-.30,y-.115),.60,.23,boxstyle='round,pad=.02,rounding_size=.08',fc='white',ec=col,lw=1.2,zorder=3))
-    lx.text(x,y+.035,es,fontsize=5.8,weight='bold',ha='center',va='center',color=INK,zorder=4); lx.text(x,y-.055,en,fontsize=5.2,ha='center',va='center',color='#6a655a',style='italic',zorder=4)
-for (es,en,col),(x,y),to in ((('Cocina y café','Kitchen, café','#b5602e'),(-.42,.3),P[5]),(('Gallinas y lombrices','Chickens, worms','#b5602e'),(0,-.22),P[5]),(('Agua del lavado','Wash water','#1f78c8'),(.42,.3),P[7])):
-    lx.add_patch(FancyBboxPatch((x-.27,y-.1),.54,.2,boxstyle='round,pad=.02,rounding_size=.07',fc='#f6f1e6',ec=col,lw=.9,ls='--',zorder=3))
-    lx.text(x,y+.03,es,fontsize=5.4,weight='bold',ha='center',va='center',zorder=4); lx.text(x,y-.05,en,fontsize=5,ha='center',va='center',color='#6a655a',style='italic',zorder=4)
-    lx.add_patch(FancyArrowPatch((x,y),to,arrowstyle='-|>',mutation_scale=8,color='#c9bfae',lw=.9,ls='--',shrinkA=12,shrinkB=17,zorder=1))
+    w=bw(es,en,6.4)
+    lx.add_patch(FancyBboxPatch((x-w/2,y-.13),w,.26,boxstyle='round,pad=.02,rounding_size=.07',fc='white',ec=col,lw=1.4,zorder=3))
+    lx.text(x,y+.045,es,fontsize=6.4,weight='bold',ha='center',va='center',color=INK,zorder=4); lx.text(x,y-.06,en,fontsize=5.8,ha='center',va='center',color='#6a655a',style='italic',zorder=4)
+INNER=((('Cocina y café','Kitchen, café','#b5602e'),(.85,.3),5),(('Agua del lavado','Wash water','#1f78c8'),(-.95,.3),7),(('Gallinas y lombrices','Chickens, worms','#b5602e'),(-1.0,-.32),5))
+for (es,en,col),(x,y),to in INNER:
+    w=bw(es,en,6.0)
+    lx.add_patch(FancyBboxPatch((x-w/2,y-.115),w,.23,boxstyle='round,pad=.02,rounding_size=.06',fc='#f6f1e6',ec=col,lw=1.0,ls='--',zorder=3))
+    lx.text(x,y+.04,es,fontsize=6.0,weight='bold',ha='center',va='center',zorder=4); lx.text(x,y-.055,en,fontsize=5.4,ha='center',va='center',color='#6a655a',style='italic',zorder=4)
+    tx,ty=P[to]; lx.add_patch(FancyArrowPatch((x,y),(tx*.82,ty*.82),arrowstyle='-|>',mutation_scale=9,color=col,lw=1.0,ls=(0,(3,2)),shrinkA=14,shrinkB=6,alpha=.8,zorder=2))
+lx.text(0,.55,'nada sale'+chr(10)+'nothing leaves',fontsize=6.4,ha='center',va='center',color='#9b927f',style='italic')
 fig.text(0.02,0.29,'Ciclos cerrados: nada sale como basura · Closed loops: nothing leaves as waste',fontsize=8.6,weight='bold',color=INK)
 # ---- the numbers ----
 horses=22; manure_t=horses*23*365/1000; compost_t=manure_t*.55; roof_m3=(88*46+92*36)*0.623*11*3.785/1000
