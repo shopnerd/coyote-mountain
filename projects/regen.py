@@ -71,7 +71,7 @@ ax.add_patch(MPoly(np.array(mg),closed=True,fc='#9bb35a',ec='#4f7a3a',lw=1.2,alp
 for k in range(9):
     o=MG+uy*F(-26+k*6.5); ax.plot(*np.array([o-ux*F(56),o+ux*F(56)]).T,color='#4f7a3a',lw=.6,zorder=9)
 ax.text(MG[0],MG[1]+F(42),'HUERTA PARA RESTAURANTES · MARKET GARDEN\n120 × 60 ft, camas permanentes · permanent beds',fontsize=6.2,weight='bold',color='#3f6b2a',ha='center',va='center',zorder=15,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='#4f7a3a',lw=.8,alpha=.92))
-ax.text(18.6,64,'← campo de alfalfa\n(cercado, al oeste)\nalfalfa field\n(fenced, to the west)',fontsize=6.2,color='#3f6b2a',weight='bold',ha='left',va='center',zorder=15,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='#4f7a3a',lw=.8,alpha=.9))   # 4 Oct (Will): the big fenced field to the west grows alfalfa / feed
+ax.text(18.6,64,'← campo de alfalfa (cercado, al suroeste)\nalfalfa field (fenced, to the south-west)\n↙ laguna: ahí beben todos · the pond where all the animals drink',fontsize=6.2,color='#3f6b2a',weight='bold',ha='left',va='center',zorder=15,bbox=dict(boxstyle='round,pad=.25',fc='white',ec='#4f7a3a',lw=.8,alpha=.9))   # 4 Oct (Will): the big fenced field to the west grows alfalfa / feed
 ax.text(36,14,'← ganado del rancho más allá de la cerca · the ranch’s cattle, beyond the fence',fontsize=6.2,color='#5c3b22',style='italic',zorder=15,bbox=dict(boxstyle='round,pad=.2',fc='white',ec='none',alpha=.85))
 mark(c3+np.array([3,-3]),'o','#4f7a3a','vivero (el antiguo) · the nursery')
 mark(c3+np.array([10,-21]),'h','#e0a020','colmenas · beehives',dx=2.2)
