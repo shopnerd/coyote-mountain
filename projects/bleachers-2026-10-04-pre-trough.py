@@ -111,8 +111,7 @@ fy = lambda x: YD + .15
 # 4 Oct (Will): the roof 2 ft bigger all round and carried over the trailer to a ridge on its centre line, one gable over the
 # whole café (the mirror below makes the other half); solar panels over all of it
 EXT = 2 * FT
-BARD, BARW = 1.6, .45                                          # 4 Oct (Will): the road end becomes a bar: a 1.6 m deck across the trailer end, then the rock wall
-RX0, RX1 = RX0 - EXT, X1 + BARD + BARW + .45                   # roof carried out over the bar
+RX0, RX1 = RX0 - EXT, RX1 + EXT
 YO0 = fy(0) - .4; YO = YO0 - EXT                                   # the old and new outer edge
 rz = lambda y: RZ0 + (RZ1 - RZ0) * (y - YS) / (YO0 - YS)           # same pitch as before, continued to the ridge (y = 0) and the new edge
 for x in [X0 + .1 + (X1 - X0 - .2) * k / 3 for k in range(4)]:
@@ -154,37 +153,10 @@ def bend_road(d):
             out_.append(q)
         s_['pts'] = out_
 for k in range(3):                                               # 4 Oct (Will): ONE wide stair across the whole end, deck to deck: 3 steps + the deck = 4 risers (~12 in), 16 in treads
+    x0_ = SX + k * .41; x1_ = x0_ + .41
+    prism([(x0_, YD), (x1_, YD), (x1_, -YD), (x0_, -YD)], -0.1, H * (3 - k) / 4, 'wood')
     x1b = X0 - k * .41; x0b = x1b - .41                            # 4 Oct (Will): the same stair at the other end too
     prism([(x0b, YD), (x1b, YD), (x1b, -YD), (x0b, -YD)], -0.1, H * (3 - k) / 4, 'wood')
-# ---- 4 Oct (Will, red box on the café-end painting): a fieldstone horse trough against the bar's rock wall (no stair at this end now), fed by the café
-# roof. 20 x 3.5 ft, rim 2 ft, 2 ft out from the bottom step so people pass round its ends onto the stair; its middle 8 ft is a
-# planted bed of tall water plants (papyrus, horsetail, cattail) that screens the trailer's old end; open water at both ends for
-# the horses. Gutters on both eaves, a downspout at each road-end corner, buried to the trough (first-flush standpipe first).
-# the bar: a deck strip across the trailer end joining the two side decks, a fieldstone wall at its outer edge rising to a 42 in
-# counter (guardrail + bar top, people stand on the deck and look out over the trough), wood counter on top; stools behind it
-prism([(X1, YD), (X1 + BARD, YD), (X1 + BARD, -YD), (X1, -YD)], -0.1, H, 'wood')
-WX0, WX1 = X1 + BARD, X1 + BARD + BARW
-prism([(WX0, YD), (WX1, YD), (WX1, -YD), (WX0, -YD)], -0.15, H + 1.0, 'rock')
-prism([(WX0 - .25, YD - .05), (WX1 + .05, YD - .05), (WX1 + .05, -YD + .05), (WX0 - .25, -YD + .05)], H + 1.0, H + 1.07, 'wood')
-for y_ in (-2.4, -1.2, 0, 1.2, 2.4):
-    prism([(WX0 - .55, y_ - .15), (WX0 - .25, y_ - .15), (WX0 - .25, y_ + .15), (WX0 - .55, y_ + .15)], H, H + .75, 'wood')     # bar stools
-for y_ in (-YD + .2, YD - .2): prism([(X1 + BARD - .1, y_ - .07), (X1 + BARD + .04, y_ - .07), (X1 + BARD + .04, y_ + .07), (X1 + BARD - .1, y_ + .07)], H, rz(-abs(YD)) - .02, 'steel')   # roof posts at the bar
-TX0 = WX1 + .02; TX1 = TX0 + 3.5 * FT; TY = 10 * FT; TW_ = .7 * FT; TZ = 2 * FT
-prism([(TX0, -TY), (TX1, -TY), (TX1, TY), (TX0, TY)], -0.15, .12, 'rock')                       # base
-for pts in ([(TX0, -TY), (TX0 + TW_, -TY), (TX0 + TW_, TY), (TX0, TY)], [(TX1 - TW_, -TY), (TX1, -TY), (TX1, TY), (TX1 - TW_, TY)],
-            [(TX0, -TY), (TX1, -TY), (TX1, -TY + TW_), (TX0, -TY + TW_)], [(TX0, TY - TW_), (TX1, TY - TW_), (TX1, TY), (TX0, TY)]):
-    prism(pts, .12, TZ, 'rock')
-WL = TZ - .12
-for y0_, y1_ in ((-TY + TW_, -4 * FT), (4 * FT, TY - TW_)): quad((TX0 + TW_, y0_, WL), (TX1 - TW_, y0_, WL), (TX1 - TW_, y1_, WL), (TX0 + TW_, y1_, WL), 'water')
-for y_ in (-4 * FT, 4 * FT): prism([(TX0 + TW_, y_ - .06), (TX1 - TW_, y_ - .06), (TX1 - TW_, y_ + .06), (TX0 + TW_, y_ + .06)], .12, TZ - .05, 'rock')   # low stone weirs round the plant bed
-import random as _rr; _g = _rr.Random(11)
-for _ in range(140):                                                                           # the reeds, 4-7 ft
-    x_ = _g.uniform(TX0 + TW_ + .05, TX1 - TW_ - .05); y_ = _g.uniform(-4 * FT + .08, 4 * FT - .08); h_ = _g.uniform(1.2, 2.2); w_ = .045
-    lean = _g.uniform(-.15, .15)
-    beam((x_, y_, WL - .05), (x_ + lean, y_ + lean * .6, WL + h_), w_, 'sage')
-for sy in (-1, 1):                                                                             # gutters + downspouts at the road end
-    beam((RX0, sy * YO, rz(YO) - .08), (RX1, sy * YO, rz(YO) - .08), .12, 'steel')
-    beam((RX1 - .1, sy * YO, rz(YO) - .1), (RX1 - .1, sy * YO, -0.05), .09, 'steel')
 out = os.path.join(HERE, 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
     f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved blades tiled like a pinwheel, each one step lower (exactly per her sketch), shade roof over the deck\n# unit m\n# name bleachers\n')
