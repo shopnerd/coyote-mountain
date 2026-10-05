@@ -5,20 +5,23 @@ a day at the centre from dawn to the lantern-lit night, crossfaded with their ow
 """
 import os, subprocess, sys, concurrent.futures as cf
 from PIL import Image, ImageDraw, ImageFont
-HERE = os.path.dirname(os.path.abspath(__file__)); IMG = os.path.join(HERE, '..', '..', '..', 'will-os', 'equino', 'img'); A = os.path.join(HERE, 'anim')
+HERE = os.path.dirname(os.path.abspath(__file__)); IMG = os.path.join(HERE, '..', '..', '..', 'will-os', 'equino', 'img')
+A = os.path.join(HERE, os.environ.get('REEL_DIR', 'anim-full'))   # 5 Oct: first cut (fast model) kept in anim/
 os.makedirs(A, exist_ok=True)
 import animate as AN
+MODEL = os.environ.get('REEL_MODEL', 'veo-3.1-generate-preview')   # 5 Oct (Will: some animation weird, use a better model): the full Veo 3.1
 
+# 5 Oct: calmer motion than the first cut; small natural movements, a slow steady camera
 SCENES = [   # (clip, painting, motion)
- ('01-dawn', 'p4-site-ne-fan-dawn-google', 'Just after sunrise over a ranch in the dry hills of Baja California. A very slow, high drone glide forward over the whole site, low sun raking across the land, a little haze in the valley; horses graze, a rider moves along the road, morning light warms.'),
- ('02-fog', '4-hill-s-fan-fog-openai', 'Early morning marine fog slowly lifting off the valley below the hill; the camera drifts slowly sideways along the hillside; the mist thins and drifts, horses move quietly in the paddocks, soft light brightens.'),
- ('03-stalls', '1-hero-sw-oct4o', 'Golden afternoon. The camera slowly orbits a little to the left over the covered stalls; horses walk and swish their tails in the runs, a person leads a horse along the path, long shadows, warm light, a few clouds drift.'),
- ('04-aisle', '10-stable-aisle-fresh', 'Inside the stable aisle. The camera walks slowly forward down the aisle at eye level; horses look out over their stall doors and turn their heads, dust motes float in shafts of warm sunlight, a person walks at the far end.'),
- ('05-farrier', 'wash-farrier-fan-left-google', 'At the wash pad under the grapevine trellis. The camera slowly pushes in; the farrier works on the horse\u2019s hoof, the horse shifts its weight and flicks its ears and tail, grape leaves stir in a light breeze, warm late light.'),
- ('06-picnic', '23-picnic-side-oct4o', 'Families picnicking on the stone-stepped platforms beside the small caf\u00e9. The camera drifts slowly sideways; people talk, eat and laugh, children move about, a rider passes in the arena, a light breeze, golden hour.'),
- ('07-cafe', 'cafe-end-fan-high-google', 'The caf\u00e9 end with its stone bar wall and trough. A slow high drone drift forward; a horse walks up and drinks at the trough, reeds sway, people at the bar wall, warm evening light.'),
- ('08-blue', '1-hero-sw-fan-blue-google', 'Blue hour just after sunset. A slow drone glide over the covered stalls toward the stable; warm lights glow inside, the sky deepens from orange to blue, horses settle in the runs.'),
- ('09-lantern', '16-stable-sw-lantern-fan-right-google', None),   # the test clip, stable-lantern.mp4
+ ('01-dawn', 'p4-site-ne-fan-dawn-google', 'Just after sunrise over a ranch in the dry hills of Baja California. A very slow, steady, high drone glide forward over the whole site; low sun raking across the land, a little haze in the valley; the horses graze quietly in place, the morning light slowly warms.'),
+ ('02-fog', '4-hill-s-fan-fog-openai', 'Early morning marine fog slowly lifting off the valley below the hill; the camera drifts very slowly sideways along the hillside; the mist thins and drifts; the horses stand and graze, the soft light slowly brightens.'),
+ ('03-stalls', '1-hero-sw-oct4o', 'Golden afternoon. The camera slowly and steadily orbits a little to the left over the covered stalls; the horses in the runs stand, swish their tails and lower their heads; long shadows, warm light, the clouds drift slowly.'),
+ ('04-aisle', '10-stable-aisle-fresh', 'Inside the stable aisle, a calm still moment. The camera is almost still, only a very slight slow push forward. Nobody walks: any person in the picture stays exactly where they are, far away and small, standing still. The horses look out over their stall doors and slowly turn their heads; dust motes float in the shafts of warm sunlight; the light shifts very slightly.'),
+ ('05-farrier', 'wash-farrier-fan-left-google', 'At the wash pad under the grapevine trellis. The camera pushes in very slowly; the farrier stays bent at the hoof, working with small movements; the horse stands still and flicks its ears and tail; grape leaves stir in a light breeze, warm late light.'),
+ ('06-picnic', '23-picnic-side-oct4o', 'Families picnicking on the stone-stepped platforms beside the small caf\u00e9. The camera drifts very slowly sideways; the seated people stay seated and talk with small gestures; the rider in the far arena only walks very slowly at a calm walk, no trotting, no dust kicked up; a light breeze, golden hour.'),
+ ('07-cafe', 'cafe-end-fan-high-google', 'The caf\u00e9 end with its stone bar wall and trough. A very slow, steady drone drift forward; the horse by the trough lowers its head to drink, the reeds sway gently, the people stay where they are, warm evening light.'),
+ ('08-blue', '1-hero-sw-fan-blue-google', 'Blue hour just after sunset. A very slow, steady drone glide toward the stable; warm lights glow steadily inside, the sky slowly deepens from orange to blue, the horses stand calmly in the runs.'),
+ ('09-lantern', '16-stable-sw-lantern-fan-right-google', 'Moody deep twilight. The camera drifts very slowly forward toward the glowing stable. Warm amber light glows steadily from inside between the thin wall sticks. The horses stand calmly and only shift their weight or swish their tails; the sky slowly darkens.'),
 ]
 FADE, FPS, W, H = 1.0, 24, 1920, 1080
 
@@ -34,11 +37,10 @@ def title(path, big, small):
 def make(sc):
     clip, src, motion = sc; out = os.path.join(A, clip + '.mp4')
     if os.path.exists(out): return out
-    if motion is None: os.replace(os.path.join(A, 'stable-lantern.mp4'), out); return out
-    AN.animate(os.path.join(IMG, src + '.jpg'), out, motion); return out
+    AN.animate(os.path.join(IMG, src + '.jpg'), out, motion, MODEL); return out
 
 if __name__ == '__main__':
-    with cf.ThreadPoolExecutor(3) as ex: clips = list(ex.map(make, SCENES))
+    with cf.ThreadPoolExecutor(int(os.environ.get('REEL_JOBS', '1'))) as ex: clips = list(ex.map(make, SCENES))   # 5 Oct: one at a time for the full model's rate limit
     t0, t1 = os.path.join(A, '00-title.mp4'), os.path.join(A, '99-end.mp4')
     title(t0, 'Centro Equino', 'Chichihuas \u00b7 Baja California'); title(t1, 'Centro Equino', 'dise\u00f1o preliminar \u00b7 preliminary design \u00b7 2026')
     parts = [t0] + clips + [t1]

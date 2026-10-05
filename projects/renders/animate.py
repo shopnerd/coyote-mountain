@@ -8,15 +8,24 @@ sys.argv, ARGS = [sys.argv[0], 'google'], sys.argv[1:]
 from gallery2 import gemini_key
 
 RULES = (' Keep every building, roof, wall, fence, road, trough and tree exactly as in the first frame: same shapes, same places, '
-         'nothing added, removed or morphing. Only the camera moves, slowly and smoothly, and the living things move: horses, people, '
-         'a dog, grass, dust, clouds and light. No text, no cuts.')
+         'nothing added, removed or morphing. Only the camera moves, slowly and smoothly. Horses stand or move slowly at a walk at most, never run; '
+         'people stay where they are with small natural movements and stay small in the frame; grass, dust, clouds and light drift. No text, no cuts.')
+
+# 5 Oct (Will: 'some of the animation is a little weird'): what the first cut got wrong
+NEG = ('morphing, warping or melting buildings, changing architecture, new buildings, extra or missing limbs, extra legs on horses, '
+       'horses or people sliding without walking, people or animals appearing or vanishing, fast camera moves, shaky camera, '
+       'cuts, zoom bursts, flicker, text, watermark, running or galloping horses, trotting, riders at speed, people walking toward the camera, close-up faces, distorted faces')
 
 def animate(img, out, prompt, model='veo-3.1-fast-generate-preview'):
     k = gemini_key(); base = 'https://generativelanguage.googleapis.com/v1beta'
     body = {'instances': [{'prompt': prompt + RULES, 'image': {'bytesBase64Encoded': base64.b64encode(open(img, 'rb').read()).decode(), 'mimeType': 'image/jpeg'}}],
-            'parameters': {'aspectRatio': '16:9', 'durationSeconds': 8, 'resolution': '1080p'}}
+            'parameters': {'aspectRatio': '16:9', 'durationSeconds': 8, 'resolution': '1080p', 'negativePrompt': NEG}}
     req = urllib.request.Request(f'{base}/models/{model}:predictLongRunning', data=json.dumps(body).encode(), headers={'content-type': 'application/json', 'x-goog-api-key': k})
-    op = json.load(urllib.request.urlopen(req, timeout=120))['name']
+    for tries in range(8):                                     # 5 Oct: the full model rate-limits (429); wait and retry
+        try: op = json.load(urllib.request.urlopen(req, timeout=120))['name']; break
+        except urllib.error.HTTPError as e:
+            if e.code != 429 or tries == 7: raise
+            time.sleep(60 * (tries + 1))
     t = time.time()
     while True:
         time.sleep(10)
