@@ -257,9 +257,6 @@ for s in (-1, 1):
     for k in range(n_p + 1):
         y = s * run * k / n_p
         if k == 0: y = s * 0.6
-        if abs(y) < 5.0 + .5:                                                                                  # 4 Oct (Will): the ridge is open under the clerestory, so these purlins stop at its ends
-            for xa_, xb_ in ((-HL - 2.0 + .3, -38.0), (38.0, HL + 2.0 - .3)): bar((xa_, y, roof_z(y) + top), (xb_, y, roof_z(y) + top), PURL_D, 16)
-            continue
         bar((-HL - 2.0 + .3, y, roof_z(y) + top), (HL + 2.0 - .3, y, roof_z(y) + top), PURL_D, 16)   # purlins carry the 2 ft gable overhang   # round, not hexagonal (Will, 4 Oct)
     bar((-HL, s * HD, EAVE - 0.2), (HL, s * HD, EAVE - 0.2), PURL_D, 16)      # eave beam at the column heads
 
@@ -269,12 +266,9 @@ GOH = 2.0                                        # 4 Oct (Will): 2 ft overhang a
 mat('roof')
 for s in (-1, 1):
     y_out = s * (HD + OH)
-    y_in = s * MON_HW                            # 4 Oct (Will): the big roof stops at the clerestory glazing, so the ridge under the monitor is OPEN to the sky
     for dz in (0, T):
         quad((-HL - GOH, y_out, roof_z(y_out) + zr + dz), (HL + GOH, y_out, roof_z(y_out) + zr + dz),
-             (HL + GOH, y_in, roof_z(y_in) + zr + dz), (-HL - GOH, y_in, roof_z(y_in) + zr + dz))
-        for xa_, xb_ in ((-HL - GOH, -MON_X), (MON_X, HL + GOH)):                 # the ridge strip only beyond the monitor's ends
-            quad((xa_, y_in, roof_z(y_in) + zr + dz), (xb_, y_in, roof_z(y_in) + zr + dz), (xb_, 0, RIDGE + zr + dz), (xa_, 0, RIDGE + zr + dz))
+             (HL + GOH, 0, RIDGE + zr + dz), (-HL - GOH, 0, RIDGE + zr + dz))
 
 # ---- clerestory monitor along the ridge: glazing on both long sides, its own low gable roof above (27 Sep) ----
 zb = roof_z(MON_HW) + zr
@@ -287,7 +281,6 @@ for sgn in (-1, 1):
         quad((MON_C - MON_X - .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz), (MON_C + MON_X + .8, sgn * (MON_HW + 1), zb + MON_H - slope + dz),
              (MON_C + MON_X + .8, 0, zb + MON_H + slope * MON_HW + dz), (MON_C - MON_X - .8, 0, zb + MON_H + slope * MON_HW + dz))
 for xm in (MON_C - MON_X, MON_C + MON_X):
-    mat('truss'); box(xm - .2, xm + .2, -.2, .2, RIDGE + zr, zb + MON_H)                                       # 4 Oct: end mullion; the ends glaze like the sides
     mat('roof'); quad((xm, -MON_HW, zb + MON_H), (xm, MON_HW, zb + MON_H), (xm, 0, zb + MON_H + slope * MON_HW), (xm, 0, zb + MON_H + slope * MON_HW))
 
 # ---- 4 Oct (Will): solar, phase 1 (sheet E-1): 16 all-black 435 W panels (1722 x 1134 mm), 4 rows x 4 in landscape, in the
