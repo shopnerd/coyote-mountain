@@ -18,8 +18,8 @@ CLEAR = 3 * FT                             # 28 Sep (Will): full size, may run o
 V, F, MAT = [], [], []
 def face(pts, m): i = len(V) + 1; V.extend(pts); F.append(tuple(range(i, i + len(pts)))); MAT.append(m)
 def quad(a, b, c, d, m): face([a, b, c, d], m)
-def prism(pts, z0, z1, m, side=None):      # a vertical prism over a convex footprint pts (x, y); `side` = a different material for the sides
-    for (xa, ya), (xb, yb) in zip(pts, pts[1:] + pts[:1]): quad((xa, ya, z0), (xb, yb, z0), (xb, yb, z1), (xa, ya, z1), side or m)
+def prism(pts, z0, z1, m):                 # a vertical prism over a convex footprint pts (x, y)
+    for (xa, ya), (xb, yb) in zip(pts, pts[1:] + pts[:1]): quad((xa, ya, z0), (xb, yb, z0), (xb, yb, z1), (xa, ya, z1), m)
     face([(x, y, z1) for x, y in pts], m); face([(x, y, z0) for x, y in pts[::-1]], m)
 def beam(p0, p1, w, m, up=(0, 0, 1)):     # a square steel member between two points
     p0, p1 = np.array(p0, float), np.array(p1, float); d = p1 - p0; d /= np.linalg.norm(d)
@@ -102,9 +102,9 @@ def platform(poly, top):                                   # a flat polygon top 
     P = [toM(q) for q in poly]; cx = sum(x for x, _ in P) / len(P); cy = sum(y for _, y in P) / len(P)
     for (xa, ya), (xb, yb) in zip(P, P[1:] + P[:1]):
         face([(cx, cy, top), (xa, ya, top), (xb, yb, top)], 'wood')
-        face([(xa, ya, -0.1), (xb, yb, -0.1), (xb, yb, top), (xa, ya, top)], 'rock')   # 4 Oct (Will): risers in fieldstone like the stable
+        face([(xa, ya, -0.1), (xb, yb, -0.1), (xb, yb, top), (xa, ya, top)], 'wood')
 for poly, k in ((B1, 1), (B2, 2), (B3, 3)): platform(poly, H - k * RISE)   # largest (blade 1) just below the deck, smallest (blade 3) lowest (Will)
-prism([(X0, YS), (X1, YS), (X1, YD), (X0, YD)], -0.1, H, 'wood', side='rock')   # 4 Oct: squared at the X1 end so the end stairs land on it          # the 6 ft deck, solid to the ground, right end slanted as drawn
+prism([(X0, YS), (X1, YS), (X1, YD), (X0, YD)], -0.1, H, 'wood')   # 4 Oct: squared at the X1 end so the end stairs land on it          # the 6 ft deck, solid to the ground, right end slanted as drawn
 # ---- shade roof the full length over the deck: from the trailer's top edge down to a front beam on four posts at the deck front ----
 RX0, RX1, RZ0, RZ1 = X0 - .3, X1 + .3, 3.96, 3.2
 fy = lambda x: YD + .15
@@ -155,32 +155,19 @@ def bend_road(d):
         s_['pts'] = out_
 for k in range(3):                                               # 4 Oct (Will): ONE wide stair across the whole end, deck to deck: 3 steps + the deck = 4 risers (~12 in), 16 in treads
     x1b = X0 - k * .41; x0b = x1b - .41                            # 4 Oct (Will): the same stair at the other end too
-    prism([(x0b, YD), (x1b, YD), (x1b, -YD), (x0b, -YD)], -0.1, H * (3 - k) / 4, 'wood', side='rock')
+    prism([(x0b, YD), (x1b, YD), (x1b, -YD), (x0b, -YD)], -0.1, H * (3 - k) / 4, 'wood')
 # ---- 4 Oct (Will, red box on the café-end painting): a fieldstone horse trough against the bar's rock wall (no stair at this end now), fed by the café
 # roof. 20 x 3.5 ft, rim 2 ft, 2 ft out from the bottom step so people pass round its ends onto the stair; its middle 8 ft is a
 # planted bed of tall water plants (papyrus, horsetail, cattail) that screens the trailer's old end; open water at both ends for
 # the horses. Gutters on both eaves, a downspout at each road-end corner, buried to the trough (first-flush standpipe first).
 # the bar: a deck strip across the trailer end joining the two side decks, a fieldstone wall at its outer edge rising to a 42 in
 # counter (guardrail + bar top, people stand on the deck and look out over the trough), wood counter on top; stools behind it
-prism([(X1, YD), (X1 + BARD, YD), (X1 + BARD, -YD), (X1, -YD)], -0.1, H, 'wood', side='rock')
+prism([(X1, YD), (X1 + BARD, YD), (X1 + BARD, -YD), (X1, -YD)], -0.1, H, 'wood')
 WX0, WX1 = X1 + BARD, X1 + BARD + BARW
 prism([(WX0, YD), (WX1, YD), (WX1, -YD), (WX0, -YD)], -0.15, H + 1.0, 'rock')
 prism([(WX0 - .25, YD - .05), (WX1 + .05, YD - .05), (WX1 + .05, -YD + .05), (WX0 - .25, -YD + .05)], H + 1.0, H + 1.07, 'wood')
-# 4 Oct (Will): no seating on this side; above the wall's wood cap, the stable's horizontal sticks in 3 ft dark steel frames up to
-# the roof, so the old trailer end is hidden from the road
-XM = (WX0 + WX1) / 2; Z0S = H + 1.07
-yy_ = -abs(YD)
-while yy_ < abs(YD) - .05:
-    ya_, yb_ = yy_, min(yy_ + .9, abs(YD))
-    zt = rz(-max(abs(ya_), abs(yb_))) - .05
-    prism([(XM - .06, ya_), (XM + .06, ya_), (XM + .06, ya_ + .04), (XM - .06, ya_ + .04)], Z0S, zt, 'steel')
-    z_ = Z0S + .06; k_ = 0
-    while z_ < zt - .05:
-        w = .015 * (1, -1)[k_ % 2]
-        prism([(XM - .025 + w, ya_ + .05), (XM + .025 + w, ya_ + .05), (XM + .025 + w, yb_ - .02), (XM - .025 + w, yb_ - .02)], z_, z_ + .035, 'stakes')
-        z_ += .09; k_ += 1
-    yy_ = yb_
-prism([(XM - .06, abs(YD) - .04), (XM + .06, abs(YD) - .04), (XM + .06, abs(YD)), (XM - .06, abs(YD))], Z0S, rz(-abs(YD)) - .05, 'steel')
+for y_ in (-2.4, -1.2, 0, 1.2, 2.4):
+    prism([(WX0 - .55, y_ - .15), (WX0 - .25, y_ - .15), (WX0 - .25, y_ + .15), (WX0 - .55, y_ + .15)], H, H + .75, 'wood')     # bar stools
 for y_ in (-YD + .2, YD - .2): prism([(X1 + BARD - .1, y_ - .07), (X1 + BARD + .04, y_ - .07), (X1 + BARD + .04, y_ + .07), (X1 + BARD - .1, y_ + .07)], H, rz(-abs(YD)) - .02, 'steel')   # roof posts at the bar
 TX0 = WX1 + .02; TX1 = TX0 + 3.5 * FT; TY = 10 * FT; TW_ = .7 * FT; TZ = 2 * FT
 prism([(TX0, -TY), (TX1, -TY), (TX1, TY), (TX0, TY)], -0.15, .12, 'rock')                       # base
@@ -188,14 +175,11 @@ for pts in ([(TX0, -TY), (TX0 + TW_, -TY), (TX0 + TW_, TY), (TX0, TY)], [(TX1 - 
             [(TX0, -TY), (TX1, -TY), (TX1, -TY + TW_), (TX0, -TY + TW_)], [(TX0, TY - TW_), (TX1, TY - TW_), (TX1, TY), (TX0, TY)]):
     prism(pts, .12, TZ, 'rock')
 WL = TZ - .12
-TMID = (TX0 + TX1) / 2                                                                         # 4 Oct (Will): plants only in the back half, against the wall
-quad((TMID, -TY + TW_, WL), (TX1 - TW_, -TY + TW_, WL), (TX1 - TW_, TY - TW_, WL), (TMID, TY - TW_, WL), 'water')                 # open water along the whole front
-for y0_, y1_ in ((-TY + TW_, -4 * FT), (4 * FT, TY - TW_)): quad((TX0 + TW_, y0_, WL), (TMID, y0_, WL), (TMID, y1_, WL), (TX0 + TW_, y1_, WL), 'water')
-prism([(TMID - .05, -4 * FT), (TMID + .05, -4 * FT), (TMID + .05, 4 * FT), (TMID - .05, 4 * FT)], .12, WL - .03, 'rock')   # low stone edge to the plant bed, under water
-for y_ in (-4 * FT, 4 * FT): prism([(TX0 + TW_, y_ - .05), (TMID, y_ - .05), (TMID, y_ + .05), (TX0 + TW_, y_ + .05)], .12, WL - .03, 'rock')
+for y0_, y1_ in ((-TY + TW_, -4 * FT), (4 * FT, TY - TW_)): quad((TX0 + TW_, y0_, WL), (TX1 - TW_, y0_, WL), (TX1 - TW_, y1_, WL), (TX0 + TW_, y1_, WL), 'water')
+for y_ in (-4 * FT, 4 * FT): prism([(TX0 + TW_, y_ - .06), (TX1 - TW_, y_ - .06), (TX1 - TW_, y_ + .06), (TX0 + TW_, y_ + .06)], .12, TZ - .05, 'rock')   # low stone weirs round the plant bed
 import random as _rr; _g = _rr.Random(11)
 for _ in range(140):                                                                           # the reeds, 4-7 ft
-    x_ = _g.uniform(TX0 + TW_ + .05, TMID - .05); y_ = _g.uniform(-4 * FT + .08, 4 * FT - .08); h_ = _g.uniform(1.2, 2.2); w_ = .045
+    x_ = _g.uniform(TX0 + TW_ + .05, TX1 - TW_ - .05); y_ = _g.uniform(-4 * FT + .08, 4 * FT - .08); h_ = _g.uniform(1.2, 2.2); w_ = .045
     lean = _g.uniform(-.15, .15)
     beam((x_, y_, WL - .05), (x_ + lean, y_ + lean * .6, WL + h_), w_, 'sage')
 for sy in (-1, 1):                                                                             # gutters + downspouts at the road end
