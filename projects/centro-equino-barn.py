@@ -297,8 +297,8 @@ PNL_L, PNL_W, PNL_T = 5.64, 3.71, .13
 if SOLAR_PH1:
     mat('solar'); _cr = math.cos(math.atan(slope)); _zo = zr + T + .33
     NC_ = int((L + 2 * GOH - 3) // PNL_L)                                                       # 4 Oct (Will): the whole south half, 4 x 15
-    for r_ in range(4):
-        ya = -(HD + OH) + 1.5 + r_ * PNL_W * _cr; yb = ya + PNL_W * _cr - .08
+    for r_, sg_ in [(r, g) for g in (-1, 1) for r in range(4)]:          # 4 Oct (Will): both halves, south and north
+        ya, yb = sorted((sg_ * ((HD + OH) - 1.5 - r_ * PNL_W * _cr), sg_ * ((HD + OH) - 1.5 - (r_ + 1) * PNL_W * _cr + .08)))
         for c_ in range(NC_):
             xa = -NC_ * PNL_L / 2 + c_ * PNL_L + .04; xb = xa + PNL_L - .08; za, zb_ = roof_z(ya) + _zo, roof_z(yb) + _zo
             quad((xa, ya, za), (xb, ya, za), (xb, yb, zb_), (xa, yb, zb_))
