@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <title>coyote mountain · gallery</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Pieces made with Coyote Mountain Topo: history animations, painted views of the model, drawing sheets and a drone survey as points.">
+<meta name="description" content="Pieces made with Coyote Mountain Topo: a horse centre designed on real ground, each view as the model and as paintings, design sheets, history animations, drawing sheets and a drone survey as points.">
 <style>
 :root {
   --page: #d9d9d4; --paper: #f0f0ec; --panel: #e8e8e4; --ink: #1a1a18; --ink2: #454440; --ink3: #6e6d68; --line: #c8c8c2; --accent: #C96B3A; --shadow: rgba(26,26,24,.10);
@@ -36,7 +36,7 @@ section { display: grid; gap: 14px; }
 .sh h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
 .sh span { color: var(--ink3); font-size: 11px; }
 .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--min, 300px)), 1fr)); }
-.grid.films { --min: 380px; }
+.grid.films { --min: 300px; }
 .grid.sheets, .grid.studies { --min: 400px; }
 .studies .shot img { --ar: 3 / 2; object-fit: contain; background: var(--panel); }
 figure { margin: 0; display: grid; gap: 7px; align-content: start; }
@@ -69,6 +69,18 @@ dialog::backdrop { background: rgba(14,14,13,.9); }
 .lbbar p { margin: 0; flex: 1; }
 .lbbar button { font: inherit; font-size: 12px; color: #e8e7e2; background: transparent; border: 1px solid #55544f; padding: 5px 12px; cursor: pointer; }
 .lbbar button:hover, .lbbar button:focus-visible { border-color: var(--accent); color: #fff; outline: none; }
+.view { display: grid; gap: 8px; }
+.view h3 { margin: 0; font-size: 12.5px; font-weight: 600; display: flex; gap: 10px; align-items: baseline; }
+.view h3 span { color: var(--ink3); font-weight: 400; font-size: 11px; }
+.vrow { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(230px, 1fr); gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; }
+.vrow figure { scroll-snap-align: start; }
+.vrow figure:first-child .shot { outline: 1px solid var(--ink3); outline-offset: -1px; }
+.vrow figcaption em.model { color: var(--accent); }
+.views { display: grid; gap: 26px; }
+.grid.design { --min: 320px; }
+.design .shot img { --ar: 2890 / 1870; object-fit: contain; background: #fff; }
+.play { position: absolute; left: 12px; bottom: 12px; font-size: 11px; font-weight: 600; letter-spacing: .06em; padding: 4px 10px; background: rgba(14,14,13,.78); color: #f0efe9; }
+.lead { margin: 0; color: var(--ink2); max-width: 70ch; font-size: 12.5px; }
 @media (max-width: 720px) { .intro { grid-template-columns: 1fr; } .titleblock { grid-row: auto; grid-column: 1; min-width: 0; } }
 @media (prefers-reduced-motion: reduce) { .shot img, .shot video { transition: none; } .shot:hover img, .shot:hover video { transform: none; } }
 </style>
@@ -77,7 +89,7 @@ dialog::backdrop { background: rgba(14,14,13,.9); }
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('coyote-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}catch(_){}</script>
 <header class="top">
   <a class="mark" href="../" style="text-decoration:none">coyote_mountain<span>_farm</span></a>
-  <div class="keys">gallery · a selection from the first two weeks</div>
+  <div class="keys">gallery · a selection</div>
   <a class="live" href="../topo.html">open the tool</a>
   <button class="theme" id="themeBtn" type="button">dark</button>
 </header>
@@ -85,12 +97,12 @@ dialog::backdrop { background: rgba(14,14,13,.9); }
 <main>
   <div class="intro">
     <h1>Ground, drawn from real terrain and painted from the model</h1>
-    <p>Every piece here began as elevation data for a real place, fetched, shaped and viewed in Coyote Mountain Topo, then exported as a drawing sheet, recorded as video, or handed to an image painter as a structured control. Most of it is Encino Solo, a ranch near Ensenada in Baja California. Near-duplicates are left out.</p>
+    <p>Every piece here began as elevation data for a real place, fetched, shaped and viewed in Coyote Mountain Topo, then exported as a drawing sheet, recorded as video, or handed to an image painter as a structured control. Most of it is in the hills near Ensenada, Baja California: Encino Solo, a ranch, and Centro Equino, a horse centre designed in the tool on the real ground.</p>
     <div class="titleblock" aria-label="gallery details">
       <div><span>home site</span><b>Encino Solo</b></div>
-      <div><span>lat, lng</span><b>32.0151, −116.7778</b></div>
+      <div><span>designed here</span><b>Centro Equino</b></div>
       <div><span>drone survey</span><b>1,021,033 pts</b></div>
-      <div><span>pieces</span><b>39</b></div>
+      <div><span>pieces</span><b id="npieces">·</b></div>
     </div>
   </div>
 
@@ -99,8 +111,19 @@ dialog::backdrop { background: rgba(14,14,13,.9); }
     <div class="grid films" id="films"></div>
   </section>
 
+  <section aria-labelledby="h-views">
+    <div class="sh"><h2 id="h-views">One view, many ways</h2><span>Centro Equino · the model first, then paintings of it</span></div>
+    <p class="lead">Each row is one camera on the model. The first picture is the model itself, with no AI: the ground, the buildings, the roads and the planting as designed. The rest are painters (OpenAI and Google's Gemini) given that picture as a strict control and asked for a time of day or a kind of weather. The model is the truth; the paintings are what it could feel like.</p>
+    <div class="views" id="views"></div>
+  </section>
+
+  <section aria-labelledby="h-design">
+    <div class="sh"><h2 id="h-design">Design sheets</h2><span>Centro Equino · water, grading, irrigation, the design as a system</span></div>
+    <div class="grid design" id="design"></div>
+  </section>
+
   <section aria-labelledby="h-painted">
-    <div class="sh"><h2 id="h-painted">Painted from the model</h2><span>the 3d view as control, a painter's picture on top</span></div>
+    <div class="sh"><h2 id="h-painted">Early experiments</h2><span>the first two weeks: the 3d view as control, a painter's picture on top</span></div>
     <div class="grid" id="painted"></div>
   </section>
 
@@ -131,32 +154,24 @@ const FILMS = [
   { v: 'vid/la-history.mp4', p: 'vid/la-history.jpg', cap: 'Los Angeles, 1900 to now', note: 'animate history on the model' },
   { v: 'vid/encino-night-rain.mp4', p: 'vid/encino-night-rain.jpg', cap: 'Encino Solo, rain on the survey', note: 'points, night view' },
   { v: 'vid/san-diego-history.mp4', p: 'vid/san-diego-history.jpg', cap: 'San Diego downtown through time', note: 'history with buildings' },
+  { v: 'vid/centro-equino-day.mp4', p: 'vid/centro-equino-day.jpg', cap: 'A day at Centro Equino', note: 'paintings animated by Veo · sound', lbOnly: true },
+];
+const VIEWS = [{"id": "stable-sw", "title": "The stable from the south-west", "items": [["stable-sw-0.jpg", "the model, no AI", "model"], ["stable-sw-1.jpg", "painted", "OpenAI"], ["stable-sw-2.jpg", "golden hour", "OpenAI"], ["stable-sw-3.jpg", "dawn", "Gemini"], ["stable-sw-4.jpg", "blue hour", "Gemini"], ["stable-sw-5.jpg", "storm", "Gemini"]]}, {"id": "centre-ne", "title": "The whole centre from the north-east", "items": [["centre-ne-0.jpg", "the model, no AI", "model"], ["centre-ne-1.jpg", "golden hour", "OpenAI"], ["centre-ne-2.jpg", "dawn", "Gemini"], ["centre-ne-3.jpg", "blue hour", "Gemini"], ["centre-ne-4.jpg", "storm", "Gemini"]]}, {"id": "hill", "title": "From the hill", "items": [["hill-0.jpg", "the model, no AI", "model"], ["hill-1.jpg", "golden hour", "OpenAI"], ["hill-2.jpg", "dawn", "OpenAI"], ["hill-3.jpg", "dusk", "OpenAI"], ["hill-4.jpg", "fog", "OpenAI"], ["hill-5.jpg", "storm", "OpenAI"]]}, {"id": "bleachers", "title": "The bleachers from above", "items": [["bleachers-0.jpg", "the model, no AI", "model"], ["bleachers-1.jpg", "painted", "Gemini"], ["bleachers-2.jpg", "golden hour", "OpenAI"], ["bleachers-3.jpg", "dawn", "Gemini"], ["bleachers-4.jpg", "blue hour", "Gemini"], ["bleachers-5.jpg", "storm", "Gemini"]]}, {"id": "west", "title": "West elevation, a horse drinking", "items": [["west-0.jpg", "the model, no AI", "model"], ["west-1.jpg", "painted", "OpenAI"], ["west-2.jpg", "golden hour", "OpenAI"], ["west-3.jpg", "storm", "Gemini"]]}, {"id": "picnic", "title": "Picnic at the bleachers", "items": [["picnic-0.jpg", "the model, no AI", "model"], ["picnic-1.jpg", "painted", "OpenAI"], ["picnic-2.jpg", "golden hour", "OpenAI"], ["picnic-3.jpg", "storm", "Gemini"]]}, {"id": "block", "title": "The site as a block, from the north-west", "items": [["block-0.jpg", "the model, no AI", "model"], ["block-1.jpg", "golden hour", "OpenAI"], ["block-2.jpg", "golden hour", "Gemini"], ["block-3.jpg", "painted", "OpenAI"]]}, {"id": "plan", "title": "Plan", "items": [["plan-0.jpg", "the model, no AI", "model"], ["plan-1.jpg", "painted", "OpenAI"], ["plan-2.jpg", "painted", "Gemini"]]}];
+const DESIGN = [
+  ['ce/sheet-drainage.jpg', 'Drainage plan: where the water goes, and what slows it', 'sheet D-1'],
+  ['ce/sheet-sections.jpg', 'Grading sections: existing ground dashed, finished solid', 'sheet D-2'],
+  ['ce/sheet-irrigation.jpg', 'Irrigation: the water the planting needs, by month', 'sheet D-3'],
+  ['ce/sheet-regenerative.jpg', 'The design as a system: zones and closed loops', 'sheet A-2'],
 ];
 const PAINTED = [
-  ['img/12.jpg', 'Centro Equino study, Encino Solo', 'photograph'],
-  ['img/33.jpg', 'Centro Equino, the barn and arena', 'photograph'],
   ['img/17.jpg', 'A wildfire on the ridge', 'made by voice', true],
   ['img/18.jpg', 'A freak snowstorm over the hills', 'made by voice', true],
   ['img/19.jpg', 'The same hills at night', 'made by voice', true],
-  ['img/13.jpg', 'Fields and paddocks from above', 'photograph'],
   ['img/10.jpg', 'A reservoir in Los Angeles', 'photograph'],
   ['img/14.jpg', 'Ridges at golden hour', 'photograph'],
-  ['img/16.jpg', 'A coast city burning', 'photograph'],
-  ['img/32.jpg', 'The burning city from above, at dusk', 'photograph'],
   ['img/35.jpg', 'A desert slope at eye level', 'photograph'],
-  ['img/9.jpg', 'Valley floor, late light', 'map mash-up'],
-  ['img/3.jpg', 'A hill model among clouds', 'map mash-up'],
-  ['img/36.jpg', 'A storm building over the model', 'photograph'],
-  ['img/34.jpg', 'Terraced model with pools', 'map mash-up'],
-  ['img/8.jpg', 'The model on a dark ground', 'map mash-up'],
-  ['img/11.jpg', 'Forest on black', 'photograph'],
-  ['img/1.jpg', 'A city of towers', 'map mash-up'],
-  ['img/2.jpg', 'A city at sunset', 'map mash-up'],
-  ['img/0.jpg', 'The contour sheet printed onto the city', 'map mash-up'],
   ['img/5.jpg', 'Encino Solo in watercolour', 'watercolour'],
   ['img/6.jpg', 'Encino Solo in ink', 'ink wash'],
-  ['img/4.jpg', 'White model with trees', 'white model'],
-  ['img/7.jpg', 'White model with pools', 'white model'],
 ];
 const SHEETS = [
   ['img/23.jpg', 'Encino Solo, painted', 'drawing sheet'],
@@ -183,22 +198,25 @@ if (EDIT) document.documentElement.classList.add('editing');
 const el = (t, a = {}, kids = []) => { const e = document.createElement(t); for (const k in a) { if (k === 'style') e.style.cssText = a[k]; else if (k in e) e[k] = a[k]; else e.setAttribute(k, a[k]); } kids.forEach(k => e.append(k)); return e; };
 function tile(host, item) {
   const idx = ALL.push(item) - 1;
-  const media = item.v ? el('video', { src: item.v, poster: item.p, muted: true, loop: true, autoplay: true, playsInline: true, preload: 'metadata' }) : el('img', { src: item.src, alt: item.cap, loading: 'lazy', decoding: 'async' });
+  const media = item.v && !item.lbOnly ? el('video', { src: item.v, poster: item.p, muted: true, loop: true, autoplay: true, playsInline: true, preload: 'metadata' }) : el('img', { src: item.lbOnly ? item.p : (item.t || item.src), alt: item.cap, loading: 'lazy', decoding: 'async' });
   if (item.v) media.setAttribute('aria-label', item.cap);
-  const btn = el('button', { className: 'shot', type: 'button', style: item.ar ? `--ar:${item.ar}` : '' }, [media]);
+  const btn = el('button', { className: 'shot', type: 'button', style: item.ar ? `--ar:${item.ar}` : '' }, [media]); if (item.lbOnly) btn.append(el('span', { className: 'play', textContent: '▶ play' }));
   btn.setAttribute('aria-label', 'open ' + item.cap);
   btn.addEventListener('click', () => openAt(idx));
-  const cap = el('figcaption', {}, [el('span', { textContent: item.cap }), el('em', { textContent: item.note, className: item.voice ? 'voice' : '' })]);
+  const cap = el('figcaption', {}, [el('span', { textContent: item.cap }), el('em', { textContent: item.note, className: item.voice ? 'voice' : item.model ? 'model' : '' })]);
   const key = item.v || item.src, fig = el('figure', { className: EDIT && DROPPED.has(key) ? 'dropped' : '' }, [btn, cap]);
   const drop = el('button', { className: 'drop', type: 'button', textContent: DROPPED.has(key) ? 'undo' : 'drop' });
   drop.addEventListener('click', () => { if (DROPPED.has(key)) DROPPED.delete(key); else DROPPED.add(key); fig.classList.toggle('dropped', DROPPED.has(key)); drop.textContent = DROPPED.has(key) ? 'undo' : 'drop'; saveDropped(); });
   fig.append(drop); host.append(fig);
 }
 FILMS.forEach(f => tile(document.getElementById('films'), f));
+for (const v of VIEWS) { const row = el('div', { className: 'vrow' }), box = el('div', { className: 'view' }, [el('h3', {}, [document.createTextNode(v.title), el('span', { textContent: `${v.items.length} pictures, one camera` })]), row]); document.getElementById('views').append(box);
+  for (const [f, light, who] of v.items) tile(row, { src: 'ce/' + f, t: 'ce/t/' + f, cap: who === 'model' ? 'the model' : light, note: who === 'model' ? 'no AI' : who, model: who === 'model', group: v.title }); }
+DESIGN.forEach(([src, cap, note]) => tile(document.getElementById('design'), { src, t: src.replace('ce/', 'ce/t/'), cap, note }));
 PAINTED.forEach(([src, cap, note, voice]) => tile(document.getElementById('painted'), { src, cap, note, voice }));
 SHEETS.forEach(([src, cap, note]) => tile(document.getElementById('sheets'), { src, cap, note }));
 STUDIES.forEach(([src, cap, note]) => tile(document.getElementById('studies'), { src, cap, note }));
-saveDropped();
+saveDropped(); document.getElementById('npieces').textContent = ALL.length;
 document.getElementById('editcopy').onclick = async () => { const list = ALL.filter(it => DROPPED.has(it.v || it.src)).map(it => `${it.cap} (${it.v || it.src})`).join(String.fromCharCode(10)) || 'nothing dropped'; try { await navigator.clipboard.writeText(list); document.getElementById('editcount').textContent = `copied ${DROPPED.size} to the clipboard`; } catch (_) { document.getElementById('editcount').textContent = 'the browser blocked copying; the list is still saved here'; } };
 document.getElementById('editclear').onclick = () => { DROPPED.clear(); saveDropped(); document.querySelectorAll('figure.dropped').forEach(f => { f.classList.remove('dropped'); const b = f.querySelector('.drop'); if (b) b.textContent = 'drop'; }); };
 if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelectorAll('.shot video').forEach(v => { v.autoplay = false; v.pause(); });
@@ -206,8 +224,8 @@ if (matchMedia('(prefers-reduced-motion: reduce)').matches) document.querySelect
 const lb = document.getElementById('lb'), lbm = document.getElementById('lbmedia'), lbc = document.getElementById('lbcap'); let at = 0;
 function show(i) {
   at = (i + ALL.length) % ALL.length; const it = ALL[at]; lbm.textContent = '';
-  lbm.append(it.v ? el('video', { src: it.v, poster: it.p, controls: true, autoplay: true, loop: true, muted: true, playsInline: true }) : el('img', { src: it.src, alt: it.cap }));
-  lbc.textContent = `${it.cap} · ${it.note}`;
+  lbm.append(it.v ? el('video', { src: it.v, poster: it.p, controls: true, autoplay: true, loop: !it.lbOnly, muted: !it.lbOnly, playsInline: true }) : el('img', { src: it.src, alt: it.cap }));
+  lbc.textContent = (it.group ? it.group + ' · ' : '') + `${it.cap} · ${it.note}`;
 }
 function openAt(i) { show(i); if (!lb.open) lb.showModal(); }
 document.getElementById('lbprev').onclick = () => show(at - 1);
