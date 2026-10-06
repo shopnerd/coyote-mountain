@@ -56,7 +56,8 @@ def openai(png_path, prompt, refs, k):
     out = Image.open(io.BytesIO(base64.b64decode(j['data'][0]['b64_json']))); s = out.height / H2
     return out.crop((0, int(pad * s), out.width, int((pad + 864) * s))).resize((1536, 864), Image.LANCZOS)
 
-def google(png_path, prompt, refs, k, model='gemini-3-pro-image', aspect='16:9', size=None):
+def google(png_path, prompt, refs, k, model=None, aspect='16:9', size=None):
+    model = model or os.environ.get('GEMINI_MODEL', 'gemini-3-pro-image')   # 6 Oct: GEMINI_MODEL=gemini-nano-banana-2.1 to try the new one
     parts = [{'text': prompt}, {'inlineData': {'mimeType': 'image/png', 'data': base64.b64encode(open(png_path, 'rb').read()).decode()}}] + \
             [{'inlineData': {'mimeType': 'image/jpeg', 'data': base64.b64encode(open(r, 'rb').read()).decode()}} for r in refs]
     body = {'contents': [{'parts': parts}], 'generationConfig': {'responseModalities': ['IMAGE'], 'imageConfig': {'aspectRatio': aspect, 'imageSize': size or os.environ.get('GEMINI_SIZE', '2K')}}}

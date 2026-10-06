@@ -120,6 +120,12 @@ LIGHT = {
 
 # 5 Oct (Will): 'a few watercolor renderings'. The geometry rules above still hold; only the medium changes.
 ART_STYLES = {
+ 'watercolor_night': ' STYLE, MOST IMPORTANT: this is NOT a photograph. Paint it as a hand-made WATERCOLOR NOCTURNE on cold-press cotton paper: '
+   'it is NIGHT, so deep, layered washes of indigo, Payne’s grey and violet cover almost the whole sheet, wet-in-wet, with blooms in the dark sky and '
+   'a few pinpricks of stars left as bare paper; the land is dark, the hills near-black silhouettes. The ONLY warm colour is the stable: soft amber-gold '
+   'light glows from inside it and through the gaps between the thin wall sticks, bleeding gently into the surrounding dark washes, and a faint warm '
+   'spill on the ground just around it. A light graphite underdrawing still shows on the roof lines and fences; the dark wash fades to bare paper only at the '
+   'very edges. No other lights. Every building, roof, fence, road and tree stays exactly where and as the render shows: the same composition and camera.',
  'watercolor': ' STYLE, MOST IMPORTANT: this is NOT a photograph. Paint it as a loose, luminous hand-made architectural WATERCOLOR on '
    'cold-press cotton paper, like a landscape architect’s presentation sketch: transparent layered washes, a soft wet-in-wet sky with '
    'blooms, a light graphite pencil underdrawing still visible on the buildings, roof lines and fences, crisp dry-brush edges on the '
