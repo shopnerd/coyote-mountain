@@ -117,6 +117,16 @@ dialog::backdrop { background: rgba(14,14,13,.9); }
     <div class="views" id="views"></div>
   </section>
 
+  <section aria-labelledby="h-lines">
+    <div class="sh"><h2 id="h-lines">Lines</h2><span>make · line drawings · the ground as rows of ink, hidden lines removed, ready for a pen plotter</span></div>
+    <div class="grid" id="lines"></div>
+  </section>
+
+  <section aria-labelledby="h-cities">
+    <div class="sh"><h2 id="h-cities">Cities</h2><span>real terrain with every building and road from OpenStreetMap, straight from the 3d model</span></div>
+    <div class="grid" id="cities"></div>
+  </section>
+
   <section aria-labelledby="h-design">
     <div class="sh"><h2 id="h-design">Design sheets</h2><span>Centro Equino · water, grading, irrigation, the design as a system</span></div>
     <div class="grid design" id="design"></div>
@@ -211,6 +221,13 @@ function tile(host, item) {
 FILMS.forEach(f => tile(document.getElementById('films'), f));
 for (const v of VIEWS) { const row = el('div', { className: 'vrow' }), box = el('div', { className: 'view' }, [el('h3', {}, [document.createTextNode(v.title), el('span', { textContent: `${v.items.length} pictures, one camera` })]), row]); document.getElementById('views').append(box);
   for (const [f, light, who] of v.items) tile(row, { src: 'ce/' + f, t: 'ce/t/' + f, cap: who === 'model' ? 'the model' : light, note: who === 'model' ? 'no AI' : who, model: who === 'model', group: v.title }); }
+// 6 Oct (Will): the line drawings he loved as the share picture, and a cityscape like the San Diego pieces
+const LINES = [['img/lines-og.jpg', 'The hills in lines, with a low sun', 'the share picture'], ['img/lines-coyote-mtn-rows.jpg', 'Coyote Mountain', 'straight rows · Borrego'],
+  ['img/lines-fonts-point-rows.jpg', "Font's Point badlands", 'straight rows · Borrego'], ['img/lines-encino-rows.jpg', 'Encino Solo, water in ember', 'straight rows · Baja'],
+  ['img/lines-equino-rows.jpg', 'The Centro Equino valley', 'straight rows · water in blue'], ['img/lines-encino-sun.jpg', 'Encino Solo in sun lines', 'shade as line density']];
+const CITIES = [['img/city-sf-low-elev.jpg', 'San Francisco, the waterfront', 'from the 3d model'], ['img/city-sf-bay-elev.jpg', 'San Francisco from over the bay', 'downtown to Telegraph Hill']];
+LINES.forEach(([src, cap, note]) => tile(document.getElementById('lines'), { src, cap, note }));
+CITIES.forEach(([src, cap, note]) => tile(document.getElementById('cities'), { src, cap, note }));
 DESIGN.forEach(([src, cap, note]) => tile(document.getElementById('design'), { src, t: src.replace('ce/', 'ce/t/'), cap, note }));
 PAINTED.forEach(([src, cap, note, voice]) => tile(document.getElementById('painted'), { src, cap, note, voice }));
 SHEETS.forEach(([src, cap, note]) => tile(document.getElementById('sheets'), { src, cap, note }));
