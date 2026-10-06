@@ -122,6 +122,11 @@ dialog::backdrop { background: rgba(14,14,13,.9); }
     <div class="grid" id="lines"></div>
   </section>
 
+  <section aria-labelledby="h-mash">
+    <div class="sh"><h2 id="h-mash">Mash-ups</h2><span>the ground stays a data map (slope, aspect, elevation); a painter grows the living place on it</span></div>
+    <div class="grid" id="mash"></div>
+  </section>
+
   <section aria-labelledby="h-cities">
     <div class="sh"><h2 id="h-cities">Cities</h2><span>real terrain with every building and road from OpenStreetMap, straight from the 3d model</span></div>
     <div class="grid" id="cities"></div>
@@ -225,8 +230,11 @@ for (const v of VIEWS) { const row = el('div', { className: 'vrow' }), box = el(
 const LINES = [['img/lines-og.jpg', 'The hills in lines, with a low sun', 'the share picture'], ['img/lines-coyote-mtn-rows.jpg', 'Coyote Mountain', 'straight rows · Borrego'],
   ['img/lines-fonts-point-rows.jpg', "Font's Point badlands", 'straight rows · Borrego'], ['img/lines-encino-rows.jpg', 'Encino Solo, water in ember', 'straight rows · Baja'],
   ['img/lines-equino-rows.jpg', 'The Centro Equino valley', 'straight rows · water in blue'], ['img/lines-encino-sun.jpg', 'Encino Solo in sun lines', 'shade as line density']];
+const MASH = [['img/mash-fonts-aspect-google.jpg', "Font's Point on its aspect map", 'Gemini · which way each slope faces'], ['img/mash-fonts-aspect-openai.jpg', "Font's Point, the quiet version", 'OpenAI · aspect map'],
+  ['img/mash-encino-slope-google.jpg', 'Encino Solo on its slope map', 'Gemini · steeper is redder'], ['img/mash-sf-elev-google.jpg', 'San Francisco, the white model planted', 'Gemini'], ['img/mash-sf-elev-openai.jpg', 'San Francisco in miniature', 'OpenAI']];
 const CITIES = [['img/city-sf-low-elev.jpg', 'San Francisco, the waterfront', 'from the 3d model'], ['img/city-sf-bay-elev.jpg', 'San Francisco from over the bay', 'downtown to Telegraph Hill']];
 LINES.forEach(([src, cap, note]) => tile(document.getElementById('lines'), { src, cap, note }));
+MASH.forEach(([src, cap, note]) => tile(document.getElementById('mash'), { src, cap, note }));
 CITIES.forEach(([src, cap, note]) => tile(document.getElementById('cities'), { src, cap, note }));
 DESIGN.forEach(([src, cap, note]) => tile(document.getElementById('design'), { src, t: src.replace('ce/', 'ce/t/'), cap, note }));
 PAINTED.forEach(([src, cap, note, voice]) => tile(document.getElementById('painted'), { src, cap, note, voice }));
