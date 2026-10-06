@@ -5,7 +5,7 @@ contours, water and rain follow your hands. Load a design and the box shows wher
 
 Two pieces:
 
-- `bridge.py` reads the camera and serves depth frames on `http://localhost:8787`. It is the only thing that knows
+- `bridge.py` reads the camera (Femto Bolt, Azure Kinect, Kinect v1 or an Orbbec Astra / Gemini) and serves depth frames on `http://localhost:8787`. It is the only thing that knows
   about the hardware. Python 3.9 or newer plus numpy; nothing else.
 - The topo tool, served by the bridge at `http://localhost:8787/topo.html`, does everything else: floor
   calibration, contours, hydrology, the cut-and-fill wash, and the projector window with a four-corner keystone.
@@ -25,6 +25,43 @@ Two pieces:
    You should see `camera streaming narrow`. Open `http://localhost:8787/info` in a browser to check.
 
 Any other camera that speaks the Azure Kinect API works the same way: point `--dll` at its `k4a.dll`.
+
+## Which camera
+
+| camera | price (Oct 2026) | mode | driver |
+|---|---|---|---|
+| Kinect v1 (Xbox 360, model 1414 or 1473) | $15–40 used, with its USB power adapter | `kinect1` | libfreenect, or Kinect for Windows SDK 1.8 |
+| Orbbec Astra+ | about $165 new | `orbbec` | `pyorbbecsdk` 1.x (Python 3.11 or older) |
+| Orbbec Astra Mini Pro / Mini S / older Astra | about $150 new, less used | `orbbec` | OpenNI2 |
+| Orbbec Astra 2, Gemini 330 series | about $250–350 | `orbbec` | `pyorbbecsdk2` (Python 3.8 to 3.13) |
+| Orbbec Femto Bolt / Mega, Azure Kinect | about $400+ | `k4a` (or `orbbec`) | Orbbec K4A wrapper |
+
+All of them see a sandbox of about 1 × 0.75 m from about 1 m above. The Kinect v1 needs at least 0.8 m between camera and
+sand; the Astras 0.6 m. The tool's flip x / flip y fix a mirrored picture (the Kinect SDK mirrors; libfreenect doesn't).
+
+## Camera: Kinect v1 (Xbox 360)
+
+The camera most AR sandboxes use. It needs its USB power adapter (the Xbox plug is not USB).
+
+- **Linux** (the UC Davis-style sandbox box): `sudo apt install libfreenect-dev`, then `python3 bridge.py --mode kinect1`.
+- **macOS**: `brew install libfreenect`, then `python3 bridge.py --mode kinect1`.
+- **Windows, easiest**: install Microsoft's *Kinect for Windows SDK 1.8* (it puts `Kinect10.dll` in Windows), plug the
+  Kinect in, then `python bridge.py --mode kinect1`.
+- **Windows, open source**: build libfreenect, give the camera's "Xbox NUI Camera" device the libusbK driver with Zadig,
+  then `python bridge.py --mode kinect1 --dll "C:\path\to\libfreenect\bin"` (the folder with `freenect_sync.dll`).
+
+The bridge tries libfreenect first, then the Kinect SDK. `/info` names the one in use under `camera`.
+
+## Camera: Orbbec Astra, Gemini or Femto
+
+- **Astra 2, Gemini 330, Femto**: `python -m pip install pyorbbecsdk2` (Python 3.8 to 3.13), then `python bridge.py --mode orbbec`.
+- **Astra+ or Astra Pro Plus**: Orbbec's new SDK no longer supports these; use the older package with Python 3.11 or
+  older: `py -3.11 -m pip install pyorbbecsdk`, then `py -3.11 bridge.py --mode orbbec`.
+- **Astra Mini Pro, Mini S or an older Astra**: these speak OpenNI. `python -m pip install openni`, download Orbbec's
+  OpenNI2 package, then `python bridge.py --mode orbbec --dll "C:\path\to\OpenNI2\Redist"` (the folder with `OpenNI2.dll`).
+
+The bridge tries Orbbec's SDK first, then OpenNI2. With no camera attached it says so on `/info` (shown in the tool)
+rather than starting the SDK, which crashes outright if no camera is there.
 
 ## Without a camera
 
