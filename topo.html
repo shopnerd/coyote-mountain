@@ -4369,7 +4369,35 @@ function drawCloud(c, proj, w, h, fast, hidden, night) {   // every point a spec
   else c.drawImage(cloudCv, 0, 0, w, h);
   c.restore();
 }
-document.getElementById('cloudRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'cloudLoad') { document.getElementById('cloudFile').click(); return; } if (b.id === 'cloudNight') { if (!CLOUD.buf) { toast('load a points file first, then the night view shows it as light'); return; } S.cloudNight = !(S.cloud && S.cloudNight); if (S.cloudNight) S.cloud = true; cloudUI(); S.dirty = true; return; } if (!b.dataset.cl) return; if (b.dataset.cl === '1' && !CLOUD.buf) { toast('load a points file first (tools/cloud2bin.py makes one from a drone mesh or a lidar file)'); return; } S.cloud = b.dataset.cl === '1'; cloudUI(); S.dirty = true; };
+// 6 Oct (Will): a site with no drone survey still gets points and the night view: a cloud made from the model itself, the proposed
+// ground sampled ~25 points a cell (aerial-photo colours when the photo is loaded) and every 3d object's faces (~12 a square metre)
+function cloudFromModel() {
+  if (!S.world) { toast('fetch real terrain first, then points can be made from the model'); return false; }
+  const csz = cs(), t = S.rot * D2R, ct = Math.cos(t), st = Math.sin(t), P = [];
+  const loc = (i, j) => { const sx = (i - (W - 1) / 2) * csz, sy = ((H - 1) / 2 - j) * csz; return [sx * ct + sy * st, -sx * st + sy * ct]; };
+  const A = aerialCache.data, aw = aerialCache.rw, ah = aerialCache.rh;
+  const col = (i, j) => { if (!A) return [176, 160, 130]; const q = (Math.max(0, Math.min(ah - 1, Math.round(j / (H - 1) * (ah - 1)))) * aw + Math.max(0, Math.min(aw - 1, Math.round(i / (W - 1) * (aw - 1))))) * 4; return A[q + 3] ? [A[q], A[q + 1], A[q + 2]] : [176, 160, 130]; };
+  const add = (i, j, zz, c) => { const [e, n] = loc(i, j); P.push(e, n, zz, ((c[0] >> 3) << 11) | ((c[1] >> 2) << 5) | (c[2] >> 3)); };
+  const k = W > 200 ? 3 : 5;
+  for (let j = 0; j < H - 1; j++) for (let i = 0; i < W - 1; i++) for (let a = 0; a < k; a++) for (let b2 = 0; b2 < k; b2++) { const fi = i + (a + Math.random()) / k, fj = j + (b2 + Math.random()) / k; add(fi, fj, sample(z, fi, fj), col(fi, fj)); }
+  for (const s of S.strokes) { if (s.kind !== 'obj' || !s.c || !s.tris) continue; const v = objPlace(s);
+    for (let q = 0; q < v.length; q += 9) { const ax = v[q], ay = v[q + 1], az = v[q + 2], bx = v[q + 3] - ax, by = v[q + 4] - ay, bz = v[q + 5] - az, cx = v[q + 6] - ax, cy = v[q + 7] - ay, cz = v[q + 8] - az;
+      const area = .5 * Math.hypot(by * csz * cz - bz * cy * csz, bz * cx * csz - bx * csz * cz, (bx * cy - by * cx) * csz * csz), m = area * 12, n = Math.floor(m) + (Math.random() < m % 1 ? 1 : 0);
+      for (let r = 0; r < n; r++) { let u = Math.random(), w = Math.random(); if (u + w > 1) { u = 1 - u; w = 1 - w; } add(ax + bx * u + cx * w, ay + by * u + cy * w, az + bz * u + cz * w, [228, 222, 210]); } } }
+  const N = P.length / 4, mn = [Infinity, Infinity, Infinity], mx = [-Infinity, -Infinity, -Infinity];
+  for (let q = 0; q < P.length; q += 4) for (let d = 0; d < 3; d++) { if (P[q + d] < mn[d]) mn[d] = P[q + d]; if (P[q + d] > mx[d]) mx[d] = P[q + d]; }
+  const rg = mx.map((x, d) => Math.max(1e-3, x - mn[d])), buf = new ArrayBuffer(80 + N * 8), dv = new DataView(buf), name = 'points from the model';
+  [...'CPC1'].forEach((ch, q) => dv.setUint8(q, ch.charCodeAt(0))); dv.setUint32(4, N, true); dv.setFloat64(8, S.world.lat, true); dv.setFloat64(16, S.world.lon, true);
+  for (let d = 0; d < 3; d++) { dv.setFloat32(24 + d * 4, mn[d], true); dv.setFloat32(36 + d * 4, rg[d], true); } for (let q = 0; q < name.length; q++) dv.setUint8(48 + q, name.charCodeAt(q));
+  const u16 = new Uint16Array(buf, 80, N * 4); for (let q = 0; q < P.length; q += 4) { for (let d = 0; d < 3; d++) u16[q + d] = Math.round((P[q + d] - mn[d]) / rg[d] * 65535); u16[q + 3] = P[q + 3]; }
+  loadCloud(buf); return !!CLOUD.n;
+}
+window.__cloudFromModel = () => cloudFromModel();   // for the tests
+document.getElementById('cloudRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; if (b.id === 'cloudLoad') { document.getElementById('cloudFile').click(); return; } if ((b.id === 'cloudNight' || b.dataset.cl === '1') && !CLOUD.buf && !cloudFromModel()) return;
+  if (b.id === 'cloudNight') { if (!CLOUD.buf) { toast('load a points file first, then the night view shows it as light'); return; }
+    // 6 Oct: render mode hides the night view, so night turns it off
+    if (S.rendOn && !(S.cloud && S.cloudNight)) { const off = document.querySelector('#rendRow button[data-rd="0"]'); if (off) off.click(); }
+    S.cloudNight = !(S.cloud && S.cloudNight); if (S.cloudNight) S.cloud = true; cloudUI(); S.dirty = true; return; } if (!b.dataset.cl) return; if (b.dataset.cl === '1' && !CLOUD.buf) { toast('load a points file first (tools/cloud2bin.py makes one from a drone mesh or a lidar file)'); return; } S.cloud = b.dataset.cl === '1'; cloudUI(); S.dirty = true; };
 document.getElementById('cloudFile').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; busy('reading the points'); try { const buf = await f.arrayBuffer(); await loadCloud(buf, false); if (CLOUD.n) cloudStore.put(buf); } catch (err) { toast(String(err.message || err)); } finally { unbusy(); } };
 setTimeout(() => cloudStore.get().then(rec => { if (!rec || !rec.buf) return; CLOUD.buf = rec.buf; const tryPlace = () => { if (S.world) { loadCloud(rec.buf, true); if (S.cloud) toast('points on: ' + CLOUD.name); } else setTimeout(tryPlace, 2000); }; setTimeout(tryPlace, 3000); }).catch(() => {}), 0);   // a cloud loaded before follows you back, once the terrain is in (deferred: the store is declared further down)
 document.getElementById('aiBtn').onclick = aiPaint; document.getElementById('aiAgain').onclick = () => (AI.again || aiPaint)(); document.getElementById('aiClose').onclick = () => { document.getElementById('aiPanel').hidden = true; };
