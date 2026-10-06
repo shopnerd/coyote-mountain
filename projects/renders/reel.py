@@ -39,16 +39,16 @@ def make(sc):
     if os.path.exists(out): return out
     AN.animate(os.path.join(IMG, src + '.jpg'), out, motion, MODEL); return out
 
-if __name__ == '__main__':
-    with cf.ThreadPoolExecutor(int(os.environ.get('REEL_JOBS', '1'))) as ex: clips = list(ex.map(make, SCENES))   # 5 Oct: one at a time for the full model's rate limit
-    t0, t1 = os.path.join(A, '00-title.mp4'), os.path.join(A, '99-end.mp4')
-    title(t0, 'Centro Equino', 'Chichihuas \u00b7 Baja California'); title(t1, 'Centro Equino', 'dise\u00f1o preliminar \u00b7 preliminary design \u00b7 2026')
-    parts = [t0] + clips + [t1]
-    # normalise every part to 1920x1080 / 24 fps / 48 kHz stereo, then chain xfade + acrossfade
+def has_audio(p):
+    return 'audio' in subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'stream=codec_type', '-of', 'csv=p=0', p], capture_output=True, text=True).stdout
+
+def assemble(parts, out):
+    """Normalise every part to 1920x1080 / 24 fps / 48 kHz stereo (silence added where a clip has none), then chain xfade + acrossfade."""
     norm = []
     for p in parts:
         q = p[:-4] + '.n.mp4'; norm.append(q)
-        subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', p, '-vf', f'scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={FPS},format=yuv420p',
+        src = ['-i', p] if has_audio(p) else ['-i', p, '-f', 'lavfi', '-i', 'anullsrc=r=48000:cl=stereo', '-shortest']
+        subprocess.run(['ffmpeg', '-loglevel', 'error', '-y'] + src + ['-vf', f'scale={W}:{H}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{H},fps={FPS},format=yuv420p',
                         '-af', 'aresample=48000,aformat=channel_layouts=stereo', '-c:v', 'libx264', '-crf', '18', '-c:a', 'aac', q], check=True)
     dur = [float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', q], capture_output=True, text=True).stdout) for q in norm]
     fc, v, a, off = [], '0:v', '0:a', dur[0]
@@ -57,5 +57,12 @@ if __name__ == '__main__':
         fc.append(f'[{v}][{i}:v]xfade=transition=fade:duration={FADE}:offset={off:.3f}[v{i}]'); fc.append(f'[{a}][{i}:a]acrossfade=d={FADE}[a{i}]')
         v, a = f'v{i}', f'a{i}'; off += dur[i]
     cmd = ['ffmpeg', '-loglevel', 'error', '-y'] + sum([['-i', q] for q in norm], []) + ['-filter_complex', ';'.join(fc), '-map', f'[{v}]', '-map', f'[{a}]',
-           '-c:v', 'libx264', '-crf', '20', '-preset', 'slow', '-movflags', '+faststart', '-c:a', 'aac', '-b:a', '160k', os.path.join(A, 'centro-equino-reel.mp4')]
-    subprocess.run(cmd, check=True); print('reel:', os.path.join(A, 'centro-equino-reel.mp4'), f'{off:.1f}s')
+           '-c:v', 'libx264', '-crf', '20', '-preset', 'slow', '-movflags', '+faststart', '-c:a', 'aac', '-b:a', '160k', out]
+    subprocess.run(cmd, check=True); print('reel:', out, f'{off:.1f}s')
+
+
+if __name__ == '__main__':
+    with cf.ThreadPoolExecutor(int(os.environ.get('REEL_JOBS', '1'))) as ex: clips = list(ex.map(make, SCENES))   # 5 Oct: one at a time for the full model's rate limit
+    t0, t1 = os.path.join(A, '00-title.mp4'), os.path.join(A, '99-end.mp4')
+    title(t0, 'Centro Equino', 'Chichihuas \u00b7 Baja California'); title(t1, 'Centro Equino', 'dise\u00f1o preliminar \u00b7 preliminary design \u00b7 2026')
+    assemble([t0] + clips + [t1], os.path.join(A, 'centro-equino-reel.mp4'))
