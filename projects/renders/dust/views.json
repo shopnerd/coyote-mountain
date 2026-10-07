@@ -1,0 +1,3 @@
+[{"id":"dust-bare","i":76,"j":76,"h":10,"yaw":2.41,"pitch":1.72,"bare":true,"noroof":true,"solar":false},
+ {"id":"dust-plan","i":76,"j":76,"h":10,"yaw":2.41,"pitch":1.72,"plan":true,"noroof":true,"solar":false},
+ {"id":"dust-built","i":76,"j":76,"h":10,"yaw":2.41,"pitch":1.72}]

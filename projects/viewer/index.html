@@ -468,6 +468,11 @@ body.shot{grid-template-columns:1fr}
     document.body.classList.add('shot'); labBox.hidden = true; anim = null; controls.enabled = false; resize();
     if (o.hour) setSun(o.hour);
     whiteModel(!!o.white); if (o.white) { vis(roads, true); labBox.hidden = true; }
+    /* 7 Oct (Will, 'from dust' film): bare = the ground only, as the lot is today; plan = the ground with the roads and fences, no buildings */
+    if (!window.__all) window.__all = scene.children.filter(m => m.isMesh || m.isLineSegments).map(m => [m, m.visible]);
+    for (const [m, v0] of window.__all) m.visible = v0;
+    if (o.bare || o.plan) { const keep = new Set([terrain, ...(o.plan ? [...roads, ...groups.fence] : [])]);
+      for (const [m] of window.__all) if (!keep.has(m) && m.material && m.material.color && m.material.color.getHex() !== 0x8a6f52) m.visible = false; }
     vis(water, o.water === true); vis(groups.figures, !!o.figures); if (contours) contours.visible = !!o.contours; vis(groups.roof, !o.noroof); vis(groups.solar, o.solar !== false && !o.noroof);   /* 4 Oct (Will: 'solar on'): model shots show the phase-1 panels unless solar: false */          // the drainage lines are engineering marks: off in the money shots
     if (o.orbit) {                        // {ti, tj, az (deg, grid), el (deg), dist (m), fov}: looking at a target from around it
       const q = o.orbit, tx = q.ti * cs, tz = q.tj * cs, ty = hAt(tx, tz), az = q.az * Math.PI / 180, el = q.el * Math.PI / 180;
