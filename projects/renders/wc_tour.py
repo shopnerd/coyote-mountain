@@ -22,6 +22,9 @@ KEYS = [   # (name, picture)
  ('golden',  os.path.join(HERE, 'wc-golden', '16-stable-sw-openai.png')),
  ('dusk',    os.path.join(HERE, 'wc-dusk', '16-stable-sw-openai.png')),
  ('night',   os.path.join(HERE, 'wc-night-nb21', '16-stable-sw-google.png')),   # 6 Oct: Nano Banana 2.1 made the truest watercolour nocturne
+ # 6 Oct (Will): the ending: the topo app's night view (points from the model) painted as glowing contour threads
+ ('glow',    os.path.join(HERE, 'night-glow', 'n1-stable-wc.png')),
+ ('site',    os.path.join(HERE, 'night-glow', 'n3-site-wc.png')),
 ]
 WC = ('A loose hand-made watercolour painting on cotton paper comes alive and travels: the camera glides slowly and dreamily, and the washes '
       'bleed, spread and bloom wet-in-wet, pigment flowing across the paper, pencil lines appearing and dissolving, until the painting has '
@@ -34,7 +37,9 @@ STEP = {'dawn': 'Dawn light spreads over the whole ranch as the camera descends 
         'south': 'The camera rises and drifts across the ranch to the cafe and its stone steps.',
         'cafe': 'The light turns deep gold as the camera floats back to the stable at sunset.',
         'golden': 'The sun sets: the gold drains away and washes of rose and violet spread across the sky while the stable lights begin to glow.',
-        'dusk': 'Darkness spreads like ink through wet paper: indigo washes flood the sky and the land until only the stable glows amber, a lantern in the night.'}
+        'dusk': 'Darkness spreads like ink through wet paper: indigo washes flood the sky and the land until only the stable glows amber, a lantern in the night.',
+        'night': 'The amber glow cools and spreads: the land dissolves into the dark and is redrawn as glowing threads of light along the contours, violet, teal and gold, while the stable and trees turn to pale moonlit white.',
+        'glow': 'The camera rises slowly and pulls back into the night sky until the whole ranch lies below, drawn in glowing contour threads on dark indigo paper, stars blooming.'}
 
 def make(k):
     (a, pa), (b, pb) = KEYS[k], KEYS[k + 1]; out = os.path.join(A, f'{k + 1:02d}-{a}-to-{b}.mp4')
