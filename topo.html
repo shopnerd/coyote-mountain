@@ -2989,13 +2989,18 @@ function peDraw() {                       // the picked line in the accent colou
   c.restore();
 }
 function peSplit(f, k, t) { const A = f.anchors, n = A.length, a = A[k], b = A[(k + 1) % n], st = pieceStraight(a, b), P1 = a.o || a.p, P2 = b.i || b.p, L = (u, v) => ({ x: u.x + (v.x - u.x) * t, y: u.y + (v.y - u.y) * t }), q0 = L(a.p, P1), q1 = L(P1, P2), q2 = L(P2, b.p), r0 = L(q0, q1), r1 = L(q1, q2), s0 = L(r0, r1); a.o = q0; b.i = q2; A.splice(k + 1, 0, { p: s0, i: r0, o: r1, corner: st }); }
-cv.addEventListener('dblclick', e => {   // edit points: on a point, corner ↔ smooth; on the line, a new point there
+function peDbl(e) {   // edit points: on a point, corner ↔ smooth; on the line, a new point there
   const sdT = window.__sdCurPath ? window.__sdCurPath() : null, t = sdT || (S.brush === 'pen' && S.penEdit && peAlive(PE.sel) ? PE.sel : null); if (!t || S.mode !== 'plan') return;
   const p = pt(e), h = peHit(t, p), f = fitToPx(peGet(t)), A = f.anchors, n = A.length, m = f.closed ? n : n - 1;
-  if (h && h.k === 'p') { snapshot(); LC.toggleCorner({ fit: f }, h.idx); PE.anc = h.idx; peSet(t, fitToGrid(f)); toast(A[h.idx].corner ? 'corner' : 'smooth'); return; }
+  if (h && h.k === 'p') { snapshot(); LC.toggleCorner({ fit: f }, h.idx); PE.anc = h.idx; peSet(t, fitToGrid(f)); toast(A[h.idx].corner ? 'corner' : 'smooth'); if (window.__sketchRefresh) window.__sketchRefresh(); return; }
   let best = null, bd = 10; for (let k = 0; k < m; k++) { const a = A[k], b = A[(k + 1) % n], sg = [a.p, a.o || a.p, b.i || b.p, b.p]; for (let s2 = 1; s2 < 48; s2++) { const q = LC.bez3(sg, s2 / 48), d = Math.hypot(q.x - p[0], q.y - p[1]); if (d < bd) { bd = d; best = [k, s2 / 48]; } } }
-  if (best) { snapshot(); peSplit(f, best[0], best[1]); PE.anc = best[0] + 1; peSet(t, fitToGrid(f)); toast('point added'); }
-});
+  if (best) { snapshot(); peSplit(f, best[0], best[1]); PE.anc = best[0] + 1; peSet(t, fitToGrid(f)); toast('point added'); if (window.__sketchRefresh) window.__sketchRefresh(); }
+}
+let peTap = null, peTapDown = null, peTapAt = 0;   // a finger or a pencil: two quick taps in one spot do what a double-click does (phones and tablets send no double-click to the sheet)
+cv.addEventListener('pointerdown', e => { peTapDown = [e.clientX, e.clientY]; });
+cv.addEventListener('pointerup', e => { if (e.pointerType === 'mouse' || !peTapDown || Math.hypot(e.clientX - peTapDown[0], e.clientY - peTapDown[1]) > 10) { peTap = null; return; }
+  const now = performance.now(); if (peTap && now - peTap.t < 350 && Math.hypot(e.clientX - peTap.x, e.clientY - peTap.y) < 24) { peTap = null; peTapAt = now; peDbl(e); } else peTap = { t: now, x: e.clientX, y: e.clientY }; });
+cv.addEventListener('dblclick', e => { if (performance.now() - peTapAt > 600) peDbl(e); });
 addEventListener('keydown', e => {      // e: edit points on and off (pen); delete: the picked point, else the picked line; esc: let go
   if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName) || e.ctrlKey || e.metaKey) return; if (S.mode !== 'plan' || S.brush !== 'pen') return;
   if (e.key === 'e') { document.getElementById('penEditBtn').click(); return; }
@@ -6175,7 +6180,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
 #u2tasks button:first-child{border-left:0}
 #u2tasks button.on{box-shadow:inset 0 -3px 0 var(--accent)}
 #u2side{padding:8px 10px 24px}
-#u2head{gap:6px;padding-left:8px;padding-right:8px}#u2head .logo .long,#u2head .place,#u2find,#u2head a.u2b{display:none}
+#u2head{gap:6px;padding-left:8px;padding-right:8px}#u2head .logo .long,#u2head .place,#u2find{display:none}
 #u2proj,#u2learn{max-width:calc(100vw - 16px)}
 #u2views{top:auto;bottom:10px}
 #u2layers{width:calc(100% - 24px);max-height:calc(100% - 56px)}
@@ -9401,7 +9406,12 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
         const acts = make('div', { cls: 'u2acts' }); acts.append(ghBtn('make wall', 'the line becomes a wall along it, with a height, a thickness and a top elevation you can set; its points keep editing it', () => lineToSolid(t, 'wall')));
         if (f.closed) acts.append(ghBtn('make shape', 'the closed line is pushed up into a shape you can pull by its faces; its points keep editing it', () => lineToSolid(t, 'shape')));
         if (longest >= 0) acts.append(ghBtn('square up to it', 'angle, ortho, smart and clean line up with this line\'s longest straight piece instead of the site', () => { const a = A[longest], b = A[(longest + 1) % n]; let an = Math.atan2(b.p.y - a.p.y, b.p.x - a.p.x) / D2R; an = ((an % 90) + 135) % 90 - 45; S.penAxis = Math.round(an * 100) / 100; renderSketchPanel(); toast(`squaring up to ${S.penAxis}°`); }));
-        w.append(acts); } }
+        w.append(acts);
+        if (S.penEdit) { const pa = make('div', { cls: 'u2acts' }), key = k => document.body.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true }));   // what the delete key and a double-click do, as buttons for a finger
+          if (PE.anc >= 0 && PE.anc < n) { pa.append(ghBtn(A[PE.anc].corner ? 'make it smooth' : 'make it a corner', 'the picked point: a sharp corner or a smooth curve through it (or double-tap the point)', () => { snapshot(); const fp = fitToPx(peGet(t)); LC.toggleCorner({ fit: fp }, PE.anc); peSet(t, fitToGrid(fp)); renderSketchPanel(); }));
+            if (n > (f.closed ? 3 : 2)) pa.append(ghBtn('delete point', 'the picked point goes; the line runs straight past it (or press delete)', () => key('Delete'))); }
+          pa.append(ghBtn('delete line', 'the whole picked line goes (undo brings it back)', () => { PE.anc = -1; key('Delete'); }));
+          w.append(pa, make('p', { cls: 'u2note', text: 'double-tap the line to add a point there' })); } } }
     const notes = S.strokes.filter(st => st.kind === 'note');
     if (notes.length) { w.append(make('div', { cls: 'u2group', text: `notes · ${notes.length}` })); const list = make('div', { style: 'display:grid;gap:2px' });
       for (const st of notes.slice().reverse().slice(0, 40)) { const b = make('button', { type: 'button', style: `display:grid;grid-template-columns:8px 1fr auto;gap:6px;align-items:center;text-align:left;font:inherit;font-size:11px;padding:3px 2px;border:0;background:transparent;color:var(--ink);cursor:pointer;width:100%`, 'data-tip': (st.at || '') + (st.z3 ? ' · ' + fL(st.pts[0][3], 1) : '') });
@@ -10084,5 +10094,36 @@ if (document.documentElement.classList.contains('ui2')) (() => {
 </script>
 <script src="lang.js"></script>
 <script src="bug.js"></script>
+<script>/* the top bar on any screen: whatever doesn't fit on one line goes, from the right, into a "more" menu at its end, so nothing runs off a phone or a tablet */
+(() => { const head = document.getElementById('u2head'); if (!head) return;
+  const st = document.createElement('style'); st.textContent = `
+#u2over{position:relative}#u2over>summary{list-style:none}#u2over>summary::-webkit-details-marker{display:none}
+#u2overPop{position:absolute;top:calc(100% + 6px);right:0;z-index:41;display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:170px;padding:8px;background:var(--panel);border:1px solid var(--ink2);box-shadow:0 8px 24px rgba(0,0,0,.14)}
+#u2overPop>*{width:100%;box-sizing:border-box}#u2overPop>.u2b,#u2overPop>details>summary.u2b{display:block;width:100%;box-sizing:border-box;text-align:left}
+@media (pointer:coarse){#u2head .u2b{padding:8px 12px}}
+#u2status select{height:24px;min-height:0;padding-top:0;padding-bottom:0}`;   /* the units menu sat 4px below the screen's bottom edge on touch screens */ document.head.append(st);
+  const more = document.createElement('details'), sum = document.createElement('summary'), pop = document.createElement('div');
+  more.id = 'u2over'; sum.className = 'u2b'; sum.textContent = 'more ▾'; pop.id = 'u2overPop'; more.append(sum, pop); head.append(more);
+  const proj = head.querySelector(':scope > details'), stay = new Set([more, proj, proj && proj.nextElementSibling, proj && proj.nextElementSibling && proj.nextElementSibling.nextElementSibling]);   // project, undo and redo always stay in the bar
+  const keep = el => stay.has(el) || el.classList.contains('logo') || el.classList.contains('sp');
+  let busy = false, lastW = 0, mo = null;
+  const fit = () => { if (busy) return; busy = true; lastW = innerWidth;
+    for (const el of [...pop.children]) head.insertBefore(el, more);
+    more.style.display = 'none';
+    if (head.scrollWidth > head.clientWidth + 1) { more.style.display = '';
+      const movable = [...head.children].filter(el => !keep(el) && getComputedStyle(el).display !== 'none');
+      while (head.scrollWidth > head.clientWidth + 1 && movable.length) pop.prepend(movable.pop()); }
+    if (!pop.children.length) { more.style.display = 'none'; more.open = false; }
+    if (mo) mo.takeRecords();   // its own moves are not news
+    busy = false; };
+  // a plain button in the menu closes it; a menu of its own (learn, connect AI) opens inside it
+  pop.addEventListener('click', e => { const top = [...pop.children].find(c => c.contains(e.target)); if (top && top.tagName !== 'DETAILS') more.open = false; });
+  document.addEventListener('pointerdown', e => { if (more.open && !more.contains(e.target)) more.open = false; });
+  addEventListener('resize', () => { if (innerWidth !== lastW) fit(); });   // only a real width change: a tablet's keyboard coming up must not move a box being typed in
+  mo = new MutationObserver(() => requestAnimationFrame(fit)); mo.observe(head, { childList: true });
+  new MutationObserver(() => requestAnimationFrame(fit)).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+  fit(); if (document.fonts) document.fonts.ready.then(fit);
+})();
+</script>
 </body>
 </html>
