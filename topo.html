@@ -138,6 +138,7 @@ header .theme:hover{color:var(--accent);border-color:var(--accent)}
 /* dark: the chosen tool, task and map mode in bright orange with dark text (the cream they use in light mode left light text unreadable); lists and hovers a softer orange tint */
 :root[data-theme=dark] #u2rail #u2tools button.on,:root[data-theme=dark] #u2map #u2mapbar .u2b.on{background:#e0763f;border-color:#f39a68;color:#1b1714;box-shadow:0 0 8px rgba(224,118,63,.45)}
 :root[data-theme=dark] #u2rail #u2tasks button.on{background:#e0763f;color:#1b1714;box-shadow:inset 3px 0 0 #ffb27f}
+:root[data-theme=dark] #u2views button.on{background:#e0763f;color:#1b1714}
 :root[data-theme=dark] #u2hits button.sel,:root[data-theme=dark] #u2hits button:hover,:root[data-theme=dark] #u2learn button.u2all,:root[data-theme=dark] .u2nat .splist button.on,:root[data-theme=dark] [style*="background:#fdf3ea"]{background:#4a2a1b!important;color:#ffe3d1!important;border-color:#f08a50}
 :root[data-theme=dark] input[type=range]::-moz-range-thumb{background:#3a2a20;border-color:#b0623a}
 :root[data-theme=dark] input[type=range]:active::-webkit-slider-thumb{background:#5a3a28}
@@ -1583,7 +1584,7 @@ let dpr = 1, sheet = { x: 0, y: 0, w: 1, h: 1 }, sheetBase = { x: 0, y: 0, w: 1,
 function resize() {
   const r = cv.parentElement.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1);
   S.w = r.width; S.h = r.height; cv.width = r.width * dpr; cv.height = r.height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const pj = document.body.classList.contains('projector'), m = pj ? 0 : 36, foot = pj ? 0 : 20, aw = S.w - 2 * m, ah = S.h - 2 * m - foot, k = Math.min(aw / (W - 1), ah / (H - 1));   // the projector fills the whole surface with the sheet
+  const pj = document.body.classList.contains('projector'), m = pj ? 0 : 36, foot = pj ? 0 : 20 + (document.getElementById('u2views') && matchMedia('(max-width:760px)').matches ? 40 : 0), aw = S.w - 2 * m, ah = S.h - 2 * m - foot, k = Math.min(aw / (W - 1), ah / (H - 1));   // the projector fills the whole surface with the sheet; on a phone the plan / 3d / section switch sits under the sheet, so it gets room there
   sheetBase = { x: (S.w - k * (W - 1)) / 2, y: (S.h - foot - k * (H - 1)) / 2, w: k * (W - 1), h: k * (H - 1), k }; applyPlanView();
   sizePip(); S.dirty = true;
 }
@@ -1716,8 +1717,9 @@ function drawPlanBase() {
   ctx.fillText(foot, fx, fy);
   /* the scale bar: a fifth of the ground on screen (all of it at zoom 1), stepped down a nice length at a time until it clears the caption */
   const uf = isFt() ? FT : 1, right = Math.min(sheet.x + sheet.w, S.w - 16), capEnd = fx + ctx.measureText(foot).width + 24, seen = (Math.min(sheet.x + sheet.w, S.w) - Math.max(sheet.x, 0)) / k * cs();
-  let barD = niceBar(Math.min(S.siteW, seen) * uf / 5); while (barD > 1 && barD / uf / cs() * k > right - capEnd) barD = niceBar(barD * .45);
-  const bar = barD / uf, bw = bar / cs() * k, bx = right - bw, by = fy + 4;
+  const bpx = d => d / uf / cs() * k; let barD = niceBar(Math.min(S.siteW, seen) * uf / 5), d2 = barD, by = fy + 4; while (d2 > 1 && bpx(d2) > right - capEnd) d2 = niceBar(d2 * .45);
+  if (d2 * 4 >= barD) barD = d2; else { by = fy + 20; while (barD > 1 && bpx(barD) > right - fx) barD = niceBar(barD * .45); }   // no room beside the caption (a narrow phone): the bar takes a line of its own under it rather than shrinking to nothing
+  const bar = barD / uf, bw = bar / cs() * k, bx = right - bw;
   ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(bx + bw, by); ctx.stroke();
   ctx.textAlign = 'right'; ctx.fillStyle = INK; ctx.fillText(`${barD} ${isFt() ? 'ft' : 'm'}`, bx + bw, by + 4);
   }
@@ -3301,7 +3303,7 @@ function hintText() {
   let h = '';
   if (S.mode === 'plan' && HIST.on) return HIST.frames ? `looking back · ${HIST.frames.length} pictures of this place since ${HIST.frames[0].date.slice(0, 4)} · press animate history again to stop` : 'looking back · fetching the pictures';
   if (S.mode === 'plan') {
-    if (S.brush === 'pen') { const m = S.penMode; h = S.penEdit ? 'edit points · click a line · drag a point or handle · double-click: corner/smooth or a new point · delete removes a point · e/esc to stop' : m === 'free' ? 'free · draw; hold still half a second to snap to the exact shape · e edits points' : m === 'angle' ? 'angle · one straight line at a clean angle' : m === 'ortho' ? 'ortho · square runs' : m === 'smart' ? 'smart · the shape you meant: line, arc, circle, box' : m === 'clean' ? 'clean · smart, then lines up with the other clean lines' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : 'circle · drag from the centre outward'; if (S.plant) h = S.plant === 'tree' ? PLANT_HINT.tree : PLANT_HINT[S.plant] + (m === 'free' ? ' · traced as drawn' : ' · ' + m + ' gives it a clean shape'); }
+    if (S.brush === 'pen') { const m = S.penMode; const tch = matchMedia('(pointer:coarse)').matches; h = S.penEdit ? (tch ? 'edit points · tap a line · drag a point or handle · double-tap: corner/smooth or a new point · the panel deletes points' : 'edit points · click a line · drag a point or handle · double-click: corner/smooth or a new point · delete removes a point · e/esc to stop') : m === 'free' ? 'free · draw; hold still half a second to snap to the exact shape · ' + (tch ? 'edit points reshapes' : 'e edits points') : m === 'angle' ? 'angle · one straight line at a clean angle' : m === 'ortho' ? 'ortho · square runs' : m === 'smart' ? 'smart · the shape you meant: line, arc, circle, box' : m === 'clean' ? 'clean · smart, then lines up with the other clean lines' : m === 'line' ? 'line · drag from one end to the other' : m === 'rect' ? 'rectangle · drag corner to corner' : 'circle · drag from the centre outward'; if (S.plant) h = S.plant === 'tree' ? PLANT_HINT.tree : PLANT_HINT[S.plant] + (m === 'free' ? ' · traced as drawn' : ' · ' + m + ' gives it a clean shape'); }
     else if (S.brush === 'erase') h = 'eraser · drag across pen strokes to remove them';
     else if (S.brush === 'section') h = 'section · drag from A to B; the section view opens when you let go';
     else if (S.brush === 'path') h = `path · draw the centreline; a ${fL(S.pathW, 1)} corridor, ${S.pathH === 0 ? 'flush' : S.pathH > 0 ? 'raised ' + fL(S.pathH, 2) : 'sunk ' + fL(-S.pathH, 2)}, follows it`;
@@ -10101,7 +10103,8 @@ if (document.documentElement.classList.contains('ui2')) (() => {
 #u2overPop{position:absolute;top:calc(100% + 6px);right:0;z-index:41;display:flex;flex-direction:column;align-items:stretch;gap:6px;min-width:170px;padding:8px;background:var(--panel);border:1px solid var(--ink2);box-shadow:0 8px 24px rgba(0,0,0,.14)}
 #u2overPop>*{width:100%;box-sizing:border-box}#u2overPop>.u2b,#u2overPop>details>summary.u2b{display:block;width:100%;box-sizing:border-box;text-align:left}
 @media (pointer:coarse){#u2head .u2b{padding:8px 12px}}
-#u2status select{height:24px;min-height:0;padding-top:0;padding-bottom:0}`;   /* the units menu sat 4px below the screen's bottom edge on touch screens */ document.head.append(st);
+#u2status select{height:24px;min-height:0;padding-top:0;padding-bottom:0}
+@media (pointer:coarse) and (min-width:761px){.ui2 #app{grid-template-rows:calc(40px + env(safe-area-inset-top,0px)) 36px minmax(0,1fr) calc(28px + env(safe-area-inset-bottom,0px))}.ui2 #railGrip{top:calc(76px + env(safe-area-inset-top,0px))}.cmd button{min-height:30px;padding:2px 10px}}`;   /* tablets: the row under the top bar is taller so the view buttons (top, front … eye, zoom extents) take a finger */   /* the units menu sat 4px below the screen's bottom edge on touch screens */ document.head.append(st);
   const more = document.createElement('details'), sum = document.createElement('summary'), pop = document.createElement('div');
   more.id = 'u2over'; sum.className = 'u2b'; sum.textContent = 'more ▾'; pop.id = 'u2overPop'; more.append(sum, pop); head.append(more);
   const proj = head.querySelector(':scope > details'), stay = new Set([more, proj, proj && proj.nextElementSibling, proj && proj.nextElementSibling && proj.nextElementSibling.nextElementSibling]);   // project, undo and redo always stay in the bar
