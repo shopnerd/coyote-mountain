@@ -4102,7 +4102,7 @@ async function paintRoots() {             // the root chart painted as a botanic
   if (!key) { toast('no google ai key · the chart is drawn, not painted'); finish(drawn, `roots ${ab} · drawn`, 'the root chart as the data draws it. add a google ai key to paint it.'); return; }
   AI.busy = true; busy(`painting the roots along ${ab}`);
   const was = AI.model; if (AI.engine === 'google') AI.model = 'gemini-3-pro-image-preview';   // plates use the pro model: it holds a drawing's structure where the fast one redraws
-  try { const prompt = window.__rootsPaintPrompt(L.species, L.counts), im = await loadImg(await aiCall(key, drawn.toDataURL('image/png').split(',')[1], prompt, null, '2K'));
+  try { const prompt = window.__rootsPaintPrompt(L.species, L.counts, L.sizes), im = await loadImg(await aiCall(key, drawn.toDataURL('image/png').split(',')[1], prompt, null, '2K'));
     const pc = document.createElement('canvas'); pc.width = W2; pc.height = H2; pc.getContext('2d').drawImage(im, 0, 0, W2, H2); const drift = window.__rootsDrift(drawn, pc, L.panels);
     finish(pc, `roots ${ab} · painted · ${aiModelName()}${!drift ? ' · on the slope: compare it with the drawing' : drift.length ? ' · check: ' + drift.slice(0, 4).join(', ') + (drift.length > 4 ? ` and ${drift.length - 4} more` : '') + ' · press again for another' : ' · plants and roots where the data puts them'}`, prompt, true); }
   catch (e) { toast(String(e.message || e)); } finally { AI.model = was; AI.busy = false; unbusy(); S.dirty = true; }
