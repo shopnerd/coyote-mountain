@@ -32,7 +32,7 @@ def resolve(src):
 
 data = json.loads(get(f'{SITE}/equino/api/layout'))
 L = data.get('layout') or {}
-out = {'slots': {}, 'boxes': L.get('boxes') or {}, 'texts': L.get('texts') or {}, 'sizes': L.get('sizes') or {}}   # sizes: 10 Oct
+out = {'slots': {}, 'boxes': L.get('boxes') or {}, 'texts': L.get('texts') or {}, 'sizes': L.get('sizes') or {}, 'tmoves': L.get('tmoves') or {}}   # sizes: 10 Oct
 for k, v in (L.get('slots') or {}).items():
     v = dict(v)
     if 'src' in v:
@@ -40,5 +40,5 @@ for k, v in (L.get('slots') or {}).items():
         except Exception as e: print('could not fetch', v['src'], e); v.pop('src')
     out['slots'][k] = v
 json.dump(out, open(os.path.join(HERE, 'pack_layout.json'), 'w', encoding='utf-8'), indent=1, ensure_ascii=False)
-print(f"pack_layout.json: {len(out['slots'])} photo changes, {len(out['boxes'])} drawing moves, {len(out['texts'])} text edits, {len(out['sizes'])} text sizes")
+print(f"pack_layout.json: {len(out['slots'])} photo changes, {len(out['boxes'])} drawing moves, {len(out['texts'])} text edits, {len(out['sizes'])} text sizes, {len(out['tmoves'])} text moves")
 for h in (data.get('history') or [])[:8]: print('  ', h.get('at', '')[:16], h.get('by', ''), h.get('op'), h.get('kind'), h.get('key'))

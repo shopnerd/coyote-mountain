@@ -6,7 +6,7 @@
 #   texts : {'t1a2b3c4d': 'new text'}   key = crc32 of the ORIGINAL source text, so it survives edits
 import json as _lj, os as _lo, zlib as _lz
 LAYOUT_FILE = 'pack_layout.json'
-LAYOUT = {'slots': {}, 'boxes': {}, 'texts': {}, 'sizes': {}}   # sizes: {text key: scale on the original size} (10 Oct, Will)
+LAYOUT = {'slots': {}, 'boxes': {}, 'texts': {}, 'sizes': {}, 'tmoves': {}}   # sizes: {text key: scale on the original size} (10 Oct, Will)
 if _lo.path.exists(LAYOUT_FILE):
     try: LAYOUT.update(_lj.load(open(LAYOUT_FILE, encoding='utf-8')))
     except Exception as e: print('pack_layout.json unreadable:', e)
@@ -102,11 +102,18 @@ def apply_layout(PAGES):
             src = getattr(t, '_orig_text', None) or t.get_text(); t._orig_text = src
             if tkey(src) in LAYOUT['texts']: t.set_text(LAYOUT['texts'][tkey(src)])
         # 10 Oct (Will): text sizes from the editor. A label just scales; a paragraph scales its lines and their spacing about its first line
-        SZ = LAYOUT.get('sizes') or {}; groups = {}
+        SZ = LAYOUT.get('sizes') or {}; MV = LAYOUT.get('tmoves') or {}; groups = {}
         for t in arts:
             g = t.get_gid() or ''
             k = g.split(':')[1] if g.startswith('para:') else tkey(getattr(t, '_orig_text', None) or t.get_text())
+            t._lkey = k
             if k in SZ: groups.setdefault(k, []).append(t)
+        # 10 Oct (Will): texts moved in the editor, [dx, dy] as page fractions (top-left origin); a paragraph moves as one
+        for t in arts:
+            d = MV.get(getattr(t, '_lkey', ''))
+            if not d or getattr(t, '_moved', None) == tuple(d): continue
+            tr = t.get_transform(); px = tr.transform(t.get_position()); fw, fh = fig.bbox.width, fig.bbox.height
+            t.set_position(tuple(tr.inverted().transform((px[0] + d[0] * fw, px[1] - d[1] * fh)))); t._moved = tuple(d); t._off = d
         for k, ts in groups.items():
             s = SZ[k]; top = max(t.get_position()[1] for t in ts)
             for t in ts:
@@ -147,11 +154,11 @@ def apply_layout(PAGES):
             rect = [bb.x0, 1 - bb.y1, bb.width, bb.height]; g = t.get_gid() or ''
             if g.startswith('para:'):
                 _, key, orig = g.split(':', 2)
-                P = paras.setdefault(key, {'key': key, 'text': LAYOUT['texts'].get(key, PARA_SRC.get(key, '')), 'rects': [], 'size': t.get_fontsize(), 'scale': getattr(t, '_size_scale', 1), 'para': True})
+                P = paras.setdefault(key, {'key': key, 'text': LAYOUT['texts'].get(key, PARA_SRC.get(key, '')), 'rects': [], 'size': t.get_fontsize(), 'scale': getattr(t, '_size_scale', 1), 'off': getattr(t, '_off', [0, 0]), 'weight': str(t.get_fontweight()), 'italic': t.get_fontstyle() == 'italic', 'para': True})
                 P['rects'].append(rect)
             else:
                 src = getattr(t, '_orig_text', s)
-                texts.append({'key': tkey(src), 'text': s, 'rect': [round(v, 4) for v in rect], 'size': round(t.get_fontsize(), 1), 'scale': getattr(t, '_size_scale', 1)})
+                texts.append({'key': tkey(src), 'text': s, 'rect': [round(v, 4) for v in rect], 'size': round(t.get_fontsize(), 1), 'scale': getattr(t, '_size_scale', 1), 'off': getattr(t, '_off', [0, 0]), 'weight': str(t.get_fontweight()), 'italic': t.get_fontstyle() == 'italic'})
         for P in paras.values():
             R = P.pop('rects'); x0 = min(a[0] for a in R); y0 = min(a[1] for a in R); x1 = max(a[0] + a[2] for a in R); y1 = max(a[1] + a[3] for a in R)
             P['rect'] = [round(x0, 4), round(y0, 4), round(x1 - x0, 4), round(y1 - y0, 4)]; texts.append(P)
