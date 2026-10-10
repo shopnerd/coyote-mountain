@@ -410,7 +410,7 @@ const FIGS = {
 
 const FIGSET = { people: ['stand', 'walk', 'child'], horse: ['hat', 'horse', 'stand'] };
 function figWidthM(k) { const [d, h, w] = FIGS[k]; return k === 'horse' ? w * h : w * h / 100; }
-function drawFigures(c, items, L, t0, t1, X, gyAt, k, set) {   // the figures stand where they are clear: no trunk within reach and no low crown over their heads; flat silhouettes in the print's indigo-grey
+function drawFigures(c, items, L, t0, t1, X, gyAt, k, set, halo) {   // the figures stand where they are clear: no trunk within reach and no low crown over their heads; flat silhouettes in the print's indigo-grey
   const list = FIGSET[set]; if (!list) return; const lo = t0 * L + .6, hi = t1 * L - .6, placed = [];
   const plants = items.map(it => { const g = it.g, sc = g.sc, lowM = sc ? -(sc.base != null ? sc.base : -g.H * .2) : g.D.form === 'palm' ? g.H * .8 : g.H; return { x: it.p.t * L, half: Math.max(.3, g.Wc / 2), low: Math.max(0, lowM) }; });
   const clear = (x, half, tall) => { if (x - half < lo || x + half > hi) return -1; let d = 1e9;
@@ -424,7 +424,8 @@ function drawFigures(c, items, L, t0, t1, X, gyAt, k, set) {   // the figures st
   c.save(); let n = 0;
   for (const p of placed.sort((a, b) => (a.key === 'horse' ? -1 : 1))) { const [d, h] = FIGS[p.key], px = X(p.x / L), py = gyAt(px), s = (p.key === 'horse' ? h : h / 100) * k, fl = p.key === 'horse' || p.key === 'hat' ? -1 : (n++ % 2 ? -1 : 1);
     c.save(); c.translate(px, py + .5); c.scale(s * fl, s); const parts = d.split('|');
-    parts.forEach((dd, q) => { const P = new Path2D(dd); if (LINE) { c.fillStyle = WASHI; c.fill(P); c.strokeStyle = SUMI; c.lineWidth = 1 / s; c.stroke(P); } else { c.fillStyle = p.key === 'horse' && parts.length > 2 && q === 0 ? '#6c7384' : '#454c5c'; c.globalAlpha = .9; c.fill(P); } });
+    parts.forEach((dd, q) => { const P = new Path2D(dd); if (halo) { c.lineJoin = 'round'; c.strokeStyle = WASHI; c.lineWidth = 3 / s; c.stroke(P); c.fillStyle = q === 0 && parts.length > 2 ? '#4a4440' : SUMI; c.fill(P); return; }   /* over a painting: dark, with a paper edge, so they read on anything */
+      if (LINE) { c.fillStyle = WASHI; c.fill(P); c.strokeStyle = SUMI; c.lineWidth = 1 / s; c.stroke(P); } else { c.fillStyle = p.key === 'horse' && parts.length > 2 && q === 0 ? '#6c7384' : '#454c5c'; c.globalAlpha = .9; c.fill(P); } });
     c.restore(); }
   c.restore();
 }
@@ -708,7 +709,7 @@ function slopeChart(c, w, h, sec, mode, yr) {
     if (S.myco) { const gyAt = x => gy(Math.max(t0, Math.min(t1, t0 + (x - ox) / (L * k)))), E = mycoDraw(c, items, X, gy, k, soil(), oyT, yBot, x0, x1, gyAt); if (c.canvas && c.canvas.id === 'c' && !mode) { MYCO.edges = E; MYCO.m = c.getTransform(); window.__mycoStart(); } }   // the mushroom button
     else if (c.canvas && c.canvas.id === 'c') MYCO.edges = null;
     c.strokeStyle = INK; c.lineWidth = 1.6; c.globalAlpha = 1; c.stroke(ground()); }
-  if (mode !== 'plants' && S.rootsPeople && S.rootsPeople !== 'none') drawFigures(c, items, L, t0, t1, X, x => gy(Math.max(t0, Math.min(t1, t0 + (x - ox) / (L * k)))), k, S.rootsPeople);   // scale figures: drawn on the drawing, and laid back over a painting rather than left to the painter
+  if (mode !== 'plants' && S.rootsPeople && S.rootsPeople !== 'none') drawFigures(c, items, L, t0, t1, X, x => gy(Math.max(t0, Math.min(t1, t0 + (x - ox) / (L * k)))), k, S.rootsPeople, mode === 'labels');   // scale figures: drawn on the drawing, and laid back over a painting rather than left to the painter
   if (mode === 'plants') { c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], counts: items.reduce((o, it) => (o[it.p.sp] = (o[it.p.sp] || 0) + 1, o), {}), sizes: items.reduce((o, it) => (o[it.p.sp] = Math.max(o[it.p.sp] || 0, it.g.H), o), {}), slope: true };   /* left to right, as the painter is told */ }
   // the words: title, an elevation ruler at true scale, each run of one species named once below the hillside, with a faint leader up to it
   const drop = (gz(t0) - gz(t1)), pct = Math.round(Math.abs(drop) / span * 100), ab = S.secs && S.secs.indexOf(sec) >= 0 && secLetters ? secLetters(S.secs.indexOf(sec)).join('–') + ' · ' : '';
