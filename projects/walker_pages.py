@@ -66,7 +66,11 @@ def w_cover():
     wtext(fig, 134, 1016, 'Propuesta de diseño', 18); wtext(fig, 134, 1082, 'Design proposal', 16, 400, 'italic', MUTEDW)
     wrule(fig, 134, 976, 1342)
     wtext(fig, 134, 1396, 'DISEÑO · DESIGN', 9, 700, color=TANW)
-    wtext(fig, 134, 1470, 'G I A N T   N A T U R E', 22, 700, color=GREEN)
+    gn = wtext(fig, 134, 1470, 'G I A N T   N A T U R E', 22, 700, color=GREEN)
+    _x = 134 + gn.get_window_extent(fig.canvas.get_renderer()).width * PX[0] / fig.bbox.width + 34   # 10 Oct (Walker): the two names beside GIANT NATURE, lighter green
+    nm = wtext(fig, _x, 1470, 'Walker Rollins / William Rollins', 15, 600, color='#86a370')
+    _room = (1225 - _x) * fig.bbox.width / PX[0]; _w = nm.get_window_extent(fig.canvas.get_renderer()).width
+    if _w > _room: nm.set_fontsize(15 * _room / _w)                                                 # keep it clear of the cover photo
     wtext(fig, 134, 1532, 'Diseño preliminar · Preliminary design   ·   octubre 2026 · October 2026', 11.5, color=MUTEDW)
     num[0] += 1; PAGES.append(fig)
 def w_renders(page, items):
