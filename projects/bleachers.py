@@ -132,8 +132,10 @@ SX = X1                                                          # the trailer e
 # ---- 4 Oct (Will): the same deck, three stepped blades and shade roof mirrored onto the trailer's other long side, so the
 # trailer works as a double-sided café with a kiosk window and a picnic stair on each side (mirrored across its centre line y = 0) ----
 MIRROR_BOTH = True
+STEPS_BOTH_SIDES = False   # 10 Oct (Walker): deck and stepped platforms on the arena (west) side only; the roof is still mirrored, one gable over the whole café
 if MIRROR_BOTH:
     for fc, m in list(zip(F, MAT)):
+        if not STEPS_BOTH_SIDES and m in ('wood', 'rock'): continue
         face([(x, -y, z) for x, y, z in (V[i - 1] for i in fc)][::-1], m)
 # 4 Oct (Will): with platforms on both sides the main road ran over the new side; bend it out round the café, clear of the deepest
 # platform by 1 m plus its half width, easing back over 15 m each way (applied to the three working drawings below)
