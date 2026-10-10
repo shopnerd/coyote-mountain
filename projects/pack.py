@@ -313,7 +313,7 @@ w_photos('stalls-a','Caballerizas techadas','Covered stalls',[(1,'Desde el cerro
          (3,'Bajo el techo mariposa','Under the butterfly roof'),(4,'El pasillo y los caballos','The corridor and the horses')])
 w_photos('stalls-b','Caballerizas techadas','Covered stalls',[(5,'Al anochecer, desde el suroeste','At dusk, from the south-west'),(6,'Modelo: el pasillo','Model: the corridor'),(7,'Modelo: desde el suroeste','Model: from the south-west')], size=12)
 w_photos('cafe-a','La pista y el café','The arena and café',[(1,'Las gradas y el café junto a la pista','The bleachers and café beside the arena'),(2,'El café y las gradas, a la hora azul','The café and bleachers at blue hour'),
-         (3,'El café, lado del camino','The café, road end'),(4,'Día de campo junto al café','A picnic beside the café')])
+         (3,'El café, lado del camino','The café, road end'),(4,'Opción 2: el café entre los árboles','Option 2: the café in the trees')])
 w_photos('cafe-b','La pista y el café','The arena and café',[(5,'Las gradas al amanecer','The bleachers at dawn'),(6,'Modelo: el café y las gradas','Model: the café and the steps')])
 w_photos('models','Vistas del sitio','Site views',[(1,'Desde el sur, en alto','High from the south'),(2,'Modelo: desde el noroeste','Model: from the north-west'),(3,'Modelo: desde el suroeste','Model: from the south-west')], size=12)
 barn_plan(); ZOOMPG.add(len(PAGES) - 1)
@@ -341,7 +341,7 @@ sheet('site_analysis.py','Lectura del sitio','Reading the site')   # 4 Oct (Will
 sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will): zones, no waste, vivero, biodynamics, horsemanship, community   # 4 Oct (Will): E-1, power, dark-sky lighting, solar, two render slots
 w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-10-v47.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-10-v48.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:
