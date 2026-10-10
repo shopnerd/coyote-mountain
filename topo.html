@@ -2527,7 +2527,7 @@ document.getElementById('animSave').onclick = () => animSave();
 document.getElementById('animSound').onclick = e => { ANIM.sound = !ANIM.sound; animAudio(ANIM.sound); e.currentTarget.classList.toggle('on', ANIM.sound); };
 document.getElementById('geoRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.geo = b.dataset.geo === '1'; document.querySelectorAll('#geoRow button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('geoInfo').style.display = S.geo ? '' : 'none'; GEO.key = ''; geoRefresh(); geoInfo(); S.dirty = true; };
 document.getElementById('rootRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.roots = b.dataset.root === '1'; rootsKeep(); document.querySelectorAll('#rootRow button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('rootInfo').style.display = S.roots ? '' : 'none'; rootInfo(); S.dirty = true; };
-window.__topo = () => ({ S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3, PAPER, rootInfo, sectionProfile });   // what roots.js draws with; a function, so it's read after everything here is set up
+window.__topo = () => ({ S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3, PAPER, rootInfo, sectionProfile, secLetters });   // what roots.js draws with; a function, so it's read after everything here is set up
 const GROW = { on: false };
 async function rootsGrow(record) {   // the years played: each stage grown once first (the grown engine takes a moment per plant), then planting day to maturity in about ten seconds, the view recorded if asked
   if (GROW.on) { GROW.on = false; return; } const L = window.__rootsInfo(S.sec); if (!L.length) return;
@@ -2592,6 +2592,8 @@ function drawSection(c = ctx, w = S.w, h = S.h, mini = false, activeOnly = false
   if (!S.sec) { c.fillStyle = INK2; c.font = font(11); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('no section yet. in plan, pick "section line" and drag across the sheet.', w / 2, h / 2); return; }
   const chartH = S.roots && !mini && window.__rootsChart ? Math.round(w < 640 || S.rootsLayout === 'slope' ? h * .64 : Math.max(Math.min(h * .5, 420), Math.min(h * .42, 240))) : 0;   // roots on: a root chart under the sections, every species the active line crosses at one scale
   const list = mini || S.noFoot || activeOnly || chartH ? [S.secI] : S.secs.map((_, i) => i), nb = list.length, bh = (h - chartH) / nb;   // roots on: the active section alone above its chart
+  const full = chartH && S.rootsLayout === 'slope';   // on the slope: the chart is the section, drawn at true scale over the whole view, clear of the buttons along its top
+  if (full) { const top = 52; c.save(); c.translate(0, top); window.__rootsChart(c, w, h - top, S.secs[S.secI]); c.restore(); return; }
   if (chartH) { c.save(); c.translate(0, h - chartH); window.__rootsChart(c, w, chartH, S.secs[S.secI]); c.restore(); }
   list.forEach((i, k) => { const [la, lb] = secLetters(i); c.save(); c.translate(0, k * bh); c.beginPath(); c.rect(0, 0, w, bh); c.clip(); drawSectionOne(c, w, bh, mini, S.secs[i], la, lb, i === S.secI); if (k) { c.strokeStyle = 'rgba(40,40,36,.18)'; c.lineWidth = 1; c.setLineDash([2, 4]); c.beginPath(); c.moveTo(0, .5); c.lineTo(w, .5); c.stroke(); c.setLineDash([]); } c.restore(); });
 }

@@ -3,8 +3,8 @@
    loaded after topo.html's main script; uses its S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3 */
 (() => {
 const ROOT_DATA = window.ROOT_DATA || {};   // from roots-data.js   // key → { common, latin, form, arch, h, spread, typ, max, lat, yrs, regen, conf, src }
-let S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3, PAPER, rootInfo, sectionProfile;   // topo's, through window.__topo
-const bind = () => ({ S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3, PAPER, rootInfo, sectionProfile } = window.__topo());
+let S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3, PAPER, rootInfo, sectionProfile, secLetters;   // topo's, through window.__topo
+const bind = () => ({ S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3, PAPER, rootInfo, sectionProfile, secLetters } = window.__topo());
 const TAU = Math.PI * 2, DOWN = Math.PI / 2, UP = -Math.PI / 2, SEPIA = '#4b3220', LEAF = '#5d6b45';
 
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -437,7 +437,7 @@ function slopeChart(c, w, h, sec, mode, yr) {
   const P = plantsNear(sec), uf = isFt() ? 3.28084 : 1, un = isFt() ? 'ft' : 'm', narrow = w < 640;
   if (!P.length) return null;
   const n = 600, prof = sectionProfile(n, sec), L = prof.L, gz = t => { const q = Math.max(0, Math.min(1, t)) * n, i = Math.min(n - 1, Math.floor(q)), f = q - i; return prof.gnd[i] * (1 - f) + prof.gnd[i + 1] * f; };
-  const yrM = Math.max(yr, ...P.map(p => ROOT_DATA[p.sp].yrs * 1.5)), items = P.map(p => { const g = plantGeo(p.sp, ageOf(p.st, yr), habitFor(p.sp, ROOT_DATA[p.sp]) ? 0 : p.seed % 4); return g && { p, g: { ...g, m: dims(p.sp, yrM) } }; }).filter(Boolean);
+  const yrM = Math.max(yr, ...P.map(p => ROOT_DATA[p.sp].yrs * 1.5)), items = P.map(p => { const g = plantGeo(p.sp, ageOf(p.st, yr), habitFor(p.sp, ROOT_DATA[p.sp]) ? 0 : p.seed % 4); return g && { p, g: { ...g, m: p.st.grow === false ? dims(p.sp, p.st.age || 0) : dims(p.sp, yrM) } }; }).filter(Boolean);   /* the scale leaves room for full size, but an existing tree stays the size it is */
   const cap = Math.max(...items.map(({ g }) => Math.min(g.m.M, Math.max(g.m.T * 2.2, g.m.H * .5))));   // how deep the soil is shown: the deep roots go on, said in words
   const pad = Math.max(...items.map(({ g }) => Math.max(g.m.Wc / 2, Math.min(g.m.Lr, g.m.Wc)))) / L, t0 = Math.max(0, Math.min(...items.map(it => it.p.t)) - pad), t1 = Math.min(1, Math.max(...items.map(it => it.p.t)) + pad), span = (t1 - t0) * L;
   let zTop = -Infinity, zBot = Infinity; for (let q = Math.floor(t0 * n); q <= Math.ceil(t1 * n); q++) { zTop = Math.max(zTop, prof.gnd[q]); zBot = Math.min(zBot, prof.gnd[q]); }
@@ -453,9 +453,9 @@ function slopeChart(c, w, h, sec, mode, yr) {
     c.strokeStyle = INK; c.lineWidth = 1.6; c.globalAlpha = 1; c.stroke(ground()); }
   if (mode === 'plants') { c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], counts: items.reduce((o, it) => (o[it.p.sp] = (o[it.p.sp] || 0) + 1, o), {}), slope: true };   /* left to right, as the painter is told */ }
   // the words: title, an elevation ruler at true scale, each run of one species named once below the hillside, with a faint leader up to it
-  const drop = (gz(t0) - gz(t1)), pct = Math.round(Math.abs(drop) / span * 100);
+  const drop = (gz(t0) - gz(t1)), pct = Math.round(Math.abs(drop) / span * 100), ab = S.secs && S.secs.indexOf(sec) >= 0 && secLetters ? secLetters(S.secs.indexOf(sec)).join('–') + ' · ' : '';
   c.fillStyle = INK; c.font = font(12, 600); c.textAlign = 'left'; c.textBaseline = 'top';
-  c.fillText(narrow ? `${TT('raíces', 'roots')} · ${yr === 0 ? TT('al plantar', 'planting day') : yr + ' yr'}` : ES_ON() ? `Raíces en el terreno · roots on the slope · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')} · escala real · true scale · ${fL(span, 0)}, ${pct}%` : `roots on the slope · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'} · true scale, no vertical exaggeration · ${fL(span, 0)} across, ${pct}% slope`, narrow ? 10 : 64, 10);
+  c.fillText(ab + (narrow ? `${TT('raíces', 'roots')} · ${yr === 0 ? TT('al plantar', 'planting day') : yr + ' yr'}` : ES_ON() ? `Raíces en el terreno · roots on the slope · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')} · escala real · true scale · ${fL(span, 0)}, ${pct}%` : `roots on the slope · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'} · true scale, no vertical exaggeration · ${fL(span, 0)} across, ${pct}% slope`), narrow ? 10 : 64, 10);
   let stepU = niceStep(((zTop - zBot) * uf) / 5); while (stepU / uf * k < 18) stepU = niceStep(stepU * 2.2);
   c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle'; c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL - 6, top - 4); c.lineTo(mL - 6, yBot); c.stroke();
   for (let u = Math.ceil(zBot * uf / stepU) * stepU; u <= zTop * uf + 1e-6; u += stepU) { const y = Y(u / uf); c.beginPath(); c.moveTo(mL - 10, y); c.lineTo(mL - 6, y); c.stroke(); c.fillStyle = INK2; c.fillText(`${+u.toFixed(1)}`, mL - 13, y); }
@@ -527,7 +527,7 @@ window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.ro
     const im = PLATE.img, f = Math.min(w / im.width, (h - 4) / im.height), dw = im.width * f, dh = im.height * f; c.fillStyle = '#efe6d2'; c.fillRect(0, 0, w, h); c.drawImage(im, (w - dw) / 2, (h - dh) / 2 + 2, dw, dh); c.restore(); return { panels: [], species: [...seen.keys()], painted: true }; }
   if (!seen.size) { c.fillStyle = INK2; c.font = font(11); c.fillText('no species planted near this section line. plant with shape · agroforestry, then draw the section through them.', 64, 32); c.restore(); return; }
   if (S.rootsLayout === 'slope') { c.restore(); return slopeChart(c, w, h, sec, mode, yr); }   // the planted stretch on the real hillside
-  const yrM = Math.max(yr, ...[...seen.keys()].map(k => ROOT_DATA[k].yrs * 1.5)), G = [...seen.values()].map(p => plantGeo(p.sp, ageOf(p.st, yr), 0)).filter(Boolean).map(g => ({ ...g, m: dims(g.key, yrM) }));   // drawn at this age, scaled at full size
+  const yrM = Math.max(yr, ...[...seen.keys()].map(k => ROOT_DATA[k].yrs * 1.5)), G = [...seen.values()].map(p => { const g = plantGeo(p.sp, ageOf(p.st, yr), 0); return g && { ...g, m: p.st.grow === false ? dims(p.sp, p.st.age || 0) : dims(g.key, yrM) }; }).filter(Boolean);   // drawn at this age, scaled at full size
   // woody and herbaceous each get their own panel and scale, as the atlases do: a grass beside a 15 m oak would be a speck
   const cat = g => /^(tree|palm)$/.test(g.D.form) || (g.D.form === 'shrub' && g.m.H >= 1.2) ? 0 :   /* small shrubs stand with the low plants, where their scale fits */ /^(cactus|succulent)$/.test(g.D.form) ? 1 : 2, groups = [0, 1, 2].map(i => G.filter(g => cat(g) === i)).filter(a => a.length);   // trees, shrubs and palms · cacti and succulents · grasses and flowers, each at its own scale
   const narrow = w < 640, mL = narrow ? 8 : 64, mR = narrow ? 8 : 24, gap = groups.length > 1 ? (narrow ? 12 : 34) : 0, span = w - mL - mR - gap * (groups.length - 1); let x0 = mL;
