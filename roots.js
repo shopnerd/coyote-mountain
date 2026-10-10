@@ -254,15 +254,25 @@ function scWood(c, nodes, ox, oy, k, flip, col, shade, alpha, minW) {   // every
     if (w >= 6) { c.save(); c.strokeStyle = shade; c.lineWidth = Math.max(.5, w * .05); c.globalAlpha = alpha * .55; c.setLineDash([w * .9, w * .5]); for (const off of [-.3, -.05, .2]) { c.save(); c.translate(w * off, 0); c.stroke(path); c.restore(); } c.restore(); } }   // the bark's furrows: a big trunk reads as big
   c.restore();
 }
-function scMass(c, sc, ox, oy, k, flip, alpha) {   // the massing look: the crown's masses as one flat shape in its middle tone, a lit face on the sun side, a quiet shadow side, one clean outline
-  const f = 1 - Math.max(0, Math.min(1, alpha)), fade = h => f > .01 ? mix(h[0] === '#' ? h : '#' + h.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join(''), PAPER, f * .85) : h;   // further from the line: lighter, still solid, so flat masses never show through each other
-  alpha = 1; const t = sc.hb.tones.map(fade), M = sc.mass || sc.clouds, X = x => ox + flip * x * k, Y = y => oy + y * k, sil = new Path2D(), lit = new Path2D(), dark = new Path2D();
-  const lowY = sc.base != null ? sc.base : 0, MM = M.filter(cl => cl.y + cl.r * 1.12 <= lowY + cl.r * .25);   // the crown lifted clear of the ground: the trunk shows below it
-  for (const cl of MM) { const r = cl.r * k * 1.12; if (r < .4) continue; sil.moveTo(X(cl.x) + r, Y(cl.y)); sil.arc(X(cl.x), Y(cl.y), r, 0, TAU); }
-  for (const cl of MM) { const r = cl.r * k * .82; if (r < .4) continue; if (cl.s > .5) { const x = X(cl.x) - flip * r * .14, y = Y(cl.y) - r * .16; lit.moveTo(x + r, y); lit.arc(x, y, r, 0, TAU); } else if (cl.s < .38) { const x = X(cl.x) + flip * r * .12, y = Y(cl.y) + r * .14; dark.moveTo(x + r, y); dark.arc(x, y, r, 0, TAU); } }
-  const lw = Math.max(.6, Math.min(1.4, k * .05));
-  c.save(); c.globalAlpha = alpha; c.lineWidth = lw * 2; c.strokeStyle = fade(mix(sc.hb.tones[0], '#1a1a18', .45)); c.stroke(sil);   // the outline drawn first and the fill laid over it: only the outer edge of the whole crown stays
-  c.fillStyle = t[1]; c.fill(sil); c.save(); c.clip(sil); c.fillStyle = mix(t[1], t[0], .55); c.fill(dark); c.fillStyle = mix(t[1], t[2], .55); c.fill(lit); c.restore(); c.restore();
+function scMass(c, sc, ox, oy, k, flip, alpha) {   // the massing look: one organic silhouette per crown (traced round the outside of its masses, smoothed, a slightly irregular leafy edge), shaded light to shadow, one clean outline
+  const f = 1 - Math.max(0, Math.min(1, alpha)), hx = h => h[0] === '#' ? h : '#' + h.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join(''), fade = h => f > .01 ? mix(hx(h), PAPER, f * .85) : h;   // further from the line: lighter, still solid
+  const t = sc.hb.tones.map(fade), M = sc.mass || sc.clouds, lowY = sc.base != null ? sc.base : 0, MM = M.filter(cl => cl.y + cl.r * 1.12 <= lowY + cl.r * .25);
+  if (!MM.length) return;
+  let wsum = 0, mx = 0, my = 0; for (const cl of MM) { const w = cl.r * cl.r; wsum += w; mx += cl.x * w; my += cl.y * w; } mx /= wsum; my /= wsum;
+  const N = 96, rad = new Float64Array(N);
+  for (let q = 0; q < N; q++) { const a = q / N * TAU, ux = Math.cos(a), uy = Math.sin(a); let best = 0;
+    for (const cl of MM) { const R = cl.r * 1.12, dx = cl.x - mx, dy = cl.y - my, pr = dx * ux + dy * uy, pe2 = dx * dx + dy * dy - pr * pr; if (pe2 < R * R) best = Math.max(best, pr + Math.sqrt(R * R - pe2)); } rad[q] = best; }
+  const sm = Float64Array.from(rad, (_, q) => (rad[(q - 2 + N) % N] + 2 * rad[(q - 1 + N) % N] + 3 * rad[q] + 2 * rad[(q + 1) % N] + rad[(q + 2) % N]) / 9);   // smoothed: no arcs, a continuous form
+  const seed = mx * 13.7 + my * 7.3, edge = q => 1 + .028 * Math.sin(q * .9 + seed) + .018 * Math.sin(q * 2.3 + seed * 1.7) + .012 * Math.sin(q * 4.1 + seed * .6);   // the leafy edge: small, irregular
+  const P = []; for (let q = 0; q < N; q++) { const a = q / N * TAU, r = sm[q] * edge(q); P.push([ox + flip * (mx + Math.cos(a) * r) * k, oy + (my + Math.sin(a) * r) * k]); }
+  const sil = new Path2D(); sil.moveTo((P[N - 1][0] + P[0][0]) / 2, (P[N - 1][1] + P[0][1]) / 2); for (let q = 0; q < N; q++) { const a = P[q], b = P[(q + 1) % N]; sil.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); } sil.closePath();
+  let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const [x, y] of P) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  const lx = flip > 0 ? x0 : x1, rx = flip > 0 ? x1 : x0, g = c.createLinearGradient(lx + (rx - lx) * .15, y0, rx - (rx - lx) * .1, y1);   // the sun from the upper left
+  g.addColorStop(0, mix(hx(t[2]), hx(t[1]), .25)); g.addColorStop(.5, t[1]); g.addColorStop(1, mix(hx(t[1]), hx(t[0]), .8));
+  const lw = Math.max(.6, Math.min(1.3, k * .045));
+  c.save(); c.fillStyle = g; c.fill(sil);
+  c.save(); c.clip(sil); const sh = new Path2D(); sh.moveTo(P[0][0], P[0][1] + (y1 - y0) * .22); for (const [x, y] of P) sh.lineTo(x + flip * (x1 - x0) * .03, y + (y1 - y0) * .22); sh.closePath(); c.globalAlpha = .28; c.fillStyle = hx(t[0]); c.fill(sh); c.restore();   // a soft shadowed underside
+  c.lineWidth = lw; c.strokeStyle = fade(mix(sc.hb.tones[0], '#1a1a18', .5)); c.globalAlpha = .9; c.stroke(sil); c.restore();
 }
 function scLeaves(c, sc, ox, oy, k, flip, alpha, layer) {
   const t = sc.hb.tones, LT = sc.LT, rp = sc.sprR * k, SP = sc.sprays.filter(q => q[8] === layer), X = x => ox + flip * x * k, Y = y => oy + y * k, lf = sc.hb.leaf; c.save();
