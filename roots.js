@@ -249,14 +249,56 @@ function scWood(c, nodes, ox, oy, k, flip, col, shade, alpha, minW) {   // every
   const B = new Map(); for (let i = 1; i < nodes.length; i++) { const nd = nodes[i], p = nodes[nd.p], w = nd.r * 2 * k; if (w < (minW || .25)) continue;   /* massing: only the trunk and main limbs */ const q = w < 1 ? Math.round(w * 8) / 8 : Math.round(w * 2) / 2; let a = B.get(q); if (!a) B.set(q, a = []); a.push(p.x, p.y, nd.x, nd.y); }
   const ws = [...B.keys()].sort((a, b) => a - b); c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
   for (const w of ws) { const a = B.get(w), path = new Path2D(); for (let i = 0; i < a.length; i += 4) { path.moveTo(ox + flip * a[i] * k, oy + a[i + 1] * k); path.lineTo(ox + flip * a[i + 2] * k, oy + a[i + 3] * k); }
-    c.globalAlpha = alpha * (w < .6 ? .45 + w * .9 : 1); c.strokeStyle = col; c.lineWidth = Math.max(.5, w); c.stroke(path);
-    if (w >= 3) { c.save(); c.translate(w * .22, 0); c.strokeStyle = shade; c.lineWidth = w * .42; c.globalAlpha = alpha * .85; c.stroke(path); c.restore(); c.save(); c.translate(-w * .28, 0); c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = w * .14; c.stroke(path); c.restore(); }
-    if (w >= 6) { c.save(); c.strokeStyle = shade; c.lineWidth = Math.max(.5, w * .05); c.globalAlpha = alpha * .55; c.setLineDash([w * .9, w * .5]); for (const off of [-.3, -.05, .2]) { c.save(); c.translate(w * off, 0); c.stroke(path); c.restore(); } c.restore(); } }   // the bark's furrows: a big trunk reads as big
+    c.globalAlpha = alpha * (w < .6 ? .45 + w * .9 : 1); c.strokeStyle = col; c.lineWidth = Math.max(.5, LINE ? Math.min(w * .55, 1.1 + w * .22) : w); c.stroke(path);   /* the line style: a brush line, not a filled limb */
+    if (w >= 3 && !LINE) { c.save(); c.translate(w * .22, 0); c.strokeStyle = shade; c.lineWidth = w * .42; c.globalAlpha = alpha * .85; c.stroke(path); c.restore(); c.save(); c.translate(-w * .28, 0); c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = w * .14; c.stroke(path); c.restore(); }
+    if (w >= 6 && !LINE) { c.save(); c.strokeStyle = shade; c.lineWidth = Math.max(.5, w * .05); c.globalAlpha = alpha * .55; c.setLineDash([w * .9, w * .5]); for (const off of [-.3, -.05, .2]) { c.save(); c.translate(w * off, 0); c.stroke(path); c.restore(); } c.restore(); } }   // the bark's furrows: a big trunk reads as big
   c.restore();
 }
+/* ---------- the woodblock discipline (Will, 10/10): old Japanese prints met with Western etching. warm washi paper, a small palette, flat areas with
+   bokashi (the printer's hand-wiped blend), confident key lines that swell and taper, a few repeated marks for texture instead of hatching, empty space.
+   no lettering beyond our own bilingual labels, no seals, no costume motifs ---------- */
+const WASHI = '#f3ecdc', SUMI = '#2b2724';
+let GRAIN = null;
+function washi(c, w, h) {   // warm paper with a faint fibre grain
+  c.fillStyle = WASHI; c.fillRect(0, 0, w, h);
+  if (!GRAIN) { GRAIN = document.createElement('canvas'); GRAIN.width = GRAIN.height = 240; const g = GRAIN.getContext('2d'), R = rng(77);
+    g.strokeStyle = '#b9a98a'; g.lineCap = 'round'; for (let i = 0; i < 70; i++) { const x = R() * 240, y = R() * 240, a = R() * TAU, L = 6 + R() * 22; g.globalAlpha = .08 + R() * .12; g.lineWidth = .4 + R() * .5; g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * L * .5 + (R() - .5) * 6, y + Math.sin(a) * L * .5 + (R() - .5) * 6, x + Math.cos(a) * L, y + Math.sin(a) * L); g.stroke(); }
+    g.fillStyle = '#9c8b6a'; for (let i = 0; i < 260; i++) { g.globalAlpha = .05 + R() * .1; g.fillRect(R() * 240, R() * 240, .7, .7); } }
+  c.save(); c.fillStyle = c.createPattern(GRAIN, 'repeat'); c.fillRect(0, 0, w, h); c.restore();
+}
+function bokashiSky(c, w, y0, y1) { if (LINE) return; const g = c.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, 'rgba(96,124,150,.30)'); g.addColorStop(1, 'rgba(96,124,150,0)'); c.save(); c.fillStyle = g; c.fillRect(0, y0, w, y1 - y0); c.restore(); }   // a pale indigo band at the top of the sky
+function soilFill(c, path, yTop, yBot) {   // earth: flat ochre deepening with depth, no hatch
+  if (LINE) { c.fillStyle = WASHI; c.fill(path); return; }
+  const g = c.createLinearGradient(0, yTop, 0, yBot); g.addColorStop(0, '#e6d8b6'); g.addColorStop(1, '#cbb186'); c.fillStyle = g; c.fill(path);
+}
+function strata(c, clip, groundPts, depthPx, seed) {   // the soil drawn the woodblock way: a few broken lines parallel to the ground, sparser with depth
+  c.save(); c.clip(clip); c.strokeStyle = LINE ? SUMI : '#7a6545'; c.lineCap = 'round'; const R = rng(seed | 0);
+  for (let d = 14, k = 0; d < depthPx; d += 12 + k * 5, k++) { c.globalAlpha = (LINE ? .5 : .28) * Math.max(.25, 1 - d / depthPx); c.lineWidth = LINE ? .8 : .7; c.setLineDash([10 + R() * 26, 6 + R() * 14 + k * 3]); c.lineDashOffset = R() * 40; c.beginPath(); groundPts.forEach(([x, y], i) => i ? c.lineTo(x, y + d) : c.moveTo(x, y + d)); c.stroke(); }
+  c.restore();
+}
+function cartouche(c, text, x, y) {   // the title in a framed label, as a print carries its title block; our own words only
+  c.save(); c.font = font(11.5, 600); c.textAlign = 'left'; c.textBaseline = 'middle'; const w = c.measureText(text).width + 22, h = 24;
+  c.fillStyle = WASHI; c.globalAlpha = .92; c.fillRect(x, y, w, h); c.globalAlpha = 1; c.strokeStyle = SUMI; c.lineWidth = 1.3; c.strokeRect(x + .5, y + .5, w - 1, h - 1); c.lineWidth = .6; c.strokeRect(x + 3.5, y + 3.5, w - 7, h - 7);
+  c.fillStyle = SUMI; c.fillText(text, x + 11, y + h / 2 + .5); c.restore();
+}
+const inPoly = (P, x, y) => { let o = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) o = !o; } return o; };
+const tonesOf = hb => { const t = hb.tones; return [mix(t[0], '#2f3e52', .22), mix(t[1], '#6f7d5a', .08), mix(t[2], '#efe2bd', .25)]; };   // the print's palette: shadows toward indigo, lights toward warm cream
+function motifs(c, sil, P, x0, y0, x1, y1, leaf, flip, col, alpha, lw) {   // texture by repeated marks, as a carver cuts it: needles as fans, leaves as small cups, scales as chevrons; more of them on the shaded side
+  const W = x1 - x0, H = y1 - y0, sp = Math.max(10, Math.min(19, Math.min(W, H) / 4.5)); if (W < 18 || H < 14) return; const R = rng(Math.round(x0 * 7 + y0 * 13)), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  c.save(); c.clip(sil); c.strokeStyle = col; c.lineWidth = lw; c.lineCap = 'round'; c.globalAlpha = alpha; c.beginPath();
+  for (let y = y0 + sp * .6, row = 0; y < y1; y += sp * .78, row++) for (let x = x0 + (row % 2) * sp * .5; x < x1; x += sp) {
+    const px = x + (R() - .5) * sp * .5, py = y + (R() - .5) * sp * .4, lit = (-(px - cx) * flip * .55 - (py - cy) * .83) / (Math.max(W, H) * .5); if (lit > -.05 + R() * .3 || R() < .3) continue;   /* the lit side left as empty paper; the marks gather in the shade */ if (!inPoly(P, px, py)) continue;
+    const s = sp * .32;
+    if (leaf === 'needle') { for (let q = -2; q <= 2; q++) { const a = -Math.PI / 2 + q * .42; c.moveTo(px, py + s * .5); c.lineTo(px + Math.cos(a) * s * 1.2, py + s * .5 + Math.sin(a) * s * 1.2); } }
+    else if (leaf === 'scale') { c.moveTo(px - s, py + s * .4); c.lineTo(px, py - s * .3); c.lineTo(px + s, py + s * .4); }
+    else if (leaf === 'feather') { c.moveTo(px - s, py); c.quadraticCurveTo(px, py - s * .6, px + s, py); for (let q = -1; q <= 1; q++) { c.moveTo(px + q * s * .55, py - s * .25); c.lineTo(px + q * s * .55, py + s * .25); } }
+    else { c.moveTo(px - s, py - s * .15); c.quadraticCurveTo(px, py + s * .9, px + s, py - s * .15); }
+  }
+  c.stroke(); c.restore();
+}
 function scMass(c, sc, ox, oy, k, flip, alpha) {   // the massing look: one organic silhouette per crown (traced round the outside of its masses, smoothed, a slightly irregular leafy edge), shaded light to shadow, one clean outline
-  const f = 1 - Math.max(0, Math.min(1, alpha)), hx = h => h[0] === '#' ? h : '#' + h.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join(''), fade = h => f > .01 ? mix(hx(h), PAPER, f * .85) : h;   // further from the line: lighter, still solid
-  const t = sc.hb.tones.map(fade), M = sc.mass || sc.clouds, lowY = sc.base != null ? sc.base : 0, MM = M.filter(cl => cl.y + cl.r * 1.12 <= lowY + cl.r * .25);
+  const f = 1 - Math.max(0, Math.min(1, alpha)), hx = h => h[0] === '#' ? h : '#' + h.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join(''), fade = h => f > .01 ? mix(hx(h), WASHI, f * .85) : h;   // further from the line: lighter, still solid
+  const t = tonesOf(sc.hb).map(fade), M = sc.mass || sc.clouds, lowY = sc.base != null ? sc.base : 0, MM = M.filter(cl => cl.y + cl.r * 1.12 <= lowY + cl.r * .25);
   if (!MM.length) return;
   let wsum = 0, mx = 0, my = 0; for (const cl of MM) { const w = cl.r * cl.r; wsum += w; mx += cl.x * w; my += cl.y * w; } mx /= wsum; my /= wsum;
   const N = 96, rad = new Float64Array(N);
@@ -267,15 +309,17 @@ function scMass(c, sc, ox, oy, k, flip, alpha) {   // the massing look: one orga
   const P = []; for (let q = 0; q < N; q++) { const a = q / N * TAU, r = sm[q] * edge(q); P.push([ox + flip * (mx + Math.cos(a) * r) * k, oy + (my + Math.sin(a) * r) * k]); }
   const sil = new Path2D(); sil.moveTo((P[N - 1][0] + P[0][0]) / 2, (P[N - 1][1] + P[0][1]) / 2); for (let q = 0; q < N; q++) { const a = P[q], b = P[(q + 1) % N]; sil.quadraticCurveTo(a[0], a[1], (a[0] + b[0]) / 2, (a[1] + b[1]) / 2); } sil.closePath();
   let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; for (const [x, y] of P) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  const lx = flip > 0 ? x0 : x1, rx = flip > 0 ? x1 : x0, g = c.createLinearGradient(lx + (rx - lx) * .15, y0, rx - (rx - lx) * .1, y1);   // the sun from the upper left
-  g.addColorStop(0, mix(hx(t[2]), hx(t[1]), .25)); g.addColorStop(.5, t[1]); g.addColorStop(1, mix(hx(t[1]), hx(t[0]), .8));
-  const lw = Math.max(.6, Math.min(1.3, k * .045));
-  c.save(); c.fillStyle = g; c.fill(sil);
-  c.save(); c.clip(sil); const sh = new Path2D(); sh.moveTo(P[0][0], P[0][1] + (y1 - y0) * .22); for (const [x, y] of P) sh.lineTo(x + flip * (x1 - x0) * .03, y + (y1 - y0) * .22); sh.closePath(); c.globalAlpha = .28; c.fillStyle = hx(t[0]); c.fill(sh); c.restore();   // a soft shadowed underside
-  c.lineWidth = lw; c.strokeStyle = fade(mix(sc.hb.tones[0], '#1a1a18', .5)); c.globalAlpha = .9; c.stroke(sil); c.restore();
+  const lw = Math.max(.7, Math.min(1.5, k * .05)), key = fade(mix(hx(t[0]), SUMI, .55));
+  c.save(); c.fillStyle = t[1]; c.fill(sil);   // a flat area of colour
+  c.save(); c.clip(sil); { const g = c.createLinearGradient(0, y0, 0, y0 + (y1 - y0) * .55); g.addColorStop(0, t[2]); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(x0 - 2, y0 - 2, x1 - x0 + 4, (y1 - y0) * .6); }   // bokashi: the light wiped in along the top
+  { const sh = new Path2D(); sh.moveTo(P[0][0], P[0][1] + (y1 - y0) * .26); for (const [x, y] of P) sh.lineTo(x + flip * (x1 - x0) * .03, y + (y1 - y0) * .26); sh.closePath(); c.globalAlpha = .45; c.fillStyle = hx(t[0]); c.fill(sh); } c.restore();   // the shadowed underside, flat
+  motifs(c, sil, P, x0, y0, x1, y1, sc.hb.leaf, flip, LINE ? SUMI : key, LINE ? .75 : .38 * (1 - f * .7), LINE ? .75 : .7);
+  c.lineJoin = 'round'; c.lineWidth = lw; c.strokeStyle = key; c.globalAlpha = .95; c.stroke(sil);
+  c.save(); c.beginPath(); c.rect(x0 - 10, y0 + (y1 - y0) * .5, x1 - x0 + 20, (y1 - y0) * .6); c.clip(); c.lineWidth = lw * 2.3; c.stroke(sil); c.restore();   // the key line swells along the shaded underside, as a brush line does
+  c.restore();
 }
 function scLeaves(c, sc, ox, oy, k, flip, alpha, layer) {
-  const t = sc.hb.tones, LT = sc.LT, rp = sc.sprR * k, SP = sc.sprays.filter(q => q[8] === layer), X = x => ox + flip * x * k, Y = y => oy + y * k, lf = sc.hb.leaf; c.save();
+  const t = tonesOf(sc.hb), LT = sc.LT, rp = sc.sprR * k, SP = sc.sprays.filter(q => q[8] === layer), X = x => ox + flip * x * k, Y = y => oy + y * k, lf = sc.hb.leaf; c.save();
   // the masses' dark cores first: depth inside the crown (ambient occlusion), a little below and right of each cloud
   if (rp >= 1.3) { c.fillStyle = mix(t[0], '#1e2416', .4); c.globalAlpha = alpha * (LINE ? 1 : .6); c.beginPath(); for (const [x, y, r, s] of SP) { if (s > .45) continue; const R_ = Math.max(.6, r * k); c.moveTo(X(x) + flip * R_ * .12 + R_, Y(y) + R_ * .15); c.arc(X(x) + flip * R_ * .12, Y(y) + R_ * .15, R_, 0, TAU); } c.fill(); }   // shadow under the shaded sprays: depth inside the crown
   if (rp < 1.3) { if (layer) { c.restore(); return; }   // far: the crown as an impostor; each mass shaded light to dark and grained with a stipple of fixed size, the engraver's distant tree
@@ -415,7 +459,7 @@ function plantGeo(key, yr, variant) {
 function inkLines(c, lines, ox, oy, k, col, alpha, flip, clipY) {
   const B = new Map();
   const floor = [.6, .42, .3, .22, .16, .12];   // a hairline's strength by branching order: the finest roots stay visible, as in the atlases
-  for (const r of lines) { const n = r.x.length, fl = floor[Math.min(5, r.o)] * (k < 4 ? k / 4 : 1); for (let i = 0; i < n - 1; i += 3) { const j = Math.min(n - 1, i + 3), wpx = r.w[i] * k; if (wpx < .45 && fl < .04) break;
+  for (const r of lines) { if (LINE && r.o >= 3) continue;   /* the line style: the root's structure, not every hair */ const n = r.x.length, fl = floor[Math.min(5, r.o)] * (k < 4 ? k / 4 : 1); for (let i = 0; i < n - 1; i += 3) { const j = Math.min(n - 1, i + 3), wpx = r.w[i] * k; if (wpx < .45 && fl < .04) break;
     const lw = wpx < .45 ? .45 : Math.round(wpx * 4) / 4, af = wpx < .45 ? Math.max(fl, Math.round(wpx / .45 * 8) / 8) : 1, key = lw + '|' + af + '|' + (wpx >= 1.2 ? 1 : 0); let p = B.get(key); if (!p) { p = new Path2D(); B.set(key, p); }
     p.moveTo(ox + flip * r.x[i] * k, oy + r.y[i] * k); for (let q = i + 1; q <= j; q++) p.lineTo(ox + flip * r.x[q] * k, oy + r.y[q] * k); } }
   c.save(); c.strokeStyle = col; c.lineCap = 'round'; c.lineJoin = 'round';
@@ -455,11 +499,11 @@ function drawTop(c, g, ox, oy, k, alpha, flip) {
 }
 let LINE = false; const LINED = new WeakSet();   // the line style: pen and ink, no colour or tone; LINED: the contexts already turned to ink
 const lineCtx = c => new Proxy(c, { get: (t, k) => { const v = t[k]; return typeof v === 'function' ? v.bind(t) : v; },
-  set: (t, k, v) => { if (k === 'strokeStyle') t[k] = /^rgba\(255/.test(String(v)) || v === '#7f9268' ? PAPER : INK;   /* #7f9268: a cactus arm's body, drawn as a fat stroke inside its ink outline */ else if (k === 'fillStyle') t[k] = v === INK || v === INK2 || v === INK3 ? v : PAPER; else t[k] = v; return true; } });   // every colour drawn becomes ink, every fill paper: masses still hide what is behind them
+  set: (t, k, v) => { if (k === 'strokeStyle') t[k] = /^rgba\(255/.test(String(v)) || v === '#7f9268' ? PAPER : INK;   /* #7f9268: a cactus arm's body, drawn as a fat stroke inside its ink outline */ else if (k === 'fillStyle') t[k] = v === INK || v === INK2 || v === INK3 ? v : WASHI; else t[k] = v; return true; } });   // every colour drawn becomes ink, every fill paper: masses still hide what is behind them
 function drawPlant(c, g, ox, oy, k, alpha, flip, groundClip) {   // groundClip(c): a path below the ground, so roots never poke out of a slope
   if (LINE && !LINED.has(c)) { c = lineCtx(c); LINED.add(c); }
   if (FORM[g.key] && !g.sc) { c.save(); if (groundClip) { groundClip(c); c.clip(); } inkLines(c, g.roots, ox, oy, k, SEPIA, alpha * .92, flip); c.restore(); drawForm(c, g, ox, oy, k, alpha, flip, g.variant); return; }
-  if (g.sc) { const hb = g.sc.hb; c.save(); if (groundClip) { groundClip(c); c.clip(); } scWood(c, g.sc.roots, ox, oy, k, flip, SEPIA, '#2a1a10', alpha); if (g.sc.fine) inkLines(c, g.sc.fine, ox, oy, k, SEPIA, alpha * .85, flip); c.restore(); if (MASSING()) { scWood(c, g.sc.crown.length > 1 ? g.sc.crown : g.sc.crown, ox, oy, k, flip, hb.bark, '#1c1b18', alpha, 2.2); canopyLayer(c, cc => scMass(cc, g.sc, ox, oy, k, flip, alpha)); return; }
+  if (g.sc) { const hb = g.sc.hb; c.save(); if (groundClip) { groundClip(c); c.clip(); } scWood(c, g.sc.roots, ox, oy, k, flip, SEPIA, '#2a1a10', alpha, LINE ? .9 : 0); if (g.sc.fine && !LINE) inkLines(c, g.sc.fine, ox, oy, k, SEPIA, alpha * .85, flip);   /* the line style: the root's structure, not its hair */ c.restore(); if (MASSING()) { scWood(c, g.sc.crown.length > 1 ? g.sc.crown : g.sc.crown, ox, oy, k, flip, hb.bark, '#1c1b18', alpha, 2.2); canopyLayer(c, cc => scMass(cc, g.sc, ox, oy, k, flip, alpha)); return; }
   canopyLayer(c, cc => scLeaves(cc, g.sc, ox, oy, k, flip, alpha, 0)); scWood(c, g.sc.crown, ox, oy, k, flip, hb.bark, '#1c1b18', alpha); if (g.sc.twigs) inkLines(c, g.sc.twigs, ox, oy, k, hb.bark, alpha * .8, flip); canopyLayer(c, cc => scLeaves(cc, g.sc, ox, oy, k, flip, alpha, 1)); return; }   /* leaves behind the limbs, the limbs, leaves in front */
   c.save(); if (groundClip) { groundClip(c); c.clip(); }
   const body = g.roots.filter(r => r.body); inkLines(c, g.roots.filter(r => !r.body), ox, oy, k, SEPIA, alpha * .92, flip);
@@ -516,16 +560,16 @@ function slopeChart(c, w, h, sec, mode, yr) {
   const X = t => ox + (t - t0) * L * k, Y = z => oyT + (zTop - z) * k, gy = t => Y(gz(t)), x0 = X(t0), x1 = X(t1), yBot = Y(zBot);
   const ground = () => { const p = new Path2D(); p.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) p.lineTo(X(q / n), Y(prof.gnd[q])); p.lineTo(x1, gy(t1)); return p; };
   const soil = () => { const p = ground(); p.lineTo(x1, yBot + 6); p.lineTo(x0, yBot + 6); p.closePath(); return p; };
-  c.save(); if (mode !== 'labels') { c.fillStyle = PAPER; c.fillRect(0, 0, w, h); }
-  if (mode !== 'labels') {   // the hillside in section: a soft soil tone, a light hatch, the ground line
-    c.fillStyle = LINE ? PAPER : '#e7e0d0'; c.fill(soil()); if (mode !== 'plants') { c.save(); c.clip(soil()); c.strokeStyle = INK; c.globalAlpha = .1; c.lineWidth = .6; c.beginPath(); for (let x = x0 - 800; x < x1; x += 9) { c.moveTo(x, top); c.lineTo(x + 800, yBot + 800); } c.stroke(); c.restore(); }
+  c.save(); if (mode !== 'labels') { washi(c, w, h); bokashiSky(c, w, 0, h * .32); }
+  if (mode !== 'labels') {   // the hillside in section: ochre deepening with depth, a few strata lines, the ground line
+    soilFill(c, soil(), oyT, yBot); { const gp = []; gp.push([x0, gy(t0)]); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) gp.push([X(q / n), Y(prof.gnd[q])]); gp.push([x1, gy(t1)]); strata(c, soil(), gp, yBot - Math.min(...gp.map(q => q[1])), 31); }
     for (const { p, g } of items.slice().sort((a, b) => b.p.d - a.p.d)) drawPlant(c, g, X(p.t), gy(p.t), k, 1 - .45 * Math.min(1, p.d / p.reach), p.seed & 1 ? 1 : -1, cc => { cc.beginPath(); cc.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) cc.lineTo(X(q / n), Y(prof.gnd[q])); cc.lineTo(x1, gy(t1)); cc.lineTo(x1, 1e5); cc.lineTo(x0, 1e5); cc.closePath(); });   /* roots stay inside the drawn stretch */
     c.strokeStyle = INK; c.lineWidth = 1.6; c.globalAlpha = 1; c.stroke(ground()); }
   if (mode === 'plants') { c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], counts: items.reduce((o, it) => (o[it.p.sp] = (o[it.p.sp] || 0) + 1, o), {}), sizes: items.reduce((o, it) => (o[it.p.sp] = Math.max(o[it.p.sp] || 0, it.g.H), o), {}), slope: true };   /* left to right, as the painter is told */ }
   // the words: title, an elevation ruler at true scale, each run of one species named once below the hillside, with a faint leader up to it
   const drop = (gz(t0) - gz(t1)), pct = Math.round(Math.abs(drop) / span * 100), ab = S.secs && S.secs.indexOf(sec) >= 0 && secLetters ? secLetters(S.secs.indexOf(sec)).join('–') + ' · ' : '';
   c.fillStyle = INK; c.font = font(12, 600); c.textAlign = 'left'; c.textBaseline = 'top';
-  c.fillText(ab + (narrow ? `${TT('raíces', 'roots')} · ${yr === 0 ? TT('al plantar', 'planting day') : yr + ' yr'}` : ES_ON() ? `Raíces en el terreno · roots on the slope · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')} · escala real · true scale · ${fL(span, 0)}, ${pct}%` : `roots on the slope · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'} · true scale, no vertical exaggeration · ${fL(span, 0)} across, ${pct}% slope`), narrow ? 10 : 64, 10);
+  cartouche(c, ab + (narrow ? `${TT('raíces', 'roots')} · ${yr === 0 ? TT('al plantar', 'planting day') : yr + ' yr'}` : ES_ON() ? `Raíces en el terreno · roots on the slope · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')} · escala real · true scale · ${fL(span, 0)}, ${pct}%` : `roots on the slope · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'} · true scale, no vertical exaggeration · ${fL(span, 0)} across, ${pct}% slope`), narrow ? 8 : 60, 6);
   let stepU = niceStep(((zTop - zBot) * uf) / 5); while (stepU / uf * k < 18) stepU = niceStep(stepU * 2.2);
   c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle'; c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL - 6, oyT - 4); c.lineTo(mL - 6, yBot); c.stroke();
   for (let u = Math.ceil(zBot * uf / stepU) * stepU; u <= zTop * uf + 1e-6; u += stepU) { const y = Y(u / uf); c.beginPath(); c.moveTo(mL - 10, y); c.lineTo(mL - 6, y); c.stroke(); c.fillStyle = INK2; c.fillText(`${+u.toFixed(1)}`, mL - 13, y); }
@@ -559,6 +603,7 @@ function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow
   const tot = Math.min(fitW, G.reduce((s, g) => s + colW(g, k), 0)), gy0 = gyFix || top + above * k, bottomY = gy0 + below * k;
   // the ruler: depth below ground, rules across the panel like the six-foot lines of the prairie chart
   LAYOUT.push({ x0: mL, x1: px0 + pw, gy0, bottomY, top });
+  if (mode !== 'labels') { const sp = new Path2D(); sp.rect(mL, gy0, px0 + pw - mL, bottomY - gy0); soilFill(c, sp, gy0, bottomY); strata(c, sp, [[mL, gy0], [px0 + pw, gy0]], bottomY - gy0, px0); }   // the earth in section
   const type = mode !== 'plants', ink = mode !== 'labels';
   let stepU = niceStep((below * uf) / 4); while (stepU / uf * k < 16) stepU = niceStep(stepU * 2.2); const stepM = stepU / uf; c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle';
   if (type) {
@@ -590,9 +635,9 @@ window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.ro
   const yr = AGRO ? AGRO.year : 10, uf = isFt() ? 3.28084 : 1, un = isFt() ? 'ft' : 'm', seen = new Map();
   for (const p of plantsNear(sec).sort((p, q) => p.t - q.t)) if (!seen.has(p.sp)) seen.set(p.sp, p);
   { const key = plateKey(sec, [...seen.keys()], yr); if (key !== lastKey) { lastKey = key; if (rootInfo) setTimeout(rootInfo); } }   // the layer's words follow what the line crosses
-  c.save(); if (mode !== 'labels') { c.fillStyle = PAPER; c.fillRect(0, 0, w, h); } if (!mode) { c.strokeStyle = 'rgba(40,40,36,.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, .5); c.lineTo(w, .5); c.stroke(); }
+  c.save(); if (mode !== 'labels') { washi(c, w, h); bokashiSky(c, w, 0, h * .3); } if (!mode) { c.strokeStyle = 'rgba(40,40,36,.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, .5); c.lineTo(w, .5); c.stroke(); }
   c.fillStyle = INK; c.font = font(12, 600); c.textAlign = 'left'; c.textBaseline = 'top';
-  if (mode !== 'plants' && S.rootsLayout !== 'slope') c.fillText(ES_ON() ? `${w < 640 ? 'raíces · roots' : 'Raíces a lo largo del corte · roots along the section'} · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')}` : `${w < 640 ? 'roots' : 'roots along the section'} · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'}`, w < 640 ? 10 : 64, 10);
+  if (mode !== 'plants' && S.rootsLayout !== 'slope') cartouche(c, ES_ON() ? `${w < 640 ? 'raíces · roots' : 'Raíces a lo largo del corte · roots along the section'} · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')}` : `${w < 640 ? 'roots' : 'roots along the section'} · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'}`, w < 640 ? 8 : 60, 6);
   if (!mode && S.rootsShow === 'painted' && PLATE && PLATE.key === plateKey(sec, [...seen.keys()], yr)) {   // the painted plate, fitted whole into the band on its paper
     const im = PLATE.img, f = Math.min(w / im.width, (h - 4) / im.height), dw = im.width * f, dh = im.height * f; c.fillStyle = '#efe6d2'; c.fillRect(0, 0, w, h); c.drawImage(im, (w - dw) / 2, (h - dh) / 2 + 2, dw, dh); c.restore(); return { panels: [], species: [...seen.keys()], painted: true }; }
   if (!seen.size) { c.fillStyle = INK2; c.font = font(11); c.fillText('no species planted near this section line. plant with shape · agroforestry, then draw the section through them.', 64, 32); c.restore(); return; }
@@ -612,8 +657,9 @@ window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.ro
 /* painting the chart: what the painter is told, and a check that it kept the roots where the data put them */
 window.__rootsPaintPrompt = (keys, counts, sizes) => { bind(); const ftm = m => isFt() ? `${Math.round(m * 3.28084)} ft` : `${+m.toFixed(1)} m`, lsz = k => { const hb = habitFor(k, ROOT_DATA[k]); const L = hb && LEAFS[hb.leaf]; return L ? L.leaf : null; };
   const lines = keys.map(k => { const D = ROOT_DATA[k], H = sizes && sizes[k], lf = lsz(k); return `${D.common} (${D.latin.replace(/\s*\(.*?\)/g, '')})${counts && counts[k] ? ', exactly ' + counts[k] + ' plant' + (counts[k] > 1 ? 's' : '') : ''}${H ? ', ' + ftm(H) + ' tall' : ''}${H && lf ? (H / lf > 40 ? ', its leaves (about ' + Math.round(lf * 100) + ' cm) far too small to draw one by one at this scale: its crown is fine foliage texture in clustered masses, no individual leaf shapes' : ', each leaf about ' + Math.round(lf * 100) + ' cm') : ''}${LOOK[k] || D.habit ? ': ' + (LOOK[k] || D.habit) : ''}`; });
-  return (S.rootsInk === 'line' ? 'Turn this diagram into a finished pen-and-ink botanical plate in the manner of the root atlases of Lore Kutschera and Victorian scientific illustration: black ink only, fine linework, stippling and cross-hatching for shade lit from the upper left, fine hair roots drawn line by line, no colour and no grey wash, plain white paper. '
-    : 'Turn this diagram into a finished botanical plate in the manner of a hand-coloured 19th-century copperplate engraving and the root atlases of Lore Kutschera: fine ink linework, cross-hatched shading lit from the upper left, sepia roots with fine hair roots, quiet natural colour, plain warm paper. ')
+  return (S.rootsInk === 'line' ? 'Turn this diagram into a finished ink plate that marries the key-block line of old Japanese woodblock prints (confident brush lines that swell and taper, outlines carrying a few repeated texture marks, generous empty space) with the fine pen line of 19th-century botanical root atlases (Kutschera): black sumi ink only, no colour, no grey wash, only sparse stippling, warm off-white paper with a faint fibre. '
+    : 'Turn this diagram into a finished botanical plate that marries an old Japanese woodblock print (Edo to early Showa) with a 19th-century Western copperplate etching and the root atlases of Kutschera: from the woodblock, flat areas of quiet colour in a small palette, confident tapering key lines, soft bokashi gradients (a pale indigo band at the top of the sky, the earth deepening with depth), generous empty space and warm washi paper; from the etching, fine etched linework and delicate cross-hatching in the trunks, roots and soil, sepia hair roots. Lit from the upper left. ')
+    + 'No lettering of any kind, no Japanese characters, no seals or stamps, no cherry blossoms, no waves, no decorative border. '
     + 'TRUE SCALE: these are full-size plants drawn to scale, not miniatures, seen from far enough away that a whole tree fits on the page. Draw foliage at its real size relative to each plant: a mature tree carries tens of thousands of small leaves, so its crown reads as a mass of fine texture and clustered sprays, never as a few large countable leaves; the bark texture, branch thickness and twig fineness of a big tree. No storybook, bonsai or toy proportions. '
     + (S.rootsLayout === 'slope' ? 'This is a section through a planted hillside: keep the sloping ground line exactly where it is drawn; trunks and stems stand vertical, roots grow down through the soil below the slope; the toned area below the line is the hillside soil in section. ' : '')
     + (S.rootsLayout === 'slope' ? 'The species, in the order they first appear from left to right (several repeat further along the slope, keep each drawn plant as the species drawn there): ' : 'The plants, left to right: ') + lines.join('; ') + '. '
