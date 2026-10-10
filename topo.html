@@ -2528,9 +2528,43 @@ document.getElementById('animSound').onclick = e => { ANIM.sound = !ANIM.sound; 
 document.getElementById('geoRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.geo = b.dataset.geo === '1'; document.querySelectorAll('#geoRow button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('geoInfo').style.display = S.geo ? '' : 'none'; GEO.key = ''; geoRefresh(); geoInfo(); S.dirty = true; };
 document.getElementById('rootRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.roots = b.dataset.root === '1'; document.querySelectorAll('#rootRow button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('rootInfo').style.display = S.roots ? '' : 'none'; rootInfo(); S.dirty = true; };
 window.__topo = () => ({ S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3, PAPER, rootInfo });   // what roots.js draws with; a function, so it's read after everything here is set up
+const GROW = { on: false };
+async function rootsGrow(record) {   // the years played: each stage grown once first (the grown engine takes a moment per plant), then planting day to maturity in about ten seconds, the view recorded if asked
+  if (GROW.on) { GROW.on = false; return; } const L = window.__rootsInfo(S.sec); if (!L.length) return;
+  const end = Math.min(60, Math.max(...L.map(([, D]) => Math.round(D.yrs || 10)))), keys = L.map(([k]) => k), was = AGRO.year; GROW.on = true;
+  const setY = y => { AGRO.year = y; S.rec = S.rec || {}; S.rec.agroYear = y; agroApply(); const yb = document.querySelector('#rootInfo .rootYear'); if (yb) { yb.querySelector('input').value = String(y); yb.querySelector('.ry').textContent = y === 0 ? 'planting day' : `${y} year${y === 1 ? '' : 's'} after planting`; } S.dirty = true; };
+  busy('growing the plants for the film'); try { for (let y = 0; y <= end && GROW.on; y++) { for (const k of keys) window.__rootsGeo(k, y); await new Promise(r => setTimeout(r, 0)); } } finally { unbusy(); }
+  if (!GROW.on) { setY(was); return; }
+  if (record) recStart(); const t0 = performance.now(), dur = 10000;
+  await new Promise(done => { const step = () => { if (!GROW.on) return done(); const t = Math.min(1, (performance.now() - t0) / dur), y = Math.round(t * t * end); if (y !== AGRO.year) setY(y); if (t < 1) requestAnimationFrame(step); else setTimeout(done, 1500); }; setY(0); requestAnimationFrame(step); });   // eased: the early years, when most changes, get the most time
+  if (record) recStop(); GROW.on = false; toast(record ? 'growth recorded' : `grown: ${end} years`);
+}
+window.__rootsGrow = rootsGrow;
 function rootInfo() {   // the species the active section crosses: what each does for the land, how sure the numbers are, where they come from
-  const el = document.getElementById('rootInfo'); el.textContent = ''; if (!S.roots || !window.__rootsInfo) return; const L = window.__rootsInfo(S.sec);
-  if (!L.length) { el.textContent = 'no species planted near the section line yet: plant with shape · agroforestry, then draw the section through them.'; return; }
+  const el = document.getElementById('rootInfo'); let yb = el.querySelector(':scope > .rootYear'); [...el.childNodes].forEach(ch => { if (ch !== yb) ch.remove(); });   // the year slider survives a refresh, so it can be dragged while the panel follows
+  if (!S.roots || !window.__rootsInfo) return; const L = window.__rootsInfo(S.sec);
+  if (!L.length) { if (yb) yb.remove(); el.append('no species planted near the section line yet: plant with shape · agroforestry, then draw the section through them.'); return; }
+  const yLabel = () => AGRO.year === 0 ? 'planting day' : `${AGRO.year} year${AGRO.year === 1 ? '' : 's'} after planting`;
+  if (!yb) {   // years after planting: the same clock as agroforestry's canopies, so plan, section and chart grow together
+    yb = document.createElement('div'); yb.className = 'rootYear'; yb.style.cssText = 'display:grid;grid-template-columns:1fr auto;gap:4px 8px;align-items:center;margin-bottom:8px';
+    const lab = document.createElement('b'), mat = document.createElement('button'), rng = document.createElement('input'); lab.className = 'ry'; lab.style.fontSize = '12px';
+    mat.type = 'button'; mat.className = 'btn'; mat.textContent = 'mature'; mat.dataset.tip = 'every plant on the line at full size: the years its slowest species takes to mature';
+    rng.type = 'range'; rng.min = '0'; rng.max = '60'; rng.step = '1'; rng.setAttribute('aria-label', 'years after planting'); rng.style.cssText = 'grid-column:1/-1;width:100%';
+    const set = y => { AGRO.year = Math.max(0, Math.min(60, Math.round(y))); S.rec = S.rec || {}; S.rec.agroYear = AGRO.year; agroApply(); rng.value = String(AGRO.year); lab.textContent = yLabel(); S.dirty = true; };
+    rng.oninput = () => set(+rng.value); mat.onclick = () => set(Math.max(...window.__rootsInfo(S.sec).map(([, D]) => D.yrs || 10)));
+    const play = document.createElement('button'), recB = document.createElement('button'); play.type = recB.type = 'button'; play.className = recB.className = 'btn'; play.textContent = '▶ grow'; recB.textContent = 'record growth';
+    play.dataset.tip = 'planting day to full size in about ten seconds, plants and roots together'; recB.dataset.tip = 'the same, saved as a video of the view';
+    play.onclick = () => rootsGrow(false); recB.onclick = () => rootsGrow(true); const pr = document.createElement('div'); pr.className = 'u2acts'; pr.style.gridColumn = '1/-1'; pr.append(play, recB);
+    yb.append(lab, mat, rng, pr); el.prepend(yb); }
+  { const rng = yb.querySelector('input'); if (document.activeElement !== rng) rng.value = String(AGRO.year); yb.querySelector('.ry').textContent = yLabel(); }
+  { const pb = document.createElement('button'); pb.className = 'btn'; pb.type = 'button'; pb.textContent = 'paint the root chart'; pb.dataset.tip = 'the chart painted as a botanical engraving by the image model; names, depths and the ruler stay exact, laid over its picture'; pb.style.cssText = 'width:100%;margin-bottom:8px'; pb.onclick = () => window.__paintRoots(); el.append(pb);
+    const st = window.__rootsPlateState ? window.__rootsPlateState(S.sec) : 'none', seg = document.createElement('div'); seg.className = 'seg'; seg.style.marginBottom = '6px';   // drawing or painted: the painted plate only while it still matches the line, the plants and the year
+    for (const [v, t] of [['drawn', 'drawing'], ['painted', 'painted']]) { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; const on = (S.rootsShow || 'drawn') === v && (v === 'drawn' || st === 'current'); b.classList.toggle('on', on || (v === 'drawn' && st !== 'current')); if (v === 'painted' && st !== 'current') b.disabled = true; b.onclick = () => { S.rootsShow = v; rootInfo(); S.dirty = true; }; seg.append(b); }
+    el.append(seg);
+    { const sty = document.createElement('div'); sty.className = 'seg'; sty.style.marginBottom = '6px';   // the drawing's style: colour, or pen and ink; painting follows it
+      for (const [v, t] of [['color', 'colour'], ['line', 'line drawing']]) { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; b.classList.toggle('on', (S.rootsInk || 'color') === v); b.onclick = () => { S.rootsInk = v; rootInfo(); S.dirty = true; }; sty.append(b); }
+      el.append(sty); }
+    if (st === 'stale') { const n = document.createElement('p'); n.className = 'u2note'; n.style.margin = '0 0 6px'; n.textContent = 'the painted plate was made before the last change to the line, the plants or the year: paint again to bring it up to date.'; el.append(n); } }
   for (const [, D] of L) { const p = document.createElement('p'); p.style.margin = '0 0 6px'; const b = document.createElement('b'); b.textContent = D.common; const i = document.createElement('i'); i.textContent = ' ' + D.latin; p.append(b, i, document.createTextNode(` · most roots to ${fL(D.typ, 1)}, deepest ${fL(D.max, 1)}${D.regen ? ' · ' + D.regen : ''}`));
     for (const sc of (D.src || []).slice(0, 2)) { const a = document.createElement('a'); a.href = sc.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' [' + sc.cite + ']'; p.append(a); } el.append(p); }
   if (window.ROOT_NOTES) { const p = document.createElement('p'); p.style.cssText = 'margin:0;color:var(--ink3)'; p.textContent = window.ROOT_NOTES; el.append(p); } }
@@ -4051,6 +4085,19 @@ function showPainted(src, title, note, name, again) {   // the painted panel: pi
   const panel = document.getElementById('aiPanel'); let im = document.getElementById('aiImg'); if (!im) { im = document.createElement('img'); im.id = 'aiImg'; im.alt = 'the painted view'; document.getElementById('aiImgWrap').appendChild(im); }
   AI.last = src; AI.lastName = name; AI.again = again; AI.fixes = []; im.src = src; { const li = new Image(); li.onload = () => { AI.lastImg = li; aerialUI(); }; li.src = src; } document.getElementById('aiTitle').textContent = title; document.getElementById('aiNote').textContent = note; panel.hidden = false;
 }
+async function paintRoots() {             // the root chart painted as a botanical plate: the plants drawn from the data go to the painter alone, the ruler, names and depths are laid back over its picture in exact type, and a check says if it moved any roots
+  if (!S.sec || !window.__rootsChart) return; if (AI.busy) return; const key = aiKey(), W2 = 1536, H2 = 864, ab = secLetters(S.secI).join('–');
+  const drawn = document.createElement('canvas'); drawn.width = W2; drawn.height = H2; const L = window.__rootsChart(drawn.getContext('2d'), W2, H2, S.sec, 'plants'); if (!L || !L.species.length) { toast('no planted species near this section line'); return; }
+  const finish = (pic, title, note, painted) => { const out = document.createElement('canvas'); out.width = W2; out.height = H2; const o = out.getContext('2d'); o.drawImage(pic, 0, 0, W2, H2); window.__rootsChart(o, W2, H2, S.sec, 'labels'); if (painted) { window.__rootsSetPlate(out, S.sec, L.species); S.rootsShow = 'painted'; rootInfo(); S.dirty = true; } showPainted(out.toDataURL('image/png'), title, note, `coyote-topo-roots-${ab}.png`, paintRoots); };
+  if (!key) { toast('no google ai key · the chart is drawn, not painted'); finish(drawn, `roots ${ab} · drawn`, 'the root chart as the data draws it. add a google ai key to paint it.'); return; }
+  AI.busy = true; busy(`painting the roots along ${ab}`);
+  const was = AI.model; if (AI.engine === 'google') AI.model = 'gemini-3-pro-image-preview';   // plates use the pro model: it holds a drawing's structure where the fast one redraws
+  try { const prompt = window.__rootsPaintPrompt(L.species), im = await loadImg(await aiCall(key, drawn.toDataURL('image/png').split(',')[1], prompt, null, '2K'));
+    const pc = document.createElement('canvas'); pc.width = W2; pc.height = H2; pc.getContext('2d').drawImage(im, 0, 0, W2, H2); const drift = window.__rootsDrift(drawn, pc, L.panels);
+    finish(pc, `roots ${ab} · painted · ${aiModelName()}${drift.length ? ' · check: ' + drift.slice(0, 4).join(', ') + (drift.length > 4 ? ` and ${drift.length - 4} more` : '') + ' · press again for another' : ' · plants and roots where the data puts them'}`, prompt, true); }
+  catch (e) { toast(String(e.message || e)); } finally { AI.model = was; AI.busy = false; unbusy(); S.dirty = true; }
+}
+window.__paintRoots = paintRoots;
 async function paintSection() {           // the active section as the drawing sheet paints it: square to the line at eye level, no perspective, the cut face held; without a key the renderer's own picture
   if (!S.sec) { toast('draw a section line in plan first'); return; } if (AI.busy) return; const key = aiKey(); const ab = secLetters(S.secI).join('–'); AI.busy = true; busy(key ? `painting section ${ab}` : `drawing section ${ab}`);
   const restore = sectionCamera();
@@ -5269,7 +5316,7 @@ const AGRO_LIB = {
   toyon: ['toyon', 'shrub', [3, 5], [5, 8], 15, [6, 7], [11, 12, 1], true, 'winter berries for birds'],
   sage: ['white sage', 'shrub', [1, 1.5], [2, 3], 5, [4, 5, 6], [], true, 'bees crowd it in spring; rots with summer water'],
 };
-const woodyTree = st => st.kind === 'tree' && !(st.sp && AGRO_LIB[st.sp] && (AGRO_LIB[st.sp][1] === 'grass' || AGRO_LIB[st.sp][1] === 'forb'));   // grasses and flowers are planted like trees but are not counted as trees, nor their wood as carbon
+const woodyTree = st => st.kind === 'tree' && !(st.sp && AGRO_LIB[st.sp] && (AGRO_LIB[st.sp][1] === 'grass' || AGRO_LIB[st.sp][1] === 'forb' || AGRO_LIB[st.sp][1] === 'succulent'));   // grasses and flowers are planted like trees but are not counted as trees, nor their wood as carbon
 function agroRadiusM(sp, yr, hi) {   // metres of canopy radius after yr years: a sapling of 0.3 m, most of its size by the middle of its years to mature
   const L = AGRO_LIB[sp]; if (!L) return .5; const d = hi ? L[2][1] : (L[2][0] + L[2][1]) / 2, yrs = (L[3][0] + L[3][1]) / 2, r0 = .3; return r0 + (d / 2 - r0) * (1 - Math.exp(-3 * Math.max(0, yr) / yrs));
 }
@@ -6528,7 +6575,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   function agroPanel(box) { agroBoxEl = box; if (S.rec && S.rec.agroYear != null) AGRO.year = S.rec.agroYear; agroApply(); agroRender(); }
   function agroRender() {
     if (!agroBoxEl || !agroBoxEl.isConnected) return; agroBoxEl.textContent = ''; const w = make('div', { cls: 'u2wb' }); agroBoxEl.append(w); agroSeenYear = AGRO.year; agroBoxEl.dataset.n = agroTrees().length + '|' + S.unit;
-    const sel = make('select', { 'aria-label': 'species' }); for (const kind of ['tree', 'shrub', 'grass', 'forb']) { const og = make('optgroup', { label: { tree: 'trees', shrub: 'shrubs, vines and succulents', grass: 'grasses', forb: 'flowers and cover crops' }[kind] }); if (!Object.values(AGRO_LIB).some(L => L[1] === kind)) continue; for (const id in AGRO_LIB) if (AGRO_LIB[id][1] === kind) { const o = make('option', { value: id, text: AGRO_LIB[id][0] }); if (id === (AGRO.pick || 'olive')) o.selected = true; og.append(o); } sel.append(og); }
+    const sel = make('select', { 'aria-label': 'species' }); for (const kind of ['tree', 'shrub', 'succulent', 'grass', 'forb']) { const og = make('optgroup', { label: { tree: 'trees and palms', shrub: 'shrubs and vines', succulent: 'cacti and succulents', grass: 'grasses', forb: 'flowers and cover crops' }[kind] }); if (!Object.values(AGRO_LIB).some(L => L[1] === kind)) continue; for (const id in AGRO_LIB) if (AGRO_LIB[id][1] === kind) { const o = make('option', { value: id, text: AGRO_LIB[id][0] }); if (id === (AGRO.pick || 'olive')) o.selected = true; og.append(o); } sel.append(og); }
     AGRO.pick = AGRO.pick || 'olive'; sel.onchange = () => { AGRO.pick = sel.value; if (AGRO.arm) AGRO.arm = sel.value; agroRender(); }; w.append(sel);
     const L = AGRO_LIB[AGRO.pick], fm = m => isFt() ? tz((m * 3.28084).toFixed(0)) + ' ft' : tz(m.toFixed(0)) + ' m', mo = arr => arr.length ? arr.map(m => MONTHS[m - 1]).join(' ') : 'none';
     w.append(make('p', { cls: 'u2note', text: `canopy ${fm(L[2][0])} to ${fm(L[2][1])} across in ${L[3][0]}–${L[3][1]} years · ${isFt() ? tz((L[4] / 3.785).toFixed(0)) + ' gal' : L[4] + ' L'} a week once established · flowers ${mo(L[5])} · harvest ${mo(L[6])} · ${L[8]}` }));
