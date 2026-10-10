@@ -6,7 +6,7 @@
 #   texts : {'t1a2b3c4d': 'new text'}   key = crc32 of the ORIGINAL source text, so it survives edits
 import json as _lj, os as _lo, zlib as _lz
 LAYOUT_FILE = 'pack_layout.json'
-LAYOUT = {'slots': {}, 'boxes': {}, 'texts': {}}
+LAYOUT = {'slots': {}, 'boxes': {}, 'texts': {}, 'sizes': {}}   # sizes: {text key: scale on the original size} (10 Oct, Will)
 if _lo.path.exists(LAYOUT_FILE):
     try: LAYOUT.update(_lj.load(open(LAYOUT_FILE, encoding='utf-8')))
     except Exception as e: print('pack_layout.json unreadable:', e)
@@ -101,6 +101,18 @@ def apply_layout(PAGES):
             if g.startswith('para:'): continue                                   # paragraphs were already rewrapped at build time
             src = getattr(t, '_orig_text', None) or t.get_text(); t._orig_text = src
             if tkey(src) in LAYOUT['texts']: t.set_text(LAYOUT['texts'][tkey(src)])
+        # 10 Oct (Will): text sizes from the editor. A label just scales; a paragraph scales its lines and their spacing about its first line
+        SZ = LAYOUT.get('sizes') or {}; groups = {}
+        for t in arts:
+            g = t.get_gid() or ''
+            k = g.split(':')[1] if g.startswith('para:') else tkey(getattr(t, '_orig_text', None) or t.get_text())
+            if k in SZ: groups.setdefault(k, []).append(t)
+        for k, ts in groups.items():
+            s = SZ[k]; top = max(t.get_position()[1] for t in ts)
+            for t in ts:
+                if not hasattr(t, '_orig_size'): t._orig_size = t.get_fontsize()
+                t.set_fontsize(t._orig_size * s); t._size_scale = s
+                if len(ts) > 1: x_, y_ = t.get_position(); t.set_position((x_, top - (top - y_) * s))
         fig.canvas.draw(); r = fig.canvas.get_renderer()
         boxes = []
         for i, ax in enumerate(fig.axes):
@@ -135,11 +147,11 @@ def apply_layout(PAGES):
             rect = [bb.x0, 1 - bb.y1, bb.width, bb.height]; g = t.get_gid() or ''
             if g.startswith('para:'):
                 _, key, orig = g.split(':', 2)
-                P = paras.setdefault(key, {'key': key, 'text': LAYOUT['texts'].get(key, PARA_SRC.get(key, '')), 'rects': [], 'size': t.get_fontsize(), 'para': True})
+                P = paras.setdefault(key, {'key': key, 'text': LAYOUT['texts'].get(key, PARA_SRC.get(key, '')), 'rects': [], 'size': t.get_fontsize(), 'scale': getattr(t, '_size_scale', 1), 'para': True})
                 P['rects'].append(rect)
             else:
                 src = getattr(t, '_orig_text', s)
-                texts.append({'key': tkey(src), 'text': s, 'rect': [round(v, 4) for v in rect], 'size': round(t.get_fontsize(), 1)})
+                texts.append({'key': tkey(src), 'text': s, 'rect': [round(v, 4) for v in rect], 'size': round(t.get_fontsize(), 1), 'scale': getattr(t, '_size_scale', 1)})
         for P in paras.values():
             R = P.pop('rects'); x0 = min(a[0] for a in R); y0 = min(a[1] for a in R); x1 = max(a[0] + a[2] for a in R); y1 = max(a[1] + a[3] for a in R)
             P['rect'] = [round(x0, 4), round(y0, 4), round(x1 - x0, 4), round(y1 - y0, 4)]; texts.append(P)
