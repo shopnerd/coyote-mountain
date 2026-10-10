@@ -125,6 +125,7 @@ const LOOK = {   // for the painter: leaf, bark and form, in a phrase
   rosemary: 'dense shrub of needle-like dark leaves', ceanothus: 'dense shrub of small dark leaves, blue flower clusters', toyon: 'dense evergreen shrub, toothed leathery leaves, red berries',
   sage: 'mound of silvery-white broad leaves, tall flower spikes', vetiver: 'tall stiff upright clump of narrow leaves', bigbluestem: 'tall bunchgrass with three-branched turkey-foot seed heads',
   agave: 'rosette of thick grey-green spine-tipped leaves', pricklypear: 'stacked flat oval pads with spines and areoles',
+  stonepine: 'umbrella crown of dark needles on a tall clear red-brown trunk', mexfanpalm: 'very tall slender trunk, small crown of bright green fan leaves, skirt of dry fronds', pirul: 'weeping willow-like crown of fine pinnate leaves, pink peppercorn clusters, gnarled trunk', sycamore: 'mottled white and tan bark, broad maple-like leaves, crooked leaning trunks', buckwheat: 'low mound of tiny needle-like leaves with cream-pink flower heads', deergrass: 'large fountain of fine grass with tall pale flower spikes',
 };
 const HABIT = {   // per species: the crown's shape (centre height and half-height as fractions of the tree's height, lowest limbs), leaf texture, foliage tones shaded to lit
   oak: { crown: { cy: .55, ry: .45, base: .14, rx: 1 }, lean: .12, leaf: 'scallop', clump: .05, tones: ['#4c5638', '#7d8a5c', '#c3c8a4'], bark: '#3b3832' },
@@ -146,12 +147,14 @@ const HABIT = {   // per species: the crown's shape (centre height and half-heig
   corkoak: { crown: { cy: .56, ry: .42, base: .2, rx: 1.05 }, gnarl: 2, lean: .2, scaffolds: 5, splay: 2, leaf: 'scallop', clump: .05, tones: ['#3f4c33', '#677852', '#a9b58f'], bark: '#8d7a63' },
   bay: { crown: { cy: .52, ry: .48, base: .06, rx: .8, taper: -.3 }, trunks: 3, trunkSplay: .3, lean: .08, scaffolds: 5, splay: 1.2, leaf: 'glossy', clump: .05, tones: ['#2e3f26', '#4d6440', '#8ea47c'], bark: '#4d4a44' },
   pistachio: { crown: { cy: .55, ry: .42, base: .2, rx: 1.05 }, trunks: 2, trunkSplay: .5, gnarl: 1.5, lean: .2, scaffolds: 5, leaf: 'broad', clump: .05, tones: ['#4b5c38', '#7a8f5c', '#bccb98'], bark: '#7d7466' },
+  pirul: { crown: { cy: .5, ry: .42, base: .25, rx: 1.1 }, trunks: 1, gnarl: 2, lean: .3, scaffolds: 5, splay: 2.3, leaf: 'feather', clump: .05, tones: ['#4a5c38', '#7a9058', '#bccb96'], bark: '#6a5a4a' },
+  sycamore: { crown: { cy: .6, ry: .38, base: .25, rx: 1 }, trunks: 2, trunkSplay: .5, gnarl: 2.2, lean: .3, scaffolds: 5, splay: 2, leaf: 'broad', clump: .06, tones: ['#4c5f36', '#7c9455', '#bfd09a'], bark: '#c9c2b0' },
   strawberrytree: { crown: { cy: .55, ry: .45, base: .12, rx: 1 }, trunks: 3, trunkSplay: .6, gnarl: 1.5, lean: .2, scaffolds: 5, leaf: 'glossy', clump: .045, tones: ['#344528', '#55703f', '#97ad7a'], bark: '#8a4a32' },
 };
 const SHRUB = { crown: { cy: .5, ry: .5, base: .03, rx: 1 }, trunks: 5, trunkSplay: 1.3, lean: .2, scaffolds: 7, splay: 2.4, leaf: 'fine', clump: .07, tones: ['#4c5a3e', '#7c8c66', '#bcc6a8'], bark: '#5a5248' };
 const SHRUBS = {   // shrubs that differ from the default mound: tone, leaf and stance
   saltbush: { tones: ['#7b8170', '#a5ab98', '#d6d9cb'] }, jojoba: { leaf: 'glossy', tones: ['#56634c', '#808f72', '#b8c2a8'] }, creosote: { crown: { cy: .55, ry: .45, base: .12, rx: 1, taper: .35 }, trunks: 7, trunkSplay: 1.5, leaf: 'glossy', clump: .05, tones: ['#3d4a2c', '#62733f', '#a2b07a'] },
-  sage: { tones: ['#8e9688', '#b8beb2', '#e3e6dc'], leaf: 'broad' }, rosemary: { leaf: 'needle', tones: ['#33402c', '#566649', '#909e83'] }, lavender: { leaf: 'needle', tones: ['#6f7a6a', '#98a291', '#c9cfc2'] },
+  sage: { tones: ['#8e9688', '#b8beb2', '#e3e6dc'], leaf: 'broad' }, buckwheat: { leaf: 'needle', tones: ['#5e6650', '#8c9478', '#c6c8b0'] }, rosemary: { leaf: 'needle', tones: ['#33402c', '#566649', '#909e83'] }, lavender: { leaf: 'needle', tones: ['#6f7a6a', '#98a291', '#c9cfc2'] },
   ceanothus: { leaf: 'glossy', tones: ['#2f3d27', '#4f6240', '#8a9c78'] }, toyon: { leaf: 'glossy', crown: { cy: .5, ry: .5, base: .08, rx: 1 }, tones: ['#2f4226', '#4f6a3e', '#8ea77a'] },
   guava: { leaf: 'glossy', tones: ['#5d6b54', '#87957c', '#bcc6b0'] }, elder: { leaf: 'feather', tones: ['#44582f', '#6f8a4c', '#b0c58c'] }, lupine: { leaf: 'feather', tones: ['#6f7d68', '#9aa891', '#cdd5c4'] },
   myrtle: { leaf: 'glossy', tones: ['#2e3f27', '#4b6340', '#8aa27c'] }, lentisk: { leaf: 'glossy', tones: ['#33452a', '#536a43', '#93a77f'] }, thyme: { leaf: 'needle', tones: ['#5a6650', '#84907a', '#b9c1ad'] },
@@ -420,7 +423,7 @@ window.__rootsProfile = (c, sec, X, Y, n, gnd, pxm, mini) => { bind(); LINE = S.
   const P = plantsNear(sec); if (!P.length) return 0; const yr = AGRO ? AGRO.year : 10, gy = t => { const q = t * n, i = Math.min(n - 1, Math.floor(q)), f = q - i; return gnd[i] * (1 - f) + gnd[i + 1] * f; };
   const clip = cc => { cc.beginPath(); cc.moveTo(X(0), Y(gnd[0])); for (let q = 1; q <= n; q++) cc.lineTo(X(q), Y(gnd[q])); cc.lineTo(X(n), 1e5); cc.lineTo(X(0), 1e5); cc.closePath(); };
   let drawn = 0;
-  for (const p of P) { const g = plantGeo(p.sp, yr, habitFor(p.sp, ROOT_DATA[p.sp]) ? 0 : p.seed % 4);   // grown species: one plant, mirrored for variety; growing four would cost a second
+  for (const p of P) { const g = plantGeo(p.sp, ageOf(p.st, yr), habitFor(p.sp, ROOT_DATA[p.sp]) ? 0 : p.seed % 4);   // grown species: one plant, mirrored for variety; growing four would cost a second
     if (!g) continue; const hp = Math.max(g.H, g.T) * pxm; if (hp < 3) continue;
     drawPlant(c, g, X(p.t * n), Y(gy(p.t)), pxm, 1 - .55 * Math.min(1, p.d / p.reach), p.seed & 1 ? 1 : -1, clip); drawn++; }
   return drawn;
@@ -428,12 +431,13 @@ window.__rootsProfile = (c, sec, X, Y, n, gnd, pxm, mini) => { bind(); LINE = S.
 
 /* the root chart: each species the section crosses once, side by side at one scale, against a depth ruler, named, with how deep it goes */
 let lastKey = null;
+const ageOf = (st, yr) => st.grow === false ? st.age || 0 : yr + (st.age || 0);   /* a plant's age: new ones grow with the slider; age adds years they already had; grow false keeps an existing tree at today's size */
 /* the chart on the slope: the planted stretch of the section at true scale, no vertical exaggeration, every plant where it stands on the real ground, roots down through the hillside */
 function slopeChart(c, w, h, sec, mode, yr) {
   const P = plantsNear(sec), uf = isFt() ? 3.28084 : 1, un = isFt() ? 'ft' : 'm', narrow = w < 640;
   if (!P.length) return null;
   const n = 600, prof = sectionProfile(n, sec), L = prof.L, gz = t => { const q = Math.max(0, Math.min(1, t)) * n, i = Math.min(n - 1, Math.floor(q)), f = q - i; return prof.gnd[i] * (1 - f) + prof.gnd[i + 1] * f; };
-  const yrM = Math.max(yr, ...P.map(p => ROOT_DATA[p.sp].yrs * 1.5)), items = P.map(p => { const g = plantGeo(p.sp, yr, habitFor(p.sp, ROOT_DATA[p.sp]) ? 0 : p.seed % 4); return g && { p, g: { ...g, m: dims(p.sp, yrM) } }; }).filter(Boolean);
+  const yrM = Math.max(yr, ...P.map(p => ROOT_DATA[p.sp].yrs * 1.5)), items = P.map(p => { const g = plantGeo(p.sp, ageOf(p.st, yr), habitFor(p.sp, ROOT_DATA[p.sp]) ? 0 : p.seed % 4); return g && { p, g: { ...g, m: dims(p.sp, yrM) } }; }).filter(Boolean);
   const cap = Math.max(...items.map(({ g }) => Math.min(g.m.M, Math.max(g.m.T * 2.2, g.m.H * .5))));   // how deep the soil is shown: the deep roots go on, said in words
   const pad = Math.max(...items.map(({ g }) => Math.max(g.m.Wc / 2, Math.min(g.m.Lr, g.m.Wc)))) / L, t0 = Math.max(0, Math.min(...items.map(it => it.p.t)) - pad), t1 = Math.min(1, Math.max(...items.map(it => it.p.t)) + pad), span = (t1 - t0) * L;
   let zTop = -Infinity, zBot = Infinity; for (let q = Math.floor(t0 * n); q <= Math.ceil(t1 * n); q++) { zTop = Math.max(zTop, prof.gnd[q]); zBot = Math.min(zBot, prof.gnd[q]); }
@@ -445,17 +449,17 @@ function slopeChart(c, w, h, sec, mode, yr) {
   c.save(); if (mode !== 'labels') { c.fillStyle = PAPER; c.fillRect(0, 0, w, h); }
   if (mode !== 'labels') {   // the hillside in section: a soft soil tone, a light hatch, the ground line
     c.fillStyle = LINE ? PAPER : '#e7e0d0'; c.fill(soil()); if (mode !== 'plants') { c.save(); c.clip(soil()); c.strokeStyle = INK; c.globalAlpha = .1; c.lineWidth = .6; c.beginPath(); for (let x = x0 - 800; x < x1; x += 9) { c.moveTo(x, top); c.lineTo(x + 800, yBot + 800); } c.stroke(); c.restore(); }
-    for (const { p, g } of items.slice().sort((a, b) => b.p.d - a.p.d)) drawPlant(c, g, X(p.t), gy(p.t), k, 1 - .45 * Math.min(1, p.d / p.reach), p.seed & 1 ? 1 : -1, cc => { cc.beginPath(); cc.moveTo(x0 - 400, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) cc.lineTo(X(q / n), Y(prof.gnd[q])); cc.lineTo(x1 + 400, gy(t1)); cc.lineTo(x1 + 400, 1e5); cc.lineTo(x0 - 400, 1e5); cc.closePath(); });
+    for (const { p, g } of items.slice().sort((a, b) => b.p.d - a.p.d)) drawPlant(c, g, X(p.t), gy(p.t), k, 1 - .45 * Math.min(1, p.d / p.reach), p.seed & 1 ? 1 : -1, cc => { cc.beginPath(); cc.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) cc.lineTo(X(q / n), Y(prof.gnd[q])); cc.lineTo(x1, gy(t1)); cc.lineTo(x1, 1e5); cc.lineTo(x0, 1e5); cc.closePath(); });   /* roots stay inside the drawn stretch */
     c.strokeStyle = INK; c.lineWidth = 1.6; c.globalAlpha = 1; c.stroke(ground()); }
-  if (mode === 'plants') { c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], slope: true };   /* left to right, as the painter is told */ }
+  if (mode === 'plants') { c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], counts: items.reduce((o, it) => (o[it.p.sp] = (o[it.p.sp] || 0) + 1, o), {}), slope: true };   /* left to right, as the painter is told */ }
   // the words: title, an elevation ruler at true scale, each run of one species named once below the hillside, with a faint leader up to it
   const drop = (gz(t0) - gz(t1)), pct = Math.round(Math.abs(drop) / span * 100);
   c.fillStyle = INK; c.font = font(12, 600); c.textAlign = 'left'; c.textBaseline = 'top';
-  c.fillText(narrow ? `roots on the slope · ${yr === 0 ? 'planting day' : yr + ' yr'}` : `roots on the slope · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'} · true scale, no vertical exaggeration · ${fL(span, 0)} across, ${pct}% slope`, narrow ? 10 : 64, 10);
+  c.fillText(narrow ? `${TT('raíces', 'roots')} · ${yr === 0 ? TT('al plantar', 'planting day') : yr + ' yr'}` : ES_ON() ? `Raíces en el terreno · roots on the slope · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')} · escala real · true scale · ${fL(span, 0)}, ${pct}%` : `roots on the slope · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'} · true scale, no vertical exaggeration · ${fL(span, 0)} across, ${pct}% slope`, narrow ? 10 : 64, 10);
   let stepU = niceStep(((zTop - zBot) * uf) / 5); while (stepU / uf * k < 18) stepU = niceStep(stepU * 2.2);
   c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle'; c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL - 6, top - 4); c.lineTo(mL - 6, yBot); c.stroke();
   for (let u = Math.ceil(zBot * uf / stepU) * stepU; u <= zTop * uf + 1e-6; u += stepU) { const y = Y(u / uf); c.beginPath(); c.moveTo(mL - 10, y); c.lineTo(mL - 6, y); c.stroke(); c.fillStyle = INK2; c.fillText(`${+u.toFixed(1)}`, mL - 13, y); }
-  c.save(); c.translate(12, (top + yBot) / 2); c.rotate(-Math.PI / 2); c.textAlign = 'center'; c.fillStyle = INK3; c.fillText(`elevation · ${un}`, 0, 0); c.restore();
+  c.save(); c.translate(12, (top + yBot) / 2); c.rotate(-Math.PI / 2); c.textAlign = 'center'; c.fillStyle = INK3; c.fillText(`${TT('elevación', 'elevation')} · ${un}`, 0, 0); c.restore();
   // each species numbered in order down the line, the number under every plant of it with a faint leader up to its roots, and a key below: as the root atlases label their plates
   const order = [], num = sp => { let k = order.indexOf(sp); if (k < 0) { order.push(sp); k = order.length - 1; } return k + 1; }, sorted = items.slice().sort((a, b) => a.p.t - b.p.t);
   const marks = []; for (const it of sorted) { const x = X(it.p.t), nn = num(it.p.sp), last = marks[marks.length - 1]; if (last && last.n === nn && x - last.x < 26) { last.x = (last.x * last.c + x) / (last.c + 1); last.c++; continue; } marks.push({ x, n: nn, c: 1, it }); }
@@ -464,11 +468,11 @@ function slopeChart(c, w, h, sec, mode, yr) {
     c.strokeStyle = INK3; c.globalAlpha = .5; c.setLineDash([2, 3]); c.lineWidth = .8; c.beginPath(); c.moveTo(mk.x, ly - 8); c.lineTo(X(mk.it.p.t), tipY + 3); c.stroke(); c.setLineDash([]); c.globalAlpha = 1;
     c.beginPath(); c.arc(mk.x, ly, 7.5, 0, Math.PI * 2); c.fillStyle = PAPER; c.fill(); c.strokeStyle = INK; c.lineWidth = .9; c.stroke(); c.fillStyle = INK; c.font = font(9.5, 600); c.fillText(String(mk.n), mk.x, ly + .5); }
   // the key: number, name, how many, how deep; wrapped across the width
-  const key = order.map((sp, k) => { const D = ROOT_DATA[sp], its = items.filter(it => it.p.sp === sp), g = its[0].g; return { n: k + 1, t: `${D.common}${its.length > 1 ? ' ×' + its.length : ''}`, d: narrow ? '' : ` · roots ${fL(g.T, 1)}, deepest ${fL(g.M, 1)}` }; });
+  const key = order.map((sp, k) => { const D = ROOT_DATA[sp], its = items.filter(it => it.p.sp === sp), g = its[0].g; return { n: k + 1, t: `${NM(D)}${its.length > 1 ? ' ×' + its.length : ''}`, d: narrow ? '' : ES_ON() ? ` · raíces/roots ${fL(g.T, 1)}, máx./deepest ${fL(g.M, 1)}` : ` · roots ${fL(g.T, 1)}, deepest ${fL(g.M, 1)}` }; });
   let kx = narrow ? 10 : 64, ky = yBot + 54; c.textAlign = 'left'; c.textBaseline = 'middle';
   for (const kk of key) { c.font = font(10.5, 600); const w1 = c.measureText(kk.n + ' ' + kk.t).width; c.font = font(10); const w2 = c.measureText(kk.d).width; if (kx + w1 + w2 + 18 > w - 10) { kx = narrow ? 10 : 64; ky += 15; }
     c.fillStyle = INK; c.font = font(10.5, 600); c.fillText(kk.n + ' ' + kk.t, kx, ky); c.fillStyle = INK3; c.font = font(10); c.fillText(kk.d, kx + w1, ky); kx += w1 + w2 + 18; }
-  c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], slope: true };   /* left to right, as the painter is told */
+  c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], counts: items.reduce((o, it) => (o[it.p.sp] = (o[it.p.sp] || 0) + 1, o), {}), slope: true };   /* left to right, as the painter is told */
 }
 const topH = g => g.H * (FORM[g.key] && FORM[g.key].stalk ? (FORM[g.key].stalk === 'white' ? 2.7 : 1.5) : 1.1), topHm = g => topH({ ...g, H: g.m.H });   // room above for flower stalks; topHm at full size, for the chart's scale
 { const T = window.__topo && window.__topo(); if (T) for (const [k, D] of Object.entries(ROOT_DATA)) if (!T.AGRO_LIB[k] && D.agro) {   // the restoration grasses, cover crops and desert shrubs join agroforestry's library: [name, kind, canopy m, years, L a week, flowers, harvest, bees, note]
@@ -501,11 +505,12 @@ function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow
   if (!type) return; c.textBaseline = 'top'; c.textAlign = 'center';
   for (const [g, cx, cw] of cols) { const D = g.D;
     if (g.M > below + 1e-6) { c.strokeStyle = SEPIA; c.lineWidth = 1; c.beginPath(); c.moveTo(cx, bottomY - 14); c.lineTo(cx, bottomY - 2); c.moveTo(cx - 3, bottomY - 6); c.lineTo(cx, bottomY - 2); c.lineTo(cx + 3, bottomY - 6); c.stroke(); }
-    c.fillStyle = INK; c.font = font(11, 600); c.fillText(D.common, cx, bottomY + 6, cw - 6);
+    c.fillStyle = INK; c.font = font(11, 600); c.fillText(NM(D), cx, bottomY + 6, cw - 6);
     if (narrow) continue;
     c.fillStyle = INK2; c.font = `italic ${font(10)}`; c.fillText(D.latin.replace(/\s*\(.*?\)/g, ''), cx, bottomY + 19, cw - 6);
-    c.font = font(10); c.fillStyle = INK3; c.fillText(`most roots to ${fL(g.T, 1)}`, cx, bottomY + 32, cw - 6); c.fillText(`deepest ${fL(g.M, 1)}`, cx, bottomY + 44, cw - 6); }
+    c.font = font(10); c.fillStyle = INK3; c.fillText(`${TT('raíces', 'most roots to')} ${fL(g.T, 1)}`, cx, bottomY + 32, cw - 6); c.fillText(`${TT('máx.', 'deepest')} ${fL(g.M, 1)}`, cx, bottomY + 44, cw - 6); }
 }
+const ES_ON = () => document.documentElement.lang === 'es', NM = D => ES_ON() && D.es && D.es !== D.common ? `${D.es} · ${D.common}` : D.common, TT = (es, en) => ES_ON() ? `${es} · ${en}` : en;
 const niceStep = v => { const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
 let LAYOUT = [], PLATE = null;   // PLATE: the last painted chart and what it was painted from (line, species, year)
 const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side']);   // a painted plate belongs to its line, plants, year and style
@@ -517,12 +522,12 @@ window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.ro
   { const key = plateKey(sec, [...seen.keys()], yr); if (key !== lastKey) { lastKey = key; if (rootInfo) setTimeout(rootInfo); } }   // the layer's words follow what the line crosses
   c.save(); if (mode !== 'labels') { c.fillStyle = PAPER; c.fillRect(0, 0, w, h); } if (!mode) { c.strokeStyle = 'rgba(40,40,36,.25)'; c.lineWidth = 1; c.beginPath(); c.moveTo(0, .5); c.lineTo(w, .5); c.stroke(); }
   c.fillStyle = INK; c.font = font(12, 600); c.textAlign = 'left'; c.textBaseline = 'top';
-  if (mode !== 'plants' && S.rootsLayout !== 'slope') c.fillText(`${w < 640 ? 'roots' : 'roots along the section'} · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'}`, w < 640 ? 10 : 64, 10);
+  if (mode !== 'plants' && S.rootsLayout !== 'slope') c.fillText(ES_ON() ? `${w < 640 ? 'raíces · roots' : 'Raíces a lo largo del corte · roots along the section'} · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')}` : `${w < 640 ? 'roots' : 'roots along the section'} · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'}`, w < 640 ? 10 : 64, 10);
   if (!mode && S.rootsShow === 'painted' && PLATE && PLATE.key === plateKey(sec, [...seen.keys()], yr)) {   // the painted plate, fitted whole into the band on its paper
     const im = PLATE.img, f = Math.min(w / im.width, (h - 4) / im.height), dw = im.width * f, dh = im.height * f; c.fillStyle = '#efe6d2'; c.fillRect(0, 0, w, h); c.drawImage(im, (w - dw) / 2, (h - dh) / 2 + 2, dw, dh); c.restore(); return { panels: [], species: [...seen.keys()], painted: true }; }
   if (!seen.size) { c.fillStyle = INK2; c.font = font(11); c.fillText('no species planted near this section line. plant with shape · agroforestry, then draw the section through them.', 64, 32); c.restore(); return; }
   if (S.rootsLayout === 'slope') { c.restore(); return slopeChart(c, w, h, sec, mode, yr); }   // the planted stretch on the real hillside
-  const yrM = Math.max(yr, ...[...seen.keys()].map(k => ROOT_DATA[k].yrs * 1.5)), G = [...seen.values()].map(p => plantGeo(p.sp, yr, 0)).filter(Boolean).map(g => ({ ...g, m: dims(g.key, yrM) }));   // drawn at this age, scaled at full size
+  const yrM = Math.max(yr, ...[...seen.keys()].map(k => ROOT_DATA[k].yrs * 1.5)), G = [...seen.values()].map(p => plantGeo(p.sp, ageOf(p.st, yr), 0)).filter(Boolean).map(g => ({ ...g, m: dims(g.key, yrM) }));   // drawn at this age, scaled at full size
   // woody and herbaceous each get their own panel and scale, as the atlases do: a grass beside a 15 m oak would be a speck
   const cat = g => /^(tree|palm)$/.test(g.D.form) || (g.D.form === 'shrub' && g.m.H >= 1.2) ? 0 :   /* small shrubs stand with the low plants, where their scale fits */ /^(cactus|succulent)$/.test(g.D.form) ? 1 : 2, groups = [0, 1, 2].map(i => G.filter(g => cat(g) === i)).filter(a => a.length);   // trees, shrubs and palms · cacti and succulents · grasses and flowers, each at its own scale
   const narrow = w < 640, mL = narrow ? 8 : 64, mR = narrow ? 8 : 24, gap = groups.length > 1 ? (narrow ? 12 : 34) : 0, span = w - mL - mR - gap * (groups.length - 1); let x0 = mL;
@@ -535,7 +540,7 @@ window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.ro
   c.restore(); return { panels: LAYOUT.slice(), species: G.map(g => g.key) };
 };
 /* painting the chart: what the painter is told, and a check that it kept the roots where the data put them */
-window.__rootsPaintPrompt = keys => { bind(); const lines = keys.map(k => { const D = ROOT_DATA[k]; return `${D.common} (${D.latin.replace(/\s*\(.*?\)/g, '')})${LOOK[k] || D.habit ? ': ' + (LOOK[k] || D.habit) : ''}`; });
+window.__rootsPaintPrompt = (keys, counts) => { bind(); const lines = keys.map(k => { const D = ROOT_DATA[k]; return `${D.common} (${D.latin.replace(/\s*\(.*?\)/g, '')})${counts && counts[k] ? ', exactly ' + counts[k] + ' plant' + (counts[k] > 1 ? 's' : '') : ''}${LOOK[k] || D.habit ? ': ' + (LOOK[k] || D.habit) : ''}`; });
   return (S.rootsInk === 'line' ? 'Turn this diagram into a finished pen-and-ink botanical plate in the manner of the root atlases of Lore Kutschera and Victorian scientific illustration: black ink only, fine linework, stippling and cross-hatching for shade lit from the upper left, fine hair roots drawn line by line, no colour and no grey wash, plain white paper. '
     : 'Turn this diagram into a finished botanical plate in the manner of a hand-coloured 19th-century copperplate engraving and the root atlases of Lore Kutschera: fine ink linework, cross-hatched shading lit from the upper left, sepia roots with fine hair roots, quiet natural colour, plain warm paper. ')
     + (S.rootsLayout === 'slope' ? 'This is a section through a planted hillside: keep the sloping ground line exactly where it is drawn; trunks and stems stand vertical, roots grow down through the soil below the slope; the toned area below the line is the hillside soil in section. ' : '')
