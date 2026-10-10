@@ -683,6 +683,24 @@ const ageOf = (st, yr) => { if (st.grow === false) return st.age || 0; if (!S ||
   const u = (hashStr(st.c[0].toFixed(3) + ':' + st.c[1].toFixed(3)) % 1000) / 1000, Y = ROOT_DATA[st.sp].yrs || 10;   // mixed ages: a third of the stand is as old as the slider, the rest seedlings to young adults of their own species
   return (u < .34 ? yr : Math.min(yr, Y * 1.1) * (.04 + .96 * Math.pow((u - .34) / .66, 1.4))) + (st.age || 0); };   /* a plant's age: new ones grow with the slider; age adds years they already had; grow false keeps an existing tree at today's size */
 /* the chart on the slope: the planted stretch of the section at true scale, no vertical exaggeration, every plant where it stands on the real ground, roots down through the hillside */
+/* the land beyond (Will, 10/10, from a painting he loved): behind the section line, the real ground at several distances back, each drawn as a flat band,
+   paler and bluer with distance, a crisp key line along its top, as woodblock prints stack their hills and survey plates band their canyon walls */
+function backdrop(c, sec, t0, t1, L, X, Y, w, h, clipTop, yBot) {
+  const [A, B] = sec, dx = B[0] - A[0], dy = B[1] - A[1], gl = Math.hypot(dx, dy) || 1, m = cs(), G = window.__topo().grid || [150, 100], inGrid = (p) => p[0] >= 0 && p[1] >= 0 && p[0] <= G[0] - 1 && p[1] <= G[1] - 1;
+  const nx = -dy / gl, ny = dx / gl, n = 300, reach = sg0 => { let d = 0; while (d < 2000) { const o = (d + 5) / m * sg0; if (!inGrid([A[0] + nx * o, A[1] + ny * o]) || !inGrid([B[0] + nx * o, B[1] + ny * o])) break; d += 5; } return d; };   // how far back the site's ground goes
+  const side = sg => { let sum = 0, cnt = 0; for (const d of D) { const o = d / m * sg, a = [A[0] + nx * o, A[1] + ny * o], b = [B[0] + nx * o, B[1] + ny * o]; if (!inGrid(a) || !inGrid(b)) continue; const g = sectionProfile(40, [a, b]).gnd; sum += g.reduce((x, y) => x + y, 0) / g.length; cnt++; } return cnt ? sum / cnt : -1e9; };
+  let D = [1, 1]; const pick = sg0 => { const R = Math.min(reach(sg0), Math.max(60, L * 4)); return [.06, .16, .32, .58, 1].map(f => Math.max(8, R * f)); };
+  const sg = (D = pick(1), side(1)) >= (D = pick(-1), side(-1)) ? 1 : -1, bands = []; D = pick(sg);   // five distances back, spread over the ground the site holds on the higher side
+  for (const d of D) { const o = d / m * sg, a = [A[0] + nx * o, A[1] + ny * o], b = [B[0] + nx * o, B[1] + ny * o]; if (!inGrid(a) || !inGrid(b)) continue; bands.push({ d, g: sectionProfile(n, [a, b]).gnd }); }
+  if (!bands.length) return;
+  const far = ['#b9c3cc', '#c9c4ad', '#c8a982', '#a98a62', '#8e9a74'], ink = '#3a3530';
+  c.save(); c.beginPath(); c.rect(X(t0), clipTop, X(t1) - X(t0), yBot - clipTop); c.clip();   // within the drawing's frame; the section's soil covers the bands' feet   // farthest to nearest: pale blue-grey, sand, ochre, rust-brown, sage
+  bands.reverse().forEach((bd, i) => { const col = far[Math.round(i * (far.length - 1) / Math.max(1, bands.length - 1))], path = new Path2D(); path.moveTo(X(0), Y(bd.g[0]));
+    for (let q = 1; q <= n; q++) path.lineTo(X(q / n), Y(bd.g[q])); const edge = new Path2D(path); path.lineTo(X(1), h + 40); path.lineTo(X(0), h + 40); path.closePath();
+    c.save(); if (LINE) { c.fillStyle = WASHI; c.fill(path); } else { const top = Math.min(...bd.g.map(Y)), gr = c.createLinearGradient(0, top, 0, top + h * .35); gr.addColorStop(0, col); gr.addColorStop(1, mix(col, WASHI, .35)); c.fillStyle = gr; c.globalAlpha = .9; c.fill(path); c.globalAlpha = 1; }   // bokashi: each band deepest at its ridge
+    c.strokeStyle = LINE ? SUMI : ink; c.lineWidth = LINE ? .9 : 1.1; c.globalAlpha = LINE ? .6 : .55; c.lineJoin = 'round'; c.stroke(edge); c.restore(); });
+  c.restore();
+}
 function slopeChart(c, w, h, sec, mode, yr) {
   const P = plantsNear(sec), uf = isFt() ? 3.28084 : 1, un = isFt() ? 'ft' : 'm', narrow = w < 640;
   if (!P.length) return null;
@@ -703,6 +721,7 @@ function slopeChart(c, w, h, sec, mode, yr) {
   const ground = () => { const p = new Path2D(); p.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) p.lineTo(X(q / n), Y(prof.gnd[q])); p.lineTo(x1, gy(t1)); return p; };
   const soil = () => { const p = ground(); p.lineTo(x1, yBot + 6); p.lineTo(x0, yBot + 6); p.closePath(); return p; };
   c.save(); if (mode !== 'labels') { washi(c, w, h); bokashiSky(c, w, 0, h * .32); }
+  if (mode !== 'labels' && S.rootsBack) backdrop(c, sec, t0, t1, L, X, Y, w, h, top - 6, yBot);   // the land beyond the section, in stacked bands
   if (mode !== 'labels') {   // the hillside in section: ochre deepening with depth, a few strata lines, the ground line
     soilFill(c, soil(), oyT, yBot); { const gp = []; gp.push([x0, gy(t0)]); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) gp.push([X(q / n), Y(prof.gnd[q])]); gp.push([x1, gy(t1)]); strata(c, soil(), gp, yBot - Math.min(...gp.map(q => q[1])), 31); }
     const hostOf = new Map(); for (const it of items) { if (it.g.D.form !== 'vine') continue; let best = null, bd = 1e9; for (const h of items) { if (h === it || h.g.D.form === 'vine' || h.g.H < 1 || (FORM[h.g.key] && FORM[h.g.key].t !== 'palm')) continue; const d = Math.abs(h.p.t - it.p.t) * L; if (d < Math.max(3, h.g.Wc * .6) && d < bd) { bd = d; best = h; } } if (best) hostOf.set(it.p, best); }   // each vine's host: the nearest tree, palm or big shrub within reach
@@ -777,7 +796,7 @@ function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow
 const ES_ON = () => document.documentElement.lang === 'es', NM = D => { const es = D.es && D.es.replace(/\s*\(.*?\)/g, ''); return ES_ON() && es && es !== D.common ? `${es} · ${D.common}` : D.common; }, TT = (es, en) => ES_ON() ? `${es} · ${en}` : en;
 const niceStep = v => { const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
 let LAYOUT = [], PLATE = null;   // PLATE: the last painted chart and what it was painted from (line, species, year)
-const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side', CAN(), S.rootsLook || 'massing', S.rootsAdapt || 0, !!S.myco, S.rootsPeople || 'none', !!S.rootsMixed]);   // a painted plate belongs to its line, plants, year and style
+const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side', CAN(), S.rootsLook || 'massing', S.rootsAdapt || 0, !!S.myco, S.rootsPeople || 'none', !!S.rootsMixed, !!S.rootsBack]);   // a painted plate belongs to its line, plants, year and style
 window.__rootsSetPlate = (img, sec, keys) => { bind(); PLATE = { img, key: plateKey(sec, keys, AGRO.year) }; };
 window.__rootsPlateState = sec => { bind(); if (!PLATE) return 'none'; const seen = new Set(); for (const p of plantsNear(sec).sort((p, q) => p.t - q.t)) seen.add(p.sp); return PLATE.key === plateKey(sec, [...seen], AGRO.year) ? 'current' : 'stale'; };
 window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.rootsInk === 'line';
@@ -811,6 +830,7 @@ window.__rootsPaintPrompt = (keys, counts, sizes, smin) => { bind(); const ftm =
     + ((S.rootsAdapt || 0) > .25 ? 'Where plants stand close they have adapted to each other, as drawn: trunks lean and bend toward the light, crowns grow one-sided and interlace with their neighbours, branches weave through a neighbour\'s crown, roots intertwine below. Keep and celebrate these adaptations. ' : '')
     + (keys.some(k => ROOT_DATA[k] && ROOT_DATA[k].form === 'vine') ? 'The vines climb their host trees exactly as drawn: twining up the trunk, spreading over the crown and hanging in flowering curtains from its edges. ' : '')
     + 'Paint no people, animals or figures (they are added afterwards). '
+    + (S.rootsBack ? 'Behind the section, the stacked bands are the real land beyond it: paint them as layered distant ridges and banded rock strata in flat woodblock colour, each farther band paler and bluer, keeping every band outline where it is drawn; the plants stay in front at their drawn size on the drawn ground line. ' : '')
     + (S.myco ? 'Underground, a fine network of faintly glowing pale mycelium threads links the roots of all the plants, as drawn; a few small mushrooms at the surface. Keep it subtle. ' : '')
     + 'No lettering of any kind, no Japanese characters, no seals or stamps, no cherry blossoms, no waves, no decorative border. Keep the soil exactly as deep as it is drawn: below its bottom edge, and in the strip along the bottom of the page, the paper stays plain and empty (labels go there). '
     + 'TRUE SCALE: these are full-size plants drawn to scale, not miniatures, seen from far enough away that a whole tree fits on the page. Draw foliage at its real size relative to each plant: a mature tree carries tens of thousands of small leaves, so its crown reads as a mass of fine texture and clustered sprays, never as a few large countable leaves; the bark texture, branch thickness and twig fineness of a big tree. No storybook, bonsai or toy proportions. '
