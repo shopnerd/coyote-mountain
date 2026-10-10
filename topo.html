@@ -237,6 +237,8 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="sec deep" id="geoLbl" style="display:none">geology</div>
     <div class="seg deep" id="geoRow" style="display:none;margin-bottom:6px"><button data-geo="1">geology</button><button data-geo="0" class="on">no geology</button></div>
     <div class="desc deep" id="geoInfo" style="display:none;padding-bottom:4px"></div>
+    <div class="seg" id="rootRow" style="display:none;margin-bottom:6px"><button data-root="1">roots</button><button data-root="0" class="on">no roots</button></div>
+    <div class="desc" id="rootInfo" style="display:none;padding-bottom:4px"></div>
 
     <div class="sec" id="worldLbl">world</div>
     <div class="params" id="worldSec">
@@ -2524,6 +2526,14 @@ document.getElementById('animClose').onclick = () => animStop();
 document.getElementById('animSave').onclick = () => animSave();
 document.getElementById('animSound').onclick = e => { ANIM.sound = !ANIM.sound; animAudio(ANIM.sound); e.currentTarget.classList.toggle('on', ANIM.sound); };
 document.getElementById('geoRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.geo = b.dataset.geo === '1'; document.querySelectorAll('#geoRow button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('geoInfo').style.display = S.geo ? '' : 'none'; GEO.key = ''; geoRefresh(); geoInfo(); S.dirty = true; };
+document.getElementById('rootRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; S.roots = b.dataset.root === '1'; document.querySelectorAll('#rootRow button').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('rootInfo').style.display = S.roots ? '' : 'none'; rootInfo(); S.dirty = true; };
+window.__topo = () => ({ S, AGRO, AGRO_LIB, agroRadiusM, cs, fL, font, isFt, INK, INK2, INK3, PAPER, rootInfo });   // what roots.js draws with; a function, so it's read after everything here is set up
+function rootInfo() {   // the species the active section crosses: what each does for the land, how sure the numbers are, where they come from
+  const el = document.getElementById('rootInfo'); el.textContent = ''; if (!S.roots || !window.__rootsInfo) return; const L = window.__rootsInfo(S.sec);
+  if (!L.length) { el.textContent = 'no species planted near the section line yet: plant with shape · agroforestry, then draw the section through them.'; return; }
+  for (const [, D] of L) { const p = document.createElement('p'); p.style.margin = '0 0 6px'; const b = document.createElement('b'); b.textContent = D.common; const i = document.createElement('i'); i.textContent = ' ' + D.latin; p.append(b, i, document.createTextNode(` · most roots to ${fL(D.typ, 1)}, deepest ${fL(D.max, 1)}${D.regen ? ' · ' + D.regen : ''}`));
+    for (const sc of (D.src || []).slice(0, 2)) { const a = document.createElement('a'); a.href = sc.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' [' + sc.cite + ']'; p.append(a); } el.append(p); }
+  if (window.ROOT_NOTES) { const p = document.createElement('p'); p.style.cssText = 'margin:0;color:var(--ink3)'; p.textContent = window.ROOT_NOTES; el.append(p); } }
 /* ---------- several sections: a list of a–b lines, one active; S.sec always mirrors the active one ---------- */
 const SEC_LETTERS = 'ABCDEFGH', SEC_MAX = 4;
 function secSync() { S.secI = Math.max(0, Math.min(S.secs.length - 1, S.secI | 0)); S.sec = S.secs.length ? S.secs[S.secI] : null; secTabs(); }
@@ -2542,7 +2552,9 @@ function sectionProfile(n, sec = S.sec) {
 function drawSection(c = ctx, w = S.w, h = S.h, mini = false, activeOnly = false) {   // every section stacked down the page, the active one first-class; the pip and the sheet show the active one alone
   c.clearRect(0, 0, w, h);
   if (!S.sec) { c.fillStyle = INK2; c.font = font(11); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('no section yet. in plan, pick "section line" and drag across the sheet.', w / 2, h / 2); return; }
-  const list = mini || S.noFoot || activeOnly ? [S.secI] : S.secs.map((_, i) => i), nb = list.length, bh = h / nb;
+  const chartH = S.roots && !mini && window.__rootsChart ? Math.round(w < 640 ? h * .6 : Math.max(Math.min(h * .5, 420), Math.min(h * .42, 240))) : 0;   // roots on: a root chart under the sections, every species the active line crosses at one scale
+  const list = mini || S.noFoot || activeOnly ? [S.secI] : S.secs.map((_, i) => i), nb = list.length, bh = (h - chartH) / nb;
+  if (chartH) { c.save(); c.translate(0, h - chartH); window.__rootsChart(c, w, chartH, S.secs[S.secI]); c.restore(); }
   list.forEach((i, k) => { const [la, lb] = secLetters(i); c.save(); c.translate(0, k * bh); c.beginPath(); c.rect(0, 0, w, bh); c.clip(); drawSectionOne(c, w, bh, mini, S.secs[i], la, lb, i === S.secI); if (k) { c.strokeStyle = 'rgba(40,40,36,.18)'; c.lineWidth = 1; c.setLineDash([2, 4]); c.beginPath(); c.moveTo(0, .5); c.lineTo(w, .5); c.stroke(); c.setLineDash([]); } c.restore(); });
 }
 function drawSectionOne(c, w, h, mini, sec, la, lb, active) {
@@ -2581,6 +2593,7 @@ function drawSectionOne(c, w, h, mini, sec, la, lb, active) {
     c.fillStyle = area > 0 ? 'rgba(201,107,58,.28)' : 'rgba(42,42,40,.16)'; c.fill();
   }
   if (window.__pcSection) window.__pcSection(c, sec, X, Y, n, mini);   /* point cloud: the points near this section line */
+  if (S.roots && window.__rootsProfile) window.__rootsProfile(c, sec, X, Y, n, gnd, pxm, mini);   /* planting: the species near the line with their roots, at true scale */
   // existing dashed, proposed solid
   c.strokeStyle = INK2; c.lineWidth = 1; c.setLineDash([5, 4]); c.beginPath(); ex.forEach((v, q) => q ? c.lineTo(X(q), Y(v)) : c.moveTo(X(q), Y(v))); c.stroke(); c.setLineDash([]);
   c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); gnd.forEach((v, q) => q ? c.lineTo(X(q), Y(v)) : c.moveTo(X(q), Y(v))); c.stroke();
@@ -3340,7 +3353,7 @@ function setMode(m) {
   rendUI(m);
   { const su = document.getElementById('sunSec'); if (m === 'analysis') document.getElementById('sunSlot').appendChild(su); else document.getElementById('colorRow').insertAdjacentElement('afterend', su); }   // the one sun clock: in the sun block in analysis, under the render in the model
   { const ae = document.getElementById('aerialRow'), op = document.getElementById('aerialOp'); ae.insertAdjacentElement('afterend', op); op.style.padding = m === 'model' ? '0 12px 6px' : ''; if (m === 'model') { document.getElementById('modelStyle').insertAdjacentElement('afterend', ae); ae.style.padding = '0 12px'; ae.style.marginTop = '0'; ae.style.marginBottom = '6px'; } else { document.getElementById('annoRow').insertAdjacentElement('afterend', ae); ae.style.padding = '0'; ae.style.marginTop = '6px'; ae.style.marginBottom = '0'; } ae.insertAdjacentElement('afterend', op); let prev = op; for (const id of ['histRow', 'histPosRow', 'histGlowRow', 'histGlowOpRow', 'histInfo']) { const el = document.getElementById(id); prev.insertAdjacentElement('afterend', el); el.style.paddingLeft = el.style.paddingRight = m === 'model' ? '12px' : '0'; prev = el; } }   // the photo switch travels: under smooth / stepped in the model, with the sheet switches in plan
-  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('sculptSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('sheetSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('geoRow').style.display = m === 'section' ? '' : 'none'; document.getElementById('secRow').style.display = m === 'section' ? '' : 'none'; secTabs(); for (const id of ['worldLbl', 'worldSec']) document.getElementById(id).style.display = m === 'plan' ? '' : 'none'; document.getElementById('geoInfo').style.display = m === 'section' && S.geo ? '' : 'none'; document.getElementById('rainRowM').style.display = m === 'model' ? '' : 'none'; document.getElementById('cloudRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('objShowRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('cloudInfo').style.display = m === 'model' && CLOUD.n ? '' : 'none'; for (const id of ['sculptLbl', 'modelLbl']) document.getElementById(id).style.display = m === 'model' ? '' : 'none'; for (const id of ['secLbl', 'geoLbl']) document.getElementById(id).style.display = m === 'section' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null; aerialUI();
+  document.getElementById('desc').textContent = DESC[m]; document.getElementById('brushSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('sculptSec').style.display = (m === 'plan' || m === 'model') ? '' : 'none'; document.getElementById('sheetSec').style.display = m === 'plan' ? '' : 'none'; document.getElementById('anaSec').style.display = m === 'analysis' ? '' : 'none'; document.getElementById('sculptRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('geoRow').style.display = m === 'section' ? '' : 'none'; document.getElementById('secRow').style.display = m === 'section' ? '' : 'none'; secTabs(); for (const id of ['worldLbl', 'worldSec']) document.getElementById(id).style.display = m === 'plan' ? '' : 'none'; document.getElementById('geoInfo').style.display = m === 'section' && S.geo ? '' : 'none'; document.getElementById('rootRow').style.display = m === 'section' ? '' : 'none'; document.getElementById('rootInfo').style.display = m === 'section' && S.roots ? '' : 'none'; document.getElementById('rainRowM').style.display = m === 'model' ? '' : 'none'; document.getElementById('cloudRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('objShowRow').style.display = m === 'model' ? '' : 'none'; document.getElementById('cloudInfo').style.display = m === 'model' && CLOUD.n ? '' : 'none'; for (const id of ['sculptLbl', 'modelLbl']) document.getElementById(id).style.display = m === 'model' ? '' : 'none'; for (const id of ['secLbl', 'geoLbl']) document.getElementById(id).style.display = m === 'section' ? '' : 'none'; document.getElementById('colorLbl').style.display = m === 'model' ? '' : 'none'; document.getElementById('colorRow').style.display = m === 'model' ? '' : 'none'; showSun(); S.pick = null; aerialUI();
   if (m !== 'model') walkStop(); cv.classList.toggle('orbit', m === 'model' && !S.sculpt); document.getElementById('modelStyle').style.display = m === 'model' ? '' : 'none'; pip.hidden = false; if (m !== 'model' && m !== 'analysis' && S.rain) setRain(false); S.dirty = true;
 }
 document.getElementById('modes').onclick = e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); };
@@ -3452,7 +3465,7 @@ function drawPlant(c, st, toXY, k, dense) {
 function plantSummary() {                  // for the sheet notes
   let trees = 0, canopy = 0, shrubs = 0, bed = 0, hedge = 0, gravel = 0, paving = 0, paths = 0, pathLen = 0; const A = cs() * cs();
   for (const st of S.strokes) if (st.kind === 'path') { paths++; let L = 0; for (let i = 1; i < st.pts.length; i++) L += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); pathLen += L; if (st.sf === 'gravel') gravel += L * (st.pw || 1.5); else if (st.sf === 'paving') paving += L * (st.pw || 1.5); }
-  for (const st of S.strokes) { if (!st.kind) continue; if (st.kind === 'tree') { trees++; canopy += Math.PI * st.r * st.r * A; } else if (st.kind === 'shrub') { shrubs++; bed += polyArea(st.pts) * A; } else if (st.kind === 'hedge') { for (let i = 1; i < st.pts.length; i++) hedge += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); } else if (st.kind === 'gravel') gravel += polyArea(st.pts) * A; else if (st.kind === 'paving') paving += polyArea(st.pts) * A; }
+  for (const st of S.strokes) { if (!st.kind) continue; if (woodyTree(st)) { trees++; canopy += Math.PI * st.r * st.r * A; } else if (st.kind === 'shrub') { shrubs++; bed += polyArea(st.pts) * A; } else if (st.kind === 'hedge') { for (let i = 1; i < st.pts.length; i++) hedge += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); } else if (st.kind === 'gravel') gravel += polyArea(st.pts) * A; else if (st.kind === 'paving') paving += polyArea(st.pts) * A; }
   if (!trees && !shrubs && !hedge && !gravel && !paving && !paths) return '';
   const parts = []; if (paths) parts.push(`${paths} path${paths === 1 ? '' : 's'} · ${fL(pathLen, 0)}`); if (trees) parts.push(`${trees} tree${trees === 1 ? '' : 's'} · canopy ${fBig(canopy)}`); if (shrubs) parts.push(`${shrubs} shrub mass${shrubs === 1 ? '' : 'es'} · ${fBig(bed)}`); if (hedge) parts.push(`hedge ${fL(hedge, 0)}`); if (gravel) parts.push(`gravel ${fBig(gravel)}`); if (paving) parts.push(`paving ${fBig(paving)}`);
   return parts.join(' · ');
@@ -3858,7 +3871,7 @@ function aerialJpeg() {                   // the aerial photo shrunk for the mod
 function aiScene() {                      // what the model cannot see in the picture, in words: place, time, weather, what is planted and built
   const hh = Math.floor(S.hour), tod = S.hour < 7 ? 'just before sunrise' : S.hour < 10 ? 'early morning, long shadows' : S.hour < 15 ? 'midday' : S.hour < 18 ? 'afternoon' : S.hour < 20 ? 'golden hour before sunset' : 'dusk';
   const sky = { clear: 'a clear sky', cumulus: 'fair-weather cumulus clouds', marine: 'a low marine layer along the horizon', overcast: 'a flat overcast sky', seamless: 'a plain seamless studio backdrop behind the model, no sky', white: 'a pure white studio background, no sky', dark: 'a dark charcoal studio backdrop, no sky' }[S.rendSky];
-  const trees = S.strokes.filter(st => st.kind === 'tree').length, shrubs = S.strokes.filter(st => st.kind === 'shrub' || st.kind === 'hedge').length, paths = S.strokes.filter(st => st.kind === 'path'), blds = S.showBld && S.coast && S.coast.blds ? S.coast.blds.length : 0, walls = S.strokes.filter(st => st.kind === 'wall').length;
+  const trees = S.strokes.filter(woodyTree).length, shrubs = S.strokes.filter(st => st.kind === 'shrub' || st.kind === 'hedge').length, paths = S.strokes.filter(st => st.kind === 'path'), blds = S.showBld && S.coast && S.coast.blds ? S.coast.blds.length : 0, walls = S.strokes.filter(st => st.kind === 'wall').length;
   const bits = [`${MONTHS[S.month - 1]}, ${tod}, ${sky}`]; if (S.world && S.world.name) bits.push('the place is ' + S.world.name); if (S.hasWater) bits.push('there is open water where the picture shows blue');
   if (trees) bits.push(`${trees} tree${trees > 1 ? 's' : ''} where the dark round canopies stand`); if (shrubs) bits.push('shrub masses and hedges'); if (paths.length) bits.push(paths.some(q => q.sf === 'paving') ? 'a paved path' : paths.some(q => q.sf === 'gravel') ? 'a gravel path' : 'an earth path'); if (blds) bits.push(`${blds} plain buildings`); if (walls) bits.push('low retaining walls at the pad edges');
   const veg = aerialVeg(); if (veg) bits.push(veg.replace(/\.$/, '')); const objs = S.strokes.filter(st => st.kind === 'obj' && st.c); if (objs.length) bits.push(objs.map(o => `a designed structure called ${o.name}, about ${fL(o.h * o.sc, 0)} tall, drawn as a plain pale solid: keep its exact shape, size and place`).join('; ')); const extra = document.getElementById('aiWords').value.trim(); if (extra) bits.push(extra); return bits.join('. ') + '.';
@@ -3941,7 +3954,7 @@ function aiSpec() {                       // the plan in plain words, for the ch
   const b = aiBuiltNote(); if (b) bits.push(b.replace(/^ The built things in the first image are modelled to size and are the subject of the picture: /, 'built: ').replace(/\. Keep every one.*$/, ''));
   const paths = S.strokes.filter(st => st.kind === 'path'); if (paths.length) bits.push(`${paths.length} road${paths.length > 1 ? 's' : ''} or track${paths.length > 1 ? 's' : ''}, about ${fL(paths[0].pw || 1.5, 0)} wide`);
   const ditches = (S.rec && S.rec.ditches) || []; if (ditches.length) bits.push(`${ditches.length} ditch or swale with a berm on the downhill side`);
-  const trees = S.strokes.filter(st => st.kind === 'tree').length; if (trees) bits.push(`${trees} planted tree${trees > 1 ? 's' : ''}`);
+  const trees = S.strokes.filter(woodyTree).length; if (trees) bits.push(`${trees} planted tree${trees > 1 ? 's' : ''}`);
   return bits.join('. ') + '.';
 }
 const CHECK_SCHEMA = { type: 'object', required: ['verdict', 'summary', 'issues'], properties: {
@@ -5256,6 +5269,7 @@ const AGRO_LIB = {
   toyon: ['toyon', 'shrub', [3, 5], [5, 8], 15, [6, 7], [11, 12, 1], true, 'winter berries for birds'],
   sage: ['white sage', 'shrub', [1, 1.5], [2, 3], 5, [4, 5, 6], [], true, 'bees crowd it in spring; rots with summer water'],
 };
+const woodyTree = st => st.kind === 'tree' && !(st.sp && AGRO_LIB[st.sp] && (AGRO_LIB[st.sp][1] === 'grass' || AGRO_LIB[st.sp][1] === 'forb'));   // grasses and flowers are planted like trees but are not counted as trees, nor their wood as carbon
 function agroRadiusM(sp, yr, hi) {   // metres of canopy radius after yr years: a sapling of 0.3 m, most of its size by the middle of its years to mature
   const L = AGRO_LIB[sp]; if (!L) return .5; const d = hi ? L[2][1] : (L[2][0] + L[2][1]) / 2, yrs = (L[3][0] + L[3][1]) / 2, r0 = .3; return r0 + (d / 2 - r0) * (1 - Math.exp(-3 * Math.max(0, yr) / yrs));
 }
@@ -6053,7 +6067,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
     ] },
   ];
   const LAYERS = [
-    { name: 'map layers', rows: ['#aerialRow', '#seaRow', '#roadRow', '#bldRow', '#ovRow', '#objShowRow', '#cloudRow', '#geoRow'], more: ['#aerialOp', '#bldModeRow', '#bldMMRow', '#cloudInfo', '#geoInfo'] },
+    { name: 'map layers', rows: ['#aerialRow', '#seaRow', '#roadRow', '#bldRow', '#ovRow', '#objShowRow', '#cloudRow', '#geoRow', '#rootRow'], more: ['#aerialOp', '#bldModeRow', '#bldMMRow', '#cloudInfo', '#geoInfo', '#rootInfo'] },
     { name: 'look', rows: ['#colorRow', '#interval', '#labelRow', '#cfRow'], more: ['#modelStyle', '#hach', '#annoRow', '#ve'] },
   ];
   const unit = sel => { if (sel[0] === '=') return null;   // '=name' is a small group label, not a row. the row a selector stands for: a row by its id, an input's labelled row, a lone button, or a small button pair
@@ -6514,7 +6528,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   function agroPanel(box) { agroBoxEl = box; if (S.rec && S.rec.agroYear != null) AGRO.year = S.rec.agroYear; agroApply(); agroRender(); }
   function agroRender() {
     if (!agroBoxEl || !agroBoxEl.isConnected) return; agroBoxEl.textContent = ''; const w = make('div', { cls: 'u2wb' }); agroBoxEl.append(w); agroSeenYear = AGRO.year; agroBoxEl.dataset.n = agroTrees().length + '|' + S.unit;
-    const sel = make('select', { 'aria-label': 'species' }); for (const kind of ['tree', 'shrub']) { const og = make('optgroup', { label: kind === 'tree' ? 'trees' : 'shrubs and vines' }); for (const id in AGRO_LIB) if (AGRO_LIB[id][1] === kind) { const o = make('option', { value: id, text: AGRO_LIB[id][0] }); if (id === (AGRO.pick || 'olive')) o.selected = true; og.append(o); } sel.append(og); }
+    const sel = make('select', { 'aria-label': 'species' }); for (const kind of ['tree', 'shrub', 'grass', 'forb']) { const og = make('optgroup', { label: { tree: 'trees', shrub: 'shrubs, vines and succulents', grass: 'grasses', forb: 'flowers and cover crops' }[kind] }); if (!Object.values(AGRO_LIB).some(L => L[1] === kind)) continue; for (const id in AGRO_LIB) if (AGRO_LIB[id][1] === kind) { const o = make('option', { value: id, text: AGRO_LIB[id][0] }); if (id === (AGRO.pick || 'olive')) o.selected = true; og.append(o); } sel.append(og); }
     AGRO.pick = AGRO.pick || 'olive'; sel.onchange = () => { AGRO.pick = sel.value; if (AGRO.arm) AGRO.arm = sel.value; agroRender(); }; w.append(sel);
     const L = AGRO_LIB[AGRO.pick], fm = m => isFt() ? tz((m * 3.28084).toFixed(0)) + ' ft' : tz(m.toFixed(0)) + ' m', mo = arr => arr.length ? arr.map(m => MONTHS[m - 1]).join(' ') : 'none';
     w.append(make('p', { cls: 'u2note', text: `canopy ${fm(L[2][0])} to ${fm(L[2][1])} across in ${L[3][0]}–${L[3][1]} years · ${isFt() ? tz((L[4] / 3.785).toFixed(0)) + ' gal' : L[4] + ' L'} a week once established · flowers ${mo(L[5])} · harvest ${mo(L[6])} · ${L[8]}` }));
@@ -6991,7 +7005,7 @@ button.u2chip.undo{padding:3px 9px;cursor:pointer;color:var(--ink);border-style:
   function carbonAt(yr) {   // [low, high] kg C after yr years; a plant's carbon follows its canopy area, growing faster than its width
     let lo = 0, hi = 0;
     for (const st of S.strokes) {
-      if (st.kind === 'tree') { const rng = st.sp && CARBON_KG[st.sp] ? CARBON_KG[st.sp] : C_GENERIC_TREE; let f = 1; if (st.sp && AGRO_LIB[st.sp]) { const rm = agroRadiusM(st.sp, 999), r = agroRadiusM(st.sp, yr); f = Math.pow(r / rm, 2.5); } else f = Math.min(1, yr / 20); lo += rng[0] * f; hi += rng[1] * f; }
+      if (woodyTree(st)) { const rng = st.sp && CARBON_KG[st.sp] ? CARBON_KG[st.sp] : C_GENERIC_TREE; let f = 1; if (st.sp && AGRO_LIB[st.sp]) { const rm = agroRadiusM(st.sp, 999), r = agroRadiusM(st.sp, yr); f = Math.pow(r / rm, 2.5); } else f = Math.min(1, yr / 20); lo += rng[0] * f; hi += rng[1] * f; }
       else if (st.kind === 'shrub' && st.pts.length > 2) { let a = 0; for (let i = 0, j = st.pts.length - 1; i < st.pts.length; j = i++) a += (st.pts[j][0] + st.pts[i][0]) * (st.pts[j][1] - st.pts[i][1]); const m2 = Math.abs(a / 2) * cs() * cs(), f = Math.min(1, yr / 8); lo += m2 * C_SHRUB_M2[0] * f; hi += m2 * C_SHRUB_M2[1] * f; }
       else if (st.kind === 'hedge' && st.pts.length > 1) { let L = 0; for (let i = 1; i < st.pts.length; i++) L += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]) * cs(); const f = Math.min(1, yr / 8); lo += L * C_HEDGE_M[0] * f; hi += L * C_HEDGE_M[1] * f; }
     }
@@ -10096,6 +10110,8 @@ if (document.documentElement.classList.contains('ui2')) (() => {
 </script>
 <script src="lang.js"></script>
 <script src="bug.js"></script>
+<script src="roots-data.js"></script>
+<script src="roots.js"></script>
 <script>/* the top bar on any screen: whatever doesn't fit on one line goes, from the right, into a "more" menu at its end, so nothing runs off a phone or a tablet */
 (() => { const head = document.getElementById('u2head'); if (!head) return;
   const st = document.createElement('style'); st.textContent = `
