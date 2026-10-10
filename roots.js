@@ -410,15 +410,17 @@ const FIGS = {
 
 const FIGSET = { people: ['stand', 'walk', 'child'], horse: ['hat', 'horse', 'stand'] };
 function figWidthM(k) { const [d, h, w] = FIGS[k]; return k === 'horse' ? w * h : w * h / 100; }
-function drawFigures(c, items, L, t0, t1, X, gyAt, k, set) {   // the figures stand in the widest gaps between plants, at true height, flat silhouettes in the print's indigo-grey
-  const list = FIGSET[set]; if (!list) return; const stems = items.map(it => it.p.t * L).sort((a, b) => a - b), lo = t0 * L + 1, hi = t1 * L - 1, edges = [lo, ...stems.filter(x => x > lo && x < hi), hi], gaps = [];
-  for (let i = 1; i < edges.length; i++) gaps.push([edges[i - 1], edges[i]]);
-  const placed = [];
-  for (const key of list) { const need = figWidthM(key) + (key === 'horse' ? 1.2 : .9); gaps.sort((a, b) => (b[1] - b[0]) - (a[1] - a[0])); const g = gaps[0]; if (!g || g[1] - g[0] < need) continue;
-    const xm = key === 'hat' && placed.some(p => p.key === 'horse') ? null : (g[0] + g[1]) / 2; let x = xm;
-    if (key === 'horse') { x = (g[0] + g[1]) / 2 + .6; placed.push({ key, x }); gaps[0] = [g[0], x - figWidthM(key) / 2 - .2]; gaps.push([x + figWidthM(key) / 2 + .2, g[1]]); continue; }
-    placed.push({ key, x }); gaps[0] = [g[0], x - .5]; gaps.push([x + .5, g[1]]); }
-  const hz = placed.find(p => p.key === 'horse'), lead = placed.find(p => p.key === 'hat'); if (hz && lead) lead.x = hz.x + 1.55;   // the person leads the horse at its head
+function drawFigures(c, items, L, t0, t1, X, gyAt, k, set) {   // the figures stand where they are clear: no trunk within reach and no low crown over their heads; flat silhouettes in the print's indigo-grey
+  const list = FIGSET[set]; if (!list) return; const lo = t0 * L + .6, hi = t1 * L - .6, placed = [];
+  const plants = items.map(it => { const g = it.g, sc = g.sc, lowM = sc ? -(sc.base != null ? sc.base : -g.H * .2) : g.D.form === 'palm' ? g.H * .8 : g.H; return { x: it.p.t * L, half: Math.max(.3, g.Wc / 2), low: Math.max(0, lowM) }; });
+  const clear = (x, half, tall) => { if (x - half < lo || x + half > hi) return -1; let d = 1e9;
+    for (const p of plants) { const dx = Math.abs(p.x - x); if (dx < half + .5) return -1; if (dx < p.half + half * .6 && p.low < tall + .4) return -1; d = Math.min(d, dx); }
+    for (const q of placed) { const dx = Math.abs(q.x - x); if (dx < half + q.half + .8) return -1; d = Math.min(d, dx + 2); }
+    return d; };
+  for (const key of list) { if (key === 'hat' && list.includes('horse')) continue; const half = figWidthM(key) / 2 + (key === 'horse' ? 1.1 : .25), tall = key === 'horse' ? 2.25 : FIGS[key][1]; let best = null, bs = -1;
+    for (let x = lo; x <= hi; x += .25) { const sc = clear(x, half, tall); if (sc > bs) { bs = sc; best = x; } }
+    if (best != null && bs > 0) placed.push({ key, x: key === 'horse' ? best - .4 : best, half }); }
+  const hz = placed.find(p => p.key === 'horse'); if (hz) placed.push({ key: 'hat', x: hz.x - 1.45, half: .3 });   // the person leads the horse at its head (the horse faces left)
   c.save(); let n = 0;
   for (const p of placed.sort((a, b) => (a.key === 'horse' ? -1 : 1))) { const [d, h] = FIGS[p.key], px = X(p.x / L), py = gyAt(px), s = (p.key === 'horse' ? h : h / 100) * k, fl = p.key === 'horse' || p.key === 'hat' ? -1 : (n++ % 2 ? -1 : 1);
     c.save(); c.translate(px, py + .5); c.scale(s * fl, s); const parts = d.split('|');
@@ -703,10 +705,10 @@ function slopeChart(c, w, h, sec, mode, yr) {
     const hostOf = new Map(); for (const it of items) { if (it.g.D.form !== 'vine') continue; let best = null, bd = 1e9; for (const h of items) { if (h === it || h.g.D.form === 'vine' || h.g.H < 1 || (FORM[h.g.key] && FORM[h.g.key].t !== 'palm')) continue; const d = Math.abs(h.p.t - it.p.t) * L; if (d < Math.max(3, h.g.Wc * .6) && d < bd) { bd = d; best = h; } } if (best) hostOf.set(it.p, best); }   // each vine's host: the nearest tree, palm or big shrub within reach
     for (const { p, g } of items.slice().sort((a, b) => b.p.d - a.p.d)) drawPlant(c, hostOf.has(p) ? { ...g, hosted: true } : g, X(p.t), gy(p.t), k, 1 - .45 * Math.min(1, p.d / p.reach), p.seed & 1 ? 1 : -1, cc => { cc.beginPath(); cc.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) cc.lineTo(X(q / n), Y(prof.gnd[q])); cc.lineTo(x1, gy(t1)); cc.lineTo(x1, yBot + 4); cc.lineTo(x0, yBot + 4); cc.closePath(); });   /* roots stay in the drawn soil; deeper ones are given in the key */   /* roots stay inside the drawn stretch */
     for (const it of items) { const h = hostOf.get(it.p); if (h) drawVine(c, it.g, h.g, X(it.p.t), gy(it.p.t), k, 1 - .45 * Math.min(1, it.p.d / it.p.reach), X(h.p.t), gy(h.p.t), h.p.seed & 1 ? 1 : -1); }   // vines climb last, over their hosts
-    if (S.rootsPeople && S.rootsPeople !== 'none') drawFigures(c, items, L, t0, t1, X, x => gy(Math.max(t0, Math.min(t1, t0 + (x - ox) / (L * k)))), k, S.rootsPeople);   // scale figures
     if (S.myco) { const gyAt = x => gy(Math.max(t0, Math.min(t1, t0 + (x - ox) / (L * k)))), E = mycoDraw(c, items, X, gy, k, soil(), oyT, yBot, x0, x1, gyAt); if (c.canvas && c.canvas.id === 'c' && !mode) { MYCO.edges = E; MYCO.m = c.getTransform(); window.__mycoStart(); } }   // the mushroom button
     else if (c.canvas && c.canvas.id === 'c') MYCO.edges = null;
     c.strokeStyle = INK; c.lineWidth = 1.6; c.globalAlpha = 1; c.stroke(ground()); }
+  if (mode !== 'plants' && S.rootsPeople && S.rootsPeople !== 'none') drawFigures(c, items, L, t0, t1, X, x => gy(Math.max(t0, Math.min(t1, t0 + (x - ox) / (L * k)))), k, S.rootsPeople);   // scale figures: drawn on the drawing, and laid back over a painting rather than left to the painter
   if (mode === 'plants') { c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], counts: items.reduce((o, it) => (o[it.p.sp] = (o[it.p.sp] || 0) + 1, o), {}), sizes: items.reduce((o, it) => (o[it.p.sp] = Math.max(o[it.p.sp] || 0, it.g.H), o), {}), slope: true };   /* left to right, as the painter is told */ }
   // the words: title, an elevation ruler at true scale, each run of one species named once below the hillside, with a faint leader up to it
   const drop = (gz(t0) - gz(t1)), pct = Math.round(Math.abs(drop) / span * 100), ab = S.secs && S.secs.indexOf(sec) >= 0 && secLetters ? secLetters(S.secs.indexOf(sec)).join('–') + ' · ' : '';
@@ -803,7 +805,7 @@ window.__rootsPaintPrompt = (keys, counts, sizes) => { bind(); const ftm = m => 
     : 'Turn this diagram into a finished botanical plate that marries an old Japanese woodblock print (Edo to early Showa) with a 19th-century Western copperplate etching and the root atlases of Kutschera: from the woodblock, flat areas of quiet colour in a small palette, confident tapering key lines, soft bokashi gradients (a pale indigo band at the top of the sky, the earth deepening with depth), generous empty space and warm washi paper; from the etching, fine etched linework and delicate cross-hatching in the trunks, roots and soil, sepia hair roots. Lit from the upper left. ')
     + ((S.rootsAdapt || 0) > .25 ? 'Where plants stand close they have adapted to each other, as drawn: trunks lean and bend toward the light, crowns grow one-sided and interlace with their neighbours, branches weave through a neighbour\'s crown, roots intertwine below. Keep and celebrate these adaptations. ' : '')
     + (keys.some(k => ROOT_DATA[k] && ROOT_DATA[k].form === 'vine') ? 'The vines climb their host trees exactly as drawn: twining up the trunk, spreading over the crown and hanging in flowering curtains from its edges. ' : '')
-    + (S.rootsPeople && S.rootsPeople !== 'none' ? 'The small flat human' + (S.rootsPeople === 'horse' ? ' and horse' : '') + ' silhouettes are scale figures: keep them exactly where and as tall as drawn, as plain flat silhouettes. ' : '')
+    + 'Paint no people, animals or figures (they are added afterwards). '
     + (S.myco ? 'Underground, a fine network of faintly glowing pale mycelium threads links the roots of all the plants, as drawn; a few small mushrooms at the surface. Keep it subtle. ' : '')
     + 'No lettering of any kind, no Japanese characters, no seals or stamps, no cherry blossoms, no waves, no decorative border. Keep the soil exactly as deep as it is drawn: below its bottom edge, and in the strip along the bottom of the page, the paper stays plain and empty (labels go there). '
     + 'TRUE SCALE: these are full-size plants drawn to scale, not miniatures, seen from far enough away that a whole tree fits on the page. Draw foliage at its real size relative to each plant: a mature tree carries tens of thousands of small leaves, so its crown reads as a mass of fine texture and clustered sprays, never as a few large countable leaves; the bark texture, branch thickness and twig fineness of a big tree. No storybook, bonsai or toy proportions. '
