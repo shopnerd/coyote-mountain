@@ -389,7 +389,7 @@ function drawVine(c, v, host, vx, vy, k, alpha, hx, hy, hfl) {
   // curtains: strands hanging from the masses' outer edges, swaying a little, flowering down their length
   const curt = new Path2D(), nC = Math.round(6 + 18 * F.drape * Math.min(1, reach / Math.max(1, host.H * k)));
   for (let q = 0; q < nC && Cs.length; q++) { const [cx, cy, r] = Cs[Math.floor(R() * Cs.length)], a = (side > 0 ? -.3 : Math.PI + .3) + (R() - .5) * 2.2, sx = cx + Math.cos(a) * r, sy = cy + Math.abs(Math.sin(a)) * r * .6, L = (1 + R() * 3.5) * k * F.drape * Math.min(1, reach / Math.max(1, host.H * k) + .2);
-    let x = sx, y = sy; curt.moveTo(x, y); for (let u = 0; u < L; u += 3) { x = sx + Math.sin(u / 14 + q) * 3 + side * u * .05; y = sy + u; curt.lineTo(x, y); if (R() < .35) leaves.push([x, y]); if (R() < F.bloom * (F.raceme ? .9 : .55)) flowers.push([x + (R() - .5) * 4, y]); } }
+    let x = sx, y = sy; curt.moveTo(x, y); const gY = Math.min(hy, vy) - 2; for (let u = 0; u < L; u += 3) { x = sx + Math.sin(u / 14 + q) * 3 + side * u * .05; y = sy + u; if (y > gY) break;   /* curtains stop at the ground */ curt.lineTo(x, y); if (R() < .35) leaves.push([x, y]); if (R() < F.bloom * (F.raceme ? .9 : .55)) flowers.push([x + (R() - .5) * 4, y]); } }
   c.strokeStyle = stem; c.lineWidth = Math.max(.5, k * .01); c.globalAlpha = alpha * .8; c.stroke(curt);
   // its leaves, then its flowers in loose clusters
   c.globalAlpha = alpha * .9; c.fillStyle = leaf; c.beginPath(); for (const [x, y] of leaves) { const r = Math.max(1.3, k * .09) * (.7 + R() * .6); c.moveTo(x + r, y); c.ellipse(x, y, r, r * .7, R() * 3, 0, TAU); } c.fill();
