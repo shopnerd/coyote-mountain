@@ -232,6 +232,7 @@ function scTree(key, R, D, H, Wc, T, M, Lr, W0) {
   for (let q = 0; q < 6000 && clouds.length < 500; q++) { const u = R() * 2 - 1, v = R() * 2 - 1; if (u * u + v * v > .92) continue; const x = u * rx, y = cy + v * ry; if (y > base * .8) continue; if (clouds.some(c => Math.hypot(c.x - x, c.y - y) < cloudR * 1.15)) continue; clouds.push({ x, y, r: cloudR * (.8 + R() * .35) }); }
   if (!clouds.length) clouds.push({ x: 0, y: cy, r: cloudR });
   for (const c of clouds) { const u = c.x / rx, v = (c.y - cy) / ry; c.s = Math.max(0, Math.min(1, .5 + .45 * (u * Lx + v * Ly))); c.e = Math.hypot(u, v); }
+  const mass = clouds.map(c => ({ ...c }));   // every mass, for the massing look: a whole crown
   for (let q = clouds.length - 1; q >= 0 && clouds.length > 2; q--) { const c = clouds[q], low = (c.y - cy) / ry > .35; if (R() < (c.e < .5 ? .85 : c.e < .72 ? .55 : low ? .5 : .28)) clouds.splice(q, 1); }   // the foliage is a shell: the inside and the underside of the crown mostly open, gaps in the shell where the sky shows
   const sprays = [];
   for (const nd of tips) { let cl = null, dc = 1e9; for (const c of clouds) { const d = Math.hypot(c.x - nd.x, c.y - nd.y) / c.r; if (d < dc) { dc = d; cl = c; } } if (dc > 1 && R() > .06) continue;
@@ -241,17 +242,27 @@ function scTree(key, R, D, H, Wc, T, M, Lr, W0) {
       sh = Math.max(0, Math.min(1, sh)); const tr = e > .78 && sg > .1 && R() < .22 ? 1 : 0, dry = R() < .035 ? 1 : 0;   // leaves glowing where the sun comes through at the edge; a few dry ones
       if ((e < .45 && R() < .8) || y > -sprR * .5) continue; sprays.push([x, y, sprR * (.75 + R() * .5), sh, tr, dry, (R() - .5) * .1, R() * TAU, R() < .3 ? 1 : 0]); } }   // last: in front of the limbs (1) or behind them (0), so the branches weave through the leaves
   sprays.sort((a, b) => a[3] - b[3]);
-  return { crown, roots, sprays, clouds, sprR, LT, hb, fine, twigs };
+  return { crown, roots, sprays, clouds, mass, base, sprR, LT, hb, fine, twigs };
 }
 const mix = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
-function scWood(c, nodes, ox, oy, k, flip, col, shade, alpha) {   // every segment at its own thickness, opaque, thick over thin; a darker band down the shaded side of anything wide enough
-  const B = new Map(); for (let i = 1; i < nodes.length; i++) { const nd = nodes[i], p = nodes[nd.p], w = nd.r * 2 * k; if (w < .25) continue; const q = w < 1 ? Math.round(w * 8) / 8 : Math.round(w * 2) / 2; let a = B.get(q); if (!a) B.set(q, a = []); a.push(p.x, p.y, nd.x, nd.y); }
+function scWood(c, nodes, ox, oy, k, flip, col, shade, alpha, minW) {   // every segment at its own thickness, opaque, thick over thin; a darker band down the shaded side of anything wide enough
+  const B = new Map(); for (let i = 1; i < nodes.length; i++) { const nd = nodes[i], p = nodes[nd.p], w = nd.r * 2 * k; if (w < (minW || .25)) continue;   /* massing: only the trunk and main limbs */ const q = w < 1 ? Math.round(w * 8) / 8 : Math.round(w * 2) / 2; let a = B.get(q); if (!a) B.set(q, a = []); a.push(p.x, p.y, nd.x, nd.y); }
   const ws = [...B.keys()].sort((a, b) => a - b); c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
   for (const w of ws) { const a = B.get(w), path = new Path2D(); for (let i = 0; i < a.length; i += 4) { path.moveTo(ox + flip * a[i] * k, oy + a[i + 1] * k); path.lineTo(ox + flip * a[i + 2] * k, oy + a[i + 3] * k); }
     c.globalAlpha = alpha * (w < .6 ? .45 + w * .9 : 1); c.strokeStyle = col; c.lineWidth = Math.max(.5, w); c.stroke(path);
     if (w >= 3) { c.save(); c.translate(w * .22, 0); c.strokeStyle = shade; c.lineWidth = w * .42; c.globalAlpha = alpha * .85; c.stroke(path); c.restore(); c.save(); c.translate(-w * .28, 0); c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = w * .14; c.stroke(path); c.restore(); }
     if (w >= 6) { c.save(); c.strokeStyle = shade; c.lineWidth = Math.max(.5, w * .05); c.globalAlpha = alpha * .55; c.setLineDash([w * .9, w * .5]); for (const off of [-.3, -.05, .2]) { c.save(); c.translate(w * off, 0); c.stroke(path); c.restore(); } c.restore(); } }   // the bark's furrows: a big trunk reads as big
   c.restore();
+}
+function scMass(c, sc, ox, oy, k, flip, alpha) {   // the massing look: the crown's masses as one flat shape in its middle tone, a lit face on the sun side, a quiet shadow side, one clean outline
+  const f = 1 - Math.max(0, Math.min(1, alpha)), fade = h => f > .01 ? mix(h[0] === '#' ? h : '#' + h.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join(''), PAPER, f * .85) : h;   // further from the line: lighter, still solid, so flat masses never show through each other
+  alpha = 1; const t = sc.hb.tones.map(fade), M = sc.mass || sc.clouds, X = x => ox + flip * x * k, Y = y => oy + y * k, sil = new Path2D(), lit = new Path2D(), dark = new Path2D();
+  const lowY = sc.base != null ? sc.base : 0, MM = M.filter(cl => cl.y + cl.r * 1.12 <= lowY + cl.r * .25);   // the crown lifted clear of the ground: the trunk shows below it
+  for (const cl of MM) { const r = cl.r * k * 1.12; if (r < .4) continue; sil.moveTo(X(cl.x) + r, Y(cl.y)); sil.arc(X(cl.x), Y(cl.y), r, 0, TAU); }
+  for (const cl of MM) { const r = cl.r * k * .82; if (r < .4) continue; if (cl.s > .5) { const x = X(cl.x) - flip * r * .14, y = Y(cl.y) - r * .16; lit.moveTo(x + r, y); lit.arc(x, y, r, 0, TAU); } else if (cl.s < .38) { const x = X(cl.x) + flip * r * .12, y = Y(cl.y) + r * .14; dark.moveTo(x + r, y); dark.arc(x, y, r, 0, TAU); } }
+  const lw = Math.max(.6, Math.min(1.4, k * .05));
+  c.save(); c.globalAlpha = alpha; c.lineWidth = lw * 2; c.strokeStyle = fade(mix(sc.hb.tones[0], '#1a1a18', .45)); c.stroke(sil);   // the outline drawn first and the fill laid over it: only the outer edge of the whole crown stays
+  c.fillStyle = t[1]; c.fill(sil); c.save(); c.clip(sil); c.fillStyle = mix(t[1], t[0], .55); c.fill(dark); c.fillStyle = mix(t[1], t[2], .55); c.fill(lit); c.restore(); c.restore();
 }
 function scLeaves(c, sc, ox, oy, k, flip, alpha, layer) {
   const t = sc.hb.tones, LT = sc.LT, rp = sc.sprR * k, SP = sc.sprays.filter(q => q[8] === layer), X = x => ox + flip * x * k, Y = y => oy + y * k, lf = sc.hb.leaf; c.save();
@@ -438,7 +449,8 @@ const lineCtx = c => new Proxy(c, { get: (t, k) => { const v = t[k]; return type
 function drawPlant(c, g, ox, oy, k, alpha, flip, groundClip) {   // groundClip(c): a path below the ground, so roots never poke out of a slope
   if (LINE && !LINED.has(c)) { c = lineCtx(c); LINED.add(c); }
   if (FORM[g.key] && !g.sc) { c.save(); if (groundClip) { groundClip(c); c.clip(); } inkLines(c, g.roots, ox, oy, k, SEPIA, alpha * .92, flip); c.restore(); drawForm(c, g, ox, oy, k, alpha, flip, g.variant); return; }
-  if (g.sc) { const hb = g.sc.hb; c.save(); if (groundClip) { groundClip(c); c.clip(); } scWood(c, g.sc.roots, ox, oy, k, flip, SEPIA, '#2a1a10', alpha); if (g.sc.fine) inkLines(c, g.sc.fine, ox, oy, k, SEPIA, alpha * .85, flip); c.restore(); canopyLayer(c, cc => scLeaves(cc, g.sc, ox, oy, k, flip, alpha, 0)); scWood(c, g.sc.crown, ox, oy, k, flip, hb.bark, '#1c1b18', alpha); if (g.sc.twigs) inkLines(c, g.sc.twigs, ox, oy, k, hb.bark, alpha * .8, flip); canopyLayer(c, cc => scLeaves(cc, g.sc, ox, oy, k, flip, alpha, 1)); return; }   /* leaves behind the limbs, the limbs, leaves in front */
+  if (g.sc) { const hb = g.sc.hb; c.save(); if (groundClip) { groundClip(c); c.clip(); } scWood(c, g.sc.roots, ox, oy, k, flip, SEPIA, '#2a1a10', alpha); if (g.sc.fine) inkLines(c, g.sc.fine, ox, oy, k, SEPIA, alpha * .85, flip); c.restore(); if (MASSING()) { scWood(c, g.sc.crown.length > 1 ? g.sc.crown : g.sc.crown, ox, oy, k, flip, hb.bark, '#1c1b18', alpha, 2.2); canopyLayer(c, cc => scMass(cc, g.sc, ox, oy, k, flip, alpha)); return; }
+  canopyLayer(c, cc => scLeaves(cc, g.sc, ox, oy, k, flip, alpha, 0)); scWood(c, g.sc.crown, ox, oy, k, flip, hb.bark, '#1c1b18', alpha); if (g.sc.twigs) inkLines(c, g.sc.twigs, ox, oy, k, hb.bark, alpha * .8, flip); canopyLayer(c, cc => scLeaves(cc, g.sc, ox, oy, k, flip, alpha, 1)); return; }   /* leaves behind the limbs, the limbs, leaves in front */
   c.save(); if (groundClip) { groundClip(c); c.clip(); }
   const body = g.roots.filter(r => r.body); inkLines(c, g.roots.filter(r => !r.body), ox, oy, k, SEPIA, alpha * .92, flip);
   for (const r of body) { c.beginPath(); for (let i = 0; i < r.x.length; i++) c.lineTo(ox + flip * (r.x[i] - r.w[i] / 2) * k, oy + r.y[i] * k); for (let i = r.x.length - 1; i >= 0; i--) c.lineTo(ox + flip * (r.x[i] + r.w[i] / 2) * k, oy + r.y[i] * k); c.closePath(); c.globalAlpha = alpha * .25; c.fillStyle = SEPIA; c.fill(); c.globalAlpha = alpha * .9; c.strokeStyle = SEPIA; c.lineWidth = .8; c.stroke(); }
@@ -470,6 +482,7 @@ window.__rootsProfile = (c, sec, X, Y, n, gnd, pxm, mini) => { bind(); LINE = S.
 
 /* the root chart: each species the section crosses once, side by side at one scale, against a depth ruler, named, with how deep it goes */
 let lastKey = null;
+const MASSING = () => !S || (S.rootsLook || 'massing') === 'massing';   /* the default look: clean masses, as the palms and cacti are drawn; natural: leaves at their real size */
 const CAN = () => S && S.rootsCanopy != null ? Math.max(0, Math.min(1, S.rootsCanopy)) : 1;   /* the canopy's opacity: turned down, the branches and trunks show through */
 const OFF = { c: null };
 function canopyLayer(c, draw) {   // the leaves drawn whole on a layer of their own, then laid down at the canopy's opacity: overlapping sprays don't stack back up to solid
@@ -560,7 +573,7 @@ function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow
 const ES_ON = () => document.documentElement.lang === 'es', NM = D => ES_ON() && D.es && D.es !== D.common ? `${D.es} · ${D.common}` : D.common, TT = (es, en) => ES_ON() ? `${es} · ${en}` : en;
 const niceStep = v => { const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
 let LAYOUT = [], PLATE = null;   // PLATE: the last painted chart and what it was painted from (line, species, year)
-const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side', CAN()]);   // a painted plate belongs to its line, plants, year and style
+const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side', CAN(), S.rootsLook || 'massing']);   // a painted plate belongs to its line, plants, year and style
 window.__rootsSetPlate = (img, sec, keys) => { bind(); PLATE = { img, key: plateKey(sec, keys, AGRO.year) }; };
 window.__rootsPlateState = sec => { bind(); if (!PLATE) return 'none'; const seen = new Set(); for (const p of plantsNear(sec).sort((p, q) => p.t - q.t)) seen.add(p.sp); return PLATE.key === plateKey(sec, [...seen], AGRO.year) ? 'current' : 'stale'; };
 window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.rootsInk === 'line';
