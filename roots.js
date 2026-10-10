@@ -125,42 +125,51 @@ const LOOK = {   // for the painter: leaf, bark and form, in a phrase
   rosemary: 'dense shrub of needle-like dark leaves', ceanothus: 'dense shrub of small dark leaves, blue flower clusters', toyon: 'dense evergreen shrub, toothed leathery leaves, red berries',
   sage: 'mound of silvery-white broad leaves, tall flower spikes', vetiver: 'tall stiff upright clump of narrow leaves', bigbluestem: 'tall bunchgrass with three-branched turkey-foot seed heads',
   agave: 'rosette of thick grey-green spine-tipped leaves', pricklypear: 'stacked flat oval pads with spines and areoles',
+  rabbitbrush: 'low mound of narrow green leaves covered in small yellow flower heads', sagebrush: 'soft aromatic mound of thread-fine silver-grey leaves', saladito: 'big dense evergreen shrub of leathery oval leaves, clusters of sticky red berries', blacksage: 'open shrub of dark green wrinkled leaves, whorls of pale lavender flowers on stems', munzsage: 'compact grey-green shrub, small blue flower whorls', clevesage: 'rounded ash-grey shrub, tall stems with violet-blue pompom whorls', malva: 'tall open shrub of felty grey leaves and pink cup-shaped flowers along wand-like stems',
   stonepine: 'umbrella crown of dark needles on a tall clear red-brown trunk', mexfanpalm: 'very tall slender trunk, small crown of bright green fan leaves, skirt of dry fronds', pirul: 'weeping willow-like crown of fine pinnate leaves, pink peppercorn clusters, gnarled trunk', sycamore: 'mottled white and tan bark, broad maple-like leaves, crooked leaning trunks', buckwheat: 'low mound of tiny needle-like leaves with cream-pink flower heads', deergrass: 'large fountain of fine grass with tall pale flower spikes',
 };
 const HABIT = {   // per species: the crown's shape (centre height and half-height as fractions of the tree's height, lowest limbs), leaf texture, foliage tones shaded to lit
-  oak: { crown: { cy: .55, ry: .45, base: .14, rx: 1 }, lean: .12, leaf: 'scallop', clump: .05, tones: ['#4c5638', '#7d8a5c', '#c3c8a4'], bark: '#3b3832' },
-  olive: { crown: { cy: .58, ry: .4, base: .32, rx: 1 }, trunks: 2, trunkSplay: .5, gnarl: 3, lean: .3, scaffolds: 5, splay: 2.1, leaf: 'fine', clump: .045, tones: ['#56604c', '#8d9880', '#cdd3c2'], bark: '#625b51' },
-  carob: { crown: { cy: .56, ry: .44, base: .2, rx: 1 }, lean: .1, scaffolds: 5, leaf: 'glossy', clump: .055, tones: ['#36432a', '#566a3e', '#97a97a'], bark: '#4e4840' },
-  fig: { crown: { cy: .55, ry: .4, base: .22, rx: 1.08 }, trunks: 2, trunkSplay: .7, lean: .15, scaffolds: 5, splay: 2.2, leaf: 'broad', clump: .065, tones: ['#465c30', '#71904c', '#b4c88a'], bark: '#9b978d' },
-  almond: { crown: { cy: .62, ry: .36, base: .3, rx: 1, taper: .45 }, lean: .08, scaffolds: 4, splay: 1.5, leaf: 'fine', clump: .04, tones: ['#4a5a36', '#7a8d58', '#bcc79a'], bark: '#4a433b' },
-  pomegranate: { crown: { cy: .52, ry: .45, base: .1, rx: 1 }, trunks: 4, trunkSplay: .8, gnarl: 1.5, lean: .2, scaffolds: 4, leaf: 'fine', clump: .04, tones: ['#40532e', '#6b8448', '#aec07f'], bark: '#5a5248' },
-  lemon: { crown: { cy: .5, ry: .48, base: .08, rx: 1 }, lean: .1, scaffolds: 5, leaf: 'glossy', clump: .05, tones: ['#2f4425', '#50683a', '#93a977'], bark: '#5a5550' },
-  avocado: { crown: { cy: .55, ry: .45, base: .12, rx: 1 }, lean: .1, scaffolds: 5, leaf: 'glossy', clump: .06, tones: ['#2f4223', '#4f6837', '#8fa66f'], bark: '#4f4a43' },
-  jujube: { crown: { cy: .58, ry: .4, base: .25, rx: 1 }, gnarl: 2, lean: .2, scaffolds: 4, leaf: 'feather', clump: .04, tones: ['#465a32', '#738c50', '#b6c690'], bark: '#4a4038' },
-  mesquite: { crown: { cy: .6, ry: .32, base: .2, rx: 1.12 }, trunks: 3, trunkSplay: .7, gnarl: 2.5, lean: .35, scaffolds: 6, splay: 2.4, leaf: 'feather', clump: .045, tones: ['#56663e', '#869a62', '#c6d1a4'], bark: '#3e362e' },
-  paloverde: { crown: { cy: .58, ry: .38, base: .2, rx: 1.05 }, trunks: 2, trunkSplay: .6, lean: .2, scaffolds: 5, splay: 2.2, leaf: 'feather', clump: .035, tones: ['#6f8a4a', '#9cb46e', '#d3dfae'], bark: '#7f9c64' },
-  desertwillow: { crown: { cy: .58, ry: .4, base: .25, rx: 1 }, trunks: 2, trunkSplay: .5, gnarl: 1.5, lean: .25, scaffolds: 4, leaf: 'fine', clump: .04, tones: ['#4f6238', '#7d9356', '#bfcd9a'], bark: '#5a5045' },
-  moringa: { crown: { cy: .62, ry: .34, base: .35, rx: .9 }, lean: .15, scaffolds: 4, splay: 1.6, leaf: 'feather', clump: .035, tones: ['#5a7040', '#8aa462', '#c8d7a2'], bark: '#a29a8a' },
-  ironwood: { crown: { cy: .58, ry: .38, base: .2, rx: 1.05 }, trunks: 2, trunkSplay: .7, gnarl: 2, lean: .25, scaffolds: 5, splay: 2.2, leaf: 'feather', clump: .04, tones: ['#5b6a52', '#8a9a80', '#c4cdb8'], bark: '#5d5650' },
-  stonepine: { crown: { cy: .82, ry: .17, base: .62, rx: 1.1 }, lean: .1, scaffolds: 5, splay: 2.3, leaf: 'needle', clump: .05, tones: ['#2f3f2a', '#4d6342', '#8ea27e'], bark: '#7b5d45' },
-  cypress: { crown: { cy: .5, ry: .5, base: .04, rx: 1, taper: -.75 }, leader: true, lean: .02, leaf: 'scale', clump: .09, tones: ['#253222', '#3d5135', '#71876a'], bark: '#5a4a3d' },
-  corkoak: { crown: { cy: .56, ry: .42, base: .2, rx: 1.05 }, gnarl: 2, lean: .2, scaffolds: 5, splay: 2, leaf: 'scallop', clump: .05, tones: ['#3f4c33', '#677852', '#a9b58f'], bark: '#8d7a63' },
-  bay: { crown: { cy: .52, ry: .48, base: .06, rx: .8, taper: -.3 }, trunks: 3, trunkSplay: .3, lean: .08, scaffolds: 5, splay: 1.2, leaf: 'glossy', clump: .05, tones: ['#2e3f26', '#4d6440', '#8ea47c'], bark: '#4d4a44' },
-  pistachio: { crown: { cy: .55, ry: .42, base: .2, rx: 1.05 }, trunks: 2, trunkSplay: .5, gnarl: 1.5, lean: .2, scaffolds: 5, leaf: 'broad', clump: .05, tones: ['#4b5c38', '#7a8f5c', '#bccb98'], bark: '#7d7466' },
-  pirul: { crown: { cy: .5, ry: .42, base: .25, rx: 1.1 }, trunks: 1, gnarl: 2, lean: .3, scaffolds: 5, splay: 2.3, leaf: 'feather', clump: .05, tones: ['#4a5c38', '#7a9058', '#bccb96'], bark: '#6a5a4a' },
-  sycamore: { crown: { cy: .6, ry: .38, base: .25, rx: 1 }, trunks: 2, trunkSplay: .5, gnarl: 2.2, lean: .3, scaffolds: 5, splay: 2, leaf: 'broad', clump: .06, tones: ['#4c5f36', '#7c9455', '#bfd09a'], bark: '#c9c2b0' },
-  strawberrytree: { crown: { cy: .55, ry: .45, base: .12, rx: 1 }, trunks: 3, trunkSplay: .6, gnarl: 1.5, lean: .2, scaffolds: 5, leaf: 'glossy', clump: .045, tones: ['#344528', '#55703f', '#97ad7a'], bark: '#8a4a32' },
+  oak: { crown: { cy: .55, ry: .45, base: .14, rx: 1 }, lean: .12, leaf: 'scallop', tones: ['#4c5638', '#7d8a5c', '#c3c8a4'], bark: '#3b3832' },
+  olive: { crown: { cy: .58, ry: .4, base: .32, rx: 1 }, trunks: 2, trunkSplay: .5, gnarl: 3, lean: .3, scaffolds: 5, splay: 2.1, leaf: 'fine', tones: ['#56604c', '#8d9880', '#cdd3c2'], bark: '#625b51' },
+  carob: { crown: { cy: .56, ry: .44, base: .2, rx: 1 }, lean: .1, scaffolds: 5, leaf: 'glossy', tones: ['#36432a', '#566a3e', '#97a97a'], bark: '#4e4840' },
+  fig: { crown: { cy: .55, ry: .4, base: .22, rx: 1.08 }, trunks: 2, trunkSplay: .7, lean: .15, scaffolds: 5, splay: 2.2, leaf: 'broad', tones: ['#465c30', '#71904c', '#b4c88a'], bark: '#9b978d' },
+  almond: { crown: { cy: .62, ry: .36, base: .3, rx: 1, taper: .45 }, lean: .08, scaffolds: 4, splay: 1.5, leaf: 'fine', tones: ['#4a5a36', '#7a8d58', '#bcc79a'], bark: '#4a433b' },
+  pomegranate: { crown: { cy: .52, ry: .45, base: .1, rx: 1 }, trunks: 4, trunkSplay: .8, gnarl: 1.5, lean: .2, scaffolds: 4, leaf: 'fine', tones: ['#40532e', '#6b8448', '#aec07f'], bark: '#5a5248' },
+  lemon: { crown: { cy: .5, ry: .48, base: .08, rx: 1 }, lean: .1, scaffolds: 5, leaf: 'glossy', tones: ['#2f4425', '#50683a', '#93a977'], bark: '#5a5550' },
+  avocado: { crown: { cy: .55, ry: .45, base: .12, rx: 1 }, lean: .1, scaffolds: 5, leaf: 'glossy', tones: ['#2f4223', '#4f6837', '#8fa66f'], bark: '#4f4a43' },
+  jujube: { crown: { cy: .58, ry: .4, base: .25, rx: 1 }, gnarl: 2, lean: .2, scaffolds: 4, leaf: 'feather', tones: ['#465a32', '#738c50', '#b6c690'], bark: '#4a4038' },
+  mesquite: { crown: { cy: .6, ry: .32, base: .2, rx: 1.12 }, trunks: 3, trunkSplay: .7, gnarl: 2.5, lean: .35, scaffolds: 6, splay: 2.4, leaf: 'feather', tones: ['#56663e', '#869a62', '#c6d1a4'], bark: '#3e362e' },
+  paloverde: { crown: { cy: .58, ry: .38, base: .2, rx: 1.05 }, trunks: 2, trunkSplay: .6, lean: .2, scaffolds: 5, splay: 2.2, leaf: 'feather', tones: ['#6f8a4a', '#9cb46e', '#d3dfae'], bark: '#7f9c64' },
+  desertwillow: { crown: { cy: .58, ry: .4, base: .25, rx: 1 }, trunks: 2, trunkSplay: .5, gnarl: 1.5, lean: .25, scaffolds: 4, leaf: 'fine', tones: ['#4f6238', '#7d9356', '#bfcd9a'], bark: '#5a5045' },
+  moringa: { crown: { cy: .62, ry: .34, base: .35, rx: .9 }, lean: .15, scaffolds: 4, splay: 1.6, leaf: 'feather', tones: ['#5a7040', '#8aa462', '#c8d7a2'], bark: '#a29a8a' },
+  ironwood: { crown: { cy: .58, ry: .38, base: .2, rx: 1.05 }, trunks: 2, trunkSplay: .7, gnarl: 2, lean: .25, scaffolds: 5, splay: 2.2, leaf: 'feather', tones: ['#5b6a52', '#8a9a80', '#c4cdb8'], bark: '#5d5650' },
+  stonepine: { crown: { cy: .82, ry: .17, base: .62, rx: 1.1 }, lean: .1, scaffolds: 5, splay: 2.3, leaf: 'needle', tones: ['#2f3f2a', '#4d6342', '#8ea27e'], bark: '#7b5d45' },
+  cypress: { crown: { cy: .5, ry: .5, base: .04, rx: 1, taper: -.75 }, leader: true, lean: .02, leaf: 'scale', tones: ['#253222', '#3d5135', '#71876a'], bark: '#5a4a3d' },
+  corkoak: { crown: { cy: .56, ry: .42, base: .2, rx: 1.05 }, gnarl: 2, lean: .2, scaffolds: 5, splay: 2, leaf: 'scallop', tones: ['#3f4c33', '#677852', '#a9b58f'], bark: '#8d7a63' },
+  bay: { crown: { cy: .52, ry: .48, base: .06, rx: .8, taper: -.3 }, trunks: 3, trunkSplay: .3, lean: .08, scaffolds: 5, splay: 1.2, leaf: 'glossy', tones: ['#2e3f26', '#4d6440', '#8ea47c'], bark: '#4d4a44' },
+  pistachio: { crown: { cy: .55, ry: .42, base: .2, rx: 1.05 }, trunks: 2, trunkSplay: .5, gnarl: 1.5, lean: .2, scaffolds: 5, leaf: 'broad', tones: ['#4b5c38', '#7a8f5c', '#bccb98'], bark: '#7d7466' },
+  pirul: { crown: { cy: .5, ry: .42, base: .25, rx: 1.1 }, trunks: 1, gnarl: 2, lean: .3, scaffolds: 5, splay: 2.3, leaf: 'feather', tones: ['#4a5c38', '#7a9058', '#bccb96'], bark: '#6a5a4a' },
+  sycamore: { crown: { cy: .6, ry: .38, base: .25, rx: 1 }, trunks: 2, trunkSplay: .5, gnarl: 2.2, lean: .3, scaffolds: 5, splay: 2, leaf: 'broad', tones: ['#4c5f36', '#7c9455', '#bfd09a'], bark: '#c9c2b0' },
+  strawberrytree: { crown: { cy: .55, ry: .45, base: .12, rx: 1 }, trunks: 3, trunkSplay: .6, gnarl: 1.5, lean: .2, scaffolds: 5, leaf: 'glossy', tones: ['#344528', '#55703f', '#97ad7a'], bark: '#8a4a32' },
 };
-const SHRUB = { crown: { cy: .5, ry: .5, base: .03, rx: 1 }, trunks: 5, trunkSplay: 1.3, lean: .2, scaffolds: 7, splay: 2.4, leaf: 'fine', clump: .07, tones: ['#4c5a3e', '#7c8c66', '#bcc6a8'], bark: '#5a5248' };
+const SHRUB = { crown: { cy: .5, ry: .5, base: .03, rx: 1 }, trunks: 5, trunkSplay: 1.3, lean: .2, scaffolds: 7, splay: 2.4, leaf: 'fine', tones: ['#4c5a3e', '#7c8c66', '#bcc6a8'], bark: '#5a5248' };
 const SHRUBS = {   // shrubs that differ from the default mound: tone, leaf and stance
-  saltbush: { tones: ['#7b8170', '#a5ab98', '#d6d9cb'] }, jojoba: { leaf: 'glossy', tones: ['#56634c', '#808f72', '#b8c2a8'] }, creosote: { crown: { cy: .55, ry: .45, base: .12, rx: 1, taper: .35 }, trunks: 7, trunkSplay: 1.5, leaf: 'glossy', clump: .05, tones: ['#3d4a2c', '#62733f', '#a2b07a'] },
-  sage: { tones: ['#8e9688', '#b8beb2', '#e3e6dc'], leaf: 'broad' }, buckwheat: { leaf: 'needle', tones: ['#5e6650', '#8c9478', '#c6c8b0'] }, rosemary: { leaf: 'needle', tones: ['#33402c', '#566649', '#909e83'] }, lavender: { leaf: 'needle', tones: ['#6f7a6a', '#98a291', '#c9cfc2'] },
+  saltbush: { tones: ['#7b8170', '#a5ab98', '#d6d9cb'] }, jojoba: { leaf: 'glossy', tones: ['#56634c', '#808f72', '#b8c2a8'] }, creosote: { crown: { cy: .55, ry: .45, base: .12, rx: 1, taper: .35 }, trunks: 7, trunkSplay: 1.5, leaf: 'glossy', tones: ['#3d4a2c', '#62733f', '#a2b07a'] },
+  sage: { tones: ['#8e9688', '#b8beb2', '#e3e6dc'], leaf: 'broad' }, buckwheat: { leaf: 'needle', tones: ['#5e6650', '#8c9478', '#c6c8b0'] },
+  rabbitbrush: { leaf: 'needle', tones: ['#5d6a3c', '#8e9b5a', '#c9cf8e'] }, sagebrush: { leaf: 'needle', tones: ['#6f7868', '#9ca592', '#d0d6c6'] },
+  saladito: { leaf: 'glossy', trunks: 4, trunkSplay: 1.1, crown: { cy: .52, ry: .48, base: .05, rx: 1 }, tones: ['#2f4126', '#4f6a3e', '#8fa679'] }, blacksage: { leaf: 'fine', tones: ['#3c4a30', '#62734e', '#a2b08a'] },
+  munzsage: { leaf: 'fine', tones: ['#59644f', '#848f78', '#bcc4b0'] }, clevesage: { leaf: 'fine', tones: ['#6b7464', '#98a08f', '#cdd2c3'] },
+  malva: { leaf: 'broad', crown: { cy: .55, ry: .45, base: .1, rx: 1, taper: .3 }, tones: ['#6c7462', '#99a28c', '#cfd5c2'] }, rosemary: { leaf: 'needle', tones: ['#33402c', '#566649', '#909e83'] }, lavender: { leaf: 'needle', tones: ['#6f7a6a', '#98a291', '#c9cfc2'] },
   ceanothus: { leaf: 'glossy', tones: ['#2f3d27', '#4f6240', '#8a9c78'] }, toyon: { leaf: 'glossy', crown: { cy: .5, ry: .5, base: .08, rx: 1 }, tones: ['#2f4226', '#4f6a3e', '#8ea77a'] },
   guava: { leaf: 'glossy', tones: ['#5d6b54', '#87957c', '#bcc6b0'] }, elder: { leaf: 'feather', tones: ['#44582f', '#6f8a4c', '#b0c58c'] }, lupine: { leaf: 'feather', tones: ['#6f7d68', '#9aa891', '#cdd5c4'] },
   myrtle: { leaf: 'glossy', tones: ['#2e3f27', '#4b6340', '#8aa27c'] }, lentisk: { leaf: 'glossy', tones: ['#33452a', '#536a43', '#93a77f'] }, thyme: { leaf: 'needle', tones: ['#5a6650', '#84907a', '#b9c1ad'] },
   pigeonpea: { leaf: 'feather', tones: ['#4f6338', '#7a915a', '#b6c793'] }, grape: { leaf: 'broad', trunks: 1, gnarl: 3, tones: ['#4c6232', '#79934f', '#b9cc8d'] },
 };
 const habitFor = (key, D) => HABIT[key] || (D && D.form === 'shrub' && !FORM[key] ? { ...SHRUB, ...(SHRUBS[key] || {}) } : null);
+const LEAFS = {   // per leaf type, in metres: a twig spray's radius, one leaf's length, sprays per twig tip
+  scallop: { spray: .42, leaf: .05, per: 3 }, fine: { spray: .34, leaf: .06, per: 3 }, glossy: { spray: .4, leaf: .09, per: 3 }, broad: { spray: .5, leaf: .16, per: 2 },
+  feather: { spray: .45, leaf: .18, per: 2 }, needle: { spray: .5, leaf: .1, per: 3 }, scale: { spray: .32, leaf: .03, per: 3 },
+};
 function colonize(R, nodes, ax, ay, P) {   // nodes: {x, y, p}; grows in place
   const cell = P.di, grid = new Map(), live = new Uint8Array(ax.length).fill(1), key = (x, y) => (Math.floor(x / cell) + 4096) * 8192 + Math.floor(y / cell) + 4096;
   const add = i => { if (nodes[i].ng) return; const k = key(nodes[i].x, nodes[i].y);   // ng: the trunk, which carries the limbs but sprouts nothing itself
@@ -201,6 +210,7 @@ function scTree(key, R, D, H, Wc, T, M, Lr, W0) {
     for (let s = 0; s < L; s += D) { a += (R() - .5) * (.35 + (hb.gnarl || 0) * .12) + Math.sin(UP - a) * .03; x += Math.cos(a) * D; y += Math.sin(a) * D; if (y < cy - ry * .6) break; crown.push({ x, y, p: i }); (crown[i].kids || (crown[i].kids = [])).push(crown.length - 1); i = crown.length - 1; } } }
   colonize(R, crown, ax, ay, { D: H / 95, di: H / 8, dk: H / 40, trop: [0, -1], tw: .08, inertia: .15, jit: .55, maxIt: 420, maxN: 14000 });
   warp(crown, Math.max(rx, ry) * .05 * (1 + (hb.gnarl || 0) * .4), R); pipe(crown, W0 / 2 / Math.sqrt(nT), 2.4, .004);
+  for (const nd of crown) if (nd.ng && nd.y > -.9) nd.r *= 1 + .55 * Math.exp(nd.y / .25);   // the root flare: a trunk widens where it meets the ground
   // below: the measured profile. β from "most roots to"; lateral reach narrowing with depth
   const beta = Math.pow(.15, 1 / Math.max(.05, T)), bx = [], by = [];
   while (bx.length < nA) { const d = Math.min(M, Math.log(1 - R() * .999) / Math.log(beta)); if (d < .03) continue; const reach = D.arch === 'taproot' ? Lr * Math.max(.04, Math.exp(-d / (T * .9))) : Lr * Math.max(.05, 1 - Math.pow(d / M, .55)),   /* a taproot species spreads wide only near the surface */ x = (R() < .5 ? -1 : 1) * reach * Math.pow(R(), 1.25); bx.push(x); by.push(d); }
@@ -211,14 +221,27 @@ function scTree(key, R, D, H, Wc, T, M, Lr, W0) {
   warp(roots, (Lr + M) * .03, R); pipe(roots, W0 * .55, 2.3, .0025);
   const fine = [], fb = { n: 40000 }, fl = Math.max(.15, (Lr + M) / 28), FP = { ...FINE(fl, 4), wig: .7, gap: fl * .18 }; FP.clen = (s, len, R) => fl * .3 * (.3 + R()); FP.kid = { ...FINE(fl, 4), clen: (s, len, R) => fl * .12 * (.3 + R()) };
   const rFine = Math.min(...roots.map(n => n.r)) * 4; for (let i = 2; i < roots.length; i++) { const nd = roots[i]; if (nd.r > rFine || R() < .25) continue; for (let j = 0; j < 3 && fb.n > 0; j++) { const a = Math.atan2(nd.y - roots[nd.p].y, nd.x - roots[nd.p].x) + (R() < .5 ? -1 : 1) * (.6 + R() * .9); grow(R, fine, nd.x, nd.y, a, fl * (.4 + R()), nd.r * 1.2, 2, FP, fb); } }
-  // leaves: a clump at every crown tip, its tone from the light coming from the upper left
-  const twigs = [], tb = { n: 9000 }, tl = Wc * .045, TW = { tgt: 'up', grav: .02, wig: .6, gap: tl * .4, brA: [.4, .9], clen: (s, len, R) => (len - s) * .6, brW: .6, maxO: 2, step: tl / 6 }; TW.kid = TW;
+  // leaves at their real size (SpeedTree, Lumion): a twig spray is about half a metre whatever the tree, so a big tree shows more sprays, not bigger ones
+  const LT = LEAFS[hb.leaf] || LEAFS.scallop, sprR = LT.spray * Math.max(.28, Math.min(1, Math.max(H, Wc) / 5)), Lx = -.55, Ly = -.83;   // a tree's spray is half a metre; a sage's twigs are a few centimetres
+  const twigs = [], tb = { n: 9000 }, tl = sprR * 1.6, TW = { tgt: 'up', grav: .02, wig: .6, gap: tl * .4, brA: [.4, .9], clen: (s, len, R) => (len - s) * .6, brW: .6, maxO: 2, step: tl / 6 }; TW.kid = TW;
   const ends = []; for (const nd of crown) if (!nd.kids && nd.y < base * .6) for (let j = 0; j < 3 && tb.n > 0; j++) { const a = Math.atan2(nd.y - crown[nd.p].y, nd.x - crown[nd.p].x) + (R() - .5) * 1.6; ends.push(grow(R, twigs, nd.x, nd.y, a, tl * (.5 + R()), nd.r * 1.4, 1, TW, tb)); }
   const rLeaf = Math.min(...crown.map(n => n.r)) * 3.5, inner = crown.filter(n => !n.ng && n.r < rLeaf && n.kids && n.y < base * .7 && R() < .3).map(n => ({ x: n.x, y: n.y }));
-  const tips = ends.map(([x, y]) => ({ x, y })).concat(inner), Lx = -.55, Ly = -.83;
-  const clumps = []; for (const nd of tips) { const u = nd.x / rx, v = (nd.y - cy) / ry, s0 = .5 + .55 * (u * Lx + v * Ly); for (let q = 0; q < 2; q++) { const a = R() * TAU, d = Wc * hb.clump * .5 * R(), s = Math.max(0, Math.min(1, s0 + (R() - .5) * .3 - (q === 0 ? .12 : 0))); clumps.push([nd.x + Math.cos(a) * d, nd.y + Math.sin(a) * d * .8, Wc * hb.clump * (.22 + R() * .22), s]); } }
-  clumps.sort((a, b) => a[3] - b[3]);
-  return { crown, roots, clumps, hb, fine, twigs };
+  const tips = ends.map(([x, y]) => ({ x, y })).concat(inner);
+  // the crown's masses: cloud centres spread through the envelope; foliage only near them, so the sky shows between (Will: "dwarf trees")
+  const cloudR = Math.max(.22, Math.min(3.2, Math.min(rx, ry) * .42)), clouds = [];
+  for (let q = 0; q < 6000 && clouds.length < 500; q++) { const u = R() * 2 - 1, v = R() * 2 - 1; if (u * u + v * v > .92) continue; const x = u * rx, y = cy + v * ry; if (y > base * .8) continue; if (clouds.some(c => Math.hypot(c.x - x, c.y - y) < cloudR * 1.15)) continue; clouds.push({ x, y, r: cloudR * (.8 + R() * .35) }); }
+  if (!clouds.length) clouds.push({ x: 0, y: cy, r: cloudR });
+  for (const c of clouds) { const u = c.x / rx, v = (c.y - cy) / ry; c.s = Math.max(0, Math.min(1, .5 + .45 * (u * Lx + v * Ly))); c.e = Math.hypot(u, v); }
+  for (let q = clouds.length - 1; q >= 0 && clouds.length > 2; q--) { const c = clouds[q], low = (c.y - cy) / ry > .35; if (R() < (c.e < .5 ? .85 : c.e < .72 ? .55 : low ? .5 : .28)) clouds.splice(q, 1); }   // the foliage is a shell: the inside and the underside of the crown mostly open, gaps in the shell where the sky shows
+  const sprays = [];
+  for (const nd of tips) { let cl = null, dc = 1e9; for (const c of clouds) { const d = Math.hypot(c.x - nd.x, c.y - nd.y) / c.r; if (d < dc) { dc = d; cl = c; } } if (dc > 1 && R() > .06) continue;
+    for (let q = 0; q < LT.per; q++) { const a = R() * TAU, d = sprR * 1.1 * Math.sqrt(R()), x = nd.x + Math.cos(a) * d, y = nd.y + Math.sin(a) * d * .85, u = x / rx, v = (y - cy) / ry, e = Math.hypot(u, v);
+      const lx = (x - cl.x) / cl.r, ly = (y - cl.y) / cl.r, sl = lx * Lx + ly * Ly, sg = u * Lx + v * Ly;   // light on the cloud's own surface and across the crown
+      let sh = .48 + .3 * sl + .22 * sg - .22 * Math.max(0, 1 - e) - .12 * Math.max(0, 1 - Math.hypot(lx, ly)) + (R() - .5) * .14;   // the core of each mass and of the crown in shade (ambient occlusion)
+      sh = Math.max(0, Math.min(1, sh)); const tr = e > .78 && sg > .1 && R() < .22 ? 1 : 0, dry = R() < .035 ? 1 : 0;   // leaves glowing where the sun comes through at the edge; a few dry ones
+      if ((e < .45 && R() < .8) || y > -sprR * .5) continue; sprays.push([x, y, sprR * (.75 + R() * .5), sh, tr, dry, (R() - .5) * .1, R() * TAU, R() < .3 ? 1 : 0]); } }   // last: in front of the limbs (1) or behind them (0), so the branches weave through the leaves
+  sprays.sort((a, b) => a[3] - b[3]);
+  return { crown, roots, sprays, clouds, sprR, LT, hb, fine, twigs };
 }
 const mix = (a, b, t) => { const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), A = p(a), B = p(b); return `rgb(${A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',')})`; };
 function scWood(c, nodes, ox, oy, k, flip, col, shade, alpha) {   // every segment at its own thickness, opaque, thick over thin; a darker band down the shaded side of anything wide enough
@@ -226,26 +249,42 @@ function scWood(c, nodes, ox, oy, k, flip, col, shade, alpha) {   // every segme
   const ws = [...B.keys()].sort((a, b) => a - b); c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
   for (const w of ws) { const a = B.get(w), path = new Path2D(); for (let i = 0; i < a.length; i += 4) { path.moveTo(ox + flip * a[i] * k, oy + a[i + 1] * k); path.lineTo(ox + flip * a[i + 2] * k, oy + a[i + 3] * k); }
     c.globalAlpha = alpha * (w < .6 ? .45 + w * .9 : 1); c.strokeStyle = col; c.lineWidth = Math.max(.5, w); c.stroke(path);
-    if (w >= 3) { c.save(); c.translate(w * .22, 0); c.strokeStyle = shade; c.lineWidth = w * .42; c.globalAlpha = alpha * .85; c.stroke(path); c.restore(); c.save(); c.translate(-w * .28, 0); c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = w * .14; c.stroke(path); c.restore(); } }
+    if (w >= 3) { c.save(); c.translate(w * .22, 0); c.strokeStyle = shade; c.lineWidth = w * .42; c.globalAlpha = alpha * .85; c.stroke(path); c.restore(); c.save(); c.translate(-w * .28, 0); c.strokeStyle = 'rgba(255,255,255,.18)'; c.lineWidth = w * .14; c.stroke(path); c.restore(); }
+    if (w >= 6) { c.save(); c.strokeStyle = shade; c.lineWidth = Math.max(.5, w * .05); c.globalAlpha = alpha * .55; c.setLineDash([w * .9, w * .5]); for (const off of [-.3, -.05, .2]) { c.save(); c.translate(w * off, 0); c.stroke(path); c.restore(); } c.restore(); } }   // the bark's furrows: a big trunk reads as big
   c.restore();
 }
-function scLeaves(c, sc, ox, oy, k, flip, alpha) {
-  const t = sc.hb.tones; c.save();
-  c.fillStyle = t[0]; c.globalAlpha = alpha * .35; c.beginPath(); for (const [x, y, r] of sc.clumps) { const px = ox + flip * x * k + r * k * .3, py = oy + y * k + r * k * .35, rr = r * k * 1.05; if (rr < .4) continue; c.moveTo(px + rr, py); c.arc(px, py, rr, 0, TAU); } c.fill();
-  for (const [x, y, r, s] of sc.clumps) { const px = ox + flip * x * k, py = oy + y * k, rr = r * k; if (rr < .4) continue; c.globalAlpha = alpha * .9; c.fillStyle = s < .5 ? mix(t[0], t[1], s * 2) : mix(t[1], t[2], (s - .5) * 2); c.beginPath(); c.arc(px, py, rr, 0, TAU); c.fill(); }
-  // the leaves themselves: small scallops, crowded where the crown is in shadow, sparse in the light; an outline only on the lit side of each clump
-  c.strokeStyle = '#2b2e22'; c.lineWidth = Math.max(.35, Math.min(.8, k * .03)); c.beginPath();
-  for (const [x, y, r, s] of sc.clumps) { const px = ox + flip * x * k, py = oy + y * k, rr = r * k; if (rr < 1.6) continue; const m = Math.round(1 + (1 - s) * 5), lr = Math.max(.8, rr * .2);
-    for (let i = 0; i < m; i++) { const a = (x * 131 + y * 71 + i * 2.4) % TAU, d = rr * Math.sqrt((i * .618 + Math.abs(x) * 3) % 1), qx = px + Math.cos(a) * d, qy = py + Math.sin(a) * d * .8, lf = sc.hb.leaf, o = (i * 1.7 + x * 5) % TAU;
-      if (lf === 'fine' || lf === 'needle') { for (let j = -1; j <= 1; j++) { const b = o + j * .5, l = lr * (lf === 'needle' ? 1.6 : 1.3); c.moveTo(qx, qy); c.lineTo(qx + Math.cos(b) * l, qy + Math.sin(b) * l); } }   // narrow leaves, needles: short strokes in a spray
-      else if (lf === 'feather') { const l = lr * 1.6; c.moveTo(qx - Math.cos(o) * l, qy - Math.sin(o) * l); c.lineTo(qx + Math.cos(o) * l, qy + Math.sin(o) * l); for (let t = -.8; t <= .8; t += .4) { const bx = qx + Math.cos(o) * l * t, by = qy + Math.sin(o) * l * t; c.moveTo(bx, by); c.lineTo(bx + Math.cos(o + 1.1) * l * .35, by + Math.sin(o + 1.1) * l * .35); c.moveTo(bx, by); c.lineTo(bx + Math.cos(o - 1.1) * l * .35, by + Math.sin(o - 1.1) * l * .35); } }   // pinnate: a midrib with leaflets
-      else if (lf === 'glossy') { c.moveTo(qx + lr, qy); c.ellipse(qx, qy, lr, lr * .5, o, 0, TAU); c.moveTo(qx - lr * .3, qy - lr * .15); c.lineTo(qx + lr * .1, qy - lr * .3); }   // oval leaves with a glint
-      else if (lf === 'broad') { const l = lr * 1.5; c.moveTo(qx, qy + l * .5); for (let j = 0; j < 5; j++) { const b = -Math.PI / 2 + (j - 2) * .55; c.lineTo(qx + Math.cos(b) * l, qy + Math.sin(b) * l * .8); c.lineTo(qx + Math.cos(b + .27) * l * .45, qy + Math.sin(b + .27) * l * .35); } }   // lobed, like a fig
-      else if (lf === 'scale') { c.moveTo(qx - lr, qy); c.quadraticCurveTo(qx, qy - lr * .9, qx + lr, qy); }   // overlapping scales, a cypress's sprays
-      else { c.moveTo(qx - lr, qy); c.quadraticCurveTo(qx - lr * .5, qy + lr * .9, qx, qy + lr * .1); c.quadraticCurveTo(qx + lr * .5, qy + lr * .9, qx + lr, qy); } }
-    if (s > .45) { c.moveTo(px + Math.cos(3.4) * rr, py + Math.sin(3.4) * rr); c.arc(px, py, rr, 3.4, 4.9); } }
-  c.globalAlpha = alpha * .55; c.stroke();
-  if (LINE) { c.beginPath(); for (const [x, y, r, s] of sc.clumps) { const px = ox + flip * x * k, py = oy + y * k, rr = r * k; if (rr < 1) continue; const a0 = 2.6 + s * .6; c.moveTo(px + Math.cos(a0) * rr, py + Math.sin(a0) * rr); c.arc(px, py, rr, a0, a0 + 3.4 + (1 - s) * 1.6); } c.globalAlpha = alpha * .7; c.strokeStyle = INK; c.lineWidth = Math.max(.35, Math.min(.7, k * .025)); c.stroke(); }   // scalloped edges round every leaf mass, fuller on the shaded side
+function scLeaves(c, sc, ox, oy, k, flip, alpha, layer) {
+  const t = sc.hb.tones, LT = sc.LT, rp = sc.sprR * k, SP = sc.sprays.filter(q => q[8] === layer), X = x => ox + flip * x * k, Y = y => oy + y * k, lf = sc.hb.leaf; c.save();
+  // the masses' dark cores first: depth inside the crown (ambient occlusion), a little below and right of each cloud
+  if (rp >= 1.3) { c.fillStyle = mix(t[0], '#1e2416', .4); c.globalAlpha = alpha * (LINE ? 1 : .6); c.beginPath(); for (const [x, y, r, s] of SP) { if (s > .45) continue; const R_ = Math.max(.6, r * k); c.moveTo(X(x) + flip * R_ * .12 + R_, Y(y) + R_ * .15); c.arc(X(x) + flip * R_ * .12, Y(y) + R_ * .15, R_, 0, TAU); } c.fill(); }   // shadow under the shaded sprays: depth inside the crown
+  if (rp < 1.3) { if (layer) { c.restore(); return; }   // far: the crown as an impostor; each mass shaded light to dark and grained with a stipple of fixed size, the engraver's distant tree
+    for (const cl of sc.clouds) { const r = cl.r * k; if (r < .6) continue; const x = X(cl.x), y = Y(cl.y); c.globalAlpha = alpha * .95; c.fillStyle = cl.s < .5 ? mix(t[0], t[1], cl.s * 2) : mix(t[1], t[2], (cl.s - .5) * 2); c.beginPath(); c.arc(x - flip * r * .08, y - r * .06, r * .78, 0, TAU); c.fill(); }
+    c.fillStyle = mix(t[0], '#151a10', .5); c.globalAlpha = alpha * .5; c.beginPath(); for (const cl of sc.clouds) { const r = cl.r * k, n = Math.round(r * r * .5 * (1.1 - cl.s)); for (let q = 0; q < n; q++) { const a = (q * 2.399 + cl.x * 7) % TAU, d = r * .8 * Math.sqrt(((q * .618) + cl.y) % 1), x = X(cl.x) + Math.cos(a) * d, y = Y(cl.y) + Math.sin(a) * d; if (Math.cos(a) * flip * -.55 + Math.sin(a) * -.83 > .2 && q % 3) continue; c.moveTo(x + .6, y); c.arc(x, y, .6, 0, TAU); } } c.fill();
+    c.restore(); return; }
+  // near and middle: every spray at its real size, coloured by its light, batched by colour so a big tree is a few dozen fills
+  const hx = h => h[0] === '#' ? h : '#' + h.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join('');
+  const B = new Map(); for (const sp of SP) { const [x, y, r, s, tr, dry, jt] = sp, key = Math.round(s * 9) + '|' + tr + '|' + dry + '|' + Math.round(jt * 20); let a = B.get(key); if (!a) B.set(key, a = []); a.push(sp); }
+  const keys = [...B.keys()].sort((p, q) => parseInt(p) - parseInt(q));
+  for (const key of keys) { const [si, tr, dry, ji] = key.split('|').map(Number), s = si / 9, j = ji / 20; let col = s < .5 ? mix(t[0], t[1], s * 2) : mix(t[1], t[2], (s - .5) * 2);
+    if (j) col = mix(hx(col), j > 0 ? '#c8c27a' : '#26301c', Math.abs(j) * 1.6);
+    if (dry) col = mix(hx(col), '#a59b63', .55);
+    if (tr) col = mix(hx(col), '#dcd77a', .45);   // light through the leaves at the sunny edge
+    c.fillStyle = col; c.globalAlpha = alpha * (LINE ? 1 : .93); c.beginPath();
+    for (const [x, y, r, , , , , o] of B.get(key)) { const R_ = Math.max(.6, r * k); c.moveTo(X(x) + R_, Y(y)); c.ellipse(X(x), Y(y), R_, R_ * .82, o, 0, TAU); } c.fill(); }
+  // the leaves themselves, at their real length, where a leaf is at least a pixel or so; more in the shade, fewer in the light, as an engraver cuts them
+  const lpx = LT.leaf * k; if (rp >= 3) { c.strokeStyle = '#2b2e22'; c.lineWidth = Math.max(.3, Math.min(.75, lpx * .18)); c.beginPath(); const lr = Math.max(.7, lpx * .5);
+    for (const [x, y, r, s, , , , o0] of SP) { const px = X(x), py = Y(y), rr = r * k, m = Math.max(1, Math.min(9, Math.round((1.3 - s) * Math.min(7, rr / Math.max(1, lpx * .9)))));
+      for (let q = 0; q < m; q++) { const a = (o0 + q * 2.399) % TAU, d = rr * .85 * Math.sqrt(((q * .618) + o0) % 1), qx = px + Math.cos(a) * d, qy = py + Math.sin(a) * d * .82, o = (o0 * 3 + q * 1.7) % TAU;
+        if (lf === 'fine' || lf === 'needle') { for (let jj = -1; jj <= 1; jj++) { const b = o + jj * .45, l = lr * (lf === 'needle' ? 1.7 : 1.4); c.moveTo(qx, qy); c.lineTo(qx + Math.cos(b) * l, qy + Math.sin(b) * l); } }
+        else if (lf === 'feather') { const l = lr * 1.6; c.moveTo(qx - Math.cos(o) * l, qy - Math.sin(o) * l); c.lineTo(qx + Math.cos(o) * l, qy + Math.sin(o) * l); for (let tt = -.8; tt <= .8; tt += .4) { const bx = qx + Math.cos(o) * l * tt, by = qy + Math.sin(o) * l * tt; c.moveTo(bx, by); c.lineTo(bx + Math.cos(o + 1.1) * l * .35, by + Math.sin(o + 1.1) * l * .35); c.moveTo(bx, by); c.lineTo(bx + Math.cos(o - 1.1) * l * .35, by + Math.sin(o - 1.1) * l * .35); } }
+        else if (lf === 'glossy') { c.moveTo(qx + lr, qy); c.ellipse(qx, qy, lr, lr * .5, o, 0, TAU); }
+        else if (lf === 'broad') { const l = lr * 1.3; c.moveTo(qx, qy + l * .5); for (let jj = 0; jj < 5; jj++) { const b = -Math.PI / 2 + (jj - 2) * .55; c.lineTo(qx + Math.cos(b) * l, qy + Math.sin(b) * l * .8); c.lineTo(qx + Math.cos(b + .27) * l * .45, qy + Math.sin(b + .27) * l * .35); } }
+        else if (lf === 'scale') { c.moveTo(qx - lr, qy); c.quadraticCurveTo(qx, qy - lr * .9, qx + lr, qy); }
+        else { c.moveTo(qx - lr, qy); c.quadraticCurveTo(qx - lr * .5, qy + lr * .9, qx, qy + lr * .1); c.quadraticCurveTo(qx + lr * .5, qy + lr * .9, qx + lr, qy); } } }
+    c.globalAlpha = alpha * (LINE ? .75 : .5); c.stroke(); }
+  // a crisp edge on the sunny side of each mass (rim light), and in the line style a scalloped outline round every mass
+  if (layer) { c.beginPath(); for (const cl of sc.clouds) { const r = cl.r * k * .98; if (r < 1.5 || (!LINE && (cl.e < .72 || cl.s < .55))) continue; const a0 = 3.3, a1 = LINE ? a0 + 5.6 : 4.95; c.moveTo(X(cl.x) + Math.cos(a0) * r * flip, Y(cl.y) + Math.sin(a0) * r); for (let a = a0; a <= a1; a += .35) { const rr = r * (1 + .07 * Math.sin(a * 9 + cl.x)); c.lineTo(X(cl.x) + Math.cos(a) * rr * flip, Y(cl.y) + Math.sin(a) * rr); } }
+  c.strokeStyle = LINE ? INK : mix(t[2], '#ffffff', .25); c.lineWidth = Math.max(.4, Math.min(1, rp * .08)); c.globalAlpha = alpha * (LINE ? .7 : .45); c.stroke(); }
   c.restore();
 }
 
@@ -261,7 +300,7 @@ const FORM = {   // per species: what to draw above ground
   americana: { t: 'rosette', n: 30, broad: true, recurve: true }, agave: { t: 'rosette', n: 30, broad: true }, aloe: { t: 'rosette', n: 16, teeth: true, stalk: 'orange', stems: 6 }, dudleya: { t: 'rosette', n: 22, broad: true, chalk: true },
 };
 const fillStroke = (c, fill, a, lw) => { c.globalAlpha = a; c.fillStyle = fill; c.fill(); c.globalAlpha = Math.min(1, a + .25); c.strokeStyle = INK; c.lineWidth = lw; c.stroke(); };
-function drawForm(c, g, ox, oy, k, alpha, flip, seed) {
+function drawForm(c, g, ox, oy, k, alpha, flip, seed) { const a0 = alpha;
   const F = FORM[g.key], R = rng(hashStr(g.key) ^ (seed || 0)), H = g.H, Wc = g.Wc, X = x => ox + flip * x * k, Y = y => oy + y * k, lw = Math.max(.4, Math.min(1, k * .02)), green = F.leaf || '#7f9068';
   c.save(); c.lineJoin = 'round'; c.lineCap = 'round';
   if (F.t === 'palm') {
@@ -273,11 +312,11 @@ function drawForm(c, g, ox, oy, k, alpha, flip, seed) {
       c.beginPath(); const step = Math.max(.12, tw * .35);
       for (let y = step; y < th; y += step) { const t = y / th, w = wAt(t) / 2, x0 = px(t); if (F.boots) { c.moveTo(X(x0 - w), Y(-y)); c.lineTo(X(x0), Y(-y - step * .6)); c.lineTo(X(x0 + w), Y(-y)); } else { c.moveTo(X(x0 - w), Y(-y)); c.quadraticCurveTo(X(x0), Y(-y + step * .25), X(x0 + w), Y(-y)); } }
       c.globalAlpha = alpha * .55; c.strokeStyle = INK; c.lineWidth = lw * .8; c.stroke(); c.save(); c.beginPath(); for (let i = 0; i <= 20; i++) { const t = i / 20; c.lineTo(X(px(t) + wAt(t) * .15), Y(-th * t)); } for (let i = 20; i >= 0; i--) { const t = i / 20; c.lineTo(X(px(t) + wAt(t) / 2), Y(-th * t)); } c.globalAlpha = alpha * .22; c.fillStyle = '#2a241c'; c.fill(); c.restore();
-      const ax = px(1), ay = -th;
+      alpha = a0; const ax = px(1), ay = -th;
       // the skirt: dead fronds hanging down the trunk, straw coloured
       if (F.skirt) { const sl = th * F.skirt, sw = fl * .55; c.beginPath(); c.moveTo(X(ax - sw * .55), Y(ay)); c.quadraticCurveTo(X(ax - sw * .6), Y(ay + sl * .6), X(ax - tw * .7), Y(ay + sl)); c.lineTo(X(ax + tw * .7), Y(ay + sl)); c.quadraticCurveTo(X(ax + sw * .6), Y(ay + sl * .6), X(ax + sw * .55), Y(ay)); c.closePath(); fillStroke(c, '#c2ab7a', alpha * .8, lw);
         c.beginPath(); for (let i = 0; i < 40; i++) { const u = (i / 39 - .5) * 2, x = ax + u * sw * .5 * (1 - .4 * R()), len = sl * (.55 + R() * .45); c.moveTo(X(x), Y(ay + R() * sl * .1)); c.lineTo(X(x * .95 + ax * .05), Y(ay + len)); } c.globalAlpha = alpha * .5; c.strokeStyle = '#5a4a30'; c.lineWidth = lw * .7; c.stroke(); }
-      // fronds: from the apex, the youngest up, the oldest drooping
+      alpha = a0 * CAN();   // fronds: the canopy, from the apex, the youngest up, the oldest drooping
       const n = Math.round(F.n * (stems > 1 ? .6 : 1)), frs = [];
       for (let i = 0; i < n; i++) { const u = i / (n - 1), a = -Math.PI - .55 + u * (Math.PI + 1.1) + (R() - .5) * .18, droop = Math.max(.1, (1 - Math.abs(Math.sin(a))) * .8 + (Math.sin(a) > 0 ? .5 : 0)); frs.push([a, droop, R(), .25 + R() * .75]); }
       frs.sort((p, q) => Math.abs(Math.sin(q[0])) - Math.abs(Math.sin(p[0])));   // side fronds behind, upright ones in front
@@ -344,7 +383,7 @@ function plantGeo(key, yr, variant) {
   const gR = q(Math.max(.12, 1 - Math.exp(-3 * Math.max(0, yr) / Math.max(.5, D.yrs)))), gH = q(Math.max(.08, 1 - Math.exp(-3 * Math.max(0, yr) / Math.max(.5, D.yrs * (D.form === 'tree' ? 1.4 : 1))))), k = `${key}|${Math.round(gR * 40)}|${Math.round(gH * 40)}|${variant}|${window.__rootsOld ? 1 : 0}`;
   if (CACHE.has(k)) return CACHE.get(k); if (CACHE.size > 400) CACHE.clear();
   const R = rng(hashStr(key) ^ (variant * 2654435761)), H = D.h * gH, Wc = (AGRO_LIB[key] ? agroRadiusM(key, yr) * 2 : D.spread * gH), T = D.typ * gR, M = Math.max(T, D.max * gR), Lr = Math.max(D.lat * gR, Wc * .3);
-  const W0 = D.form === 'palm' ? .011 : D.form === 'cactus' ? .03 : D.form === 'tree' ? Math.max(.03, (.04 + .025 * H)) : D.form === 'shrub' ? Math.max(.015, .012 * H + .01) : D.form === 'succulent' ? .02 : .0035;
+  const W0 = D.form === 'palm' ? .011 : D.form === 'cactus' ? .03 : D.form === 'tree' ? Math.max(.03, (.05 + .045 * H)) : D.form === 'shrub' ? Math.max(.015, .012 * H + .01) : D.form === 'succulent' ? .02 : .0035;
   const arch = (D.form === 'tree' || D.form === 'shrub') && D.arch === 'fibrous' ? 'plate' : D.arch;   // a tree's fibrous mat is a shallow plate of fine roots, not a bunchgrass
   if (habitFor(key, D) && !window.__rootsOld) { const g = { key, D, H, Wc, T, M, Lr, sc: scTree(key, R, D, H, Wc, T, M, Lr, W0) }; CACHE.set(k, g); return g; }   // the grown engine, species by species as their habits are set
   const g = { key, D, H, Wc, T, M, Lr, variant, roots: rootSys(arch, R, T, M, Lr, Math.max(Wc * (D.form === 'grass' ? .6 : .25), .05), W0, D.form), top: topSys(key, D.form, R, H, Wc, W0) };
@@ -399,7 +438,7 @@ const lineCtx = c => new Proxy(c, { get: (t, k) => { const v = t[k]; return type
 function drawPlant(c, g, ox, oy, k, alpha, flip, groundClip) {   // groundClip(c): a path below the ground, so roots never poke out of a slope
   if (LINE && !LINED.has(c)) { c = lineCtx(c); LINED.add(c); }
   if (FORM[g.key] && !g.sc) { c.save(); if (groundClip) { groundClip(c); c.clip(); } inkLines(c, g.roots, ox, oy, k, SEPIA, alpha * .92, flip); c.restore(); drawForm(c, g, ox, oy, k, alpha, flip, g.variant); return; }
-  if (g.sc) { const hb = g.sc.hb; c.save(); if (groundClip) { groundClip(c); c.clip(); } scWood(c, g.sc.roots, ox, oy, k, flip, SEPIA, '#2a1a10', alpha); if (g.sc.fine) inkLines(c, g.sc.fine, ox, oy, k, SEPIA, alpha * .85, flip); c.restore(); scWood(c, g.sc.crown, ox, oy, k, flip, hb.bark, '#1c1b18', alpha); if (g.sc.twigs) inkLines(c, g.sc.twigs, ox, oy, k, hb.bark, alpha * .8, flip); scLeaves(c, g.sc, ox, oy, k, flip, alpha); return; }
+  if (g.sc) { const hb = g.sc.hb; c.save(); if (groundClip) { groundClip(c); c.clip(); } scWood(c, g.sc.roots, ox, oy, k, flip, SEPIA, '#2a1a10', alpha); if (g.sc.fine) inkLines(c, g.sc.fine, ox, oy, k, SEPIA, alpha * .85, flip); c.restore(); canopyLayer(c, cc => scLeaves(cc, g.sc, ox, oy, k, flip, alpha, 0)); scWood(c, g.sc.crown, ox, oy, k, flip, hb.bark, '#1c1b18', alpha); if (g.sc.twigs) inkLines(c, g.sc.twigs, ox, oy, k, hb.bark, alpha * .8, flip); canopyLayer(c, cc => scLeaves(cc, g.sc, ox, oy, k, flip, alpha, 1)); return; }   /* leaves behind the limbs, the limbs, leaves in front */
   c.save(); if (groundClip) { groundClip(c); c.clip(); }
   const body = g.roots.filter(r => r.body); inkLines(c, g.roots.filter(r => !r.body), ox, oy, k, SEPIA, alpha * .92, flip);
   for (const r of body) { c.beginPath(); for (let i = 0; i < r.x.length; i++) c.lineTo(ox + flip * (r.x[i] - r.w[i] / 2) * k, oy + r.y[i] * k); for (let i = r.x.length - 1; i >= 0; i--) c.lineTo(ox + flip * (r.x[i] + r.w[i] / 2) * k, oy + r.y[i] * k); c.closePath(); c.globalAlpha = alpha * .25; c.fillStyle = SEPIA; c.fill(); c.globalAlpha = alpha * .9; c.strokeStyle = SEPIA; c.lineWidth = .8; c.stroke(); }
@@ -431,6 +470,14 @@ window.__rootsProfile = (c, sec, X, Y, n, gnd, pxm, mini) => { bind(); LINE = S.
 
 /* the root chart: each species the section crosses once, side by side at one scale, against a depth ruler, named, with how deep it goes */
 let lastKey = null;
+const CAN = () => S && S.rootsCanopy != null ? Math.max(0, Math.min(1, S.rootsCanopy)) : 1;   /* the canopy's opacity: turned down, the branches and trunks show through */
+const OFF = { c: null };
+function canopyLayer(c, draw) {   // the leaves drawn whole on a layer of their own, then laid down at the canopy's opacity: overlapping sprays don't stack back up to solid
+  const a = CAN(); if (a >= .999) { draw(c); return; } if (a <= .001) return;
+  const cv = c.canvas; if (!OFF.c) OFF.c = document.createElement('canvas'); const o = OFF.c; if (o.width !== cv.width || o.height !== cv.height) { o.width = cv.width; o.height = cv.height; }
+  const x = o.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, o.width, o.height); x.setTransform(c.getTransform()); draw(LINE ? lineCtx(x) : x);
+  c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = a; c.drawImage(o, 0, 0); c.restore();
+}
 const ageOf = (st, yr) => st.grow === false ? st.age || 0 : yr + (st.age || 0);   /* a plant's age: new ones grow with the slider; age adds years they already had; grow false keeps an existing tree at today's size */
 /* the chart on the slope: the planted stretch of the section at true scale, no vertical exaggeration, every plant where it stands on the real ground, roots down through the hillside */
 function slopeChart(c, w, h, sec, mode, yr) {
@@ -442,8 +489,8 @@ function slopeChart(c, w, h, sec, mode, yr) {
   const pad = Math.max(...items.map(({ g }) => Math.max(g.m.Wc / 2, Math.min(g.m.Lr, g.m.Wc)))) / L, t0 = Math.max(0, Math.min(...items.map(it => it.p.t)) - pad), t1 = Math.min(1, Math.max(...items.map(it => it.p.t)) + pad), span = (t1 - t0) * L;
   let zTop = -Infinity, zBot = Infinity; for (let q = Math.floor(t0 * n); q <= Math.ceil(t1 * n); q++) { zTop = Math.max(zTop, prof.gnd[q]); zBot = Math.min(zBot, prof.gnd[q]); }
   for (const { p, g } of items) { const z0 = gz(p.t); zTop = Math.max(zTop, z0 + topHm(g)); zBot = Math.min(zBot, z0 - Math.min(g.m.M, cap)); }
-  const top = narrow ? 34 : 40, bot = narrow ? 110 : 124, mL = narrow ? 40 : 70, mR = narrow ? 10 : 30, k = Math.min((w - mL - mR) / span, (h - top - bot) / (zTop - zBot)), ox = mL + (w - mL - mR - span * k) / 2;
-  const X = t => ox + (t - t0) * L * k, Y = z => top + (zTop - z) * k, gy = t => Y(gz(t)), x0 = X(t0), x1 = X(t1), yBot = Y(zBot);
+  const top = narrow ? 34 : 40, bot = narrow ? 110 : 124, mL = narrow ? 40 : 70, mR = narrow ? 10 : 30, k = Math.min((w - mL - mR) / span, (h - top - bot) / (zTop - zBot)), ox = mL + (w - mL - mR - span * k) / 2, oyT = top + Math.max(0, (h - top - bot - (zTop - zBot) * k) / 2);   /* a wide stretch sits in the middle of the band, not at its top */
+  const X = t => ox + (t - t0) * L * k, Y = z => oyT + (zTop - z) * k, gy = t => Y(gz(t)), x0 = X(t0), x1 = X(t1), yBot = Y(zBot);
   const ground = () => { const p = new Path2D(); p.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) p.lineTo(X(q / n), Y(prof.gnd[q])); p.lineTo(x1, gy(t1)); return p; };
   const soil = () => { const p = ground(); p.lineTo(x1, yBot + 6); p.lineTo(x0, yBot + 6); p.closePath(); return p; };
   c.save(); if (mode !== 'labels') { c.fillStyle = PAPER; c.fillRect(0, 0, w, h); }
@@ -457,9 +504,9 @@ function slopeChart(c, w, h, sec, mode, yr) {
   c.fillStyle = INK; c.font = font(12, 600); c.textAlign = 'left'; c.textBaseline = 'top';
   c.fillText(ab + (narrow ? `${TT('raíces', 'roots')} · ${yr === 0 ? TT('al plantar', 'planting day') : yr + ' yr'}` : ES_ON() ? `Raíces en el terreno · roots on the slope · ${yr === 0 ? 'al plantar · planting day' : yr + (yr === 1 ? ' año · year' : ' años · years')} · escala real · true scale · ${fL(span, 0)}, ${pct}%` : `roots on the slope · ${yr === 0 ? 'planting day' : yr + ' year' + (yr === 1 ? '' : 's') + ' after planting'} · true scale, no vertical exaggeration · ${fL(span, 0)} across, ${pct}% slope`), narrow ? 10 : 64, 10);
   let stepU = niceStep(((zTop - zBot) * uf) / 5); while (stepU / uf * k < 18) stepU = niceStep(stepU * 2.2);
-  c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle'; c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL - 6, top - 4); c.lineTo(mL - 6, yBot); c.stroke();
+  c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle'; c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL - 6, oyT - 4); c.lineTo(mL - 6, yBot); c.stroke();
   for (let u = Math.ceil(zBot * uf / stepU) * stepU; u <= zTop * uf + 1e-6; u += stepU) { const y = Y(u / uf); c.beginPath(); c.moveTo(mL - 10, y); c.lineTo(mL - 6, y); c.stroke(); c.fillStyle = INK2; c.fillText(`${+u.toFixed(1)}`, mL - 13, y); }
-  c.save(); c.translate(12, (top + yBot) / 2); c.rotate(-Math.PI / 2); c.textAlign = 'center'; c.fillStyle = INK3; c.fillText(`${TT('elevación', 'elevation')} · ${un}`, 0, 0); c.restore();
+  c.save(); c.translate(12, (oyT + yBot) / 2); c.rotate(-Math.PI / 2); c.textAlign = 'center'; c.fillStyle = INK3; c.fillText(`${TT('elevación', 'elevation')} · ${un}`, 0, 0); c.restore();
   // each species numbered in order down the line, the number under every plant of it with a faint leader up to its roots, and a key below: as the root atlases label their plates
   const order = [], num = sp => { let k = order.indexOf(sp); if (k < 0) { order.push(sp); k = order.length - 1; } return k + 1; }, sorted = items.slice().sort((a, b) => a.p.t - b.p.t);
   const marks = []; for (const it of sorted) { const x = X(it.p.t), nn = num(it.p.sp), last = marks[marks.length - 1]; if (last && last.n === nn && x - last.x < 26) { last.x = (last.x * last.c + x) / (last.c + 1); last.c++; continue; } marks.push({ x, n: nn, c: 1, it }); }
@@ -474,7 +521,7 @@ function slopeChart(c, w, h, sec, mode, yr) {
     c.fillStyle = INK; c.font = font(10.5, 600); c.fillText(kk.n + ' ' + kk.t, kx, ky); c.fillStyle = INK3; c.font = font(10); c.fillText(kk.d, kx + w1, ky); kx += w1 + w2 + 18; }
   c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], counts: items.reduce((o, it) => (o[it.p.sp] = (o[it.p.sp] || 0) + 1, o), {}), slope: true };   /* left to right, as the painter is told */
 }
-const topH = g => g.H * (FORM[g.key] && FORM[g.key].stalk ? (FORM[g.key].stalk === 'white' ? 2.7 : 1.5) : 1.1), topHm = g => topH({ ...g, H: g.m.H });   // room above for flower stalks; topHm at full size, for the chart's scale
+const topH = g => g.H * (FORM[g.key] && FORM[g.key].stalk ? (FORM[g.key].stalk === 'white' ? 2.7 : 1.5) : g.sc ? 1.22 : 1.1), topHm = g => topH({ ...g, H: g.m.H });   // room above for flower stalks; topHm at full size, for the chart's scale
 { const T = window.__topo && window.__topo(); if (T) for (const [k, D] of Object.entries(ROOT_DATA)) if (!T.AGRO_LIB[k] && D.agro) {   // the restoration grasses, cover crops and desert shrubs join agroforestry's library: [name, kind, canopy m, years, L a week, flowers, harvest, bees, note]
   const kind = D.form === 'palm' ? 'tree' : D.form === 'cactus' ? 'succulent' : D.form, y = Math.max(.5, D.yrs);
   T.AGRO_LIB[k] = [D.common, kind, [+(D.spread * .7).toFixed(2), +(D.spread * 1.2).toFixed(2)], [Math.max(1, Math.round(y * .7)), Math.max(1, Math.round(y * 1.3))], D.agro.water, D.agro.flowers, D.agro.harvest, D.agro.bee, D.regen.replace(/\.$/, '').toLowerCase()]; } }
@@ -513,7 +560,7 @@ function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow
 const ES_ON = () => document.documentElement.lang === 'es', NM = D => ES_ON() && D.es && D.es !== D.common ? `${D.es} · ${D.common}` : D.common, TT = (es, en) => ES_ON() ? `${es} · ${en}` : en;
 const niceStep = v => { const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
 let LAYOUT = [], PLATE = null;   // PLATE: the last painted chart and what it was painted from (line, species, year)
-const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side']);   // a painted plate belongs to its line, plants, year and style
+const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side', CAN()]);   // a painted plate belongs to its line, plants, year and style
 window.__rootsSetPlate = (img, sec, keys) => { bind(); PLATE = { img, key: plateKey(sec, keys, AGRO.year) }; };
 window.__rootsPlateState = sec => { bind(); if (!PLATE) return 'none'; const seen = new Set(); for (const p of plantsNear(sec).sort((p, q) => p.t - q.t)) seen.add(p.sp); return PLATE.key === plateKey(sec, [...seen], AGRO.year) ? 'current' : 'stale'; };
 window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.rootsInk === 'line';
