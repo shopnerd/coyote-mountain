@@ -719,6 +719,7 @@ function slopeChart(c, w, h, sec, mode, yr) {
   c.font = font(10); c.textAlign = 'right'; c.textBaseline = 'middle'; c.strokeStyle = INK2; c.lineWidth = 1; c.beginPath(); c.moveTo(mL - 6, oyT - 4); c.lineTo(mL - 6, yBot); c.stroke();
   for (let u = Math.ceil(zBot * uf / stepU) * stepU; u <= zTop * uf + 1e-6; u += stepU) { const y = Y(u / uf); c.beginPath(); c.moveTo(mL - 10, y); c.lineTo(mL - 6, y); c.stroke(); c.fillStyle = INK2; c.fillText(`${+u.toFixed(1)}`, mL - 13, y); }
   c.save(); c.translate(12, (oyT + yBot) / 2); c.rotate(-Math.PI / 2); c.textAlign = 'center'; c.fillStyle = INK3; c.fillText(`${TT('elevación', 'elevation')} · ${un}`, 0, 0); c.restore();
+  if (mode === 'labels') { c.save(); c.beginPath(); c.rect(0, yBot + 3, w, h - yBot); c.clip(); washi(c, w, h); c.restore(); c.save(); c.strokeStyle = SUMI; c.globalAlpha = .5; c.lineWidth = 1; c.beginPath(); c.moveTo(0, yBot + 3.5); c.lineTo(w, yBot + 3.5); c.stroke(); c.restore(); }   // over a painting the key gets its own clean paper, whatever the painter put there
   // each species numbered in order down the line, the number under every plant of it with a faint leader up to its roots, and a key below: as the root atlases label their plates
   const order = [], num = sp => { let k = order.indexOf(sp); if (k < 0) { order.push(sp); k = order.length - 1; } return k + 1; }, sorted = items.slice().sort((a, b) => a.p.t - b.p.t);
   const marks = []; for (const it of sorted) { const x = X(it.p.t), nn = num(it.p.sp), last = marks[marks.length - 1]; if (last && last.n === nn && x - last.x < 26) { last.x = (last.x * last.c + x) / (last.c + 1); last.c++; continue; } marks.push({ x, n: nn, c: 1, it }); }
@@ -762,7 +763,8 @@ function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow
   LAYOUT[LAYOUT.length - 1].cols = cols.map(([g, cx, cw]) => ({ name: g.D.common, cx, cw }));
   if (ink) for (const [g, cx, cw] of cols) { c.save(); c.beginPath(); c.rect(cx - cw * .8, top - 30, cw * 1.6, bottomY - top + 30); c.clip(); drawPlant(c, g, cx, gy0, k, 1, 1, null); c.restore(); }   // each plant in its column and a little either side, as the plates show them; the section above keeps the true spread
   c.restore();
-  if (!type) return; c.textBaseline = 'top'; c.textAlign = 'center';
+  if (!type) return; if (mode === 'labels') { c.save(); c.beginPath(); c.rect(px0 - 4, bottomY + 2, pw + 8, h - bottomY); c.clip(); washi(c, px0 + pw + 8, h); c.restore(); }   /* the names on clean paper over a painting */
+  c.textBaseline = 'top'; c.textAlign = 'center';
   for (const [g, cx, cw] of cols) { const D = g.D;
     if (g.M > below + 1e-6) { c.strokeStyle = SEPIA; c.lineWidth = 1; c.beginPath(); c.moveTo(cx, bottomY - 14); c.lineTo(cx, bottomY - 2); c.moveTo(cx - 3, bottomY - 6); c.lineTo(cx, bottomY - 2); c.lineTo(cx + 3, bottomY - 6); c.stroke(); }
     c.fillStyle = INK; c.font = font(11, 600); c.fillText(NM(D), cx, bottomY + 6, cw - 6);
