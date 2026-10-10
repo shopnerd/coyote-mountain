@@ -301,6 +301,48 @@ function motifs(c, sil, P, x0, y0, x1, y1, leaf, flip, col, alpha, lw) {   // te
   }
   c.stroke(); c.restore();
 }
+/* ---------- an ode to mycelium (the mushroom button, Will 10/10): under the slope, fine hyphae tie every plant's roots into one network, as mycorrhizal fungi do;
+   faint light pulses travel along it on a layer of their own; a few fruiting bodies come up at the surface. quiet, not a light show ---------- */
+const MYCO = { edges: null, m: null, raf: 0, t0: 0 };
+function mycoDraw(c, items, X, gy, k, soilPath, yTop, yBot, x0, x1, gyAt) {
+  const R = rng(4242), pts = [], ex = [];
+  for (const { p, g } of items) { const fl = p.seed & 1 ? 1 : -1, ox = X(p.t), oy = gy(p.t), tips = [];   // root tips: where the fungi meet the plant
+    if (g.sc) for (const nd of g.sc.roots) { if (!nd.kids && nd.y < 2.2) tips.push([nd.x, nd.y]); }
+    else if (g.roots) for (const r of g.roots) { const n = r.x.length - 1; if (r.y[n] < 2.2) tips.push([r.x[n], r.y[n]]); }
+    for (let q = 0; q < Math.min(26, tips.length); q++) { const [x, y] = tips[Math.floor(R() * tips.length)]; pts.push([ox + fl * x * k, oy + y * k, 1]); } }
+  for (let q = 0; q < 70; q++) { const x = x0 + R() * (x1 - x0), y = gyAt(x) + (4 + Math.pow(R(), 1.6) * Math.min(1.4 * k, (yBot - yTop) * .5)); pts.push([x, y, 0]); }   // threads through the topsoil between the plants
+  const reach = Math.max(30, 6 * k), edges = [];
+  pts.forEach((a, i) => { const near = pts.map((b, j) => [j, Math.hypot(a[0] - b[0], a[1] - b[1])]).filter(([j, d]) => j !== i && d < reach).sort((u, v) => u[1] - v[1]).slice(0, 2 + (a[2] ? 1 : 0));
+    for (const [j] of near) if (i < j || !near.some(([jj]) => jj === j)) { const b = pts[j], mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, L = Math.hypot(b[0] - a[0], b[1] - a[1]), nx = -(b[1] - a[1]) / (L || 1), ny = (b[0] - a[0]) / (L || 1), off = (R() - .5) * L * .45;
+      edges.push([a[0], a[1], mx + nx * off, my + ny * off, b[0], b[1], R()]); } });
+  c.save(); c.clip(soilPath);
+  if (!LINE) { c.fillStyle = 'rgba(28,30,40,.38)'; c.fill(soilPath); }   // the soil dimmed a little, so the threads can show
+  c.lineCap = 'round'; c.lineJoin = 'round'; c.beginPath(); for (const [ax, ay, cx, cy, bx, by, ph] of edges) { const L = Math.hypot(bx - ax, by - ay), n = Math.max(4, Math.round(L / 6)); c.moveTo(ax, ay);   // each thread wanders, as hyphae do
+    for (let q = 1; q <= n; q++) { const u = q / n, w = 1 - u, px = w * w * ax + 2 * w * u * cx + u * u * bx, py = w * w * ay + 2 * w * u * cy + u * u * by, j = q < n ? Math.sin(u * 17 + ph * 40) * 1.6 + Math.sin(u * 41 + ph * 13) * .8 : 0; c.lineTo(px + j, py + j * .6); }
+    if (ph < .35) { const u = .3 + ph, w = 1 - u, px = w * w * ax + 2 * w * u * cx + u * u * bx, py = w * w * ay + 2 * w * u * cy + u * u * by, a = ph * 30; c.moveTo(px, py); c.quadraticCurveTo(px + Math.cos(a) * 5, py + Math.sin(a) * 3 + 4, px + Math.cos(a) * 9, py + 7); } }   /* side branches */
+  if (LINE) { c.strokeStyle = SUMI; c.globalAlpha = .45; c.lineWidth = .55; c.setLineDash([2, 2.5]); c.stroke(); }
+  else { c.strokeStyle = 'rgba(214,240,200,.55)'; c.lineWidth = .7; c.shadowColor = 'rgba(190,255,205,.9)'; c.shadowBlur = 5; c.stroke(); c.shadowBlur = 0; c.strokeStyle = 'rgba(240,255,235,.35)'; c.lineWidth = .3; c.stroke(); }
+  c.restore();
+  // fruiting bodies: a few small mushrooms at the surface, near the plants
+  c.save(); const n = Math.min(9, items.length + 2); for (let q = 0; q < n; q++) { const it = items[Math.floor(R() * items.length)], x = X(it.p.t) + (R() - .5) * Math.max(14, it.g.Wc * k * .9), y = gyAt(x), s = Math.max(4.5, Math.min(9, k * .5)) * (.7 + R() * .6);   /* drawn larger than life, so they can be found */
+    c.fillStyle = LINE ? WASHI : '#efe6d0'; c.strokeStyle = SUMI; c.lineWidth = .7; c.beginPath(); c.rect(x - s * .18, y - s * 1.1, s * .36, s * 1.1); c.fill(); c.stroke();
+    c.beginPath(); c.moveTo(x - s * .75, y - s * 1.05); c.quadraticCurveTo(x, y - s * 2.1, x + s * .75, y - s * 1.05); c.closePath(); c.fillStyle = LINE ? WASHI : '#b9875a'; c.fill(); c.stroke(); }
+  c.restore();
+  return edges;
+}
+function mycoLoop() {   // the pulses, on a layer over the drawing: only while the button is on and the slope is showing
+  const cv = document.getElementById('c'); if (!cv) return; let o = document.getElementById('mycoLayer');
+  if (!o) { o = document.createElement('canvas'); o.id = 'mycoLayer'; o.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:3'; cv.parentElement.appendChild(o); }
+  if (o.width !== cv.width || o.height !== cv.height) { o.width = cv.width; o.height = cv.height; }
+  const x = o.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, o.width, o.height);
+  const on = S && S.myco && S.roots && S.mode === 'section' && MYCO.edges && MYCO.m;
+  if (!on) { MYCO.raf = 0; return; }
+  const t = (performance.now() - MYCO.t0) / 1000, M = MYCO.m; x.setTransform(M.a, M.b, M.c, M.d, M.e, M.f); x.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < MYCO.edges.length; i += 2) { const [ax, ay, cx, cy, bx, by, ph] = MYCO.edges[i], u = (t * (.12 + ph * .1) + ph * 7) % 1, w = 1 - u, px = w * w * ax + 2 * w * u * cx + u * u * bx, py = w * w * ay + 2 * w * u * cy + u * u * by, a = Math.sin(u * Math.PI) * (.35 + .35 * Math.sin(t * .7 + ph * 9));
+    if (a < .05) continue; const g = x.createRadialGradient(px, py, 0, px, py, 5); g.addColorStop(0, `rgba(225,255,215,${a})`); g.addColorStop(1, 'rgba(225,255,215,0)'); x.fillStyle = g; x.fillRect(px - 5, py - 5, 10, 10); }
+  MYCO.raf = requestAnimationFrame(mycoLoop);
+}
+window.__mycoStart = () => { MYCO.t0 = MYCO.t0 || performance.now(); if (!MYCO.raf) MYCO.raf = requestAnimationFrame(mycoLoop); };
 function scMass(c, sc, ox, oy, k, flip, alpha) {   // the massing look: one organic silhouette per crown (traced round the outside of its masses, smoothed, a slightly irregular leafy edge), shaded light to shadow, one clean outline
   const f = 1 - Math.max(0, Math.min(1, alpha)), hx = h => h[0] === '#' ? h : '#' + h.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join(''), fade = h => f > .01 ? mix(hx(h), WASHI, f * .85) : h;   // further from the line: lighter, still solid
   const t = tonesOf(sc.hb).map(fade), M = sc.mass || sc.clouds, lowY = sc.base != null ? sc.base : 0, MM = M.filter(cl => cl.y + cl.r * 1.12 <= lowY + cl.r * .25);
@@ -575,6 +617,8 @@ function slopeChart(c, w, h, sec, mode, yr) {
   if (mode !== 'labels') {   // the hillside in section: ochre deepening with depth, a few strata lines, the ground line
     soilFill(c, soil(), oyT, yBot); { const gp = []; gp.push([x0, gy(t0)]); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) gp.push([X(q / n), Y(prof.gnd[q])]); gp.push([x1, gy(t1)]); strata(c, soil(), gp, yBot - Math.min(...gp.map(q => q[1])), 31); }
     for (const { p, g } of items.slice().sort((a, b) => b.p.d - a.p.d)) drawPlant(c, g, X(p.t), gy(p.t), k, 1 - .45 * Math.min(1, p.d / p.reach), p.seed & 1 ? 1 : -1, cc => { cc.beginPath(); cc.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) cc.lineTo(X(q / n), Y(prof.gnd[q])); cc.lineTo(x1, gy(t1)); cc.lineTo(x1, yBot + 4); cc.lineTo(x0, yBot + 4); cc.closePath(); });   /* roots stay in the drawn soil; deeper ones are given in the key */   /* roots stay inside the drawn stretch */
+    if (S.myco) { const gyAt = x => gy(Math.max(t0, Math.min(t1, t0 + (x - ox) / (L * k)))), E = mycoDraw(c, items, X, gy, k, soil(), oyT, yBot, x0, x1, gyAt); if (c.canvas && c.canvas.id === 'c' && !mode) { MYCO.edges = E; MYCO.m = c.getTransform(); window.__mycoStart(); } }   // the mushroom button
+    else if (c.canvas && c.canvas.id === 'c') MYCO.edges = null;
     c.strokeStyle = INK; c.lineWidth = 1.6; c.globalAlpha = 1; c.stroke(ground()); }
   if (mode === 'plants') { c.restore(); return { panels: [], species: [...new Set(items.slice().sort((a, b) => a.p.t - b.p.t).map(it => it.p.sp))], counts: items.reduce((o, it) => (o[it.p.sp] = (o[it.p.sp] || 0) + 1, o), {}), sizes: items.reduce((o, it) => (o[it.p.sp] = Math.max(o[it.p.sp] || 0, it.g.H), o), {}), slope: true };   /* left to right, as the painter is told */ }
   // the words: title, an elevation ruler at true scale, each run of one species named once below the hillside, with a faint leader up to it
@@ -639,7 +683,7 @@ function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow
 const ES_ON = () => document.documentElement.lang === 'es', NM = D => ES_ON() && D.es && D.es !== D.common ? `${D.es} · ${D.common}` : D.common, TT = (es, en) => ES_ON() ? `${es} · ${en}` : en;
 const niceStep = v => { const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
 let LAYOUT = [], PLATE = null;   // PLATE: the last painted chart and what it was painted from (line, species, year)
-const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side', CAN(), S.rootsLook || 'massing', S.rootsAdapt || 0]);   // a painted plate belongs to its line, plants, year and style
+const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side', CAN(), S.rootsLook || 'massing', S.rootsAdapt || 0, !!S.myco]);   // a painted plate belongs to its line, plants, year and style
 window.__rootsSetPlate = (img, sec, keys) => { bind(); PLATE = { img, key: plateKey(sec, keys, AGRO.year) }; };
 window.__rootsPlateState = sec => { bind(); if (!PLATE) return 'none'; const seen = new Set(); for (const p of plantsNear(sec).sort((p, q) => p.t - q.t)) seen.add(p.sp); return PLATE.key === plateKey(sec, [...seen], AGRO.year) ? 'current' : 'stale'; };
 window.__rootsChart = (c, w, h, sec, mode) => { bind(); LAYOUT = []; LINE = S.rootsInk === 'line';
@@ -671,6 +715,7 @@ window.__rootsPaintPrompt = (keys, counts, sizes) => { bind(); const ftm = m => 
   return (S.rootsInk === 'line' ? 'Turn this diagram into a finished ink plate that marries the key-block line of old Japanese woodblock prints (confident brush lines that swell and taper, outlines carrying a few repeated texture marks, generous empty space) with the fine pen line of 19th-century botanical root atlases (Kutschera): black sumi ink only, no colour, no grey wash, only sparse stippling, warm off-white paper with a faint fibre. '
     : 'Turn this diagram into a finished botanical plate that marries an old Japanese woodblock print (Edo to early Showa) with a 19th-century Western copperplate etching and the root atlases of Kutschera: from the woodblock, flat areas of quiet colour in a small palette, confident tapering key lines, soft bokashi gradients (a pale indigo band at the top of the sky, the earth deepening with depth), generous empty space and warm washi paper; from the etching, fine etched linework and delicate cross-hatching in the trunks, roots and soil, sepia hair roots. Lit from the upper left. ')
     + ((S.rootsAdapt || 0) > .25 ? 'Where plants stand close they have adapted to each other, as drawn: trunks lean and bend toward the light, crowns grow one-sided and interlace with their neighbours, branches weave through a neighbour\'s crown, roots intertwine below. Keep and celebrate these adaptations. ' : '')
+    + (S.myco ? 'Underground, a fine network of faintly glowing pale mycelium threads links the roots of all the plants, as drawn; a few small mushrooms at the surface. Keep it subtle. ' : '')
     + 'No lettering of any kind, no Japanese characters, no seals or stamps, no cherry blossoms, no waves, no decorative border. Keep the soil exactly as deep as it is drawn: below its bottom edge, and in the strip along the bottom of the page, the paper stays plain and empty (labels go there). '
     + 'TRUE SCALE: these are full-size plants drawn to scale, not miniatures, seen from far enough away that a whole tree fits on the page. Draw foliage at its real size relative to each plant: a mature tree carries tens of thousands of small leaves, so its crown reads as a mass of fine texture and clustered sprays, never as a few large countable leaves; the bark texture, branch thickness and twig fineness of a big tree. No storybook, bonsai or toy proportions. '
     + (S.rootsLayout === 'slope' ? 'This is a section through a planted hillside: keep the sloping ground line exactly where it is drawn; trunks and stems stand vertical, roots grow down through the soil below the slope; the toned area below the line is the hillside soil in section. ' : '')
