@@ -56,9 +56,12 @@ def section(fig, y_top, text, x0=80, x1=2470):
 def w_cover():
     fig = wpage(); slot(fig, '1-0')
     wrule(fig, 134, 316, 186, TANW, 2)
-    wtext(fig, 134, 262, 'CENTRO EQUINO', 13.5, 700, color='#5c4b3e')
-    wtext(fig, 130, 470, 'Centro', 84, 700); wtext(fig, 130, 630, 'Equino', 84, 700)
-    wtext(fig, 134, 772, 'Chichihuas · Valle de Guadalupe', 20); wtext(fig, 134, 844, 'Baja California, México', 20)
+    wtext(fig, 134, 262, 'CENTRO EQUINO', 13.5, 700, color='#5c4b3e').set_visible(False)   # 10 Oct (Walker): hidden for now, kept for later use
+    t1 = wtext(fig, 130, 470, 'Centro', 84, 700); t2 = wtext(fig, 130, 630, 'Equino', 84, 700)
+    # 10 Oct (Walker): "Valle de Guadalupe" off the cover; "Chichihuas" as wide as the title, so its size follows the title's width
+    r = fig.canvas.get_renderer(); tw = max(t1.get_window_extent(r).width, t2.get_window_extent(r).width)
+    t3 = wtext(fig, 132, 812, 'Chichihuas', 40); t3.set_fontsize(40 * tw / t3.get_window_extent(r).width)
+    wtext(fig, 134, 886, 'Baja California, México', 20)
     wrule(fig, 134, 976, 936)
     wtext(fig, 134, 1016, 'Propuesta de diseño', 18); wtext(fig, 134, 1082, 'Design proposal', 16, 400, 'italic', MUTEDW)
     wrule(fig, 134, 976, 1342)
