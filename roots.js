@@ -62,7 +62,7 @@ function rootSys(arch, R, T, M, Lr, Wc, W0, form) {
     for (const r of runners) for (let i = 4; i < r.x.length; i += 6 + (R() * 4 | 0)) for (let j = 0; j < 5 && budget.n > 0; j++) grow(R, out, r.x[i], r.y[i], DOWN + (R() - .5) * 1.1, R() < .1 ? M * (.6 + R() * .4) : T * (.3 + R() * .8), W0 * .4, 1, P, budget);
     for (let i = 0; i < 40; i++) grow(R, out, (R() - .5) * Wc, .01, DOWN + (R() - .5) * 1.2, T * (.3 + R() * .9), W0 * .4, 1, P, budget);
   } else if (arch === 'tuber') {   // a swollen storage root tapering into a fine taproot (tillage radish)
-    const tl = Math.min(M * .4, .45), tw = Math.max(W0, .05); const xs = [], ys = [], ws = []; for (let t = 0; t <= 1.0001; t += .04) { xs.push(Math.sin(t * 5) * .004); ys.push(-.08 + t * tl); ws.push(tw * Math.sin(Math.PI * Math.min(1, .15 + t * .95)) + .004); } out.push({ x: xs, y: ys, w: ws, o: 0, body: true });
+    const big = form === 'vine', tl = big ? Math.min(M * .5, .65) : Math.min(M * .4, .45), tw = big ? .3 : Math.max(W0, .05);   /* the wild cucumber's man-root: a tuber up to 65 cm and tens of kilograms (Stocking 1955) */ const xs = [], ys = [], ws = []; for (let t = 0; t <= 1.0001; t += .04) { xs.push(Math.sin(t * 5) * .004); ys.push(-.08 + t * tl); ws.push(tw * Math.sin(Math.PI * Math.min(1, .15 + t * .95)) + .004); } out.push({ x: xs, y: ys, w: ws, o: 0, body: true });
     grow(R, out, 0, tl - .08, DOWN, M - tl, tw * .18, 1, { tgt: 'down', grav: .2, wig: .18, gap: M * .04, brA: [.8, 1.4], clen: (s, len, R) => Lr * .5 * (.3 + R()), brW: .5, maxO: 3, kid: fine, inside: lim(Lr, M) }, budget);
     for (let i = 0; i < 30; i++) { const t = R(); grow(R, out, (R() < .5 ? -1 : 1) * tw * .3, t * tl, DOWN + (R() < .5 ? -1 : 1) * (.8 + R() * .6), Lr * (.2 + R() * .5), .002, 2, fine, budget); }
   } else if (arch === 'palm') {   // palms: hundreds of roots of one thickness from a ball at the base; no taproot, no thickening; most shallow, some far out, a few deep
@@ -96,6 +96,10 @@ function topSys(key, form, R, H, Wc, W0) {
       for (let t = 0; t <= 1.0001; t += .1) { const bend = t * t; xs.push(u * Wc * .25 + out * bend); ys.push(-top * (t - (1 - stiff) * 0 - .25 * bend * Math.abs(u) * (1 / stiff - .2))); ws.push(W0 * 1.5 * (1 - t * .85)); }
       lines.push({ x: xs, y: ys, w: ws, o: 0 }); }
     if (head) { const culms = key === 'vetiver' ? 3 : 7; for (let i = 0; i < culms; i++) { const x0 = (R() - .5) * Wc * .3, top = H * (1 + R() * .2), lean = (R() - .5) * Wc * .4; lines.push({ x: [x0, x0 + lean * .5, x0 + lean], y: [0, -top * .55, -top], w: [W0, W0 * .7, W0 * .4], o: 0 }); flowers.push([x0 + lean, -top, head, H]); } }
+  } else if (form === 'vine') {   // no host: the vine sprawls along the ground in low arcs, flowering
+    const fc = (ROOT_DATA[key] && ROOT_DATA[key].flower) || '#c2287a', sp = Math.max(Wc, .8);
+    for (let i = 0; i < 14; i++) { const side = i % 2 ? 1 : -1, L = sp * (.25 + R() * .3), up = Math.min(H, .6) * (.3 + R() * .7), xs = [], ys = [], ws = []; for (let t = 0; t <= 1.001; t += .1) { xs.push(side * L * t); ys.push(-up * Math.sin(Math.PI * t * .9)); ws.push(W0 * (1 - t * .6)); } lines.push({ x: xs, y: ys, w: ws, o: 0 });
+      for (let q = 0; q < 4; q++) { const t = .2 + R() * .8; flowers.push([side * L * t, -up * Math.sin(Math.PI * t * .9) - .02, 'vf', Math.max(H, .6), fc]); } }
   } else if (form === 'forb') {
     const n = key === 'alfalfa' ? 9 : key === 'comfrey' ? 4 : key === 'compassplant' ? 2 : key === 'radish' ? 5 : 5;
     for (let i = 0; i < n; i++) { const a = UP + (i / (n - 1 || 1) - .5) * (key === 'compassplant' ? .2 : .9), L = H * (key === 'radish' ? .5 : .75 + R() * .3), st = { tgt: 'up', grav: .06, wig: .12, gap: L * .2, brA: [.4, .9], clen: (s, len, R) => (len - s) * .45, brW: .6, maxO: key === 'alfalfa' ? 3 : 1, inside: () => true }; st.kid = { ...st, kid: null };
@@ -124,6 +128,7 @@ const LOOK = {   // for the painter: leaf, bark and form, in a phrase
   elder: 'multi-stemmed, flat clusters of cream flowers, pinnate leaves', guava: 'dense shrub of grey-green oval leaves', grape: 'twisting woody vine on a trellis, lobed leaves',
   rosemary: 'dense shrub of needle-like dark leaves', ceanothus: 'dense shrub of small dark leaves, blue flower clusters', toyon: 'dense evergreen shrub, toothed leathery leaves, red berries',
   sage: 'mound of silvery-white broad leaves, tall flower spikes', vetiver: 'tall stiff upright clump of narrow leaves', bigbluestem: 'tall bunchgrass with three-branched turkey-foot seed heads',
+  bougainvillea: 'a woody scrambling vine smothered in magenta bracts', wisteria: 'a twining woody vine hung with long lavender flower racemes', wildgrape: 'a vigorous native grape vine with broad leaves and small dark grape clusters', clematis: 'a native vine with clouds of small white flowers and silky seed heads', honeysuckle: 'a twining native honeysuckle with small pale pink-cream flowers', morningglory: 'a native morning glory with large white funnel flowers', wildcucumber: 'a native wild cucumber vine with tendrils, small white flowers and spiny round fruit', passionvine: 'a passion flower vine with intricate blue-white flowers',
   agave: 'rosette of thick grey-green spine-tipped leaves', pricklypear: 'stacked flat oval pads with spines and areoles',
   rabbitbrush: 'low mound of narrow green leaves covered in small yellow flower heads', sagebrush: 'soft aromatic mound of thread-fine silver-grey leaves', saladito: 'big dense evergreen shrub of leathery oval leaves, clusters of sticky red berries', blacksage: 'open shrub of dark green wrinkled leaves, whorls of pale lavender flowers on stems', munzsage: 'compact grey-green shrub, small blue flower whorls', clevesage: 'rounded ash-grey shrub, tall stems with violet-blue pompom whorls', malva: 'tall open shrub of felty grey leaves and pink cup-shaped flowers along wand-like stems',
   stonepine: 'umbrella crown of dark needles on a tall clear red-brown trunk', mexfanpalm: 'very tall slender trunk, small crown of bright green fan leaves, skirt of dry fronds', pirul: 'weeping willow-like crown of fine pinnate leaves, pink peppercorn clusters, gnarled trunk', sycamore: 'mottled white and tan bark on crooked leaning trunks, an open irregular crown of soft foliage masses', buckwheat: 'low mound of tiny needle-like leaves with cream-pink flower heads', deergrass: 'large fountain of fine grass with tall pale flower spikes',
@@ -343,6 +348,56 @@ function mycoLoop() {   // the pulses, on a layer over the drawing: only while t
   MYCO.raf = requestAnimationFrame(mycoLoop);
 }
 window.__mycoStart = () => { MYCO.t0 = MYCO.t0 || performance.now(); if (!MYCO.raf) MYCO.raf = requestAnimationFrame(mycoLoop); };
+/* ---------- vines (Will, 10/10: bougainvillea pouring off a cypress): a vine looks for a host. near a tree, palm or big shrub it twines up the trunk,
+   in front and behind, wanders out across the crown and hangs in curtains from its edges, flowering; with no host it sprawls on the ground ---------- */
+const VINE = {   // how each flowers: density of blossom (0..1), curtains (long hanging strands), cluster size in metres
+  bougainvillea: { bloom: .95, drape: 1, cl: .45, leaf: '#5f7d32', cover: 1 }, wisteria: { bloom: .7, drape: 1.2, cl: .3, raceme: true, leaf: '#6c8a3a', cover: .8 }, wildgrape: { bloom: .25, drape: .6, cl: .2, leaf: '#7f9a3e', cover: 1.1 }, clematis: { bloom: .6, drape: .5, cl: .25, leaf: '#56713a', cover: .7 },
+  honeysuckle: { bloom: .45, drape: .5, cl: .18, leaf: '#58733c', cover: .6 }, morningglory: { bloom: .55, drape: .4, cl: .14, leaf: '#6a8a3c', cover: .6 }, wildcucumber: { bloom: .3, drape: .45, cl: .14, leaf: '#7a9640', cover: .8 }, passionvine: { bloom: .45, drape: .6, cl: .18, leaf: '#4f7a34', cover: .8 },
+};
+function hostFrame(hg, hx, hy, hfl, k) {   // a host's trunk (bottom to top) and crown masses, in screen pixels
+  const T = [], C = [];
+  if (hg.sc) { let i = 0; const cr = hg.sc.crown; T.push([hx, hy]); while (cr[i] && cr[i].kids && cr[i].kids.length) { const j = cr[i].kids[0]; if (!cr[j].ng) break; i = j; T.push([hx + hfl * cr[i].x * k, hy + cr[i].y * k]); }
+    const lowY = hg.sc.base != null ? hg.sc.base : 0; for (const cl of hg.sc.mass || hg.sc.clouds) if (cl.y + cl.r * 1.12 <= lowY + cl.r * .25) C.push([hx + hfl * cl.x * k, hy + cl.y * k, cl.r * 1.1 * k]); }
+  else if (FORM[hg.key] && FORM[hg.key].t === 'palm') { const th = hg.H * .88; for (let q = 0; q <= 10; q++) T.push([hx, hy - th * k * q / 10]); C.push([hx, hy - th * k, Math.max(hg.Wc / 2, 1) * k * .75]); }
+  else { T.push([hx, hy], [hx, hy - hg.H * .45 * k]); C.push([hx, hy - hg.H * .6 * k, hg.Wc / 2 * k * .8]); }
+  return { T, C };
+}
+function drawVine(c, v, host, vx, vy, k, alpha, hx, hy, hfl) {
+  if (LINE) c = lineCtx(c);
+  const D = v.D, F = VINE[v.key] || { bloom: .4, drape: .5, cl: .2 }, col = D.flower || '#c2287a', R = rng(hashStr(v.key) ^ Math.round(vx * 3)), stem = '#5c4a30', leaf = F.leaf || '#5f7d32', reach = v.H * k;
+  const { T, C } = hostFrame(host, hx, hy, hfl, k), side = Math.sign(vx - hx) || 1, tr = Math.max(1.5, host.H * k * .012);
+  c.save(); c.lineCap = 'round'; c.lineJoin = 'round'; c.globalAlpha = alpha;
+  const flowers = [], leaves = [];
+  // up the trunk: three stems twining, the turns behind the trunk drawn faint
+  const Ls = [0]; for (let q = 1; q < T.length; q++) Ls.push(Ls[q - 1] + Math.hypot(T[q][0] - T[q - 1][0], T[q][1] - T[q - 1][1])); const trunkL = Math.min(Ls[Ls.length - 1], reach);
+  const at = s => { let q = 1; while (q < Ls.length - 1 && Ls[q] < s) q++; const u = (s - Ls[q - 1]) / Math.max(1e-6, Ls[q] - Ls[q - 1]); return [T[q - 1][0] + (T[q][0] - T[q - 1][0]) * u, T[q - 1][1] + (T[q][1] - T[q - 1][1]) * u]; };
+  let top = [hx, hy];
+  for (let st = 0; st < 3; st++) { const ph = st * 2.1 + R(), per = Math.max(10, 1.1 * k), front = new Path2D(), back = new Path2D(); let prev = [vx, vy], pf = null;
+    front.moveTo(vx, vy); front.quadraticCurveTo((vx + hx) / 2, vy + 3, hx + side * tr * 1.5, hy - 2); prev = [hx + side * tr * 1.5, hy - 2];
+    for (let s2 = 2; s2 < trunkL * (.8 + st * .1); s2 += 2.5) { const [px, py] = at(s2), a = s2 / per * TAU + ph, x = px + Math.sin(a) * tr * 1.25, y = py, isF = Math.cos(a) > 0; (isF ? front : back).moveTo(prev[0], prev[1]); (isF ? front : back).lineTo(x, y); prev = [x, y]; if (R() < .18) leaves.push([x, y]); if (R() < F.bloom * .08) flowers.push([x, y]); }
+    top = prev; c.strokeStyle = stem; c.lineWidth = Math.max(1, k * .035); c.globalAlpha = alpha * .35; c.stroke(back); c.globalAlpha = alpha; c.stroke(front); }
+  // across the crown: from the top of the climb out over the masses on the vine's side, then curtains from their outer edges
+  const reachY = hy - reach, Cs = C.filter(cl => cl[1] + cl[2] * .3 > reachY).sort((a, b) => (b[0] - a[0]) * side - (a[1] - b[1]) * .3).slice(0, Math.max(2, Math.round(C.length * .55)));
+  for (let st = 0; st < Math.min(5, Cs.length); st++) { const path = new Path2D(); let [x, y] = top; path.moveTo(x, y); const order = Cs.slice().sort(() => R() - .5).slice(0, 4);
+    for (const [cx, cy, r] of order) { const a = Math.atan2(cy - hy, cx - hx) + (R() - .5) * 1.4, tx = cx + Math.cos(a) * r * (.75 + R() * .25), ty = cy + Math.sin(a) * r * (.75 + R() * .25); path.quadraticCurveTo((x + tx) / 2 + (R() - .5) * r, (y + ty) / 2 + (R() - .5) * r, tx, ty);
+      for (let q = 0; q < 6; q++) { const u = q / 6; leaves.push([x + (tx - x) * u + (R() - .5) * 4, y + (ty - y) * u + (R() - .5) * 4]); if (R() < F.bloom * .6) flowers.push([x + (tx - x) * u + (R() - .5) * 6, y + (ty - y) * u + (R() - .5) * 6]); } x = tx; y = ty; }
+    c.strokeStyle = stem; c.lineWidth = Math.max(.6, k * .014); c.globalAlpha = alpha * .9; c.stroke(path); }
+  // the vine's own blanket: patches of its foliage and flowers over the host's crown on its side, thinning away from it
+  const nP = Math.round((10 + 40 * (F.cover || .8)) * Math.min(1.2, v.Wc / Math.max(.5, host.Wc) + .4));
+  for (let q = 0; q < nP && Cs.length; q++) { const [cx, cy, r] = Cs[Math.floor(R() * Cs.length)], a = R() * TAU, d = r * Math.sqrt(R()) * .95, px = cx + Math.cos(a) * d, py = cy + Math.sin(a) * d; if ((px - hx) * side < -r * .6 && R() < .7) continue; if (py < reachY) continue;
+    for (let j = 0; j < 7; j++) leaves.push([px + (R() - .5) * r * .35, py + (R() - .5) * r * .3]); for (let j = 0; j < 5; j++) if (R() < F.bloom) flowers.push([px + (R() - .5) * r * .4, py + (R() - .5) * r * .35]); }
+  // curtains: strands hanging from the masses' outer edges, swaying a little, flowering down their length
+  const curt = new Path2D(), nC = Math.round(6 + 18 * F.drape * Math.min(1, reach / Math.max(1, host.H * k)));
+  for (let q = 0; q < nC && Cs.length; q++) { const [cx, cy, r] = Cs[Math.floor(R() * Cs.length)], a = (side > 0 ? -.3 : Math.PI + .3) + (R() - .5) * 2.2, sx = cx + Math.cos(a) * r, sy = cy + Math.abs(Math.sin(a)) * r * .6, L = (1 + R() * 3.5) * k * F.drape * Math.min(1, reach / Math.max(1, host.H * k) + .2);
+    let x = sx, y = sy; curt.moveTo(x, y); for (let u = 0; u < L; u += 3) { x = sx + Math.sin(u / 14 + q) * 3 + side * u * .05; y = sy + u; curt.lineTo(x, y); if (R() < .35) leaves.push([x, y]); if (R() < F.bloom * (F.raceme ? .9 : .55)) flowers.push([x + (R() - .5) * 4, y]); } }
+  c.strokeStyle = stem; c.lineWidth = Math.max(.5, k * .01); c.globalAlpha = alpha * .8; c.stroke(curt);
+  // its leaves, then its flowers in loose clusters
+  c.globalAlpha = alpha * .9; c.fillStyle = leaf; c.beginPath(); for (const [x, y] of leaves) { const r = Math.max(1.3, k * .09) * (.7 + R() * .6); c.moveTo(x + r, y); c.ellipse(x, y, r, r * .7, R() * 3, 0, TAU); } c.fill();
+  const fr = Math.max(1.2, F.cl * k * .35); c.fillStyle = col; c.globalAlpha = alpha; c.beginPath();
+  for (const [x, y] of flowers) for (let q = 0; q < 2; q++) { const r = fr * (.35 + R() * .45), ox = (R() - .5) * fr * 1.6, oy = (R() - .5) * fr * (F.raceme ? 3 : 1.4); c.moveTo(x + ox + r, y + oy); c.arc(x + ox, y + oy, r, 0, TAU); }
+  c.fill(); if (LINE) { c.strokeStyle = SUMI; c.lineWidth = .5; c.stroke(); }
+  c.restore();
+}
 function scMass(c, sc, ox, oy, k, flip, alpha) {   // the massing look: one organic silhouette per crown (traced round the outside of its masses, smoothed, a slightly irregular leafy edge), shaded light to shadow, one clean outline
   const f = 1 - Math.max(0, Math.min(1, alpha)), hx = h => h[0] === '#' ? h : '#' + h.match(/\d+/g).map(v => (+v).toString(16).padStart(2, '0')).join(''), fade = h => f > .01 ? mix(hx(h), WASHI, f * .85) : h;   // further from the line: lighter, still solid
   const t = tonesOf(sc.hb).map(fade), M = sc.mass || sc.clouds, lowY = sc.base != null ? sc.base : 0, MM = M.filter(cl => cl.y + cl.r * 1.12 <= lowY + cl.r * .25);
@@ -530,7 +585,7 @@ function drawTop(c, g, ox, oy, k, alpha, flip) {
       c.globalAlpha = alpha * .15; c.fill(); c.globalAlpha = alpha * .75; c.stroke(); }
     c.restore(); }
   if (t.flowers.length) { c.save(); c.strokeStyle = INK; c.fillStyle = INK; c.lineWidth = .7; c.globalAlpha = alpha * .85;
-    for (const [x, y, kind, H] of t.flowers) { const px = X(x), py = Y(y), s = Math.max(1.2, H * k * .09); if (H * k < 8) continue; c.beginPath();
+    for (const [x, y, kind, H, fc] of t.flowers) { const px = X(x), py = Y(y), s = Math.max(1.2, H * k * .09); if (H * k < 8) continue; c.beginPath();
       if (kind === 'turkeyfoot') { for (const a of [-.5, 0, .45]) { c.moveTo(px, py); c.lineTo(px + Math.sin(a) * s * 1.6, py - Math.cos(a) * s * 1.8); } }
       else if (kind === 'panicle' || kind === 'plume') { for (let i = 0; i < 9; i++) { const yy = py + i * s * .25, d = s * (kind === 'plume' ? .35 : .9) * (1 - i / 10); c.moveTo(px, yy); c.lineTo(px - d, yy + s * .35); c.moveTo(px, yy); c.lineTo(px + d, yy + s * .35); } }
       else if (kind === 'flag' || kind === 'eyelash') { c.moveTo(px, py); c.lineTo(px, py + s * 1.6); for (let i = 0; i < (kind === 'flag' ? 7 : 2); i++) { const yy = py + i * s * .22; c.moveTo(px, yy); c.lineTo(px + s * .7, yy + s * .1); } }
@@ -540,6 +595,7 @@ function drawTop(c, g, ox, oy, k, alpha, flip) {
       else if (kind === 'lupine') { for (let i = 0; i < 10; i++) { const yy = py + i * s * .28; c.moveTo(px - s * .3 + .9, yy); c.arc(px - s * .3, yy, .9, 0, TAU); c.moveTo(px + s * .3 + .9, yy + s * .14); c.arc(px + s * .3, yy + s * .14, .9, 0, TAU); } }
       else if (kind === 'compassplant' || kind === 'comfrey') { for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; c.moveTo(px, py); c.lineTo(px + Math.cos(a) * s, py + Math.sin(a) * s); } }
       else if (kind === 'agave') { for (let i = 0; i < 5; i++) { const yy = py + i * s * .6, d = s * 1.4 * (1 - i / 6); c.moveTo(px, yy); c.lineTo(px - d, yy - s * .3); c.moveTo(px, yy); c.lineTo(px + d, yy - s * .3); } }
+      else if (kind === 'vf') { c.fillStyle = fc; c.moveTo(px + s * .45, py); c.arc(px, py, s * .45, 0, TAU); c.fill(); c.fillStyle = INK; }
       else { c.moveTo(px + s * .5, py); c.arc(px, py, s * .5, 0, TAU); }
       c.stroke(); }
     c.restore(); }
@@ -555,7 +611,7 @@ function drawPlant(c, g, ox, oy, k, alpha, flip, groundClip) {   // groundClip(c
   c.save(); if (groundClip) { groundClip(c); c.clip(); }
   const body = g.roots.filter(r => r.body); inkLines(c, g.roots.filter(r => !r.body), ox, oy, k, SEPIA, alpha * .92, flip);
   for (const r of body) { c.beginPath(); for (let i = 0; i < r.x.length; i++) c.lineTo(ox + flip * (r.x[i] - r.w[i] / 2) * k, oy + r.y[i] * k); for (let i = r.x.length - 1; i >= 0; i--) c.lineTo(ox + flip * (r.x[i] + r.w[i] / 2) * k, oy + r.y[i] * k); c.closePath(); c.globalAlpha = alpha * .25; c.fillStyle = SEPIA; c.fill(); c.globalAlpha = alpha * .9; c.strokeStyle = SEPIA; c.lineWidth = .8; c.stroke(); }
-  c.restore(); drawTop(c, g, ox, oy, k, alpha, flip);
+  c.restore(); if (!g.hosted) drawTop(c, g, ox, oy, k, alpha, flip);
 }
 
 /* which planted species sit near a section line: along-line position t (0..1), distance off it in metres */
@@ -616,7 +672,9 @@ function slopeChart(c, w, h, sec, mode, yr) {
   c.save(); if (mode !== 'labels') { washi(c, w, h); bokashiSky(c, w, 0, h * .32); }
   if (mode !== 'labels') {   // the hillside in section: ochre deepening with depth, a few strata lines, the ground line
     soilFill(c, soil(), oyT, yBot); { const gp = []; gp.push([x0, gy(t0)]); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) gp.push([X(q / n), Y(prof.gnd[q])]); gp.push([x1, gy(t1)]); strata(c, soil(), gp, yBot - Math.min(...gp.map(q => q[1])), 31); }
-    for (const { p, g } of items.slice().sort((a, b) => b.p.d - a.p.d)) drawPlant(c, g, X(p.t), gy(p.t), k, 1 - .45 * Math.min(1, p.d / p.reach), p.seed & 1 ? 1 : -1, cc => { cc.beginPath(); cc.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) cc.lineTo(X(q / n), Y(prof.gnd[q])); cc.lineTo(x1, gy(t1)); cc.lineTo(x1, yBot + 4); cc.lineTo(x0, yBot + 4); cc.closePath(); });   /* roots stay in the drawn soil; deeper ones are given in the key */   /* roots stay inside the drawn stretch */
+    const hostOf = new Map(); for (const it of items) { if (it.g.D.form !== 'vine') continue; let best = null, bd = 1e9; for (const h of items) { if (h === it || h.g.D.form === 'vine' || h.g.H < 1 || (FORM[h.g.key] && FORM[h.g.key].t !== 'palm')) continue; const d = Math.abs(h.p.t - it.p.t) * L; if (d < Math.max(3, h.g.Wc * .6) && d < bd) { bd = d; best = h; } } if (best) hostOf.set(it.p, best); }   // each vine's host: the nearest tree, palm or big shrub within reach
+    for (const { p, g } of items.slice().sort((a, b) => b.p.d - a.p.d)) drawPlant(c, hostOf.has(p) ? { ...g, hosted: true } : g, X(p.t), gy(p.t), k, 1 - .45 * Math.min(1, p.d / p.reach), p.seed & 1 ? 1 : -1, cc => { cc.beginPath(); cc.moveTo(x0, gy(t0)); for (let q = Math.ceil(t0 * n); q <= Math.floor(t1 * n); q++) cc.lineTo(X(q / n), Y(prof.gnd[q])); cc.lineTo(x1, gy(t1)); cc.lineTo(x1, yBot + 4); cc.lineTo(x0, yBot + 4); cc.closePath(); });   /* roots stay in the drawn soil; deeper ones are given in the key */   /* roots stay inside the drawn stretch */
+    for (const it of items) { const h = hostOf.get(it.p); if (h) drawVine(c, it.g, h.g, X(it.p.t), gy(it.p.t), k, 1 - .45 * Math.min(1, it.p.d / it.p.reach), X(h.p.t), gy(h.p.t), h.p.seed & 1 ? 1 : -1); }   // vines climb last, over their hosts
     if (S.myco) { const gyAt = x => gy(Math.max(t0, Math.min(t1, t0 + (x - ox) / (L * k)))), E = mycoDraw(c, items, X, gy, k, soil(), oyT, yBot, x0, x1, gyAt); if (c.canvas && c.canvas.id === 'c' && !mode) { MYCO.edges = E; MYCO.m = c.getTransform(); window.__mycoStart(); } }   // the mushroom button
     else if (c.canvas && c.canvas.id === 'c') MYCO.edges = null;
     c.strokeStyle = INK; c.lineWidth = 1.6; c.globalAlpha = 1; c.stroke(ground()); }
@@ -645,7 +703,7 @@ function slopeChart(c, w, h, sec, mode, yr) {
 }
 const topH = g => g.H * (FORM[g.key] && FORM[g.key].stalk ? (FORM[g.key].stalk === 'white' ? 2.7 : 1.5) : g.sc ? 1.22 : 1.1), topHm = g => topH({ ...g, H: g.m.H });   // room above for flower stalks; topHm at full size, for the chart's scale
 { const T = window.__topo && window.__topo(); if (T) for (const [k, D] of Object.entries(ROOT_DATA)) if (!T.AGRO_LIB[k] && D.agro) {   // the restoration grasses, cover crops and desert shrubs join agroforestry's library: [name, kind, canopy m, years, L a week, flowers, harvest, bees, note]
-  const kind = D.form === 'palm' ? 'tree' : D.form === 'cactus' ? 'succulent' : D.form, y = Math.max(.5, D.yrs);
+  const kind = D.form === 'palm' ? 'tree' : D.form === 'cactus' ? 'succulent' : D.form,   /* vines keep their own group */ y = Math.max(.5, D.yrs);
   T.AGRO_LIB[k] = [D.common, kind, [+(D.spread * .7).toFixed(2), +(D.spread * 1.2).toFixed(2)], [Math.max(1, Math.round(y * .7)), Math.max(1, Math.round(y * 1.3))], D.agro.water, D.agro.flowers, D.agro.harvest, D.agro.bee, D.regen.replace(/\.$/, '').toLowerCase()]; } }
 
 function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow (a phone): names only, slimmer columns, and room at the bottom for the plan / 3d / section switch
@@ -680,7 +738,7 @@ function chartPanel(c, G, px0, pw, h, uf, un, narrow, mode, gyFix) {   // narrow
     c.fillStyle = INK2; c.font = `italic ${font(10)}`; c.fillText(D.latin.replace(/\s*\(.*?\)/g, ''), cx, bottomY + 19, cw - 6);
     c.font = font(10); c.fillStyle = INK3; c.fillText(`${TT('raíces', 'most roots to')} ${fL(g.T, 1)}`, cx, bottomY + 32, cw - 6); c.fillText(`${TT('máx.', 'deepest')} ${fL(g.M, 1)}`, cx, bottomY + 44, cw - 6); }
 }
-const ES_ON = () => document.documentElement.lang === 'es', NM = D => ES_ON() && D.es && D.es !== D.common ? `${D.es} · ${D.common}` : D.common, TT = (es, en) => ES_ON() ? `${es} · ${en}` : en;
+const ES_ON = () => document.documentElement.lang === 'es', NM = D => { const es = D.es && D.es.replace(/\s*\(.*?\)/g, ''); return ES_ON() && es && es !== D.common ? `${es} · ${D.common}` : D.common; }, TT = (es, en) => ES_ON() ? `${es} · ${en}` : en;
 const niceStep = v => { const p = Math.pow(10, Math.floor(Math.log10(v))), f = v / p; return (f < 1.5 ? 1 : f < 3.5 ? 2 : f < 7.5 ? 5 : 10) * p; };
 let LAYOUT = [], PLATE = null;   // PLATE: the last painted chart and what it was painted from (line, species, year)
 const plateKey = (sec, keys, yr) => JSON.stringify([sec, keys, yr, S.rootsInk || 'color', S.rootsLayout || 'side', CAN(), S.rootsLook || 'massing', S.rootsAdapt || 0, !!S.myco]);   // a painted plate belongs to its line, plants, year and style
@@ -715,6 +773,7 @@ window.__rootsPaintPrompt = (keys, counts, sizes) => { bind(); const ftm = m => 
   return (S.rootsInk === 'line' ? 'Turn this diagram into a finished ink plate that marries the key-block line of old Japanese woodblock prints (confident brush lines that swell and taper, outlines carrying a few repeated texture marks, generous empty space) with the fine pen line of 19th-century botanical root atlases (Kutschera): black sumi ink only, no colour, no grey wash, only sparse stippling, warm off-white paper with a faint fibre. '
     : 'Turn this diagram into a finished botanical plate that marries an old Japanese woodblock print (Edo to early Showa) with a 19th-century Western copperplate etching and the root atlases of Kutschera: from the woodblock, flat areas of quiet colour in a small palette, confident tapering key lines, soft bokashi gradients (a pale indigo band at the top of the sky, the earth deepening with depth), generous empty space and warm washi paper; from the etching, fine etched linework and delicate cross-hatching in the trunks, roots and soil, sepia hair roots. Lit from the upper left. ')
     + ((S.rootsAdapt || 0) > .25 ? 'Where plants stand close they have adapted to each other, as drawn: trunks lean and bend toward the light, crowns grow one-sided and interlace with their neighbours, branches weave through a neighbour\'s crown, roots intertwine below. Keep and celebrate these adaptations. ' : '')
+    + (keys.some(k => ROOT_DATA[k] && ROOT_DATA[k].form === 'vine') ? 'The vines climb their host trees exactly as drawn: twining up the trunk, spreading over the crown and hanging in flowering curtains from its edges. ' : '')
     + (S.myco ? 'Underground, a fine network of faintly glowing pale mycelium threads links the roots of all the plants, as drawn; a few small mushrooms at the surface. Keep it subtle. ' : '')
     + 'No lettering of any kind, no Japanese characters, no seals or stamps, no cherry blossoms, no waves, no decorative border. Keep the soil exactly as deep as it is drawn: below its bottom edge, and in the strip along the bottom of the page, the paper stays plain and empty (labels go there). '
     + 'TRUE SCALE: these are full-size plants drawn to scale, not miniatures, seen from far enough away that a whole tree fits on the page. Draw foliage at its real size relative to each plant: a mature tree carries tens of thousands of small leaves, so its crown reads as a mass of fine texture and clustered sprays, never as a few large countable leaves; the bark texture, branch thickness and twig fineness of a big tree. No storybook, bonsai or toy proportions. '
