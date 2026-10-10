@@ -301,9 +301,22 @@ exec(open('walker_pages.py',encoding='utf-8').read())    # 3 Oct: Walker's v14 p
 plt.rcParams['font.family'] = ['Plus Jakarta Sans', 'DejaVu Sans']   # 4 Oct: one typeface across the pack (drawings were DejaVu); DejaVu only fills missing glyphs
 FIN=DL+'/2026-09-28 finalists/'
 w_cover()
-w_renders(2,[(1,'Alzado oeste: la entrada, el bebedero y las plantas','West elevation: the entry drive, trough and planting'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
-             (3,'Alzado sur: el lavado y los corrales','South elevation: the wash room and runs'),(4,'Alzado este: la entrada desde el estacionamiento','East elevation: the parking entry')])
-barn_plan(); ZOOMPG = {len(PAGES) - 1}   # 4 Oct: drawing pages whose drawings enlarge on the web page
+# 6 Oct (Walker): cover, plan view, then one section per subject from the gallery notes ("barn 1..8", "stable 1..8", "arena cafe",
+# "view ..."): the barn (main stable), the covered stalls, the arena and café, the site models; then the drawings and the rest as before.
+planview(os.path.join(os.path.dirname(os.path.abspath('pack.py')),'renders','picks','b7-plan-oct3o-top.jpg'))   # Walker's note on b7-plan-oct3o: the 84 ft model from above, base cropped off (approved 00-plan.png before)
+ZOOMPG = {len(PAGES) - 1}   # 4 Oct: drawing pages whose drawings enlarge on the web page
+w_photos('barn-a','El establo','The barn',[(1,'Alzado oeste: la entrada y un caballo bebiendo','West elevation: the entry, a horse drinking'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
+         (3,'Alzado este, entre los pinos','East elevation, between the pines'),(4,'Alzado sur: el lavado y los corrales','South elevation: the wash pad and runs')])
+w_photos('barn-b','El establo','The barn',[(5,'Dentro del establo','Inside the barn'),(6,'El lado norte y sus corrales','The north side and its runs'),(7,'Alzado sur al anochecer','South elevation at dusk'),
+         (8,'Modelo: alzado oeste','Model: west elevation'),(9,'Modelo: el lado norte','Model: the north side')], size=12)
+w_photos('stalls-a','Caballerizas techadas','Covered stalls',[(1,'Desde el cerro, con niebla','From the hill, in the fog'),(2,'Desde el suroeste, a la hora azul','From the south-west at blue hour'),
+         (3,'Bajo el techo mariposa','Under the butterfly roof'),(4,'El pasillo y los caballos','The corridor and the horses')])
+w_photos('stalls-b','Caballerizas techadas','Covered stalls',[(5,'Al anochecer, desde el suroeste','At dusk, from the south-west'),(6,'Modelo: el pasillo','Model: the corridor'),(7,'Modelo: desde el suroeste','Model: from the south-west')], size=12)
+w_photos('cafe-a','La pista y el café','The arena and café',[(1,'Las gradas y el café junto a la pista','The bleachers and café beside the arena'),(2,'El café y las gradas, a la hora azul','The café and bleachers at blue hour'),
+         (3,'El café, lado del camino','The café, road end'),(4,'Día de campo junto al café','A picnic beside the café')])
+w_photos('cafe-b','La pista y el café','The arena and café',[(5,'Las gradas al amanecer','The bleachers at dawn'),(6,'Modelo: el café y las gradas','Model: the café and the steps')])
+w_photos('models','Vistas del sitio','Site views',[(1,'Desde el sur, en alto','High from the south'),(2,'Modelo: desde el noroeste','Model: from the north-west'),(3,'Modelo: desde el suroeste','Model: from the south-west')], size=12)
+barn_plan(); ZOOMPG.add(len(PAGES) - 1)
 import qrcode                                             # Walker added a QR to the 3D model; point it at the public copy
 _qr=qrcode.QRCode(border=0,box_size=10); _qr.add_data('https://will.100xbtr.com/equino/model/'); _qr.make(fit=True)
 _fig=PAGES[-1]; _ax=_fig.add_axes([0.031,0.385,0.05,0.077]);   # 4 Oct (Will): between the two elevations
@@ -312,13 +325,8 @@ _fig.text(0.087,0.438,'Modelo 3D del establo · 3D model of the stable',fontsize
 _fig.text(0.087,0.420,'Gírelo y explórelo en línea · Turn it and explore it online',fontsize=8.5,color=MUTED)
 _fig.text(0.087,0.403,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
 truss_page(); ZOOMPG.add(len(PAGES) - 1)
-w_renders(3,[(5,'Sobre las caballerizas techadas','Over the covered stalls'),(6,'Bajo el techo mariposa','Under the butterfly roof'),
-             (7,'El bebedero redondo y el techo mariposa, desde el oeste','The round trough and the butterfly roof, from the west'),(8,'Desde el cerro: las caballerizas y el establo','From the hill: the covered stalls and the stable')])
 stalls_page(); ZOOMPG.add(len(PAGES) - 1)
-w_renders('3b',[(9,'El lado norte y sus corrales','The north side and its runs'),(10,'Dentro del establo','Inside the stable'),
-             (11,'Las gradas y el día de campo','The bleachers and a picnic'),(12,'Los escalones, de lado','The steps from the side')])
-w_site()
-planview(FIN+'00-plan.png')   # 4 Oct (Will): approved image restored; 84 ft option = renders/gallery6/b7-plan-openai.png; ZOOMPG.add(len(PAGES) - 1)
+# 6 Oct (Walker): the old render pages (2, 3, 3b) and site views (4) are replaced by the sections above; their slots stay in walker_v14_slots.json
 w_text_refs()
 w_site_materials()
 w_inspirations()
@@ -331,10 +339,9 @@ sheet('irrigation.py','Plan de riego y agua','Irrigation and water plan')
 sheet('electrical.py','Plan eléctrico','Electrical plan')
 sheet('site_analysis.py','Lectura del sitio','Reading the site')   # 4 Oct (Will): analysis, permaculture sectors
 sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will): zones, no waste, vivero, biodynamics, horsemanship, community   # 4 Oct (Will): E-1, power, dark-sky lighting, solar, two render slots
-placeholder('Conversación','Discussion','Resumen del intercambio entre Walker, nosotros, Andrés y Don Miguel sobre este proyecto. Walker completará los acuerdos.','Summary of the exchange between Walker, us, Andrés and Don Miguel about this project. Walker will fill in the agreements.',[('Acuerdos · Walker completa','Agreements · Walker to fill in'),('Preguntas abiertas','Open questions'),('Próximos pasos','Next steps')],
-            notes={0:[('Caballerizas del establo: 12 × 14 ft con corrales de 12 × 40 ft (acordado 4 oct). Alfalfa: dos bodegas de 24 × 12 ft; se descarga desde el camino por las rejas de los extremos, el camión no entra al pasillo.','Stable stalls: 12 × 14 ft with 12 × 40 ft runs (agreed 4 Oct). Alfalfa: two 24 × 12 ft bays; unloads from the main road through the end gates, the truck stays out of the aisle.')]})
+w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-04-v43.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-06-v44.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:

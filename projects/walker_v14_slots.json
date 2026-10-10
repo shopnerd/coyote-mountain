@@ -662,5 +662,423 @@
    1
   ],
   "note": "4 Oct (Will starred 23-picnic-side-oct4o): trailer as a small cafe, raked arena"
+ },
+ "barn-a-0": {
+  "rect": [
+   80,
+   231,
+   1252,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-west-horse-fan-storm-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick el-west-horse-fan-storm-google"
+ },
+ "barn-a-1": {
+  "rect": [
+   1299,
+   231,
+   2470,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-north-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick el-north-google"
+ },
+ "barn-a-2": {
+  "rect": [
+   80,
+   915,
+   1252,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-east-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick el-east-google"
+ },
+ "barn-a-3": {
+  "rect": [
+   1299,
+   915,
+   2470,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/elevations/el-south-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick el-south-google"
+ },
+ "barn-b-0": {
+  "rect": [
+   80,
+   231,
+   845,
+   661
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/10-stable-aisle-fresh.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 10-stable-aisle-fresh"
+ },
+ "barn-b-1": {
+  "rect": [
+   892,
+   231,
+   1658,
+   661
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 8-stable-google"
+ },
+ "barn-b-2": {
+  "rect": [
+   1705,
+   231,
+   2470,
+   661
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-south-fan-blue-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick el-south-fan-blue-google"
+ },
+ "barn-b-3": {
+  "rect": [
+   80,
+   800,
+   1252,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-el-west-horse-fan-dawn.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick el-west-horse-fan-dawn-model"
+ },
+ "barn-b-4": {
+  "rect": [
+   1299,
+   800,
+   2470,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-8-stable-fan-blue.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 8-stable-fan-blue-model"
+ },
+ "stalls-a-0": {
+  "rect": [
+   80,
+   231,
+   1252,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-fog-openai.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 4-hill-s-fan-fog-openai"
+ },
+ "stalls-a-1": {
+  "rect": [
+   1299,
+   231,
+   2470,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/1-hero-sw-fan-blue-google-nocars.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): 'Stable 2 remove the cars' - Gemini edit of fans/painted/1-hero-sw-fan-blue-google.png"
+ },
+ "stalls-a-2": {
+  "rect": [
+   80,
+   915,
+   1252,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/5-corridor-out-fresh.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 5-corridor-out-fresh"
+ },
+ "stalls-a-3": {
+  "rect": [
+   1299,
+   915,
+   2470,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/5-corridor-out-fan-golden-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 5-corridor-out-fan-golden-google"
+ },
+ "stalls-b-0": {
+  "rect": [
+   80,
+   231,
+   1660,
+   1330
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/2-corridor-fan-blue-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 2-corridor-fan-blue-google"
+ },
+ "stalls-b-1": {
+  "rect": [
+   1707,
+   231,
+   2470,
+   660
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-2-corridor-fan-golden.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 2-corridor-fan-golden-model"
+ },
+ "stalls-b-2": {
+  "rect": [
+   1707,
+   790,
+   2470,
+   1219
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-1-hero-sw-fan-blue.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 1-hero-sw-fan-blue-model"
+ },
+ "cafe-a-0": {
+  "rect": [
+   80,
+   231,
+   1252,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/14-bleachers-high-oct3g.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 14-bleachers-high-oct3g"
+ },
+ "cafe-a-1": {
+  "rect": [
+   1299,
+   231,
+   2470,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/14-bleachers-high-fan-blue-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 14-bleachers-high-fan-blue-google"
+ },
+ "cafe-a-2": {
+  "rect": [
+   80,
+   915,
+   1252,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/cafe-end-fan-right-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick cafe-end-fan-right-google"
+ },
+ "cafe-a-3": {
+  "rect": [
+   1299,
+   915,
+   2470,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/23-picnic-side-oct4o.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 23-picnic-side-oct4o"
+ },
+ "cafe-b-0": {
+  "rect": [
+   80,
+   400,
+   1252,
+   1059
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/14-bleachers-high-fan-dawn-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 14-bleachers-high-fan-dawn-google"
+ },
+ "cafe-b-1": {
+  "rect": [
+   1299,
+   400,
+   2470,
+   1059
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-23-picnic-side-fan-blue.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 23-picnic-side-fan-blue-model"
+ },
+ "models-0": {
+  "rect": [
+   80,
+   231,
+   1660,
+   1330
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/12-high-south-fan-golden-openai.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 12-high-south-fan-golden-openai"
+ },
+ "models-1": {
+  "rect": [
+   1707,
+   231,
+   2470,
+   660
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-b4-nw-fan-right.png",
+  "crop": [
+   0.12,
+   0.15,
+   0.88,
+   0.95
+  ],
+  "note": "6 Oct (Walker): gallery pick b4-nw-fan-right-model",
+  "paper": true
+ },
+ "models-2": {
+  "rect": [
+   1707,
+   790,
+   2470,
+   1219
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-b3-sw-fan-left.png",
+  "crop": [
+   0.12,
+   0.15,
+   0.88,
+   0.95
+  ],
+  "note": "6 Oct (Walker): gallery pick b3-sw-fan-left-model",
+  "paper": true
+ },
+ "bio-0": {
+  "rect": [
+   80,
+   231,
+   1240,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/walker-palomino.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "9 Oct (Walker): bio page photo"
  }
 }

@@ -70,6 +70,34 @@ def w_renders(page, items):
     fig = wpage(); wtitle(fig, 'Vistas arquitectónicas', 'Architectural renders')
     for k, (n, es, en) in enumerate(items): label(fig, slot(fig, f'{page}-{k}'), es, en, n, size=13.5)   # 4 Oct: captions up a step on the 2 x 2 pages
     wfoot(fig, nxt(), 'Vistas arquitectónicas', 'Architectural renders'); PAGES.append(fig)
+def w_photos(page, es_t, en_t, items, size=13):   # 6 Oct (Walker): one subject per section (barn, covered stalls, arena café, site models), slots '<page>-<k>'
+    fig = wpage(); wtitle(fig, es_t, en_t)
+    for k, (n, es, en) in enumerate(items): label(fig, slot(fig, f'{page}-{k}'), es, en, n, size=size)
+    wfoot(fig, nxt(), es_t, en_t); PAGES.append(fig)
+BIOS = [   # 9 Oct (Walker): the last page is about the two of us (was the Discussion placeholder)
+    ('Walker Rollins', 'Giant Nature',
+     'Maestro de prácticas regenerativas de la tierra, entrenador de caballos y defensor de los caballos que viven en libertad. Durante quince años Walker enseñó prácticas regenerativas en escuelas y escuelas-granja de Los Ángeles, a niños de 6 a 16 años. Desde 2016 vive en Encino Solo, en el Rancho Chichihuas, entre una manada salvaje (entonces un semental, tres yeguas y tres potrancas), siguiéndola de día y de noche hasta que la manada aceptó su presencia. Diez años después la manada es un árbol familiar: alimentada en los inviernos difíciles, curada, y algunos caballos entrenados para montar. Esto es La Manada Libre. A través de Giant Nature, Walker lleva al diseño lo que enseñan la tierra y los caballos.',
+     'Teacher of regenerative land practices, horse trainer and advocate for horses living free. For fifteen years Walker taught regenerative land practices in Los Angeles schools and farm schools, to children aged 6 to 16. Since 2016 Walker has lived at Encino Solo, on Rancho Chichihuas, among a wild herd (then one stallion, three mares and three fillies), following it by day and night until the herd accepted a person among them. Ten years on, the herd is a family tree: fed through the lean winters, doctored, some trained to ride. This is La Manada Libre. Through Giant Nature, Walker brings what the land and the horses teach into design.',
+     ('Pierde tu sensación de separación. Vuélvete parte de la manada.', 'Lose your sense of separateness. Become part of the herd.')),
+    ('William S. Rollins', 'Diseño y fabricación · Design and fabrication',
+     'William S. Rollins es diseñador y fabricante con más de 30 años de trabajo en arquitectura, paisaje y construcción. Tiene un BFA de The Cooper Union, un certificado de Maestría en Arquitectura de Paisaje de USC y un Certificado de Diseño en Permacultura (PDC). Dirigió el taller de SCI-Arc durante 5 años y pasó 12 en la Escuela de Arquitectura de USC. Hoy es Director del Laboratorio del Baum Family Maker Space en USC Viterbi, donde dirige la fabricación digital. Construyó la herramienta de topografía y diseño de sitio con la que se planeó este proyecto, que ahora se está convirtiendo en un curso universitario. También creó el Open Makerspace Kit, un kit de capacitación gratuito y bilingüe para talleres comunitarios.',
+     'William S. Rollins is a designer and fabricator with over 30 years of work in architecture, landscape, and building. He holds a BFA from The Cooper Union, a Master of Landscape Architecture certificate from USC, and a Permaculture Design Certificate (PDC). He ran the SCI-Arc shop for 5 years and spent 12 at the USC School of Architecture. He is now Lab Director of the Baum Family Maker Space at USC Viterbi, where he leads digital fabrication. He built the topography and site-design tool used to plan this project, which is now being developed into a university course. He also created the Open Makerspace Kit, a free, bilingual training kit for community workshops.',
+     None)]
+def w_bio():
+    fig = wpage(); wtitle(fig, 'Quiénes somos', 'About us')
+    r = slot(fig, 'bio-0'); wtext(fig, r[0] + 2, r[3] + 36, 'La Manada Libre · Rancho Chichihuas', 11, 400, 'italic', MUTEDW)
+    for x0, (name, role, es, en, quote) in zip((1300, 1910), BIOS):
+        wtext(fig, x0, 262, name, 17, 700); wtext(fig, x0, 300, role, 11, 700, color=GREEN); wrule(fig, x0, x0 + 560, 322)
+        y = 365
+        for txt, sty, col in ((es, 'normal', INKW), (en, 'italic', MUTEDW)):
+            t, g = para_lines(txt)
+            for line in textwrap.wrap(t, 50): wtext(fig, x0, y, line, 10, style=sty, color=col, gid=g); y += 26
+            y += 16
+        if quote:
+            y += 8
+            for line in textwrap.wrap(quote[0], 50): wtext(fig, x0, y, line, 10.5, 700, color=GREEN); y += 27
+            for line in textwrap.wrap(quote[1], 50): wtext(fig, x0, y, line, 10.5, 400, 'italic', GREEN); y += 27
+    wfoot(fig, nxt(), 'Quiénes somos', 'About us'); PAGES.append(fig)
 def w_site():
     fig = wpage(); wtitle(fig, 'Vistas del sitio', 'Site views')
     for k, (n, es, en) in enumerate([(1, 'El centro desde el noreste, hacia el oeste', 'The centre from the north-east, looking west'),
