@@ -166,64 +166,73 @@ for k in (() if PORCH else range(3)):                            # 4 Oct (Will):
 # the horses. Gutters on both eaves, a downspout at each road-end corner, buried to the trough (first-flush standpipe first).
 # the bar: a deck strip across the trailer end joining the two side decks, a fieldstone wall at its outer edge rising to a 42 in
 # counter (guardrail + bar top, people stand on the deck and look out over the trough), wood counter on top; stools behind it
-prism([(X1, YD), (X1 + BARD, YD), (X1 + BARD, -YD), (X1, -YD)], -0.1, H, 'wood', side='rock')
 WX0, WX1 = X1 + BARD, X1 + BARD + BARW
-prism([(WX0, YD), (WX1, YD), (WX1, -YD), (WX0, -YD)], -0.15, H + 1.0, 'rock')
-prism([(WX0 - .25, YD - .05), (WX1 + .05, YD - .05), (WX1 + .05, -YD + .05), (WX0 - .25, -YD + .05)], H + 1.0, H + 1.07, 'wood')
-# 4 Oct (Will): no seating on this side; above the wall's wood cap, the stable's horizontal sticks in 3 ft dark steel frames up to
-# the roof, so the old trailer end is hidden from the road
-XM = (WX0 + WX1) / 2; Z0S = H + 1.07; AY = abs(YD)
-def half_w(z):                                                     # half width under the roof at height z (the gable: lowest at the sides)
-    L = -(YS + (z - .05 - RZ0) * (YO0 - YS) / (RZ1 - RZ0)); return min(AY, max(0.0, L))
-ZTOP = rz(0) - .08
-ny = int(round(2 * AY / .9)); EDG = [-AY + 2 * AY * k / ny for k in range(ny + 1)]
-for y_ in EDG:                                                     # 4 Oct (Will): the whole face, eave to ridge; frames up to the roof
-    prism([(XM - .06, y_ - .03), (XM + .06, y_ - .03), (XM + .06, y_ + .03), (XM - .06, y_ + .03)], Z0S, rz(-abs(y_)) - .05, 'steel')
-z_ = Z0S + .06; k_ = 0
-while z_ < ZTOP:
-    hw = half_w(z_ + .05)
-    if hw > .1:
-        w = .015 * (1, -1)[k_ % 2]
-        prism([(XM - .025 + w, -hw), (XM + .025 + w, -hw), (XM + .025 + w, hw), (XM - .025 + w, hw)], z_, z_ + .05, 'stakes')
-    z_ += .068; k_ += 1   # tight: the trailer end reads only as shadow behind
-for y_ in (-YD + .2, YD - .2): prism([(X1 + BARD - .1, y_ - .07), (X1 + BARD + .04, y_ - .07), (X1 + BARD + .04, y_ + .07), (X1 + BARD - .1, y_ + .07)], H, rz(-abs(YD)) - .02, 'steel')   # roof posts at the bar
-TX0 = WX1 + .02; TX1 = TX0 + 3.5 * FT; TY = 8.5 * FT; TW_ = .7 * FT; TZ = 2.5 * FT   # 4 Oct (Will): horse height, 30 in; 17 ft so the downspouts land beside its ends
-prism([(TX0, -TY), (TX1, -TY), (TX1, TY), (TX0, TY)], -0.15, .12, 'rock')                       # base
-for pts in ([(TX0, -TY), (TX0 + TW_, -TY), (TX0 + TW_, TY), (TX0, TY)], [(TX1 - TW_, -TY), (TX1, -TY), (TX1, TY), (TX1 - TW_, TY)],
-            [(TX0, -TY), (TX1, -TY), (TX1, -TY + TW_), (TX0, -TY + TW_)], [(TX0, TY - TW_), (TX1, TY - TW_), (TX1, TY), (TX0, TY)]):
-    prism(pts, .12, TZ, 'rock')
-WL = TZ - .12
-TMID = (TX0 + TX1) / 2                                                                         # 4 Oct (Will): plants only in the back half, against the wall
-quad((TMID, -TY + TW_, WL), (TX1 - TW_, -TY + TW_, WL), (TX1 - TW_, TY - TW_, WL), (TMID, TY - TW_, WL), 'water')                 # open water along the whole front
-for y0_, y1_ in ((-TY + TW_, -4 * FT), (4 * FT, TY - TW_)): quad((TX0 + TW_, y0_, WL), (TMID, y0_, WL), (TMID, y1_, WL), (TX0 + TW_, y1_, WL), 'water')
-prism([(TMID - .05, -4 * FT), (TMID + .05, -4 * FT), (TMID + .05, 4 * FT), (TMID - .05, 4 * FT)], .12, WL - .03, 'rock')   # low stone edge to the plant bed, under water
-for y_ in (-4 * FT, 4 * FT): prism([(TX0 + TW_, y_ - .05), (TMID, y_ - .05), (TMID, y_ + .05), (TX0 + TW_, y_ + .05)], .12, WL - .03, 'rock')
-import random as _rr; _g = _rr.Random(11)
-for _ in range(140):                                                                           # the reeds, 4-7 ft
-    x_ = _g.uniform(TX0 + TW_ + .05, TMID - .05); y_ = _g.uniform(-4 * FT + .08, 4 * FT - .08); h_ = _g.uniform(1.2, 2.2); w_ = .045
-    lean = _g.uniform(-.15, .15)
-    beam((x_, y_, WL - .05), (x_ + lean, y_ + lean * .6, WL + h_), w_, 'sage')
+if not PORCH:   # 11 Oct (Walker, option 2): no bar, rock wall, stick screen or horse trough at the road end; the screened porch goes there instead
+    prism([(X1, YD), (X1 + BARD, YD), (X1 + BARD, -YD), (X1, -YD)], -0.1, H, 'wood', side='rock')
+    prism([(WX0, YD), (WX1, YD), (WX1, -YD), (WX0, -YD)], -0.15, H + 1.0, 'rock')
+    prism([(WX0 - .25, YD - .05), (WX1 + .05, YD - .05), (WX1 + .05, -YD + .05), (WX0 - .25, -YD + .05)], H + 1.0, H + 1.07, 'wood')
+    # 4 Oct (Will): no seating on this side; above the wall's wood cap, the stable's horizontal sticks in 3 ft dark steel frames up to
+    # the roof, so the old trailer end is hidden from the road
+    XM = (WX0 + WX1) / 2; Z0S = H + 1.07; AY = abs(YD)
+    def half_w(z):                                                     # half width under the roof at height z (the gable: lowest at the sides)
+        L = -(YS + (z - .05 - RZ0) * (YO0 - YS) / (RZ1 - RZ0)); return min(AY, max(0.0, L))
+    ZTOP = rz(0) - .08
+    ny = int(round(2 * AY / .9)); EDG = [-AY + 2 * AY * k / ny for k in range(ny + 1)]
+    for y_ in EDG:                                                     # 4 Oct (Will): the whole face, eave to ridge; frames up to the roof
+        prism([(XM - .06, y_ - .03), (XM + .06, y_ - .03), (XM + .06, y_ + .03), (XM - .06, y_ + .03)], Z0S, rz(-abs(y_)) - .05, 'steel')
+    z_ = Z0S + .06; k_ = 0
+    while z_ < ZTOP:
+        hw = half_w(z_ + .05)
+        if hw > .1:
+            w = .015 * (1, -1)[k_ % 2]
+            prism([(XM - .025 + w, -hw), (XM + .025 + w, -hw), (XM + .025 + w, hw), (XM - .025 + w, hw)], z_, z_ + .05, 'stakes')
+        z_ += .068; k_ += 1   # tight: the trailer end reads only as shadow behind
+    for y_ in (-YD + .2, YD - .2): prism([(X1 + BARD - .1, y_ - .07), (X1 + BARD + .04, y_ - .07), (X1 + BARD + .04, y_ + .07), (X1 + BARD - .1, y_ + .07)], H, rz(-abs(YD)) - .02, 'steel')   # roof posts at the bar
+    TX0 = WX1 + .02; TX1 = TX0 + 3.5 * FT; TY = 8.5 * FT; TW_ = .7 * FT; TZ = 2.5 * FT   # 4 Oct (Will): horse height, 30 in; 17 ft so the downspouts land beside its ends
+    prism([(TX0, -TY), (TX1, -TY), (TX1, TY), (TX0, TY)], -0.15, .12, 'rock')                       # base
+    for pts in ([(TX0, -TY), (TX0 + TW_, -TY), (TX0 + TW_, TY), (TX0, TY)], [(TX1 - TW_, -TY), (TX1, -TY), (TX1, TY), (TX1 - TW_, TY)],
+                [(TX0, -TY), (TX1, -TY), (TX1, -TY + TW_), (TX0, -TY + TW_)], [(TX0, TY - TW_), (TX1, TY - TW_), (TX1, TY), (TX0, TY)]):
+        prism(pts, .12, TZ, 'rock')
+    WL = TZ - .12
+    TMID = (TX0 + TX1) / 2                                                                         # 4 Oct (Will): plants only in the back half, against the wall
+    quad((TMID, -TY + TW_, WL), (TX1 - TW_, -TY + TW_, WL), (TX1 - TW_, TY - TW_, WL), (TMID, TY - TW_, WL), 'water')                 # open water along the whole front
+    for y0_, y1_ in ((-TY + TW_, -4 * FT), (4 * FT, TY - TW_)): quad((TX0 + TW_, y0_, WL), (TMID, y0_, WL), (TMID, y1_, WL), (TX0 + TW_, y1_, WL), 'water')
+    prism([(TMID - .05, -4 * FT), (TMID + .05, -4 * FT), (TMID + .05, 4 * FT), (TMID - .05, 4 * FT)], .12, WL - .03, 'rock')   # low stone edge to the plant bed, under water
+    for y_ in (-4 * FT, 4 * FT): prism([(TX0 + TW_, y_ - .05), (TMID, y_ - .05), (TMID, y_ + .05), (TX0 + TW_, y_ + .05)], .12, WL - .03, 'rock')
+    import random as _rr; _g = _rr.Random(11)
+    for _ in range(140):                                                                           # the reeds, 4-7 ft
+        x_ = _g.uniform(TX0 + TW_ + .05, TMID - .05); y_ = _g.uniform(-4 * FT + .08, 4 * FT - .08); h_ = _g.uniform(1.2, 2.2); w_ = .045
+        lean = _g.uniform(-.15, .15)
+        beam((x_, y_, WL - .05), (x_ + lean, y_ + lean * .6, WL + h_), w_, 'sage')
 for sy in (-1, 1):                                                                             # gutters + downspouts at the road end
     beam((RX0, sy * YO, rz(YO) - .08), (RX1, sy * YO, rz(YO) - .08), .12, 'steel')
-    beam((WX1 + .08, sy * YO, rz(YO) - .1), (WX1 + .08, sy * YO, -0.05), .09, 'steel')   # beside the trough's ends, not in it
-if PORCH:   # 11 Oct (Walker, café option 2): an 8 ft screened porch at the trailer's X0 end, under the same gable; black steel like the stable
-    PD = 8 * FT; PX0 = X0 - PD; PY0, PY1 = YD, -YS + .3                 # deck side to just past the trailer's back face
-    prism([(PX0, PY0), (X0, PY0), (X0, PY1), (PX0, PY1)], -0.1, H, 'wood', side='rock')
+    beam(((X1 + 8 * FT + .3 if PORCH else WX1) + .08, sy * YO, rz(YO) - .1), ((X1 + 8 * FT + .3 if PORCH else WX1) + .08, sy * YO, -0.05), .09, 'steel')   # beside the trough's ends, not in it
+if PORCH:   # 11 Oct (Walker, café option 2): an 8 ft screened porch at the road (X1) end and a 6 ft screened platform along the back (+y), one screened room under the gable; black steel like the stable
+    PD = 8 * FT; PX1 = X1 + PD; YB = -YD                                  # porch out to PX1; back platform from the trailer's back face to YB
+    prism([(X1, YD), (PX1, YD), (PX1, YB), (X1, YB)], -0.1, H, 'wood', side='rock')        # porch deck, full width
+    prism([(X0, -YS), (X1, -YS), (X1, YB), (X0, YB)], -0.1, H, 'wood', side='rock')        # back platform along the trailer
     ytop = lambda y: rz(-abs(y)) - .06                                   # underside of the gable at y
-    RXP = PX0 - .3
-    for dz in (0, .03):                                                 # carry the roof over the porch, both slopes
-        quad((RXP, 0, rz(0) + dz), (RX0, 0, rz(0) + dz), (RX0, YO, rz(YO) + dz), (RXP, YO, rz(YO) + dz), 'roof')
-        quad((RXP, -YO, rz(YO) + dz), (RX0, -YO, rz(YO) + dz), (RX0, 0, rz(0) + dz), (RXP, 0, rz(0) + dz), 'roof')
-    PST = [(PX0, PY0), (PX0 + PD / 2, PY0), (X0, PY0), (PX0, (PY0 + PY1) / 2), (PX0, 0.0), (PX0, PY1), (PX0 + PD / 2, PY1), (X0, PY1)]
-    for x, y in PST:
-        prism([(x - .05, y - .05), (x + .05, y - .05), (x + .05, y + .05), (x - .05, y + .05)], H, ytop(y), 'steel')
-    for a, b in (((PX0, PY0), (X0, PY0)), ((PX0, PY1), (X0, PY1)), ((PX0, PY0), (PX0, PY1))):   # rail at 30 in and a head beam
-        beam((a[0], a[1], H + .76), (b[0], b[1], H + .76), .05, 'steel')
+    RXQ = PX1 + .3
+    if RXQ > RX1:
+        for dz in (0, .03):                                             # carry the roof out over the porch, both slopes
+            quad((RX1, 0, rz(0) + dz), (RXQ, 0, rz(0) + dz), (RXQ, YO, rz(YO) + dz), (RX1, YO, rz(YO) + dz), 'roof')
+            quad((RX1, -YO, rz(YO) + dz), (RXQ, -YO, rz(YO) + dz), (RXQ, 0, rz(0) + dz), (RX1, 0, rz(0) + dz), 'roof')
+    SIDES = [((X1, YD), (PX1, YD)), ((PX1, YD), (PX1, YB)), ((X0, YB), (PX1, YB)), ((X0, -YS), (X0, YB)), ((X1, YD), (X1, YS))]   # porch front, outer end, the whole back, back platform's far end, porch to front deck
+    def posts_on(a, b, step=3.0):
+        n = max(1, round(math.hypot(b[0] - a[0], b[1] - a[1]) / step))
+        return [(a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n) for k in range(n + 1)]
+    seen = set()
+    for a_, b_ in SIDES:
+        for x, y in posts_on(a_, b_):
+            if (round(x, 2), round(y, 2)) in seen: continue
+            seen.add((round(x, 2), round(y, 2)))
+            prism([(x - .05, y - .05), (x + .05, y - .05), (x + .05, y + .05), (x - .05, y + .05)], H, ytop(y), 'steel')
+        beam((a_[0], a_[1], H + .76), (b_[0], b_[1], H + .76), .05, 'steel')                 # rail at 30 in
     def screen(a, b):                                                   # a fine dark insect screen from the deck to the roof, in one plane
-        n = 8; ys = [a[1] + (b[1] - a[1]) * k / n for k in range(n + 1)]; xs = [a[0] + (b[0] - a[0]) * k / n for k in range(n + 1)]
+        n = max(2, round(math.hypot(b[0] - a[0], b[1] - a[1]) / .6)); ys = [a[1] + (b[1] - a[1]) * k / n for k in range(n + 1)]; xs = [a[0] + (b[0] - a[0]) * k / n for k in range(n + 1)]
         for k in range(n):
             quad((xs[k], ys[k], H + .02), (xs[k + 1], ys[k + 1], H + .02), (xs[k + 1], ys[k + 1], ytop(ys[k + 1])), (xs[k], ys[k], ytop(ys[k])), 'screen')
-    screen((PX0, PY0), (X0, PY0)); screen((PX0, PY1), (X0, PY1)); screen((PX0, PY0), (PX0, PY1))
+    for a_, b_ in SIDES: screen(a_, b_)
 out = os.path.join(HERE, 'bleachers-' + VARIANT[:-5] + '.obj' if PORCH else 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
     f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved blades tiled like a pinwheel, each one step lower (exactly per her sketch), shade roof over the deck\n# unit m\n# name bleachers\n')
