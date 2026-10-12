@@ -120,6 +120,7 @@ if __name__ == '__main__':
             if not hit and len(FL) and np.hypot(FL[:, 0] - t['i'], FL[:, 1] - t['j']).min() * cs < max(1.0, t['r'] * .6): onfence.append((t['kind'], t['i'], t['j']))   # kept; the fence works around it
             (gone if hit else trees).append((t, hit))
         trees = [t for t, _ in trees]
+        d.setdefault('records', {})['existingTrees'] = [{k: t[k] for k in ('i', 'j', 'r', 'h', 'kind')} for t in trees]   # 11 Oct: the plans draw these crowns
         d['strokes'] = [s for s in d['strokes'] if s.get('name') != NAME] + [stroke(build(trees, z, random.Random(17)), z, OBJ if fn == 'centro-equino-2026-09-26-stalls16-nopad.json' else OBJ.replace('.obj', '-' + fn[:-5] + '.obj'))]   # one obj per drawing (the viewer export reads its materials)
         json.dump(d, open(p, 'w', encoding='utf-8'))
         from collections import Counter

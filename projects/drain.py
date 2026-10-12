@@ -27,7 +27,30 @@ def base_axes(fig,rect,alpha=.55):
     ax=fig.add_axes(rect); img=np.asarray(geo.render(0,0,W-1,H-1,8)).astype(float)/255
     img=img*alpha+(1-alpha)*np.array([.96,.95,.92]); ax.imshow(img,extent=(0,W-1,H-1,0))
     ax.set_xlim(0,W-1); ax.set_ylim(H-1,0); ax.set_aspect('equal'); ax.axis('off'); return ax
+TREE_STYLE={'pine':('#2f4a2c',.55),'palm':('#7a8a3c',.5),'tallpalm':('#6a7a30',.55),'youngpalm':('#8a9a4c',.45),'bigshrub':('#5f7048',.45),'shrub':('#7f8f5f',.4),'pepper':('#7a9450',.5)}
+def _forest():   # the model's east pine grove (site_extras 'pine forest'): one crown per trunk, read from its obj
+    o=(byname('pine forest') or [None])[0]; fn=os.path.join(os.path.dirname(os.path.abspath('drain.py')),'pine-forest.obj')
+    if not o or not os.path.exists(fn): return []
+    V=[];F=[];cur=None
+    for l in open(fn,encoding='utf-8'):
+        if l.startswith('v '): V.append([float(q) for q in l.split()[1:4]])
+        elif l.startswith('usemtl'): cur=l.split()[1]
+        elif l.startswith('f '): F.append((cur,[int(q)-1 for q in l.split()[1:]]))
+    V=np.array(V); out=[]; k=0; r=math.radians(o['rot'])
+    while k<len(F):
+        if F[k][0]!='trunk': k+=1; continue
+        tr=[i for m_,f in F[k:k+6] for i in f]; cx,cy=V[tr,0].mean(),V[tr,1].mean(); k+=6
+        cr=[i for m_,f in F[k:k+18] if m_=='pine' for i in f]; k+=18
+        rad=float(np.hypot(V[cr,0]-cx,V[cr,1]-cy).max()) if cr else 2.0
+        out.append(dict(i=o['c'][0]+(cx*math.cos(r)-cy*math.sin(r))/cs, j=o['c'][1]-(cx*math.sin(r)+cy*math.cos(r))/cs, r=rad, kind='pine'))
+    return out
+def existing_trees(ax,z0=1.6):   # 11 Oct (Will): the trees already on the site, on every plan (crowns to scale, under roads and buildings)
+    from matplotlib.patches import Circle
+    for t in (p.get('records') or {}).get('existingTrees',[])+_forest():
+        col,a=TREE_STYLE.get(t['kind'],('#5f7048',.45))
+        ax.add_patch(Circle((t['i'],t['j']),max(.35,t['r']/cs),fc=col,ec=col,alpha=a,lw=.4,zorder=z0))
 def features(ax,lw=1):
+    existing_trees(ax)
     for s in S:
         n=s.get('name') or ''; k=s.get('kind')
         if k=='path':

@@ -110,7 +110,7 @@ def existing():
 PADS=[('Establo · Barn','1087.6',(107.5,57.5),'1 %'),('Caballerizas · Stalls','1089.3',(84.6,64.8),'0.2 %'),('Bebedero redondo · Round trough','1089.1',(76.2,67.6),'0 %'),('Pista oval · Arena','1073.3',(89.4,38.4),'1 %'),('Corral redondo · Pen','1080.6',(86.4,53.1),'1 %'),('Estacionamiento · Parking','1102.4',(136,60.3),'5 %'),('Bebedero · Trough','1087.1',(100.3,59.8),'0 %')]
 def grading():
     fig=newpage(); heading(fig,'Plan de terracería','Grading plan')
-    ax=plain_axes(fig,[0.02,0.075,0.74,0.82])
+    ax=plain_axes(fig,[0.02,0.075,0.74,0.82]); existing_trees(ax,z0=2.5)   # 11 Oct: existing trees
     dd=z-b; lim=6
     ax.imshow(np.ma.masked_where(np.abs(dd)<.15,dd),cmap=matplotlib.colors.LinearSegmentedColormap.from_list('cf',['#7d786d','#f4f1ea','#c96b3a']),vmin=-lim,vmax=lim,extent=(-.5,W-.5,H-.5,-.5),alpha=.55,zorder=1)
     ax.contour(X,Y,b,levels=np.arange(1050,1125,1),colors='#9d978a',linewidths=.4,linestyles='dashed',zorder=2)
@@ -345,7 +345,7 @@ sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will
 w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
 w_herd()   # 11 Oct (Will): a closing page after the bio, one big photo of the horses
 
-out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-11-v50.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
+out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-11-v51.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:

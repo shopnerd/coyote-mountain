@@ -1,6 +1,6 @@
 def existing():
     fig = newpage(); heading(fig, 'Topografía existente', 'Existing topography')
-    ax = plain_axes(fig, [0.02, 0.075, 0.74, 0.82])
+    ax = plain_axes(fig, [0.02, 0.075, 0.74, 0.82]); existing_trees(ax)   # 11 Oct: existing trees
     ax.contour(X, Y, b, levels=np.arange(1050, 1125, 1), colors='#9a9487', linewidths=.35)
     ax.contour(X, Y, b, levels=np.arange(1050, 1125, 5), colors=INK, linewidths=.85)
     for nm in ('existing vineyard road', 'existing scrub-side road'):
@@ -19,6 +19,8 @@ def existing():
     ly = 0.30
     for c, st, lw, t in items:
         fig.add_artist(matplotlib.lines.Line2D([0.78, 0.81], [ly, ly], color=c, lw=lw, ls=st)); fig.text(0.818, ly-.005, t, fontsize=8.5, color=INK); ly -= .025
+    for col, t in (('#2f4a2c', 'Pinos existentes · Existing pines'), ('#7a8a3c', 'Palmas existentes · Existing palms'), ('#5f7048', 'Arbustos y pirul · Shrubs and pepper tree')):   # 11 Oct: existing trees (aerial + site visit)
+        fig.add_artist(matplotlib.patches.Circle((0.795, ly), .006, transform=fig.transFigure, fc=col, ec=col, alpha=.6)); fig.text(0.818, ly-.005, t, fontsize=8.5, color=INK); ly -= .025
     tblock(fig, nxt(), 'Topografía existente', 'Existing topography'); PAGES.append(fig)
 
 
@@ -40,7 +42,7 @@ def min_rect(P):
 
 def operator_sheet():
     fig = newpage(); heading(fig, 'Plano de nivelación para el operador', 'Grading sheet for the machine operator')
-    ax = plain_axes(fig, [0.02, 0.075, 0.70, 0.82])
+    ax = plain_axes(fig, [0.02, 0.075, 0.70, 0.82]); existing_trees(ax, z0=2.5)   # 11 Oct: existing trees, so the machine works around them
     dd = z - b
     ax.contour(X, Y, b, levels=np.arange(1050, 1125, 1), colors='#b5b0a5', linewidths=.35, linestyles='dashed', zorder=1)
     c5 = ax.contour(X, Y, z, levels=np.arange(1050, 1125, 1), colors=INK, linewidths=.4, zorder=2)
