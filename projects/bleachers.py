@@ -134,7 +134,7 @@ SX = X1                                                          # the trailer e
 # ---- 4 Oct (Will): the same deck, three stepped blades and shade roof mirrored onto the trailer's other long side, so the
 # trailer works as a double-sided café with a kiosk window and a picnic stair on each side (mirrored across its centre line y = 0) ----
 MIRROR_BOTH = True
-STEPS_BOTH_SIDES = False   # 10 Oct (Walker): deck and stepped platforms on the arena (west) side only; the roof is still mirrored, one gable over the whole café
+STEPS_BOTH_SIDES = not PORCH   # 12 Oct (Will): option 1 (by the arena) has its deck and stepped platforms on BOTH sides again; option 2 (the porch variant) keeps Walker's one side (10 Oct)
 if MIRROR_BOTH:
     for fc, m in list(zip(F, MAT)):
         if not STEPS_BOTH_SIDES and m in ('wood', 'rock'): continue
