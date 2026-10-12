@@ -14,7 +14,7 @@ import numpy as np
 from matplotlib.path import Path
 HERE = os.path.dirname(os.path.abspath(__file__))
 from geo import cs, W, H
-FILES = ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.json', 'centro-equino-2026-09-26-stalls16-nopad.json')
+FILES = ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.json', 'centro-equino-2026-09-26-stalls16-nopad.json', 'centro-equino-2026-10-10-cafe-option2-trees.json')   # + café option 2 (trailer in the trees, Walker)
 NAME, OBJ = 'existing trees', 'existing-trees.obj'
 KEEP_CLEAR = ('walker barn 72x40', 'covered stalls', 'bleachers', 'trailer 8 x 40', 'stone trough (long)', 'wash pad trough', 'east trough', 'watering station 10ft', 'electrical room')
 
@@ -29,6 +29,12 @@ def footprints(d):   # each structure's plan outline in grid i, j (the app's obj
         r = math.radians(s['rot']); c0, c1 = s['c']; sc = s.get('sc', 1)
         out[s['name']] = Path([(c0 + (x * sc * math.cos(r) - y * sc * math.sin(r)) / cs, c1 - (x * sc * math.sin(r) + y * sc * math.cos(r)) / cs) for x, y in s['foot']])
     return out
+
+def edge_dist(P, i, j):   # grid distance from a point to a footprint outline
+    V = P.vertices; best = 1e9
+    for (ax, ay), (bx, by) in zip(V, np.roll(V, -1, 0)):
+        dx, dy = bx - ax, by - ay; L = dx * dx + dy * dy or 1e-9; u = min(1, max(0, ((i - ax) * dx + (j - ay) * dy) / L)); best = min(best, math.hypot(ax + u * dx - i, ay + u * dy - j))
+    return best
 
 def lines(d):        # fences and the arena / round pen: trees keep 1 m off them
     L = []
@@ -79,13 +85,13 @@ def build(trees, z, rnd):
             for q in range(n): m.face([rings[-1][q], rings[-1][(q + 1) % n], (x, y, zg + h)], 'scrub')
     return m
 
-def stroke(m, z):
+def stroke(m, z, objname=OBJ):
     V = np.array([p for f in m.F for p in f]); cx, cy, mz = V[:, 0].mean(), V[:, 1].mean(), V[:, 2].min()
     tris = []
     for f in m.F:
         for k in range(1, len(f) - 1):
             for q in (f[0], f[k], f[k + 1]): tris += [round(q[0] - cx, 3), round(q[1] - cy, 3), round(q[2] - mz, 3)]
-    with open(os.path.join(HERE, OBJ), 'w', newline='\n') as fo:   # the obj keeps the material groups for the viewer export
+    with open(os.path.join(HERE, objname), 'w', newline='\n') as fo:   # the obj keeps the material groups for the viewer export
         fo.write(f'# {NAME}: the trees already on the site, from the aerial and the 11 Oct 2026 site photos\n# unit m\n# name {NAME}\n')
         for f in m.F:
             for p in f: fo.write('v %.3f %.3f %.3f\n' % (p[0] - cx, p[1] - cy, p[2] - mz))
@@ -110,11 +116,11 @@ if __name__ == '__main__':
         p = os.path.join(HERE, fn); d = json.load(open(p, encoding='utf-8')); z = np.array(d['z'], float).reshape(H, W)
         FP, FL = footprints(d), lines(d); trees, gone, onfence = [], [], []
         for t in src:
-            hit = [nm for nm, P in FP.items() if P.contains_point((t['i'], t['j']), radius=-2 * max(.6, t['r'] * .5) / cs) or P.contains_point((t['i'], t['j']))]
+            hit = [nm for nm, P in FP.items() if P.contains_point((t['i'], t['j'])) or edge_dist(P, t['i'], t['j']) * cs < max(.8, t['r'] * .5)]   # trunk at least ~1 m off a wall
             if not hit and len(FL) and np.hypot(FL[:, 0] - t['i'], FL[:, 1] - t['j']).min() * cs < max(1.0, t['r'] * .6): onfence.append((t['kind'], t['i'], t['j']))   # kept; the fence works around it
             (gone if hit else trees).append((t, hit))
         trees = [t for t, _ in trees]
-        d['strokes'] = [s for s in d['strokes'] if s.get('name') != NAME] + [stroke(build(trees, z, random.Random(17)), z)]
+        d['strokes'] = [s for s in d['strokes'] if s.get('name') != NAME] + [stroke(build(trees, z, random.Random(17)), z, OBJ if fn == 'centro-equino-2026-09-26-stalls16-nopad.json' else OBJ.replace('.obj', '-' + fn[:-5] + '.obj'))]   # one obj per drawing (the viewer export reads its materials)
         json.dump(d, open(p, 'w', encoding='utf-8'))
         from collections import Counter
         print(fn, ':', len(trees), 'existing trees', dict(Counter(t['kind'] for t in trees)), '; left out (inside a structure):', [(t['kind'], h[0]) for t, h in gone], '; on a fence line:', onfence)

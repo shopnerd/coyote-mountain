@@ -1,7 +1,7 @@
 """Data for the Centro Equino 3D viewer (27 Sep): graded terrain, the aerial photo for it, every placed object as a
 triangle soup in site metres (roofs split off so they can be hidden), roads, ditches, the natural sink and labels.
 
-    python export.py [outdir]   ->  data.json + aerial.jpg      (reads ../centro-equino-2026-09-26-stalls16-nopad.json)
+    python export.py [outdir] [drawing.json]   ->  data.json + aerial.jpg      (reads ../centro-equino-2026-09-26-stalls16-nopad.json unless a drawing is named)
 Frame: x = grid i * cs, z = grid j * cs (site grid, rotated 318 deg from north), y = elevation - base (metres).
 """
 import base64, json, math, os, sys, numpy as np
@@ -10,7 +10,8 @@ from geo import GR, W, H, cs
 import geo18
 OUT = sys.argv[1] if len(sys.argv) > 1 else HERE
 os.makedirs(OUT, exist_ok=True)
-d = json.load(open(os.path.join(os.path.dirname(HERE), 'centro-equino-2026-09-26-stalls16-nopad.json'), encoding='utf-8'))
+SRC = sys.argv[2] if len(sys.argv) > 2 else 'centro-equino-2026-09-26-stalls16-nopad.json'   # 11 Oct: a variant drawing, e.g. café option 2
+d = json.load(open(os.path.join(os.path.dirname(HERE), SRC), encoding='utf-8'))
 z = np.array(d['z'], float).reshape(H, W); Y0 = float(z.min()) - 1.0
 b64 = lambda a: base64.b64encode(np.asarray(a, np.float32).tobytes()).decode()
 
@@ -53,7 +54,8 @@ for s in d['strokes']:
     o = dict(name=name, group=grp, color=col, body=b64(P[~roof].reshape(-1)))
     if roof.any(): o.update(roof=b64(P[roof].reshape(-1)), roofColor=rcol)
     if name in MATOBJ:
-        lab = np.array(obj_labels(os.path.join(os.path.dirname(HERE), MATOBJ[name])))
+        mo = os.path.join(os.path.dirname(HERE), MATOBJ[name]); alt = mo.replace('.obj', '-' + SRC[:-5] + '.obj')   # a variant drawing may carry its own obj
+        lab = np.array(obj_labels(alt if os.path.exists(alt) else mo))
         if len(lab) == len(P):
             o = dict(name=name, group=grp, parts={m_: b64(P[lab == m_].reshape(-1)) for m_ in sorted(set(lab))})
         else: print('!! material labels do not match the mesh for', name, len(lab), len(P))
