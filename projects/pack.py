@@ -341,7 +341,7 @@ sheet('site_analysis.py','Lectura del sitio','Reading the site')   # 4 Oct (Will
 sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will): zones, no waste, vivero, biodynamics, horsemanship, community   # 4 Oct (Will): E-1, power, dark-sky lighting, solar, two render slots
 w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-10-v49.pdf')
+out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-11-v50.pdf')
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:

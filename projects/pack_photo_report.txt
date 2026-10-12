@@ -18,7 +18,7 @@ p06   302 dpi     1536x864  C:\Users\onest\code\coyote-studio/projects/renders/f
 p07   205 dpi     1600x727  C:\Users\onest\code\coyote-studio/projects/renders/picks/14-bleachers-high-oct3g.jpg
 p07   353 dpi    2752x1250  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/14-bleachers-high-fan-blue-google.png
 p07   352 dpi    2752x1252  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/cafe-end-fan-right-google.png
-p07   353 dpi    2752x1252  C:\Users\onest\code\coyote-studio/projects/renders/picks/cafe-option2-trees-realtrailer.jpg
+p07   353 dpi    2752x1252  C:\Users\onest\code\coyote-studio/projects/renders/picks/cafe-option2-trees-porch-wide.jpg
 p08   350 dpi    2732x1536  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/14-bleachers-high-fan-dawn-google.png
 p08   197 dpi     1536x864  C:\Users\onest\code\coyote-studio/projects/renders/fans/model/model-23-picnic-side-fan-blue.png
 p09   118 dpi     1242x864  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/12-high-south-fan-golden-openai.png
