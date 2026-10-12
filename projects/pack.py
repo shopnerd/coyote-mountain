@@ -320,7 +320,7 @@ _fig.text(0.087,0.420,'Gírelo y explórelo en línea · Turn it and explore it 
 _fig.text(0.087,0.403,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
 truss_page(); ZOOMPG.add(len(PAGES) - 1)
 w_photos('stalls-a','Caballerizas techadas','Covered stalls',[(1,'Desde el cerro, con niebla','From the hill, in the fog'),(2,'Desde el suroeste, a la hora azul','From the south-west at blue hour'),
-         (3,'Bajo el techo mariposa','Under the butterfly roof'),(4,'El pasillo y los caballos','The corridor and the horses'),
+         (3,'Bajo el techo mariposa','Under the butterfly roof'),(4,'Desde el este, la alfalfa','From the east, the alfalfa end'),
          (5,'Al anochecer, desde el suroeste','At dusk, from the south-west')], size=12)   # 11 Oct (Will): one more render, 5 photos
 stalls_page(); ZOOMPG.add(len(PAGES) - 1)
 w_photos('cafe-a','La pista y el café','The arena and café',[(1,'Las gradas y el café junto a la pista','The bleachers and café beside the arena'),(2,'El café y las gradas, a la hora azul','The café and bleachers at blue hour'),
@@ -345,7 +345,7 @@ sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will
 w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
 w_herd()   # 11 Oct (Will): a closing page after the bio, one big photo of the horses
 
-out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-12-v53.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
+out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-12-v54.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:

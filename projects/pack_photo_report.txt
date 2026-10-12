@@ -10,7 +10,7 @@ p04   197 dpi     1536x699  C:\Users\onest\code\coyote-studio/projects/renders/p
 p07   301 dpi     1536x864  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/4-hill-s-fan-fog-openai.png
 p07   400 dpi    2043x1147  C:\Users\onest\code\coyote-studio/projects/renders/picks/1-hero-sw-fan-blue-google-nocars.jpg
 p07   311 dpi     1588x893  C:\Users\onest\code\coyote-studio/projects/renders/picks/5-corridor-out-fresh.jpg
-p07   352 dpi    2752x1522  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/5-corridor-out-fan-golden-google.png
+p07   352 dpi    2752x1522  C:\Users\onest\code\coyote-studio/projects/renders/gallery-east/26-stalls-east-google.png
 p07   353 dpi    2752x1522  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/2-corridor-fan-blue-google.png
 p09   205 dpi     1600x727  C:\Users\onest\code\coyote-studio/projects/renders/picks/14-bleachers-high-oct3g.jpg
 p09   353 dpi    2752x1250  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/14-bleachers-high-fan-blue-google.png
