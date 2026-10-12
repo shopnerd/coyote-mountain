@@ -77,7 +77,7 @@ for t in out:
     if t['i'] < 28 or (t['i'] > 85 and t['j'] > 69.5): continue                                # beyond the west road / south of the scrub-side road
     if any(math.hypot(t['i'] - q['i'], t['j'] - q['j']) * CS < max(1.2, q['r'] * .9) for q in have + add): continue
     add.append(t)
-ALL = [{k: q[k] for k in ('i', 'j', 'r', 'kind')} for q in base + forest + add]
+ALL = [dict({k: q[k] for k in ('i', 'j', 'r', 'kind')}, src=sv) for L, sv in ((base, 'design'), (forest, 'forest'), (add, 'aerial')) for q in L]   # 12 Oct: src says where each came from
 for fn in ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.json', 'centro-equino-2026-09-26-stalls16-nopad.json', 'centro-equino-2026-10-10-cafe-option2-trees.json'):
     p = os.path.join(HERE, fn); dd = json.load(open(p, encoding='utf-8')); dd.setdefault('records', {})['existingAll'] = ALL; json.dump(dd, open(p, 'w', encoding='utf-8'))
 print('existing today:', len(base), 'design-list +', len(forest), 'east grove +', len(add), 'new =', len(ALL), Counter(t['kind'] for t in add))
@@ -91,8 +91,8 @@ fig.tight_layout(); fig.savefig(os.path.join(HERE, 'existing_all_check.jpg'), pi
 # existing_will_markup.json: 'palm' = his palm dots (grid i, j), 'will' = his circles (grid i, j, r) on the potted nursery rows.
 WM = os.path.join(HERE, 'existing_will_markup.json')
 if os.path.exists(WM):
-    m = json.load(open(WM)); mine = [{k: q[k] for k in ('i', 'j', 'r', 'kind')} for q in base + forest + add]
-    his = [dict(i=i, j=j, r=1.0, kind='palm') for i, j in m['palm']] + [dict(i=i, j=j, r=round(max(.5, r * CS), 2), kind='palm') for i, j, r in m['will']]
+    m = json.load(open(WM)); mine = [dict({k: q[k] for k in ('i', 'j', 'r', 'kind')}, src=sv) for L, sv in ((base, 'design'), (forest, 'forest'), (add, 'aerial')) for q in L]
+    his = [dict(i=i, j=j, r=1.0, kind='palm', src='will-palm') for i, j in m['palm']] + [dict(i=i, j=j, r=round(max(.5, r * CS), 2), kind='palm', src='will-nursery') for i, j, r in m['will']]
     keep = [q for q in mine if q['kind'] in ('pine', 'pepper') or q['r'] >= 2.2 or
             not any(math.hypot(q['i'] - h['i'], q['j'] - h['j']) * CS < max(1.4, q['r']) for h in his)]   # his dots replace my small palms/shrubs nearby
     ALL = keep + his

@@ -115,7 +115,36 @@ if __name__ == '__main__':
     for fn in FILES:
         p = os.path.join(HERE, fn); d = json.load(open(p, encoding='utf-8')); z = np.array(d['z'], float).reshape(H, W)
         FP, FL = footprints(d), lines(d); trees, gone, onfence = [], [], []
-        for t in src:
+        # 12 Oct (Will: "more plants represented, but not under the covered stalls or other undesirable places"): the full existing
+        # layer (existing_conditions.py: design + aerial + Will's markup), minus the moving nursery rows and the east grove (its own
+        # object), minus anything on a road/trail or inside the arena and round pen; the structure rule below still applies
+        full = (d.get('records') or {}).get('existingAll')
+        if full:
+            PATHS = [(np.array([q[:2] for q in s_['pts']]), s_.get('pw', 1.5)) for s_ in d['strokes'] if s_.get('kind') == 'path']
+            def on_path(t):
+                for P_, w_ in PATHS:
+                    seg = np.diff(P_, axis=0); L2 = (seg ** 2).sum(1) + 1e-9; q_ = np.array([t['i'], t['j']]) - P_[:-1]
+                    u = np.clip((q_ * seg).sum(1) / L2, 0, 1); dmin = np.hypot(*(P_[:-1] + seg * u[:, None] - [t['i'], t['j']]).T).min() * cs
+                    if dmin < w_ / 2 + max(.6, t['r'] * .4): return True
+                return False
+            RINGS = []
+            for nm in ('arena fence', 'round pen fence'):
+                o = next((s_ for s_ in d['strokes'] if s_.get('name') == nm), None)
+                if o: r_ = math.radians(o['rot']); RINGS.append(Path([(o['c'][0] + (x * math.cos(r_) - y * math.sin(r_)) / cs, o['c'][1] - (x * math.sin(r_) + y * math.cos(r_)) / cs) for x, y in o['foot']]))
+            rng_h = random.Random(5)
+            def hgt(t):
+                if 'h' in t: return t
+                k = t['kind']; rr = t['r']
+                t = dict(t, h=round({'pine': min(6.4, max(3.5, rr * 1.9)), 'palm': rng_h.uniform(1.8, 4.3), 'shrub': min(2.5, max(1.2, rr * .9)),
+                                     'bigshrub': min(4.2, max(2, rr * 1.2)), 'tallpalm': 6.8, 'youngpalm': 1.4, 'pepper': 7.0}.get(k, 2.0), 1)); return t
+            design_h = {(round(q['i'], 2), round(q['j'], 2)): q for q in src}
+            src_ = []
+            for t in full:
+                if t.get('src') in ('forest', 'will-nursery'): continue
+                if any(R_.contains_point((t['i'], t['j'])) for R_ in RINGS) or on_path(t): continue
+                t = dict(design_h.get((round(t['i'], 2), round(t['j'], 2)), t)); src_.append(hgt(t))
+        else: src_ = src
+        for t in src_:
             hit = [nm for nm, P in FP.items() if P.contains_point((t['i'], t['j'])) or edge_dist(P, t['i'], t['j']) * cs < max(.8, t['r'] * .5)]   # trunk at least ~1 m off a wall
             if not hit and len(FL) and np.hypot(FL[:, 0] - t['i'], FL[:, 1] - t['j']).min() * cs < max(1.0, t['r'] * .6): onfence.append((t['kind'], t['i'], t['j']))   # kept; the fence works around it
             (gone if hit else trees).append((t, hit))
