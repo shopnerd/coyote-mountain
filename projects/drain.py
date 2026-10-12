@@ -44,9 +44,10 @@ def _forest():   # the model's east pine grove (site_extras 'pine forest'): one 
         rad=float(np.hypot(V[cr,0]-cx,V[cr,1]-cy).max()) if cr else 2.0
         out.append(dict(i=o['c'][0]+(cx*math.cos(r)-cy*math.sin(r))/cs, j=o['c'][1]-(cx*math.sin(r)+cy*math.cos(r))/cs, r=rad, kind='pine'))
     return out
-def existing_trees(ax,z0=1.6):   # 11 Oct (Will): the trees already on the site, on every plan (crowns to scale, under roads and buildings)
+def existing_trees(ax,z0=1.6,today=False):   # today=True: everything on the site now (records.existingAll, existing_conditions.py), for the existing-topography page   # 11 Oct (Will): the trees already on the site, on every plan (crowns to scale, under roads and buildings)
     from matplotlib.patches import Circle
-    for t in (p.get('records') or {}).get('existingTrees',[])+_forest():
+    R_=(p.get('records') or {})
+    for t in (R_.get('existingAll') if today and R_.get('existingAll') else R_.get('existingTrees',[])+_forest()):
         col,a=TREE_STYLE.get(t['kind'],('#5f7048',.45))
         ax.add_patch(Circle((t['i'],t['j']),max(.35,t['r']/cs),fc=col,ec=col,alpha=a,lw=.4,zorder=z0))
 def features(ax,lw=1):

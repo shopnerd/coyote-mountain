@@ -1,0 +1,1734 @@
+{
+"note": "every crown on the site today (Esri aerial + 11 Oct photos), nothing removed for the design; for the existing-topography page",
+"trees": [
+{
+"i": 92.0,
+"j": 25.75,
+"r": 2.68,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 95.5,
+"j": 31.25,
+"r": 2.77,
+"kind": "shrub",
+"zone": "shrubpine"
+},
+{
+"i": 104.25,
+"j": 24.75,
+"r": 3.36,
+"kind": "pine",
+"zone": "shrubpine"
+},
+{
+"i": 112.0,
+"j": 38.25,
+"r": 2.85,
+"kind": "pepper",
+"zone": "pepper"
+},
+{
+"i": 106.0,
+"j": 54.5,
+"r": 1.9,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 99.75,
+"j": 31.0,
+"r": 4.24,
+"kind": "pine",
+"zone": "shrubpine"
+},
+{
+"i": 78.25,
+"j": 71.5,
+"r": 2.01,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 110.25,
+"j": 20.75,
+"r": 1.9,
+"kind": "pine",
+"zone": "pine"
+},
+{
+"i": 133.0,
+"j": 63.25,
+"r": 1.9,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 119.25,
+"j": 39.5,
+"r": 2.01,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 109.0,
+"j": 30.0,
+"r": 1.9,
+"kind": "pine",
+"zone": "pine"
+},
+{
+"i": 111.75,
+"j": 50.75,
+"r": 3.36,
+"kind": "pine",
+"zone": "thicket"
+},
+{
+"i": 63.0,
+"j": 70.25,
+"r": 3.61,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 108.0,
+"j": 28.5,
+"r": 2.68,
+"kind": "pine",
+"zone": "pine"
+},
+{
+"i": 65.0,
+"j": 46.0,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 120.25,
+"j": 55.0,
+"r": 2.42,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 118.25,
+"j": 40.75,
+"r": 2.42,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 60.25,
+"j": 60.5,
+"r": 2.42,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 35.5,
+"j": 41.5,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 120.75,
+"j": 49.0,
+"r": 2.77,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 122.0,
+"j": 56.5,
+"r": 2.42,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 33.0,
+"j": 51.75,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 121.25,
+"j": 45.5,
+"r": 2.01,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 49.0,
+"j": 43.0,
+"r": 2.01,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 61.75,
+"j": 59.25,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 66.75,
+"j": 26.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 109.5,
+"j": 42.0,
+"r": 2.01,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 114.5,
+"j": 46.0,
+"r": 2.12,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 127.5,
+"j": 63.0,
+"r": 2.01,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 58.0,
+"j": 47.25,
+"r": 2.01,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 50.75,
+"j": 32.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 124.75,
+"j": 63.0,
+"r": 1.9,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 63.5,
+"j": 46.75,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 115.25,
+"j": 52.5,
+"r": 2.42,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 53.5,
+"j": 32.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 33.5,
+"j": 46.75,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 120.5,
+"j": 64.0,
+"r": 1.9,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 99.5,
+"j": 48.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "youngpalm"
+},
+{
+"i": 74.5,
+"j": 66.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 64.5,
+"j": 48.75,
+"r": 2.12,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 49.25,
+"j": 32.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 117.5,
+"j": 56.25,
+"r": 1.9,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 73.25,
+"j": 66.75,
+"r": 1.5,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 42.0,
+"j": 54.5,
+"r": 2.42,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 73.0,
+"j": 63.5,
+"r": 1.9,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 48.5,
+"j": 38.75,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 116.25,
+"j": 57.5,
+"r": 1.9,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 79.25,
+"j": 67.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 76.25,
+"j": 24.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 62.75,
+"j": 32.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 58.0,
+"j": 38.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 84.25,
+"j": 60.75,
+"r": 1.9,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 99.75,
+"j": 41.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "youngpalm"
+},
+{
+"i": 43.25,
+"j": 38.5,
+"r": 2.01,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 109.0,
+"j": 44.75,
+"r": 1.9,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 102.75,
+"j": 31.25,
+"r": 2.01,
+"kind": "shrub",
+"zone": "shrubpine"
+},
+{
+"i": 123.0,
+"j": 58.75,
+"r": 1.9,
+"kind": "pine",
+"zone": "other"
+},
+{
+"i": 35.0,
+"j": 46.0,
+"r": 2.01,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 116.0,
+"j": 51.0,
+"r": 2.42,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 37.75,
+"j": 35.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 113.75,
+"j": 27.0,
+"r": 2.42,
+"kind": "pine",
+"zone": "pine"
+},
+{
+"i": 129.5,
+"j": 64.0,
+"r": 1.34,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 59.75,
+"j": 49.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 109.5,
+"j": 49.25,
+"r": 1.9,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 46.25,
+"j": 34.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 57.25,
+"j": 33.75,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 57.75,
+"j": 42.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 43.5,
+"j": 43.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 45.25,
+"j": 42.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 112.5,
+"j": 20.75,
+"r": 2.12,
+"kind": "pine",
+"zone": "pine"
+},
+{
+"i": 56.5,
+"j": 41.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 53.5,
+"j": 43.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 59.5,
+"j": 44.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 56.75,
+"j": 70.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 43.25,
+"j": 34.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 86.75,
+"j": 63.75,
+"r": 1.5,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 65.25,
+"j": 59.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 41.25,
+"j": 36.0,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 65.5,
+"j": 32.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 63.75,
+"j": 42.75,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 45.0,
+"j": 36.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 49.0,
+"j": 45.0,
+"r": 2.01,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 116.0,
+"j": 62.25,
+"r": 1.9,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 124.25,
+"j": 64.25,
+"r": 1.9,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 63.5,
+"j": 52.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 33.75,
+"j": 44.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 57.25,
+"j": 60.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 112.25,
+"j": 45.75,
+"r": 2.01,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 99.5,
+"j": 37.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "youngpalm"
+},
+{
+"i": 42.25,
+"j": 33.75,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 77.75,
+"j": 67.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 69.0,
+"j": 34.75,
+"r": 1.5,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 88.5,
+"j": 60.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 117.0,
+"j": 46.0,
+"r": 1.9,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 64.75,
+"j": 36.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 71.75,
+"j": 27.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 77.5,
+"j": 24.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 54.5,
+"j": 46.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 34.5,
+"j": 37.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 63.25,
+"j": 39.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 99.25,
+"j": 50.0,
+"r": 1.9,
+"kind": "palm",
+"zone": "youngpalm"
+},
+{
+"i": 52.25,
+"j": 55.0,
+"r": 2.01,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 54.75,
+"j": 58.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 79.25,
+"j": 30.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 39.0,
+"j": 36.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 71.5,
+"j": 24.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 84.5,
+"j": 64.0,
+"r": 0.67,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 38.25,
+"j": 60.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 44.5,
+"j": 62.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 55.5,
+"j": 47.0,
+"r": 2.01,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 35.5,
+"j": 36.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 40.25,
+"j": 39.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 120.25,
+"j": 51.5,
+"r": 2.42,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 64.25,
+"j": 39.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 86.75,
+"j": 60.25,
+"r": 1.9,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 48.5,
+"j": 37.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 51.75,
+"j": 36.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 50.0,
+"j": 61.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 37.5,
+"j": 51.5,
+"r": 2.12,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 92.25,
+"j": 64.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 46.5,
+"j": 60.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 116.25,
+"j": 21.0,
+"r": 1.5,
+"kind": "pine",
+"zone": "pine"
+},
+{
+"i": 47.25,
+"j": 47.0,
+"r": 2.12,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 40.75,
+"j": 48.0,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 33.0,
+"j": 62.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 33.75,
+"j": 41.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 45.25,
+"j": 46.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 60.0,
+"j": 39.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 52.5,
+"j": 51.5,
+"r": 2.12,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 39.75,
+"j": 50.25,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 138.5,
+"j": 70.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 44.75,
+"j": 48.25,
+"r": 2.12,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 46.75,
+"j": 38.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 38.75,
+"j": 46.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 37.75,
+"j": 63.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 46.5,
+"j": 48.75,
+"r": 1.9,
+"kind": "pine",
+"zone": "westblock"
+},
+{
+"i": 75.25,
+"j": 26.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 42.75,
+"j": 63.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 94.75,
+"j": 59.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 69.25,
+"j": 26.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 63.75,
+"j": 38.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 117.5,
+"j": 59.5,
+"r": 1.5,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 48.0,
+"j": 60.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 73.5,
+"j": 24.25,
+"r": 0.67,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 102.5,
+"j": 29.25,
+"r": 1.34,
+"kind": "shrub",
+"zone": "shrubpine"
+},
+{
+"i": 116.25,
+"j": 63.75,
+"r": 1.34,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 70.25,
+"j": 24.0,
+"r": 0.67,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 121.75,
+"j": 72.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 82.25,
+"j": 68.5,
+"r": 0.67,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 36.75,
+"j": 38.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 35.25,
+"j": 67.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 116.75,
+"j": 64.75,
+"r": 1.34,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 41.0,
+"j": 46.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 63.5,
+"j": 41.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 33.25,
+"j": 65.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 141.75,
+"j": 71.75,
+"r": 1.5,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 33.5,
+"j": 61.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 53.75,
+"j": 36.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 105.0,
+"j": 66.25,
+"r": 0.67,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 77.25,
+"j": 27.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 42.75,
+"j": 46.75,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 80.25,
+"j": 68.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 115.0,
+"j": 63.75,
+"r": 1.34,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 40.25,
+"j": 62.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 85.0,
+"j": 67.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 85.0,
+"j": 65.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 110.75,
+"j": 24.75,
+"r": 0.95,
+"kind": "pine",
+"zone": "pine"
+},
+{
+"i": 35.0,
+"j": 58.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 47.0,
+"j": 64.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 35.0,
+"j": 60.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 100.25,
+"j": 54.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 112.0,
+"j": 64.75,
+"r": 0.67,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 83.5,
+"j": 65.5,
+"r": 0.67,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 65.25,
+"j": 56.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 132.0,
+"j": 71.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 61.25,
+"j": 57.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 36.75,
+"j": 68.0,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 49.25,
+"j": 51.75,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 63.75,
+"j": 29.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 44.25,
+"j": 67.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 124.25,
+"j": 70.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 39.25,
+"j": 58.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 112.5,
+"j": 42.75,
+"r": 1.34,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 56.0,
+"j": 67.5,
+"r": 0.67,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 99.75,
+"j": 44.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "youngpalm"
+},
+{
+"i": 108.5,
+"j": 57.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 29.0,
+"j": 20.25,
+"r": 1.5,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 47.75,
+"j": 55.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 113.25,
+"j": 66.0,
+"r": 0.95,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 133.25,
+"j": 70.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 53.25,
+"j": 65.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 74.75,
+"j": 27.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 75.25,
+"j": 68.5,
+"r": 0.67,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 54.75,
+"j": 70.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 92.5,
+"j": 59.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 107.75,
+"j": 34.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 91.0,
+"j": 63.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 39.75,
+"j": 60.5,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 93.0,
+"j": 62.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 109.25,
+"j": 51.25,
+"r": 0.95,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 57.25,
+"j": 67.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 39.5,
+"j": 67.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 58.5,
+"j": 68.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 50.5,
+"j": 49.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 44.0,
+"j": 65.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 59.25,
+"j": 54.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 54.0,
+"j": 61.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 48.75,
+"j": 34.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 51.75,
+"j": 44.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 44.25,
+"j": 50.0,
+"r": 1.5,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 74.25,
+"j": 23.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 37.5,
+"j": 40.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 120.0,
+"j": 60.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 27.5,
+"j": 54.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 41.75,
+"j": 60.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 90.5,
+"j": 65.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 36.25,
+"j": 65.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 73.5,
+"j": 27.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "palmgrove"
+},
+{
+"i": 55.25,
+"j": 38.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 46.5,
+"j": 53.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 109.25,
+"j": 52.25,
+"r": 0.67,
+"kind": "shrub",
+"zone": "thicket"
+},
+{
+"i": 90.25,
+"j": 50.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 108.75,
+"j": 56.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 39.0,
+"j": 55.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 60.5,
+"j": 52.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 41.0,
+"j": 64.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 57.25,
+"j": 53.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 118.5,
+"j": 63.75,
+"r": 0.67,
+"kind": "shrub",
+"zone": "shrub"
+},
+{
+"i": 28.0,
+"j": 49.25,
+"r": 1.34,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 54.0,
+"j": 39.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 46.25,
+"j": 57.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 55.5,
+"j": 54.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 61.0,
+"j": 53.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 109.75,
+"j": 60.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 93.25,
+"j": 66.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 62.5,
+"j": 28.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 53.0,
+"j": 39.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 122.0,
+"j": 61.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "other"
+},
+{
+"i": 49.25,
+"j": 67.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 51.5,
+"j": 62.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 78.25,
+"j": 68.75,
+"r": 0.95,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 58.25,
+"j": 52.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 36.5,
+"j": 58.5,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 47.75,
+"j": 52.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 92.5,
+"j": 61.25,
+"r": 0.67,
+"kind": "palm",
+"zone": "nursery"
+},
+{
+"i": 57.5,
+"j": 51.25,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+},
+{
+"i": 38.75,
+"j": 43.0,
+"r": 0.95,
+"kind": "palm",
+"zone": "westblock"
+}
+]
+}

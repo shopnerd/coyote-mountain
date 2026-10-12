@@ -1,6 +1,6 @@
 def existing():
     fig = newpage(); heading(fig, 'Topografía existente', 'Existing topography')
-    ax = plain_axes(fig, [0.02, 0.075, 0.74, 0.82]); existing_trees(ax)   # 11 Oct: existing trees
+    ax = plain_axes(fig, [0.02, 0.075, 0.74, 0.82]); existing_trees(ax, today=True)   # 12 Oct (Will): everything growing there today, nursery palms included
     ax.contour(X, Y, b, levels=np.arange(1050, 1125, 1), colors='#9a9487', linewidths=.35)
     ax.contour(X, Y, b, levels=np.arange(1050, 1125, 5), colors=INK, linewidths=.85)
     for nm in ('existing vineyard road', 'existing scrub-side road'):
