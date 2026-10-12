@@ -673,11 +673,11 @@
   "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-west-horse-fan-storm-google.png",
   "crop": [
    0,
-   0,
+   0.187,
    1,
    1
   ],
-  "note": "6 Oct (Walker): gallery pick el-west-horse-fan-storm-google"
+  "note": "12 Oct (Will + Walker): crop from the top (sky) only, so the stone trough and the drinking horse stay in"
  },
  "barn-a-1": {
   "rect": [
