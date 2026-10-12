@@ -12,9 +12,9 @@ p07   400 dpi    2043x1147  C:\Users\onest\code\coyote-studio/projects/renders/p
 p07   311 dpi     1588x893  C:\Users\onest\code\coyote-studio/projects/renders/picks/5-corridor-out-fresh.jpg
 p07   352 dpi    2752x1522  C:\Users\onest\code\coyote-studio/projects/renders/gallery-east/26-stalls-east-google.png
 p07   353 dpi    2752x1522  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/2-corridor-fan-blue-google.png
-p09   205 dpi     1600x727  C:\Users\onest\code\coyote-studio/projects/renders/picks/14-bleachers-high-oct3g.jpg
+p09   352 dpi    2752x1250  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/cafe-end-fan-right-google.png
 p09   353 dpi    2752x1250  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/14-bleachers-high-fan-blue-google.png
-p09   352 dpi    2752x1252  C:\Users\onest\code\coyote-studio/projects/renders/fans/painted/cafe-end-fan-right-google.png
+p09   352 dpi    2752x1252  C:\Users\onest\code\coyote-studio/projects/renders/picks/cafe-option2-to-barn-birdseye.jpg
 p09   353 dpi    2752x1252  C:\Users\onest\code\coyote-studio/projects/renders/picks/cafe-option2-birdseye-meadow.jpg
 p10   208 dpi     1444x639  C:\Users\onest\code\coyote-studio/projects/renders/picks/land-1-valley.png
 p10   214 dpi     1486x657  C:\Users\onest\code\coyote-studio/projects/renders/picks/land-2-palms.png
