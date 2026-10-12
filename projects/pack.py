@@ -305,17 +305,11 @@ w_cover()
 # "view ..."): the barn (main stable), the covered stalls, the arena and café, the site models; then the drawings and the rest as before.
 planview(os.path.join(os.path.dirname(os.path.abspath('pack.py')),'renders','picks','b7-plan-oct3o-top.jpg'))   # Walker's note on b7-plan-oct3o: the 84 ft model from above, base cropped off (approved 00-plan.png before)
 ZOOMPG = {len(PAGES) - 1}   # 4 Oct: drawing pages whose drawings enlarge on the web page
+# 11 Oct (Will + Walker): each building's renders, then its drawings; pages 6, 8, 9 (stalls-b, cafe-b, models) dropped
 w_photos('barn-a','El establo','The barn',[(1,'Alzado oeste: la entrada y un caballo bebiendo','West elevation: the entry, a horse drinking'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
          (3,'Alzado este, entre los pinos','East elevation, between the pines'),(4,'Alzado sur: el lavado y los corrales','South elevation: the wash pad and runs')])
 w_photos('barn-b','El establo','The barn',[(5,'Dentro del establo','Inside the barn'),(6,'El lado norte y sus corrales','The north side and its runs'),(7,'Alzado sur al anochecer','South elevation at dusk'),
          (8,'Modelo: alzado oeste','Model: west elevation'),(9,'Modelo: el lado norte','Model: the north side')], size=12)
-w_photos('stalls-a','Caballerizas techadas','Covered stalls',[(1,'Desde el cerro, con niebla','From the hill, in the fog'),(2,'Desde el suroeste, a la hora azul','From the south-west at blue hour'),
-         (3,'Bajo el techo mariposa','Under the butterfly roof'),(4,'El pasillo y los caballos','The corridor and the horses')])
-w_photos('stalls-b','Caballerizas techadas','Covered stalls',[(5,'Al anochecer, desde el suroeste','At dusk, from the south-west'),(6,'Modelo: el pasillo','Model: the corridor'),(7,'Modelo: desde el suroeste','Model: from the south-west')], size=12)
-w_photos('cafe-a','La pista y el café','The arena and café',[(1,'Las gradas y el café junto a la pista','The bleachers and café beside the arena'),(2,'El café y las gradas, a la hora azul','The café and bleachers at blue hour'),
-         (3,'El café, lado del camino','The café, road end'),(4,'Opción 2: el café entre los árboles','Option 2: the café in the trees')])
-w_photos('cafe-b','La pista y el café','The arena and café',[(5,'Las gradas al amanecer','The bleachers at dawn'),(6,'Modelo: el café y las gradas','Model: the café and the steps')])
-w_photos('models','Vistas del sitio','Site views',[(1,'Desde el sur, en alto','High from the south'),(2,'Modelo: desde el noroeste','Model: from the north-west'),(3,'Modelo: desde el suroeste','Model: from the south-west')], size=12)
 barn_plan(); ZOOMPG.add(len(PAGES) - 1)
 import qrcode                                             # Walker added a QR to the 3D model; point it at the public copy
 _qr=qrcode.QRCode(border=0,box_size=10); _qr.add_data('https://will.100xbtr.com/equino/model/'); _qr.make(fit=True)
@@ -325,7 +319,16 @@ _fig.text(0.087,0.438,'Modelo 3D del establo · 3D model of the stable',fontsize
 _fig.text(0.087,0.420,'Gírelo y explórelo en línea · Turn it and explore it online',fontsize=8.5,color=MUTED)
 _fig.text(0.087,0.403,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
 truss_page(); ZOOMPG.add(len(PAGES) - 1)
+w_photos('stalls-a','Caballerizas techadas','Covered stalls',[(1,'Desde el cerro, con niebla','From the hill, in the fog'),(2,'Desde el suroeste, a la hora azul','From the south-west at blue hour'),
+         (3,'Bajo el techo mariposa','Under the butterfly roof'),(4,'El pasillo y los caballos','The corridor and the horses'),
+         (5,'Al anochecer, desde el suroeste','At dusk, from the south-west')], size=12)   # 11 Oct (Will): one more render, 5 photos
 stalls_page(); ZOOMPG.add(len(PAGES) - 1)
+w_photos('cafe-a','La pista y el café','The arena and café',[(1,'Las gradas y el café junto a la pista','The bleachers and café beside the arena'),(2,'El café y las gradas, a la hora azul','The café and bleachers at blue hour'),
+         (3,'El café, lado del camino','The café, road end'),(4,'Opción 2: el café entre los árboles','Option 2: the café in the trees')])
+w_photos('land-a','Cortes del paisaje','Landscape sections',[(1,'Pinar y cañada','Pine grove and the draw'),(2,'Nativas de la entrada','Entry natives'),
+         (3,'Bebedero vivo y lavadero','Living trough and wash pad'),(4,'Islas para cabalgar','Riding islands')])   # 11 Oct: photos chosen in the editor
+w_photos('land-b','Cortes del paisaje: encinos y nativas','Landscape sections: oaks and natives',[(5,'Día de campo bajo encinos','Picnic under oaks'),(6,'Encinos del estacionamiento','Parking oaks'),
+         (7,'Encino y nativas de la entrada','Entry oak and natives'),(8,'Islas con encinos','Islands with oaks')])
 # 6 Oct (Walker): the old render pages (2, 3, 3b) and site views (4) are replaced by the sections above; their slots stay in walker_v14_slots.json
 w_text_refs()
 w_site_materials()
@@ -340,6 +343,7 @@ sheet('electrical.py','Plan eléctrico','Electrical plan')
 sheet('site_analysis.py','Lectura del sitio','Reading the site')   # 4 Oct (Will): analysis, permaculture sectors
 sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will): zones, no waste, vivero, biodynamics, horsemanship, community   # 4 Oct (Will): E-1, power, dark-sky lighting, solar, two render slots
 w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
+w_herd()   # 11 Oct (Will): a closing page after the bio, one big photo of the horses
 
 out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-11-v50.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')

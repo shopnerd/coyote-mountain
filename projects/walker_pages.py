@@ -106,6 +106,10 @@ def w_bio():
             for line in textwrap.wrap(quote[1], 50): wtext(fig, x0, y, line, 10.5, 400, 'italic', GREEN); y += 27
     if 'bio-1' in SLOTS: slot(fig, 'bio-1')   # 11 Oct (Will): his photo under his text, same width as the text
     wfoot(fig, nxt(), 'Quiénes somos', 'About us'); PAGES.append(fig)
+def w_herd():   # 11 Oct (Will): the closing page, one big photo of the horses
+    fig = wpage(); wtitle(fig, 'La manada', 'The herd')
+    r = slot(fig, 'herd-0'); wtext(fig, r[0] + 2, r[3] + 36, 'La Manada Libre bajo los pinos · The free herd under the pines', 11, 400, 'italic', MUTEDW)
+    wfoot(fig, nxt(), 'La manada', 'The herd'); PAGES.append(fig)
 def w_site():
     fig = wpage(); wtitle(fig, 'Vistas del sitio', 'Site views')
     for k, (n, es, en) in enumerate([(1, 'El centro desde el noreste, hacia el oeste', 'The centre from the north-east, looking west'),

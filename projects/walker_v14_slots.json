@@ -811,8 +811,8 @@
   "rect": [
    80,
    231,
-   1252,
-   763
+   845,
+   661
   ],
   "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/4-hill-s-fan-fog-openai.png",
   "crop": [
@@ -821,14 +821,14 @@
    1,
    1
   ],
-  "note": "6 Oct (Walker): gallery pick 4-hill-s-fan-fog-openai"
+  "note": "11 Oct: five photos (barn-b layout); swap in the editor"
  },
  "stalls-a-1": {
   "rect": [
-   1299,
+   892,
    231,
-   2470,
-   763
+   1658,
+   661
   ],
   "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/1-hero-sw-fan-blue-google-nocars.jpg",
   "crop": [
@@ -837,14 +837,14 @@
    1,
    1
   ],
-  "note": "6 Oct (Walker): 'Stable 2 remove the cars' - Gemini edit of fans/painted/1-hero-sw-fan-blue-google.png"
+  "note": "11 Oct: five photos (barn-b layout); swap in the editor"
  },
  "stalls-a-2": {
   "rect": [
-   80,
-   915,
-   1252,
-   1448
+   1705,
+   231,
+   2470,
+   661
   ],
   "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/5-corridor-out-fresh.jpg",
   "crop": [
@@ -853,13 +853,13 @@
    1,
    1
   ],
-  "note": "6 Oct (Walker): gallery pick 5-corridor-out-fresh"
+  "note": "11 Oct: five photos (barn-b layout); swap in the editor"
  },
  "stalls-a-3": {
   "rect": [
-   1299,
-   915,
-   2470,
+   80,
+   800,
+   1252,
    1448
   ],
   "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/5-corridor-out-fan-golden-google.png",
@@ -869,7 +869,7 @@
    1,
    1
   ],
-  "note": "6 Oct (Walker): gallery pick 5-corridor-out-fan-golden-google"
+  "note": "11 Oct: five photos (barn-b layout); swap in the editor"
  },
  "stalls-b-0": {
   "rect": [
@@ -1096,5 +1096,165 @@
    1
   ],
   "note": "11 Oct (Will): his photo under his bio text, text-column width; chains and straps in, only the bucket trimmed"
+ },
+ "stalls-a-4": {
+  "rect": [
+   1299,
+   800,
+   2470,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/2-corridor-fan-blue-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "11 Oct: five photos (barn-b layout); swap in the editor"
+ },
+ "land-a-0": {
+  "rect": [
+   80,
+   231,
+   1252,
+   763
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/1-AB-pinar-y-canada.png",
+  "crop": [
+   0,
+   0.045,
+   1,
+   0.82
+  ],
+  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+ },
+ "land-a-1": {
+  "rect": [
+   1299,
+   231,
+   2470,
+   763
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/2-CD-nativas-de-la-entrada.png",
+  "crop": [
+   0,
+   0.045,
+   1,
+   0.82
+  ],
+  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+ },
+ "land-a-2": {
+  "rect": [
+   80,
+   915,
+   1252,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/3-EF-bebedero-vivo-y-lavadero.png",
+  "crop": [
+   0,
+   0.045,
+   1,
+   0.82
+  ],
+  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+ },
+ "land-a-3": {
+  "rect": [
+   1299,
+   915,
+   2470,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/7-islas-para-cabalgar.png",
+  "crop": [
+   0,
+   0.045,
+   1,
+   0.82
+  ],
+  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+ },
+ "land-b-0": {
+  "rect": [
+   80,
+   231,
+   1252,
+   763
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/encinos y nativas, sin enredaderas · oaks and natives, no vines/1-sombra-del-dia-de-campo-encinos.png",
+  "crop": [
+   0,
+   0.045,
+   1,
+   0.82
+  ],
+  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+ },
+ "land-b-1": {
+  "rect": [
+   1299,
+   231,
+   2470,
+   763
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/encinos y nativas, sin enredaderas · oaks and natives, no vines/2-sombra-del-estacionamiento-encinos.png",
+  "crop": [
+   0,
+   0.045,
+   1,
+   0.82
+  ],
+  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+ },
+ "land-b-2": {
+  "rect": [
+   80,
+   915,
+   1252,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/encinos y nativas, sin enredaderas · oaks and natives, no vines/3-nativas-de-la-entrada-encino.png",
+  "crop": [
+   0,
+   0.045,
+   1,
+   0.82
+  ],
+  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+ },
+ "land-b-3": {
+  "rect": [
+   1299,
+   915,
+   2470,
+   1448
+  ],
+  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/encinos y nativas, sin enredaderas · oaks and natives, no vines/4-islas-para-cabalgar-encinos.png",
+  "crop": [
+   0,
+   0.045,
+   1,
+   0.82
+  ],
+  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+ },
+ "herd-0": {
+  "rect": [
+   80,
+   231,
+   2470,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/herd-under-the-pines-8792.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "11 Oct (Will): closing page, the herd under the pines (site visit); swap in the editor"
  }
 }
