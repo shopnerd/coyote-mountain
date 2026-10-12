@@ -1240,5 +1240,21 @@
    2470,
    1448
   ]
+ },
+ "article-0": {
+  "rect": [
+   80,
+   231,
+   1745,
+   1480
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/mina-y-vuelta.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "12 Oct (Walker): Mina and Vuelta, for the article page"
  }
 }

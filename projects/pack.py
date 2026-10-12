@@ -346,9 +346,9 @@ sheet('electrical.py','Plan eléctrico','Electrical plan')
 sheet('site_analysis.py','Lectura del sitio','Reading the site')   # 4 Oct (Will): analysis, permaculture sectors
 sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will): zones, no waste, vivero, biodynamics, horsemanship, community   # 4 Oct (Will): E-1, power, dark-sky lighting, solar, two render slots
 w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
-w_herd()   # 11 Oct (Will): a closing page after the bio, one big photo of the horses
+w_article()   # 12 Oct (Walker): the article 'Becoming Part of the Herd' takes the place of Will's placeholder 'La manada' page (w_herd)
 
-out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-12-v58.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
+out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-12-v59.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:
