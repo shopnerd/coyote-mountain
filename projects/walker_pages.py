@@ -106,6 +106,16 @@ def w_bio():
             for line in textwrap.wrap(quote[1], 50): wtext(fig, x0, y, line, 10.5, 400, 'italic', GREEN); y += 27
     if 'bio-1' in SLOTS: slot(fig, 'bio-1')   # 11 Oct (Will): his photo under his text, same width as the text
     wfoot(fig, nxt(), 'Quiénes somos', 'About us'); PAGES.append(fig)
+def w_land(items):   # 12 Oct (Will): the landscape sections with their species, Spanish then English, under each caption (the plates stay clean)
+    fig = wpage(); wtitle(fig, 'Cortes del paisaje', 'Landscape sections')
+    for k, (n, es, en, sp) in enumerate(items):
+        r = slot(fig, f'land-a-{k}')
+        wtext(fig, r[0] + 2, r[3] + 30, f'{n}  {es}', 11, 700); wtext(fig, r[0] + 2, r[3] + 53, en, 9.5, 400, 'italic', MUTEDW)
+        y = r[3] + 80; w = round(((1360 if r[0] < 1000 else 2470) - r[0]) / 8.4)   # the left column's lists may run into the gutter
+        for txt, sty, col in (('Especies: ' + ', '.join(a for a, b in sp) + '.', 'normal', INKW), ('Species: ' + ', '.join(b for a, b in sp) + '.', 'italic', MUTEDW)):
+            for line in textwrap.wrap(txt, w): wtext(fig, r[0] + 2, y, line, 8.4, style=sty, color=col); y += 19
+            y += 3
+    wfoot(fig, nxt(), 'Cortes del paisaje', 'Landscape sections'); PAGES.append(fig)
 def w_herd():   # 11 Oct (Will): the closing page, one big photo of the horses
     fig = wpage(); wtitle(fig, 'La manada', 'The herd')
     r = slot(fig, 'herd-0'); wtext(fig, r[0] + 2, r[3] + 36, 'La Manada Libre bajo los pinos · The free herd under the pines', 11, 400, 'italic', MUTEDW)

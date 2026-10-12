@@ -1037,65 +1037,65 @@
   "rect": [
    80,
    231,
-   1252,
-   763
+   1120,
+   691
   ],
-  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/1-AB-pinar-y-canada.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/land-1-valley.png",
   "crop": [
    0,
-   0.045,
+   0,
    1,
-   0.82
+   1
   ],
-  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+  "note": "12 Oct (Will + Walker): the four sections tagged on the every-render page"
  },
  "land-a-1": {
   "rect": [
-   1299,
+   1430,
    231,
    2470,
-   763
+   691
   ],
-  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/2-CD-nativas-de-la-entrada.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/land-2-palms.png",
   "crop": [
    0,
-   0.045,
+   0,
    1,
-   0.82
+   1
   ],
-  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+  "note": "12 Oct (Will + Walker): the four sections tagged on the every-render page"
  },
  "land-a-2": {
   "rect": [
    80,
-   915,
-   1252,
-   1448
+   860,
+   1120,
+   1320
   ],
-  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/3-EF-bebedero-vivo-y-lavadero.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/land-3-oaks.png",
   "crop": [
    0,
-   0.045,
+   0,
    1,
-   0.82
+   1
   ],
-  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+  "note": "12 Oct (Will + Walker): the four sections tagged on the every-render page"
  },
  "land-a-3": {
   "rect": [
-   1299,
-   915,
+   1430,
+   860,
    2470,
-   1448
+   1320
   ],
-  "src": "G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/renderings/2026-10-11 cortes para Andres · sections for Andres/7-islas-para-cabalgar.png",
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/land-4-entry.png",
   "crop": [
    0,
-   0.045,
+   0,
    1,
-   0.82
+   1
   ],
-  "note": "11 Oct: landscape sections, first picks; swap in the editor"
+  "note": "12 Oct (Will + Walker): the four sections tagged on the every-render page"
  },
  "land-b-0": {
   "rect": [
