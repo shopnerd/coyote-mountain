@@ -1084,17 +1084,17 @@
  "bio-1": {
   "rect": [
    1910,
-   1170,
+   1158,
    2410,
-   1448
+   1514
   ],
   "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/will-rock.jpg",
   "crop": [
    0,
-   0.26,
+   0.05,
    1,
    1
   ],
-  "note": "11 Oct (Will): his photo under his bio text, text-column width, bottom level with Walker's photo"
+  "note": "11 Oct (Will): his photo under his bio text, text-column width; chains and straps in, only the bucket trimmed"
  }
 }
