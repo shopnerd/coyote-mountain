@@ -120,47 +120,54 @@ def w_herd():   # 11 Oct (Will): the closing page, one big photo of the horses
     fig = wpage(); wtitle(fig, 'La manada', 'The herd')
     r = slot(fig, 'herd-0'); wtext(fig, r[0] + 2, r[3] + 36, 'La Manada Libre bajo los pinos · The free herd under the pines', 11, 400, 'italic', MUTEDW)
     wfoot(fig, nxt(), 'La manada', 'The herd'); PAGES.append(fig)
-def w_article(path='walker_article.json'):   # 12 Oct (Walker): "Becoming Part of the Herd" - page 1 the photo of Mina and Vuelta as big as it goes + the opening, page 2 the rest
-    A = json.load(open(path, encoding='utf-8'))
-    def sty(size, lead):
-        return {'p': (size, 400, 'normal', INKW, lead), 'li': (size, 400, 'normal', INKW, lead), 'li0': (size, 400, 'normal', INKW, lead),
-                'h': (size + 3.6, 700, 'normal', INKW, lead + 6), 'h2': (size + 1.2, 700, 'normal', GREEN, lead + 2), 'q': (size + 2, 700, 'italic', GREEN, lead + 5), 'src': (7.4, 400, 'italic', MUTEDW, 17)}
-    GAP = {'p': 8, 'li': 2, 'h': 5, 'h2': 2, 'q': 10, 'src': 0}; PRE = {'h': 14, 'h2': 6, 'q': 10, 'src': 8}
-    def flow(blocks, cols, size, lead, cw):
-        S = sty(size, lead); ci, y = 0, cols[0][2]
-        for bi, (kind, txt) in enumerate(blocks):
-            if kind == 'li':
-                L = [('li0' if k == 0 else 'li', l) for k, l in enumerate(textwrap.wrap(txt, cw - 3))]
-            else:
-                width = {'h': int(cw * .72), 'h2': int(cw * .9), 'q': int(cw * .85), 'src': cw + 8}.get(kind, cw)
-                L = [(kind, l) for l in textwrap.wrap(txt, width)]
-            need = sum(S[k][4] for k, _ in L) + PRE.get(kind, 0) + (3 * lead if kind in ('h', 'h2') else 0)
-            if kind in ('h', 'h2', 'q') and y + need > cols[ci][3]: ci += 1; y = cols[ci][2]
-            if y > cols[ci][2]: y += PRE.get(kind, 0)
-            for k, l in L:
-                sz, wt, st, col, ld = S[k]
-                if y + ld > cols[ci][3]: ci += 1; y = cols[ci][2]
-                fig, x0 = cols[ci][0], cols[ci][1]
-                if k == 'li0': wtext(fig, x0 + 3, y + 15, '•', sz, 700, color=GREEN)
-                wtext(fig, x0 + (20 if k in ('li', 'li0') else 0), y + 15, l, sz, wt, st, col)
-                y += ld
-            y += GAP.get(kind, 0)
-        return ci, y
-    blocks = A['blocks']; hs = [i for i, b in enumerate(blocks) if b[0] == 'h']; k2 = hs[2]      # page 1 carries the opening and 'why we need a written standard'
+def _asty(size, lead):
+    return {'p': (size, 400, 'normal', INKW, lead), 'li': (size, 400, 'normal', INKW, lead), 'li0': (size, 400, 'normal', INKW, lead),
+            'h': (size + 3.6, 700, 'normal', INKW, lead + 6), 'h2': (size + 1.2, 700, 'normal', GREEN, lead + 2), 'q': (size + 2, 700, 'italic', GREEN, lead + 5), 'src': (7.2, 400, 'italic', MUTEDW, 16)}
+def _aflow(blocks, cols, size, lead, cw):   # 12 Oct: article text down a list of columns (fig, x, y_top, y_bottom); returns (last column, y)
+    S = _asty(size, lead); GAP = {'p': 8, 'li': 2, 'h': 5, 'h2': 2, 'q': 10, 'src': 0}; PRE = {'h': 14, 'h2': 6, 'q': 10, 'src': 8}
+    ci, y = 0, cols[0][2]
+    for kind, txt in blocks:
+        if kind == 'li':
+            L = [('li0' if k == 0 else 'li', l) for k, l in enumerate(textwrap.wrap(txt, cw - 3))]
+        else:
+            width = {'h': int(cw * .72), 'h2': int(cw * .9), 'q': int(cw * .85), 'src': cw + 8}.get(kind, cw)
+            L = [(kind, l) for l in textwrap.wrap(txt, width)]
+        need = sum(S[k][4] for k, _ in L) + PRE.get(kind, 0) + (3 * lead if kind in ('h', 'h2') else 0)
+        if kind in ('h', 'h2', 'q') and y + need > cols[ci][3]: ci += 1; y = cols[ci][2]
+        if y > cols[ci][2]: y += PRE.get(kind, 0)
+        for k, l in L:
+            sz, wt, st, col, ld = S[k]
+            if y + ld > cols[ci][3]: ci += 1; y = cols[ci][2]
+            fig, x0 = cols[ci][0], cols[ci][1]
+            if k == 'li0': wtext(fig, x0 + 3, y + 15, '•', sz, 700, color=GREEN)
+            wtext(fig, x0 + (20 if k in ('li', 'li0') else 0), y + 15, l, sz, wt, st, col)
+            y += ld
+        y += GAP.get(kind, 0)
+    return ci, y
+def w_article(path='walker_article_es.json'):   # 12 Oct (Walker): "Volverse parte de la manada" in Spanish - p1 Mina and Vuelta as big as it goes + the opening, p2 the rest
+    A = json.load(open(path, encoding='utf-8')); blocks = A['blocks']
+    hs = [i for i, b in enumerate(blocks) if b[0] == 'h']; k2 = hs[2]
     fig1 = wpage(); wtitle(fig1, A['title_es'], A['title_en'])
     r = slot(fig1, 'article-0'); wtext(fig1, r[0] + 2, r[3] + 32, A['photo_caption'], 10, 400, 'italic', MUTEDW)
     XR = r[2] + 55
     for li, l in enumerate(textwrap.wrap(A['byline'], 46)): wtext(fig1, XR, 262 + li * 26, l, 10.5, 700, color=GREEN)
     wrule(fig1, XR, 2470, 262 + li * 26 + 22)
-    c1, y1 = flow(blocks[:k2], [(fig1, XR, 262 + li * 26 + 50, 1525)], 9.6, 23, 56)
-    print('article: page 1 column ends at', round(y1), 'col', c1 + 1)
+    c1, y1 = _aflow(blocks[:k2], [(fig1, XR, 262 + li * 26 + 50, 1528)], 8.9, 21, 60)
     fig2 = wpage(); wtitle(fig2, A['title_es'], A['title_en'])
     n = 5; gw = 40; W_ = (2390 - (n - 1) * gw) / n
-    cols = [(fig2, round(80 + k * (W_ + gw)), 250, 1530) for k in range(n)]
-    ci, y = flow(blocks[k2:], cols, 9.8, 24, 42)
-    print('article: page 2 ends in column', ci + 1, 'of', n, 'at', round(y))
+    ci, y = _aflow(blocks[k2:], [(fig2, round(80 + k * (W_ + gw)), 250, 1530) for k in range(n)], 9.5, 23.5, 43)
+    print('article es: p1 ends at', round(y1), '| p2 ends in column', ci + 1, 'of', n, 'at', round(y))
     wfoot(fig1, nxt(), A['title_es'], A['title_en']); PAGES.append(fig1)
     wfoot(fig2, nxt(), A['title_es'], A['title_en']); PAGES.append(fig2)
+def w_article_en(path='walker_article.json'):   # 12 Oct (Walker): the English original, whole, on one page after the Spanish
+    A = json.load(open(path, encoding='utf-8'))
+    fig = wpage(); wtitle(fig, A['title_en'], 'Volverse parte de la manada · versión en inglés')
+    n = 5; gw = 38; W_ = (2390 - (n - 1) * gw) / n
+    cols = [(fig, round(80 + k * (W_ + gw)), 250, 1532) for k in range(n)]
+    blocks = [['h2', A['byline']]] + A['blocks']
+    ci, y = _aflow(blocks, cols, 9.0, 21, 47)
+    print('article en: ends in column', ci + 1, 'of', n, 'at', round(y))
+    wfoot(fig, nxt(), A['title_en'], 'English'); PAGES.append(fig)
 def w_site():
     fig = wpage(); wtitle(fig, 'Vistas del sitio', 'Site views')
     for k, (n, es, en) in enumerate([(1, 'El centro desde el noreste, hacia el oeste', 'The centre from the north-east, looking west'),
