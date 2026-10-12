@@ -99,6 +99,7 @@ body.shot{grid-template-columns:1fr}
       <label class="tog"><input type="checkbox" id="sWater" checked> Agua · Water</label>
       <label class="tog"><input type="checkbox" id="sContours" checked> Curvas · Contours</label>
       <label class="tog"><input type="checkbox" id="sFence" checked> Cercas · Fences</label>
+      <label class="tog"><input type="checkbox" id="sPlants" checked> Plantas · Plants</label>
       <label class="tog"><input type="checkbox" id="sLabels"> Nombres · Labels</label>
     </div>
   </section>
@@ -198,7 +199,7 @@ body.shot{grid-template-columns:1fr}
     scene.add(new THREE.Mesh(sg, new THREE.MeshLambertMaterial({ color: 0x8a6f52, side: THREE.DoubleSide }))); }
 
   // objects: body + roof, grouped for the switches
-  const groups = { roof: [], fence: [], truss: [], figures: [], solar: [] }, centres = {}, boxes = {}; window.__boxes = boxes;   /* 4 Oct: per-object boxes, so render shots can list what is in frame */
+  const groups = { roof: [], fence: [], truss: [], figures: [], solar: [], plants: [] }, centres = {}, boxes = {}; window.__boxes = boxes;   /* 4 Oct: per-object boxes, so render shots can list what is in frame */
   const tex = (draw, rep = 1) => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); draw(x); const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; t.encoding = THREE.sRGBEncoding; t.rep = rep; return t; };
   let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const TEX = {
@@ -280,11 +281,11 @@ body.shot{grid-template-columns:1fr}
     if (o.parts) {                        // the stable and the covered stalls: one mesh per material
       const arrs = Object.fromEntries(Object.entries(o.parts).map(([m, s]) => [m, f32(s)])), axis = axisOf(arrs.roof || Object.values(arrs)[0]);
       const ctr = new THREE.Vector3(); { let n = 0; for (const a of Object.values(arrs)) for (let k = 0; k < a.length; k += 3) { ctr.x += a[k]; ctr.z += a[k + 2]; n++; } ctr.multiplyScalar(1 / n); }
-      let all = []; for (const [m, arr] of Object.entries(arrs)) { const mesh = part(arr, m, axis, ROOF[o.name], ctr); if (m === 'roof' || m === 'glass') groups.roof.push(mesh); if (m === 'truss') groups.truss.push(mesh); if (m === 'solar') groups.solar.push(mesh); if (m === 'figure') { groups.figures.push(mesh); mesh.visible = false; /* pose figures: render shots only */ } all.push(arr); }
+      let all = []; for (const [m, arr] of Object.entries(arrs)) { const mesh = part(arr, m, axis, ROOF[o.name], ctr); if (o.group === 'trees') groups.plants.push(mesh); if (m === 'roof' || m === 'glass') groups.roof.push(mesh); if (m === 'truss') groups.truss.push(mesh); if (m === 'solar') groups.solar.push(mesh); if (m === 'figure') { groups.figures.push(mesh); mesh.visible = false; /* pose figures: render shots only */ } all.push(arr); }
       const b = all.reduce((acc, a) => { const c = new Float32Array(acc.length + a.length); c.set(acc); c.set(a, acc.length); return c; }, new Float32Array(0));
       let sx = 0, sz = 0, sy = 0, n = b.length / 3; for (let k = 0; k < b.length; k += 3) { sx += b[k]; sy = Math.max(sy, b[k + 1]); sz += b[k + 2]; } centres[o.name] = new THREE.Vector3(sx / n, sy, sz / n); boxes[o.name] = new THREE.Box3().setFromArray(b); continue;
     }
-    const b = f32(o.body), m = soup(b, o.color); if (o.group === 'fence') groups.fence.push(m);
+    const b = f32(o.body), m = soup(b, o.color); if (o.group === 'fence') groups.fence.push(m); if (o.group === 'trees') groups.plants.push(m);
     if (o.roof) { const r = soup(f32(o.roof), o.roofColor); groups.roof.push(r); }
     let sx = 0, sz = 0, sy = 0, n = b.length / 3; for (let k = 0; k < b.length; k += 3) { sx += b[k]; sy = Math.max(sy, b[k + 1]); sz += b[k + 2]; }
     centres[o.name] = new THREE.Vector3(sx / n, sy, sz / n); boxes[o.name] = new THREE.Box3().setFromArray(b);
@@ -360,7 +361,7 @@ body.shot{grid-template-columns:1fr}
   $('moreBtn').onclick = () => setSheet(aside.classList.contains('open') ? 128 : STOPS()[2], true);
   // switches
   const vis = (list, on) => list.forEach(m => m.visible = on);
-  const sw = { sContours: on => { if (contours) contours.visible = on; }, sRoof: on => { vis(groups.roof, on); vis(groups.solar, on && $('sSolar').checked); }, sSolar: on => vis(groups.solar, on && $('sRoof').checked), sTruss: on => vis(groups.truss, on), sPhoto: on => terrain.material = on ? photoMat : plain, sRoads: on => vis(roads, on), sWater: on => vis(water, on), sFence: on => vis(groups.fence, on), sLabels: on => labBox.hidden = !on };
+  const sw = { sContours: on => { if (contours) contours.visible = on; }, sRoof: on => { vis(groups.roof, on); vis(groups.solar, on && $('sSolar').checked); }, sSolar: on => vis(groups.solar, on && $('sRoof').checked), sTruss: on => vis(groups.truss, on), sPhoto: on => terrain.material = on ? photoMat : plain, sRoads: on => vis(roads, on), sWater: on => vis(water, on), sFence: on => vis(groups.fence, on), sPlants: on => vis(groups.plants, on), sLabels: on => labBox.hidden = !on };
   for (const id in sw) $(id).onchange = e => { sw[id](e.target.checked); draw(); };
   for (const id in sw) sw[id]($(id).checked);                       // 4 Oct (Will): open with contours on, labels off; the boxes above are the truth
   addEventListener('keydown', e => { if (e.target.closest('input')) return; if (e.key === 'r' || e.key === 'R') { const c = $('sRoof'); c.checked = !c.checked; c.onchange({ target: c }); } if (e.key === 't' || e.key === 'T') { const c = $('sTruss'); c.checked = !c.checked; c.onchange({ target: c }); } });
