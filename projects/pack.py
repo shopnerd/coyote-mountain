@@ -306,7 +306,7 @@ w_cover()
 planview(os.path.join(os.path.dirname(os.path.abspath('pack.py')),'renders','picks','b7-plan-oct3o-top.jpg'))   # Walker's note on b7-plan-oct3o: the 84 ft model from above, base cropped off (approved 00-plan.png before)
 ZOOMPG = {len(PAGES) - 1}   # 4 Oct: drawing pages whose drawings enlarge on the web page
 # 11 Oct (Will + Walker): each building's renders, then its drawings; pages 6, 8, 9 (stalls-b, cafe-b, models) dropped
-w_photos('barn-a','El establo','The barn',[(1,'Alzado oeste: la entrada y un caballo bebiendo','West elevation: the entry, a horse drinking'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
+w_photos('barn-a','El establo','The barn',[(1,'Alzado oeste: la entrada','West elevation: the entry'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
          (3,'Alzado este, entre los pinos','East elevation, between the pines'),(4,'Alzado sur: el lavado y los corrales','South elevation: the wash pad and runs')])
 w_photos('barn-b','El establo','The barn',[(5,'El lado norte y sus corrales','The north side and its runs'),(6,'Alzado sur al anochecer','South elevation at dusk'),
          (7,'Dentro del establo','Inside the barn'),(8,'El lavado bajo la parra, herrando','The wash pad under the grapevine, a farrier at work')])   # 12 Oct (Walker): 2 x 2, the wash station added, models off this page
@@ -318,6 +318,9 @@ _ax.set_gid('qr'); _ax.imshow(np.asarray(_qr.make_image(fill_color='black',back_
 _fig.text(0.087,0.438,'Modelo 3D del establo · 3D model of the stable',fontsize=10,weight='bold',color=INK)
 _fig.text(0.087,0.420,'Gírelo y explórelo en línea · Turn it and explore it online',fontsize=8.5,color=MUTED)
 _fig.text(0.087,0.403,'will.100xbtr.com/equino/model',fontsize=8.5,color=CLAY)
+LINKS = [(len(PAGES) - 1, (0.031, 0.385, 0.30, 0.455), 'https://will.100xbtr.com/equino/model/')]   # 12 Oct (Will): the QR block opens the 3D model (PDF link + web hotspot); (page, figure box x0 y0 x1 y1, url)
+for _t in _fig.texts[-3:]: _t.set_url(LINKS[-1][2])   # 12 Oct: the PDF link rides on the QR block's own text and image
+_ax.images[-1].set_url(LINKS[-1][2])
 truss_page(); ZOOMPG.add(len(PAGES) - 1)
 w_photos('stalls-a','Caballerizas techadas','Covered stalls',[(1,'Desde el cerro, con niebla','From the hill, in the fog'),(2,'Desde el suroeste, a la hora azul','From the south-west at blue hour'),
          (3,'Bajo el techo mariposa','Under the butterfly roof'),(4,'Desde el este, la alfalfa','From the east, the alfalfa end'),
@@ -410,6 +413,7 @@ for _pgi, _f in enumerate(PAGES):
                 else: prev = {'k': kind, 't': txt.strip(), 'y': y1_, 'c': col}; paras.append(prev)
             _crop(_pgi, g['x0'] - .006, g['y0'] - .006, g['x1'] - g['x0'] + .012, g['y1'] - g['y0'] + .012, {'text': [{'k': q['k'], 't': q['t'], 'c': q['c']} for q in paras]})
 print('zoom hotspots with text:', {f'p{k+1:02d}': len(v) for k, v in sorted(_hot.items())})
+for _pgi, (_a, _b, _c, _d), _u in LINKS: _hot.setdefault(_pgi, []).append({'x': round(_a, 4), 'y': round(1 - _d, 4), 'w': round(_c - _a, 4), 'h': round(_d - _b, 4), 'href': _u})   # web: a link, not a zoom; added last so it sits on top
 import json as _json; _json.dump({'pages':_n,'version':os.path.basename(out),'built':__import__('datetime').date.today().isoformat(),'hot':{f'p{k+1:02d}':v for k,v in _hot.items()}},open(os.path.join(_web,'pages.json'),'w'))
 print('zoom hotspots:', {f'p{k+1:02d}': len(v) for k, v in sorted(_hot.items())})
 # 4 Oct: the layout editor's map: every photo slot, drawing and text with where it sits now (fractions, top-left origin)
