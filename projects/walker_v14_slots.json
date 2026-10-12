@@ -727,86 +727,6 @@
   ],
   "note": "6 Oct (Walker): gallery pick el-south-google"
  },
- "barn-b-0": {
-  "rect": [
-   80,
-   231,
-   845,
-   661
-  ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/10-stable-aisle-fresh.jpg",
-  "crop": [
-   0,
-   0,
-   1,
-   1
-  ],
-  "note": "6 Oct (Walker): gallery pick 10-stable-aisle-fresh"
- },
- "barn-b-1": {
-  "rect": [
-   892,
-   231,
-   1658,
-   661
-  ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png",
-  "crop": [
-   0,
-   0,
-   1,
-   1
-  ],
-  "note": "6 Oct (Walker): gallery pick 8-stable-google"
- },
- "barn-b-2": {
-  "rect": [
-   1705,
-   231,
-   2470,
-   661
-  ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-south-fan-blue-google.png",
-  "crop": [
-   0,
-   0,
-   1,
-   1
-  ],
-  "note": "6 Oct (Walker): gallery pick el-south-fan-blue-google"
- },
- "barn-b-3": {
-  "rect": [
-   80,
-   800,
-   1252,
-   1448
-  ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-el-west-horse-fan-dawn.png",
-  "crop": [
-   0,
-   0,
-   1,
-   1
-  ],
-  "note": "6 Oct (Walker): gallery pick el-west-horse-fan-dawn-model"
- },
- "barn-b-4": {
-  "rect": [
-   1299,
-   800,
-   2470,
-   1448
-  ],
-  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/model/model-8-stable-fan-blue.png",
-  "crop": [
-   0,
-   0,
-   1,
-   1
-  ],
-  "note": "6 Oct (Walker): gallery pick 8-stable-fan-blue-model"
- },
  "stalls-a-0": {
   "rect": [
    80,
@@ -1256,5 +1176,69 @@
    1
   ],
   "note": "11 Oct (Will): closing page, the herd under the pines (site visit); swap in the editor"
+ },
+ "barn-b-0": {
+  "rect": [
+   80,
+   231,
+   1252,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/gallery2/8-stable-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 8-stable-google"
+ },
+ "barn-b-1": {
+  "rect": [
+   1299,
+   231,
+   2470,
+   763
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/fans/painted/el-south-fan-blue-google.png",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick el-south-fan-blue-google"
+ },
+ "barn-b-2": {
+  "rect": [
+   80,
+   915,
+   1252,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/10-stable-aisle-fresh.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "6 Oct (Walker): gallery pick 10-stable-aisle-fresh"
+ },
+ "barn-b-3": {
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/wash-farrier-gemapp.jpg",
+  "crop": [
+   0,
+   0,
+   1,
+   1
+  ],
+  "note": "12 Oct (Walker): the new wash station, tagged in the gallery",
+  "rect": [
+   1299,
+   915,
+   2470,
+   1448
+  ]
  }
 }

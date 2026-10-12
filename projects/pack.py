@@ -308,8 +308,8 @@ ZOOMPG = {len(PAGES) - 1}   # 4 Oct: drawing pages whose drawings enlarge on the
 # 11 Oct (Will + Walker): each building's renders, then its drawings; pages 6, 8, 9 (stalls-b, cafe-b, models) dropped
 w_photos('barn-a','El establo','The barn',[(1,'Alzado oeste: la entrada y un caballo bebiendo','West elevation: the entry, a horse drinking'),(2,'Alzado norte: las caballerizas y sus corrales','North elevation: the stalls and their runs'),
          (3,'Alzado este, entre los pinos','East elevation, between the pines'),(4,'Alzado sur: el lavado y los corrales','South elevation: the wash pad and runs')])
-w_photos('barn-b','El establo','The barn',[(5,'Dentro del establo','Inside the barn'),(6,'El lado norte y sus corrales','The north side and its runs'),(7,'Alzado sur al anochecer','South elevation at dusk'),
-         (8,'Modelo: alzado oeste','Model: west elevation'),(9,'Modelo: el lado norte','Model: the north side')], size=12)
+w_photos('barn-b','El establo','The barn',[(5,'El lado norte y sus corrales','The north side and its runs'),(6,'Alzado sur al anochecer','South elevation at dusk'),
+         (7,'Dentro del establo','Inside the barn'),(8,'El lavado bajo la parra, herrando','The wash pad under the grapevine, a farrier at work')])   # 12 Oct (Walker): 2 x 2, the wash station added, models off this page
 barn_plan(); ZOOMPG.add(len(PAGES) - 1)
 import qrcode                                             # Walker added a QR to the 3D model; point it at the public copy
 _qr=qrcode.QRCode(border=0,box_size=10); _qr.add_data('https://will.100xbtr.com/equino/model/'); _qr.make(fit=True)
@@ -345,7 +345,7 @@ sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will
 w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
 w_herd()   # 11 Oct (Will): a closing page after the bio, one big photo of the horses
 
-out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-12-v52.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
+out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-12-v53.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:
