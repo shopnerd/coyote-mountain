@@ -45,7 +45,7 @@ ER=[(-48,-21),(-36,-21),(-36,-15),(-48,-15)]                        # 4 Oct (Wil
 P=np.array([b2g(*q) for q in ER+ER[:1]]); ax.fill(P[:,0],P[:,1],color=POW,alpha=.85,zorder=9)
 erc=np.array(b2g(-48,-18))
 # feeders: along the main road (shared trench with the water main), then branches
-mr=pts_of('main road, north-east gate to south gate'); br=pts_of('barn to cross-fence road')
+mr=pts_of('main road, north-east gate to south gate'); br=pts_of('barn to cross-fence road'); br=np.vstack([br,pts_of('trail to the track')[1:]]) if byname('trail to the track') else br   # 11 Oct: the drive + the 5 ft trail west of the main road (narrow_trails.py)
 def along(path,target):
     i=int(np.argmin(np.hypot(path[:,0]-target[0],path[:,1]-target[1]))); return i
 i_er=along(mr,erc); feed=np.vstack([mr[:i_er+1],[erc]])

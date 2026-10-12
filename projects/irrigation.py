@@ -56,7 +56,7 @@ pk=np.array([q[:2] for s_ in S if s_.get('name')=='parking stall' for q in s_['p
 ax.plot([pk[:,0].min()-1,pk[:,0].max()+1],[pk[:,1].max()+1.6]*2,color=ZONE['trees'],lw=2.2,dashes=(1,2.2),zorder=6)
 ax.text(pk[:,0].mean(),pk[:,1].max()+3.6,'Z6 · sombra del estacionamiento (nueva)\nparking shade trees (new)',fontsize=6.6,color=INK,ha='center',zorder=12,bbox=dict(boxstyle='round,pad=.2',fc='white',ec='none',alpha=.8))
 # ---- supply: vineyard main at the NE gate, along the main road, branches ----
-mr=pts_of('main road, north-east gate to south gate'); br=pts_of('barn to cross-fence road')
+mr=pts_of('main road, north-east gate to south gate'); br=pts_of('barn to cross-fence road'); br=np.vstack([br,pts_of('trail to the track')[1:]]) if byname('trail to the track') else br   # 11 Oct: the drive + the 5 ft trail west of the main road (narrow_trails.py)
 stb=byname('walker barn 72x40')[0]['c']
 ax.plot(mr[:,0],mr[:,1],color=PIPE,lw=2.2,zorder=9,solid_capstyle='round')                            # 2 in main along the main road
 ax.plot(br[:,0],br[:,1],color=PIPE,lw=1.6,zorder=9,dashes=(6,2))                                       # 1.5 in branch along the barn road to the stalls + round pen

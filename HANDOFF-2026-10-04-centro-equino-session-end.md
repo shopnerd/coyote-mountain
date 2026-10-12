@@ -69,7 +69,7 @@ github shopnerd/coyote-mountain, will-os = shopnerd/will-os); both repos were at
 | Drive pack folder | `G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/` (renderings/, sheets/, handoffs) |
 
 Build chain (projects/): stable change -> `python centro-equino-barn.py && python swap_stable.py` -> copy the stable stroke into
-`_bak_0928/*.json` (snippet in §18) -> `cp _bak_0928/*.json . && python site_extras.py && python bleachers.py && python existing_trees.py` (11 Oct: the trees already on the site) -> `cd viewer &&
+`_bak_0928/*.json` (snippet in §18) -> `cp _bak_0928/*.json . && python site_extras.py && python bleachers.py && python existing_trees.py && python narrow_trails.py` (11 Oct: the trees already on the site; 5 ft riding trails) -> `cd viewer &&
 python export.py . && cp data.json ../../../will-os/equino/model/` -> sheets (`sheet1.py`, `irrigation.py`) -> bump `out=` in
 pack.py -> `python pack.py` -> copy PDF over the shared name -> push both repos. Serve the viewer for shots:
 `cd projects/viewer && python -m http.server 8792`.
