@@ -86,3 +86,16 @@ for q in base + forest: ax.add_patch(plt.Circle((q['i'], q['j']), q['r'] / CS, f
 for q in add: ax.add_patch(plt.Circle((q['i'], q['j']), max(.3, q['r'] / CS), fill=False, lw=1.1, color='yellow'))
 ax.set_xlim(25, 140); ax.set_ylim(75, 15); ax.set_xticks([]); ax.set_yticks([]); ax.set_title('red = already drawn, yellow = added for the existing page')
 fig.tight_layout(); fig.savefig(os.path.join(HERE, 'existing_all_check.jpg'), pil_kwargs={'quality': 82})
+
+# 12 Oct (Will): his own markup in the topo app wins ("cross-reference mine with yours and go with whatever that is").
+# existing_will_markup.json: 'palm' = his palm dots (grid i, j), 'will' = his circles (grid i, j, r) on the potted nursery rows.
+WM = os.path.join(HERE, 'existing_will_markup.json')
+if os.path.exists(WM):
+    m = json.load(open(WM)); mine = [{k: q[k] for k in ('i', 'j', 'r', 'kind')} for q in base + forest + add]
+    his = [dict(i=i, j=j, r=1.0, kind='palm') for i, j in m['palm']] + [dict(i=i, j=j, r=round(max(.5, r * CS), 2), kind='palm') for i, j, r in m['will']]
+    keep = [q for q in mine if q['kind'] in ('pine', 'pepper') or q['r'] >= 2.2 or
+            not any(math.hypot(q['i'] - h['i'], q['j'] - h['j']) * CS < max(1.4, q['r']) for h in his)]   # his dots replace my small palms/shrubs nearby
+    ALL = keep + his
+    for fn in ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.json', 'centro-equino-2026-09-26-stalls16-nopad.json', 'centro-equino-2026-10-10-cafe-option2-trees.json'):
+        p = os.path.join(HERE, fn); dd = json.load(open(p, encoding='utf-8')); dd['records']['existingAll'] = ALL; json.dump(dd, open(p, 'w', encoding='utf-8'))
+    print('with Will\'s markup:', len(keep), 'of mine kept +', len(his), 'his =', len(ALL), Counter(q['kind'] for q in ALL))
