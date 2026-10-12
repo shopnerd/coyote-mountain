@@ -16,6 +16,8 @@ DECK_D = 6 * FT                            # the flat top deck along the whole t
 YD = YS - DECK_D                           # the deck's front edge
 CLEAR = 3 * FT                             # 28 Sep (Will): full size, may run over the walking path round the arena; only the arena fence is a limit (3 ft clear)
 V, F, MAT = [], [], []
+VARIANT = os.environ.get('CAFE_VARIANT')   # 11 Oct (Walker): e.g. centro-equino-2026-10-10-cafe-option2-trees.json -> that drawing only, with the 8 ft screened porch
+PORCH = bool(VARIANT)
 def face(pts, m): i = len(V) + 1; V.extend(pts); F.append(tuple(range(i, i + len(pts)))); MAT.append(m)
 def quad(a, b, c, d, m): face([a, b, c, d], m)
 def prism(pts, z0, z1, m, side=None):      # a vertical prism over a convex footprint pts (x, y); `side` = a different material for the sides
@@ -155,7 +157,7 @@ def bend_road(d):
                 if y < need: x2, y2 = x, need; q = [*unlocal(x2, y2), *q[2:]]
             out_.append(q)
         s_['pts'] = out_
-for k in range(3):                                               # 4 Oct (Will): ONE wide stair across the whole end, deck to deck: 3 steps + the deck = 4 risers (~12 in), 16 in treads
+for k in (() if PORCH else range(3)):                            # 4 Oct (Will): ONE wide stair across the whole end, deck to deck: 3 steps + the deck = 4 risers (~12 in), 16 in treads
     x1b = X0 - k * .41; x0b = x1b - .41                            # 4 Oct (Will): the same stair at the other end too
     prism([(x0b, YD), (x1b, YD), (x1b, -YD), (x0b, -YD)], -0.1, H * (3 - k) / 4, 'wood', side='rock')
 # ---- 4 Oct (Will, red box on the café-end painting): a fieldstone horse trough against the bar's rock wall (no stair at this end now), fed by the café
@@ -204,7 +206,25 @@ for _ in range(140):                                                            
 for sy in (-1, 1):                                                                             # gutters + downspouts at the road end
     beam((RX0, sy * YO, rz(YO) - .08), (RX1, sy * YO, rz(YO) - .08), .12, 'steel')
     beam((WX1 + .08, sy * YO, rz(YO) - .1), (WX1 + .08, sy * YO, -0.05), .09, 'steel')   # beside the trough's ends, not in it
-out = os.path.join(HERE, 'bleachers.obj')
+if PORCH:   # 11 Oct (Walker, café option 2): an 8 ft screened porch at the trailer's X0 end, under the same gable; black steel like the stable
+    PD = 8 * FT; PX0 = X0 - PD; PY0, PY1 = YD, -YS + .3                 # deck side to just past the trailer's back face
+    prism([(PX0, PY0), (X0, PY0), (X0, PY1), (PX0, PY1)], -0.1, H, 'wood', side='rock')
+    ytop = lambda y: rz(-abs(y)) - .06                                   # underside of the gable at y
+    RXP = PX0 - .3
+    for dz in (0, .03):                                                 # carry the roof over the porch, both slopes
+        quad((RXP, 0, rz(0) + dz), (RX0, 0, rz(0) + dz), (RX0, YO, rz(YO) + dz), (RXP, YO, rz(YO) + dz), 'roof')
+        quad((RXP, -YO, rz(YO) + dz), (RX0, -YO, rz(YO) + dz), (RX0, 0, rz(0) + dz), (RXP, 0, rz(0) + dz), 'roof')
+    PST = [(PX0, PY0), (PX0 + PD / 2, PY0), (X0, PY0), (PX0, (PY0 + PY1) / 2), (PX0, 0.0), (PX0, PY1), (PX0 + PD / 2, PY1), (X0, PY1)]
+    for x, y in PST:
+        prism([(x - .05, y - .05), (x + .05, y - .05), (x + .05, y + .05), (x - .05, y + .05)], H, ytop(y), 'steel')
+    for a, b in (((PX0, PY0), (X0, PY0)), ((PX0, PY1), (X0, PY1)), ((PX0, PY0), (PX0, PY1))):   # rail at 30 in and a head beam
+        beam((a[0], a[1], H + .76), (b[0], b[1], H + .76), .05, 'steel')
+    def screen(a, b):                                                   # a fine dark insect screen from the deck to the roof, in one plane
+        n = 8; ys = [a[1] + (b[1] - a[1]) * k / n for k in range(n + 1)]; xs = [a[0] + (b[0] - a[0]) * k / n for k in range(n + 1)]
+        for k in range(n):
+            quad((xs[k], ys[k], H + .02), (xs[k + 1], ys[k + 1], H + .02), (xs[k + 1], ys[k + 1], ytop(ys[k + 1])), (xs[k], ys[k], ytop(ys[k])), 'screen')
+    screen((PX0, PY0), (X0, PY0)); screen((PX0, PY1), (X0, PY1)); screen((PX0, PY0), (PX0, PY1))
+out = os.path.join(HERE, 'bleachers-' + VARIANT[:-5] + '.obj' if PORCH else 'bleachers.obj')
 with open(out, 'w', newline='\n') as f:
     f.write('# bleachers in front of the trailer (Walker sketch 28 Sep): 6 ft top deck along the 40 ft trailer, three curved blades tiled like a pinwheel, each one step lower (exactly per her sketch), shade roof over the deck\n# unit m\n# name bleachers\n')
     for v in V: f.write('v %.3f %.3f %.3f\n' % v)
@@ -217,7 +237,7 @@ tris = []
 for fc in F:
     for kk in range(1, len(fc) - 1): tris += list(V[fc[0] - 1]) + list(V[fc[kk] - 1]) + list(V[fc[kk + 1] - 1])
 T = np.array(tris).reshape(-1, 3); zmin = T[:, 2].min()
-for fn in ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.json', 'centro-equino-2026-09-26-stalls16-nopad.json'):
+for fn in ((VARIANT,) if PORCH else ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.json', 'centro-equino-2026-09-26-stalls16-nopad.json')):
     p = os.path.join(HERE, fn); d = json.load(open(p, encoding='utf-8'))
     tr = [s for s in d['strokes'] if s.get('name') == 'trailer 8 x 40'][0]
     d['strokes'] = [s for s in d['strokes'] if s.get('name') != 'bleachers']
@@ -226,5 +246,7 @@ for fn in ('centro-equino-2026-09-26.json', 'centro-equino-2026-09-26-stalls16.j
     st = dict(color='ink', shape=False, kind='obj', c=list(tr['c']), name='bleachers', unit='m', rot=tr['rot'], sc=1, lift=float(tr.get('lift', 0) + zmin),
               tris=[round(float(v), 3) for v in Tz.flatten()], foot=[[float(xy[:, 0].min()), float(xy[:, 1].min())], [float(xy[:, 0].max()), float(xy[:, 1].min())], [float(xy[:, 0].max()), float(xy[:, 1].max())], [float(xy[:, 0].min()), float(xy[:, 1].max())]],
               h=float(Tz[:, 2].max()), w=1, a=1, dash=False, pts=[list(tr['pts'][0])])
-    d['strokes'].append(st); bend_road(d); json.dump(d, open(p, 'w', encoding='utf-8'))
+    d['strokes'].append(st)
+    if not PORCH: bend_road(d)
+    json.dump(d, open(p, 'w', encoding='utf-8'))
 print(out, len(F), 'faces; blades per sketch, deepest 16.1 ft ->', round(DMAX / FT, 1), 'ft past the 6 ft deck;', NT, 'tiers; deck', round(H / FT, 1), 'ft high')
