@@ -1080,5 +1080,21 @@
    1
   ],
   "note": "9 Oct (Walker): bio page photo"
+ },
+ "bio-1": {
+  "rect": [
+   1910,
+   1170,
+   2410,
+   1448
+  ],
+  "src": "C:/Users/wrollins/WebDev/coyote-studio/projects/renders/picks/will-rock.jpg",
+  "crop": [
+   0,
+   0.26,
+   1,
+   1
+  ],
+  "note": "11 Oct (Will): his photo under his bio text, text-column width, bottom level with Walker's photo"
  }
 }

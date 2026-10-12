@@ -104,6 +104,7 @@ def w_bio():
             y += 8
             for line in textwrap.wrap(quote[0], 50): wtext(fig, x0, y, line, 10.5, 700, color=GREEN); y += 27
             for line in textwrap.wrap(quote[1], 50): wtext(fig, x0, y, line, 10.5, 400, 'italic', GREEN); y += 27
+    if 'bio-1' in SLOTS: slot(fig, 'bio-1')   # 11 Oct (Will): his photo under his text, same width as the text
     wfoot(fig, nxt(), 'Quiénes somos', 'About us'); PAGES.append(fig)
 def w_site():
     fig = wpage(); wtitle(fig, 'Vistas del sitio', 'Site views')
