@@ -17,11 +17,11 @@ def barn_plan():
     # old frame: the old 72 ft walls were x -36..36, so the new west wall is XW = -48 and nothing east of -36 moved.
     L, D, RUN, ST, AI = 84, 42, 40, 12, 14; XW, XE, HD = -48, 36, D / 2; RD = (D - AI) / 2; W5 = 1.5; PY = -HD - W5 / 2   # PY = outside face of the south wall
     for k in range(6):                                       # north runs (none off the kitchen bay)
-        x = XW + ST * (k + 1); ax.add_patch(Rect((x, HD), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, HD + RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=7.5, color=MUTED)
+        x = XW + ST * (k + 1); ax.add_patch(Rect((x, HD), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, HD + RUN / 2, 'corral\nrun\n3.7×12.2 m\n(12×40 ft)', ha='center', va='center', fontsize=7.5, color=MUTED)
     for k in range(4):                                       # south runs, east end
-        x = XW + 36 + ST * k; ax.add_patch(Rect((x, -HD - RUN), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, -HD - RUN / 2, 'corral\nrun\n12×40', ha='center', va='center', fontsize=7.5, color=MUTED)
+        x = XW + 36 + ST * k; ax.add_patch(Rect((x, -HD - RUN), ST, RUN, fc='#f1ead9', ec=INK, lw=.8)); ax.text(x + 6, -HD - RUN / 2, 'corral\nrun\n3.7×12.2 m\n(12×40 ft)', ha='center', va='center', fontsize=7.5, color=MUTED)
     ax.plot([XW + 36, XE], [-HD - RUN, -HD - RUN], color='#8a7d66', lw=4, solid_capstyle='butt')
-    ax.add_patch(Rect((XW, PY - 12), 36, 12, fc=CONC2, ec=INK, lw=.8)); ax.text(XW + 9, PY - 7.5, 'losa · pad 12 × 36\n+ bebedero · trough 14 × 3', ha='center', va='center', fontsize=6.5)   # 4 Oct: the trough's label joins the pad's
+    ax.add_patch(Rect((XW, PY - 12), 36, 12, fc=CONC2, ec=INK, lw=.8)); ax.text(XW + 9, PY - 7.5, 'losa · pad 3.7 × 11.0 m (12 × 36 ft)\n+ bebedero · trough 4.3 × 0.9 m (14 × 3 ft)', ha='center', va='center', fontsize=6.5)   # 4 Oct: the trough's label joins the pad's
     ax.add_patch(Rect((XW, PY - 12), 36, 12, fill=False, ec=STEEL2, lw=1.1, ls=(0, (3, 2))))   # pipe trellis with grapes over the whole pad (Walker)
     for _x in (XW + .5, XW + 12, XW + 24, XW + 35.5): ax.add_patch(Circle((_x, PY - 11.5), .35, fc=STEEL2, ec='none'))
     ax.text(XW + 18, PY - 13.6, 'pérgola de tubo con parra · pipe trellis with grapes', ha='center', va='top', fontsize=6.5, color=STEEL2)
@@ -57,8 +57,8 @@ def barn_plan():
     ax.add_patch(Rect((XW + 15, -HD - .9), 6, 1.8, fc='white', ec='none')); ax.text(XW + 24.8, -HD - 1.9, 'puerta corrediza · sliding door', ha='left', va='top', fontsize=6, color=CLAY); ax.add_patch(Rect((XW + 21.3, -HD - 1.4), 7, .5, fc='#8a6a42', ec='none'))   # the wash room's wooden sliding door, parked east
     ax.add_patch(Rect((XW - 3, PY - 13.5), 3, 13.5, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((XW - 2.4, PY - 12.9), 1.8, 12.3, fc='#8fb3c7', ec='none'))   # 4 Oct (Will): the pad trough back at the building's corner
     ax.add_patch(Rect((XE + 1, HD + 4), 3.5, 32, fc='#a79f90', ec=INK, lw=.6)); ax.add_patch(Rect((XE + 1.6, HD + 4.6), 2.3, 30.8, fc='#8fb3c7', ec='none'))   # east trough 32 x 3.5 outside the NE run fence
-    ax.text(XE + 5.6, HD + 20, 'bebedero este · east trough 32×3.5', ha='center', va='center', fontsize=6.5, color=CLAY, rotation=90)
-    ax.text(-6, 0, 'pasillo · aisle 14 ft  (piso de tierra · dirt floor)', ha='center', va='center', fontsize=8.5, color=MUTED)
+    ax.text(XE + 5.6, HD + 20, 'bebedero este · east trough 9.8×1.1 m (32×3.5 ft)', ha='center', va='center', fontsize=6.5, color=CLAY, rotation=90)
+    ax.text(-6, 0, 'pasillo 4.3 m · aisle 14 ft  (piso de tierra · dirt floor)', ha='center', va='center', fontsize=8.5, color=MUTED)
     for xg, sx in ((XW, -1), (XE, 1)):
         ax.add_patch(Rect((xg - 1, -AI / 2), 2, AI, fc='white', ec='none'))
         for s in (-1, 1): ax.add_patch(Rect((xg + sx * .8, s * AI / 2 + (0 if s > 0 else -7.5)), .5 * sx, 7.5, fc=STAKE2, ec=INK, lw=.4))
@@ -66,26 +66,26 @@ def barn_plan():
     for x in range(XW, XE + 1, 12):
         for y in (-HD, HD): ax.add_patch(matplotlib.patches.Circle((x, y), .55, fc=STEEL2, ec=INK, lw=.5, zorder=5))
         ax.plot([x, x], [-HD, HD], color=STEEL2, lw=.5, ls=(0, (2, 3)), zorder=4)
-    ax.annotate('', xy=(XW, HD + RUN + 5), xytext=(XE, HD + RUN + 5), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(-6, HD + RUN + 6, '84 ft (25.6 m) · 7 crujías de 12 ft · 7 bays of 12 ft', ha='center', va='bottom', fontsize=8)
-    ax.annotate('', xy=(XE + 8, -HD), xytext=(XE + 8, HD), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(XE + 9.6, 0, '42 ft (12.8 m)', va='center', ha='center', fontsize=8.5, rotation=90)
-    ax.annotate('', xy=(XE + 8, HD), xytext=(XE + 8, HD + RUN), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(XE + 9.6, HD + RUN / 2, '40 ft · corrales · runs', va='center', ha='center', fontsize=8, rotation=90)
+    ax.annotate('', xy=(XW, HD + RUN + 5), xytext=(XE, HD + RUN + 5), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(-6, HD + RUN + 6, '25.6 m (84 ft) · 7 crujías de 3.7 m · 7 bays of 12 ft', ha='center', va='bottom', fontsize=8)
+    ax.annotate('', xy=(XE + 8, -HD), xytext=(XE + 8, HD), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(XE + 9.6, 0, '12.8 m (42 ft)', va='center', ha='center', fontsize=8.5, rotation=90)
+    ax.annotate('', xy=(XE + 8, HD), xytext=(XE + 8, HD + RUN), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(XE + 9.6, HD + RUN / 2, '12.2 m (40 ft) · corrales · runs', va='center', ha='center', fontsize=8, rotation=90)
     ax.text(12, -HD - RUN - 3, 'muro bajo de piedra · low rock wall', ha='center', va='top', fontsize=7, color=MUTED)
     ax.text(XW + 10, HD + RUN + 11, 'oeste (camino) ← · → este (estacionamiento)', fontsize=8.5, weight='bold')
     _na = math.radians(24.16); ax.annotate('', xy=(XW + 1 + 7 * math.sin(_na), HD + RUN + 8 + 7 * math.cos(_na)), xytext=(XW + 1, HD + RUN + 8), arrowprops=dict(arrowstyle='-|>', lw=1.2, color=INK), annotation_clip=False); ax.text(XW + 1 + 9.5 * math.sin(_na), HD + RUN + 8 + 9.5 * math.cos(_na), 'N', fontsize=9, weight='bold', ha='center', va='center')   # true north leans 24 deg east of the stable's axis
     ax.set_xlim(-52, 47); ax.set_ylim(-HD - RUN - 8, HD + RUN + 13)
     stable_elevations(fig)                                     # 4 Oct (Will): east + south elevations left of the plan
     y = 0.85
-    specs = [('Planta 84 × 42 ft sobre una retícula de 12 ft: 7 crujías, cerchas de acero cada 12 ft. Pasillo central de 14 ft abierto de punta a punta con una puerta corrediza grande en cada extremo (las del oeste forradas con policarbonato translúcido como rompevientos); el camino llega directo a la puerta oeste.',
+    specs = [('Planta 25.6 × 12.8 m sobre una retícula de 3.7 m: 7 crujías, cerchas de acero cada 3.7 m. Pasillo central de 4.3 m abierto de punta a punta con una puerta corrediza grande en cada extremo (las del oeste forradas con policarbonato translúcido como rompevientos); el camino llega directo a la puerta oeste.',
               '84 × 42 ft on a 12 ft grid: 7 bays, steel trusses every 12 ft. A 14 ft centre aisle open end to end with a big sliding door at each end (the west ones backed with translucent polycarbonate as a windbreak); the road comes straight into the west door.'),
-             ('La crujía oeste (nueva, 4 oct): al norte una cocina pequeña de 12 × 14 ft con barra en L, tarja, parrilla de inducción, refri y una ventana al camino de entrada; al sur un baño accesible con regadera (12 × 8 ft) y, en la esquina, el cuarto eléctrico (12 × 6 ft) con su propia puerta exterior en el hastial oeste.',
+             ('La crujía oeste (nueva, 4 oct): al norte una cocina pequeña de 3.7 × 4.3 m con barra en L, tarja, parrilla de inducción, refri y una ventana al camino de entrada; al sur un baño accesible con regadera (3.7 × 2.4 m) y, en la esquina, el cuarto eléctrico (3.7 × 1.8 m) con su propia puerta exterior en el hastial oeste.',
               'The west bay (new, 4 Oct): to the north a small 12 × 14 ft kitchen with an L counter, sink, induction top, fridge and a window down the entry drive; to the south an accessible bathroom with a shower (12 × 8 ft) and, in the corner, the electrical room (12 × 6 ft) with its own outside door in the west gable.'),
-             ('10 caballerizas de 12 × 14 ft, 6 al norte y 4 al sur, separadas por muros de piedra de 5 ft con un tubo arriba; frentes de tubo negro con puerta hacia el pasillo; cada una sale por una abertura libre de 6 × 9 ft a su corral de 12 × 40 ft. Piso de tierra color arena.',
+             ('10 caballerizas de 3.7 × 4.3 m, 6 al norte y 4 al sur, separadas por muros de piedra de 1.5 m con un tubo arriba; frentes de tubo negro con puerta hacia el pasillo; cada una sale por una abertura libre de 1.8 × 2.7 m a su corral de 3.7 × 12.2 m. Piso de tierra color arena.',
               '10 stalls of 12 × 14 ft, 6 north and 4 south, divided by 5 ft rock walls with a pipe on top; black pipe fronts with a gate to the aisle; each opens through a 6 × 9 ft open doorway to its 12 × 40 ft run. Tan dirt floor.'),
-             ('Junto a ellos, del lado sur: el lavado (abertura de 6 × 9 ft con puerta corrediza de madera sobre riel, hacia una losa de concreto de 12 × 36 ft bajo una pérgola con parra, con un bebedero de piedra en la esquina del edificio) y monturas y alimento; todos los cuartos cerrados con paca de paja o cob aplanado, con piso de concreto.',
+             ('Junto a ellos, del lado sur: el lavado (abertura de 1.8 × 2.7 m con puerta corrediza de madera sobre riel, hacia una losa de concreto de 3.7 × 11.0 m bajo una pérgola con parra, con un bebedero de piedra en la esquina del edificio) y monturas y alimento; todos los cuartos cerrados con paca de paja o cob aplanado, con piso de concreto.',
               'Next to them on the south side: the wash room (a 6 × 9 ft opening with a wooden sliding door on a track, onto a 12 × 36 ft concrete pad under a grape trellis, with a stone trough at the building’s corner) and tack and feed; all the rooms closed in straw bale or plastered cob, with concrete floors.'),
-             ('Muro de piedra de 5 ft en todo el perímetro, y, directo sobre la piedra hasta el alero, varas horizontales que encajan entre verticales fijas de acero oscuro cada 3 ft, sin marco abajo.',
+             ('Muro de piedra de 1.5 m en todo el perímetro, y, directo sobre la piedra hasta el alero, varas horizontales que encajan entre verticales fijas de acero oscuro cada 91 cm, sin marco abajo.',
               'A 5 ft rock wall all round, and, sitting right on the rock up to the eave, horizontal sticks fitted between fixed dark steel verticals every 3 ft, no frame below.'),
-             ('Alero a 12 ft, cumbrera a 17 ft. Techo metálico gris oscuro con una claraboya abierta de 76 × 10 ft sobre el pasillo (sin vidrio) para luz y ventilación.',
+             ('Alero a 3.7 m, cumbrera a 5.2 m. Techo metálico gris oscuro con una claraboya abierta de 23.2 × 3.0 m sobre el pasillo (sin vidrio) para luz y ventilación.',
               'Eave 12 ft, ridge 17 ft. Dark grey metal roof with an open 76 × 10 ft clerestory over the aisle (no glass) for light and ventilation.')]
     for es, en in specs: y = para(fig, 0.672, y, es, en, w=88, fs=7.6)   # 4 Oct: wider column, closer to the plan (Will)   # 4 Oct: 84 ft adds a paragraph (was 70 / 8.5)
     fig.text(0.672, 0.075, 'Esquema preliminar a partir del diseño de Walker; no es plano de construcción.', fontsize=8, color=MUTED)
@@ -120,9 +120,9 @@ def truss_page():
     lw_line(ax, [-6, 0, 6], [rz(5) + 2.3, RIDGE + 3.4, rz(5) + 2.3], lw=1.5)                            # clerestory roof
     lw_line(ax, [-HD - 2, 0, HD + 2], [rz(HD + 2) + .35, RIDGE + .35, rz(HD + 2) + .35], lw=.6)       # roof sheets on the purlins
     ax.text(0, RIDGE + 4.3, 'claraboya abierta · open clerestory', ha='center', fontsize=8, color=MUTED)
-    for (a, b, t) in (((-HD - 3.2, 0), (-HD - 3.2, 5), '5 ft'), ((-HD - 3.2, 5), (-HD - 3.2, 6), '6 ft'), ((HD + 3.2, 0), (HD + 3.2, EAVE), 'alero · eave 12 ft'), ((27, 0), (27, RIDGE), 'cumbrera · ridge 17 ft')):
+    for (a, b, t) in (((-HD - 3.2, 0), (-HD - 3.2, 5), '1.5 m (5 ft)'), ((-HD - 3.2, 5), (-HD - 3.2, 6), '1.8 m (6 ft)'), ((HD + 3.2, 0), (HD + 3.2, EAVE), 'alero 3.7 m · eave 12 ft'), ((27, 0), (27, RIDGE), 'cumbrera 5.2 m · ridge 17 ft')):
         ax.annotate('', xy=a, xytext=b, arrowprops=dict(arrowstyle='<->', lw=.6)); ax.text(a[0] + (.6 if a[0] > 0 else -.6), (a[1] + b[1]) / 2, t, fontsize=7.5, ha='left' if a[0] > 0 else 'right', va='center', rotation=90 if a[0] > 20 else 0)
-    ax.annotate('', xy=(-HD, -4.4), xytext=(HD, -4.4), arrowprops=dict(arrowstyle='<->', lw=.6)); ax.text(0, -4.1, '42 ft', ha='center', va='bottom', fontsize=8)
+    ax.annotate('', xy=(-HD, -4.4), xytext=(HD, -4.4), arrowprops=dict(arrowstyle='<->', lw=.6)); ax.text(0, -4.1, '12.8 m (42 ft)', ha='center', va='bottom', fontsize=8)
     ax.text(-8, 2.6, 'caballeriza · stall', ha='center', fontsize=7.5, color=MUTED); ax.text(8, 2.6, 'pasillo · aisle', ha='center', fontsize=7.5, color=MUTED)
     fig.text(0.341, 0.462, 'Corte por una cercha · Section through a truss', fontsize=12, weight='bold', color=INK, ha='center')
     # ---- elevation of two bays: rock, the floating pipe, 3 ft frames of real sticks; the 6 x 9 doorway OPEN (Will) ----
@@ -147,22 +147,22 @@ def truss_page():
     for px in np.arange(DX0, DX1 - .1, 3.0):                                                            # above the doorway: sticks from the lintel up
         lw_sticks(ae, px, px + 3.0, 9.35, EAVE - .1, rng, gap=.2, lw=(.35, .55), amp=.06, frame='sides', frame_lw=1.1, outline=True)
     lw_box(ae, DX0, 0, DX1, 9.1, lw=1.0); lw_line(ae, [DX0 - .1, DX1 + .1], [9.2, 9.2], lw=2.2)         # the open doorway and its steel lintel
-    ae.text(18, 4.4, 'abertura libre al corral\n6 × 9 ft\nopen doorway to the run', ha='center', va='center', fontsize=7.5, color=INK)
+    ae.text(18, 4.4, 'abertura libre al corral\n1.8 × 2.7 m\n(6 × 9 ft)\nopen doorway to the run', ha='center', va='center', fontsize=7.5, color=INK)
     for x in (-12, 0, 12, 24): lw_pipe(ae, x, 0, EAVE, d=.5, lw=.9)
     lw_line(ae, [-13, 25], [EAVE + .1, EAVE + .1], lw=2.0)
-    ae.annotate('', xy=(0, -1.1), xytext=(12, -1.1), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(6, -1.4, '12 ft', ha='center', va='top', fontsize=8)
-    ae.annotate('', xy=(12, 12.8), xytext=(15, 12.8), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(13.5, 13.1, '3 ft', ha='center', fontsize=7.5)
+    ae.annotate('', xy=(0, -1.1), xytext=(12, -1.1), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(6, -1.4, '3.7 m (12 ft)', ha='center', va='top', fontsize=8)
+    ae.annotate('', xy=(12, 12.8), xytext=(15, 12.8), arrowprops=dict(arrowstyle='<->', lw=.6)); ae.text(13.5, 13.1, '91 cm (3 ft)', ha='center', fontsize=7.5)
     fig.text(0.341, 0.088, 'Alzado de tres crujías: cerrada, varas y abertura · Elevation of three bays: closed, sticks, doorway', fontsize=12, weight='bold', color=INK, ha='center')
     y = 0.86
-    specs = [('Cerchas de acero cada 12 ft sobre los tubos pesados de 12 in de Andrés (12¾ in de diámetro) como postes, cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
+    specs = [('Cerchas de acero cada 3.7 m sobre los tubos pesados de 300 mm de Andrés (324 mm de diámetro) como postes, cada uno sobre su zapata: cuerdas superiores hasta la cumbrera, cuerda inferior al alero, montantes y diagonales.',
               'Steel trusses every 12 ft on Andrés’ heavy 12 in tubes as posts (12¾ in outside diameter), each on its own footing: top chords to the ridge, bottom chord at the eave, verticals and diagonals.'),
-             ('Muro de piedra apilada de 5 ft en todo el perímetro y entre caballerizas. Las varas arrancan directo sobre la piedra, sin hueco.',
+             ('Muro de piedra apilada de 1.5 m en todo el perímetro y entre caballerizas. Las varas arrancan directo sobre la piedra, sin hueco.',
               'Stacked rock wall 5 ft high all round and between the stalls. The sticks start right on the rock, no gap.'),
-             ('Del tubo al alero, paneles de 3 ft de ancho con varas horizontales (tipo nido de pájaro) en marco de acero oscuro; cuatro paneles por crujía de 12 ft.',
+             ('Del tubo al alero, paneles de 91 cm de ancho con varas horizontales (tipo nido de pájaro) en marco de acero oscuro; cuatro paneles por crujía de 3.7 m.',
               'From the pipe to the eave, 3 ft wide panels of horizontal sticks (bird’s-nest style) in dark steel frames; four panels to each 12 ft bay.'),
-             ('Cada caballeriza abre a su corral por una abertura libre de 6 × 9 ft con dintel de acero; hacia el pasillo, frente de tubo negro con puerta.',
+             ('Cada caballeriza abre a su corral por una abertura libre de 1.8 × 2.7 m con dintel de acero; hacia el pasillo, frente de tubo negro con puerta.',
               'Each stall opens to its run through an open 6 × 9 ft doorway with a steel lintel; toward the aisle, a black pipe front with a gate.'),
-             ('Techo metálico gris oscuro, claraboya abierta de 76 × 10 ft, dos puertas corredizas de madera de 7½ × 11½ ft en cada extremo sobre riel de acero. Las del oeste y el triángulo del hastial oeste llevan por dentro lámina corrugada translúcida de policarbonato: rompevientos contra la brisa del oeste de cada tarde, luz de día y de noche un brillo entre las varas.',
+             ('Techo metálico gris oscuro, claraboya abierta de 23.2 × 3.0 m, dos puertas corredizas de madera de 2.3 × 3.5 m en cada extremo sobre riel de acero. Las del oeste y el triángulo del hastial oeste llevan por dentro lámina corrugada translúcida de policarbonato: rompevientos contra la brisa del oeste de cada tarde, luz de día y de noche un brillo entre las varas.',
               'Dark grey metal roof, an open 76 × 10 ft clerestory, two 7½ × 11½ ft wooden sliding doors at each end on a steel track. The west doors and the west gable triangle are backed inside with translucent corrugated polycarbonate: a windbreak against the afternoon west wind, daylight by day, a glow between the sticks at night.')]
     for es, en in specs: y = para(fig, 0.685, y, es, en, w=70, fs=9.3)   # 4 Oct: was 8.2
     yn = min(0.12, y - .005)                                    # 4 Oct: below the last spec, never on it

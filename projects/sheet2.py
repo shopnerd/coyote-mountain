@@ -28,13 +28,13 @@ for k,(s,es,en,a,bb) in enumerate(SECS):
     lo=min(e.min(),f.min())-3; hi=max(e.max(),f.max())+4; ax.set_ylim(lo,hi); ax.set_xlim(0,L)
     ax.set_aspect(3); ax.grid(color='#ddd',lw=.5); ax.set_ylabel('pies · ft',fontsize=8); ax.tick_params(labelsize=7.5)
     ax.set_title(f'Corte {s}–{s}′ · {es} · Section {s}–{s}′ · {en}',loc='left',fontsize=11,weight='bold',color=INK)
-    mx=np.argmax(np.abs(f-e)); ax.annotate(f'{(f-e)[mx]:+.1f} ft ({(f-e)[mx]*0.3048:+.1f} m)',xy=(d[mx],f[mx]),xytext=(d[mx],hi-1),fontsize=8,ha='center',arrowprops=dict(arrowstyle='-',color='#888',lw=.7))
+    mx=np.argmax(np.abs(f-e)); ax.annotate(f'{(f-e)[mx]*0.3048:+.1f} m ({(f-e)[mx]:+.1f} ft)',xy=(d[mx],f[mx]),xytext=(d[mx],hi-1),fontsize=8,ha='center',arrowprops=dict(arrowstyle='-',color='#888',lw=.7))
     for side,x0 in ((s,0),(s+'′',L)): ax.text(x0,hi-1,side,fontsize=10,weight='bold',color='#b5602e',ha='left' if x0==0 else 'right')
     if k==0: ax.legend(loc='lower right',fontsize=8,frameon=False)
     ax.set_xlabel('pies desde '+s+' · ft from '+s,fontsize=8)
-notes=[('A','Corte por las caballerizas techadas y la bodega de alfalfa: desde el 3 oct la plataforma queda a nivel (≈1,089.3 ft) bajo todo el edificio; hasta ≈6 ft de corte del lado alto y ≈5 ft de relleno del lado bajo.','Through the covered stalls and the alfalfa bay: since 3 Oct the pad is level (about 1,089.3 ft) under the whole building; up to about 6 ft of cut on the uphill side and 5 ft of fill downhill.'),
+notes=[('A','Corte por las caballerizas techadas y la bodega de alfalfa: desde el 3 oct la plataforma queda a nivel (≈332.0 m; 1,089.3 pies en el dibujo) bajo todo el edificio; hasta ≈1.8 m de corte del lado alto y ≈1.5 m de relleno del lado bajo.','Through the covered stalls and the alfalfa bay: since 3 Oct the pad is level (about 1,089.3 ft) under the whole building; up to about 6 ft of cut on the uphill side and 5 ft of fill downhill.'),
        ('B','El establo queda en plataforma con 1 % de caída; su techo alimenta los bebederos de piedra.','The barn sits on a pad falling 1%; its roof feeds the stone troughs.'),
-       ('C','La pista oval y el corral redondo quedan casi a nivel (cortes y rellenos menores a 2.5 ft); al final el corte sube al relleno de la plataforma de las caballerizas, hasta ≈6 ft.','The arena and round pen sit nearly level (cut and fill under 2.5 ft); at the far end the section climbs onto the covered stalls’ pad fill, up to about 6 ft.')]
+       ('C','La pista oval y el corral redondo quedan casi a nivel (cortes y rellenos menores a 76 cm); al final el corte sube al relleno de la plataforma de las caballerizas, hasta ≈1.8 m.','The arena and round pen sit nearly level (cut and fill under 2.5 ft); at the far end the section climbs onto the covered stalls’ pad fill, up to about 6 ft.')]
 y=0.54
 for s,es,en in notes:
     fig.text(0.70,y,s,fontsize=11,weight='bold',color='#b5602e')

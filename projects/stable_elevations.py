@@ -46,12 +46,12 @@ def stable_elevations(fig):
     fence(ax, W, W + 40); fence(ax, -W, -W - 6)
     lw_stones(ax, W + 3.5, W + 35.5, 0, 2.0, rng, course=(.9, 1.0), length=(1.4, 2.6), lw=.45)   # east trough on the run fence
     lw_line(ax, [W + 3.9, W + 35.1], [1.75, 1.75], lw=.6, color='#1f78c8')
-    ax.text(W + 19.5, -1.4, 'bebedero 32 ft · trough', ha='center', va='top', fontsize=6.5, color=CLAY)
+    ax.text(W + 19.5, -1.4, 'bebedero 9.8 m · trough 32 ft', ha='center', va='top', fontsize=6.5, color=CLAY)
     ax.text(W + 20, 7.0, 'corrales norte · north runs', ha='center', fontsize=6.5, color=MUTED)
-    ax.text(0, -1.4, 'pasillo 14 ft · puertas corredizas · aisle, sliding doors', ha='center', va='top', fontsize=6.5, color=INK)
+    ax.text(0, -1.4, 'pasillo 4.3 m · puertas corredizas · aisle 14 ft, sliding doors', ha='center', va='top', fontsize=6.5, color=INK)
     ax.text(-28.5, 33.5, 'Alzado este · East elevation', fontsize=11, weight='bold', color=INK, clip_on=False)   # titles ride with the drawing when it is moved
     ax.text(-28.5, 31.0, 'la entrada desde el estacionamiento, mirando al oeste · the entry from the parking, looking west', fontsize=7, color=MUTED, style='italic', clip_on=False)
-    ax.text(-28.5, 28.4, 'alero 12 ft · cumbrera 17 ft · claraboya a 20.7 ft · eave 12 ft, ridge 17 ft, clerestory top 20.7 ft', fontsize=7, color=MUTED, clip_on=False)
+    ax.text(-28.5, 28.4, 'alero 3.7 m · cumbrera 5.2 m · claraboya a 6.3 m · eave 12 ft, ridge 17 ft, clerestory top 20.7 ft', fontsize=7, color=MUTED, clip_on=False)
 
     # ---------------- south elevation (looking north; west is to the left) ----------------
     ax = fig.add_axes([0.031, 0.075, 0.42, 0.18]); ax.set_aspect('equal'); ax.set_anchor('SW'); ax.axis('off'); ax.set_gid('elev-south')   # 4 Oct (Will): moved down; the 3D-model link sits between the two
@@ -86,4 +86,4 @@ def stable_elevations(fig):
     ax.text(12, -1.4, 'caballerizas 7-10 · puertas a los corrales', ha='center', va='top', fontsize=6.5, color=INK)
     ax.text(12, -3.3, 'stalls 7-10 · doorways to the runs', ha='center', va='top', fontsize=6.5, color=MUTED, style='italic')
     ax.text(-52.5, 26.5, 'Alzado sur · South elevation', fontsize=11, weight='bold', color=INK, clip_on=False)
-    ax.text(-52.5, 24.3, 'el lado del camino, mirando al norte; 84 ft entre muros · the road side, looking north; 84 ft wall to wall', fontsize=7, color=MUTED, style='italic', clip_on=False)
+    ax.text(-52.5, 24.3, 'el lado del camino, mirando al norte; 25.6 m entre muros · the road side, looking north; 84 ft wall to wall', fontsize=7, color=MUTED, style='italic', clip_on=False)

@@ -59,12 +59,12 @@ def planview(n):
     fig=newpage(); heading(fig,'Vista en planta','Plan view')
     fig._norm_skip=True   # 4 Oct: laid out by hand
     ax=fig.add_axes([0.031,0.075,0.64,0.81]); ax.set_anchor('W'); ax.imshow((img(n)*(np.array(matplotlib.colors.to_rgb(PAPER)))).astype(np.uint8)); ax.axis('off')   # white studio background takes the paper colour
-    items=[('Establo principal','Main stable','84 × 42 ft en retícula de 12 ft · cerchas de acero, piedra a 5 ft con tubo arriba, paneles de varas horizontales, claraboya abierta · 10 caballerizas con corral de 12 × 40 ft, 6 al norte y 4 al sur · cocina, baño, cuarto eléctrico, lavado y monturas en el extremo oeste','84 × 42 ft on a 12 ft grid · steel trusses, rock to 5 ft with a pipe rail, horizontal stick panels, open clerestory · 10 stalls with 12 × 40 ft runs, 6 north and 4 south · kitchen, bathroom, electrical room, wash and tack at the west end'),
-           ('Pista oval','Oval arena','182 × 78 ft, arena rastrillada','182 × 78 ft, raked sand'),
-           ('Corral redondo','Round pen','60 ft de diámetro','60 ft across'),
-           ('Pista de trote','Riding track','1,224 ft, usa el camino oeste existente','1,224 ft, uses the existing west road'),
-           ('Caballerizas techadas','Covered stalls','8 caballerizas de 16 × 20 ft y la alfalfa bajo el mismo techo mariposa, que llena un bebedero redondo','8 stalls of 16 × 20 ft and the alfalfa under one butterfly roof that fills a round trough'),
-           ('Agua','Water','bajo natural abajo de la pista (confirmado en sitio), tres bebederos de piedra en el establo (largo de 44 ft en la entrada, 14 ft en la losa de lavado, 32 ft en la cerca del corral este), bebedero redondo en las caballerizas, bebedero redondo existente','natural water sink below the track (confirmed on site), three stone troughs at the stable (44 ft at the drive-in, 14 ft at the wash pad, 32 ft on the east run fence), round trough at the stalls, existing round watering station'),
+    items=[('Establo principal','Main stable','25.6 × 12.8 m en retícula de 3.7 m · cerchas de acero, piedra a 1.5 m con tubo arriba, paneles de varas horizontales, claraboya abierta · 10 caballerizas con corral de 3.7 × 12.2 m, 6 al norte y 4 al sur · cocina, baño, cuarto eléctrico, lavado y monturas en el extremo oeste','84 × 42 ft on a 12 ft grid · steel trusses, rock to 5 ft with a pipe rail, horizontal stick panels, open clerestory · 10 stalls with 12 × 40 ft runs, 6 north and 4 south · kitchen, bathroom, electrical room, wash and tack at the west end'),
+           ('Pista oval','Oval arena','55.5 × 23.8 m, arena rastrillada','182 × 78 ft, raked sand'),
+           ('Corral redondo','Round pen','18.3 m de diámetro','60 ft across'),
+           ('Pista de trote','Riding track','373.1 m, usa el camino oeste existente','1,224 ft, uses the existing west road'),
+           ('Caballerizas techadas','Covered stalls','8 caballerizas de 4.9 × 6.1 m y la alfalfa bajo el mismo techo mariposa, que llena un bebedero redondo','8 stalls of 16 × 20 ft and the alfalfa under one butterfly roof that fills a round trough'),
+           ('Agua','Water','bajo natural abajo de la pista (confirmado en sitio), tres bebederos de piedra en el establo (largo de 13.4 m en la entrada, 4.3 m en la losa de lavado, 9.8 m en la cerca del corral este), bebedero redondo en las caballerizas, bebedero redondo existente','natural water sink below the track (confirmed on site), three stone troughs at the stable (44 ft at the drive-in, 14 ft at the wash pad, 32 ft on the east run fence), round trough at the stalls, existing round watering station'),
            ('Estacionamiento','Parking','franja angosta al extremo este, 13 cajones a 60°','narrow strip at the far east corner, 13 stalls at 60°')]
     y=0.86
     for es,en,tes,ten in items:
@@ -97,11 +97,11 @@ def existing():
             ax.plot(x,y,'+',color=CLAY,ms=4,mew=.8,zorder=7); ax.text(x+.5,y-.4,f'{samp(b,x,y):.1f}',fontsize=6.5,color=CLAY,zorder=7)
     north(ax,140,8); scalebar(ax,6,96)
     y=0.86
-    y=para(fig,0.78,y,'Terreno natural antes de cualquier movimiento de tierra. Curvas cada 1 pie, rotuladas cada 5 pies. Las cruces marcan la elevación del terreno cada 50 pies, en pies.','Natural ground before any earthwork. Contours every 1 ft, labelled every 5 ft. Crosses mark ground elevation every 50 ft, in feet.',w=40,fs=10.5)
-    y=para(fig,0.78,y,f'El sitio cae unos {b.max()-b.min():.0f} pies, de {b.max():.0f} ft junto al camino del cerro a {b.min():.0f} ft junto al viñedo (≈ 6 %).',f'The site falls about {b.max()-b.min():.0f} ft, from {b.max():.0f} ft by the scrub-side road to {b.min():.0f} ft by the vineyard (about 6%).',w=40,fs=10.5)
+    y=para(fig,0.78,y,'Terreno natural antes de cualquier movimiento de tierra. Curvas cada 0.3 m (1 pie), rotuladas cada 1.5 m (5 pies). Las cruces marcan la elevación del terreno cada 15.2 m (50 pies); las cotas del dibujo están en pies.','Natural ground before any earthwork. Contours every 1 ft, labelled every 5 ft. Crosses mark ground elevation every 50 ft, in feet.',w=40,fs=10.5)
+    y=para(fig,0.78,y,f'El sitio cae unos {(b.max()-b.min())*0.3048:.0f} m, de {b.max()*0.3048:.0f} m junto al camino del cerro a {b.min()*0.3048:.0f} m junto al viñedo (≈ 6 %).',f'The site falls about {b.max()-b.min():.0f} ft, from {b.max():.0f} ft by the scrub-side road to {b.min():.0f} ft by the vineyard (about 6%).',w=40,fs=10.5)
     y=para(fig,0.78,y,'Historia: por años este terreno fue un vivero rentado. Los árboles dentro de la pista y entre las caballerizas son lo que dejó, y el suelo todavía guarda sus hileras. El proyecto lo vuelve a hacer vivero.','History: for years this ground was a rented plant nursery. The trees inside the track and among the stalls are what it left, and the soil still holds its rows. The project makes it a nursery again.')
-    y=para(fig,0.78,y,'Fuente: datos públicos de elevación de 30 m; precisión vertical de varios pies. Un levantamiento con dron la mejoraría.','Source: 30 m public elevation data; vertical accuracy of several feet. A drone survey would sharpen it.',w=40,fs=10.5)
-    items=[(INK,'-',.9,'Curva cada 5 ft · 5 ft contour'),('#8a8478','-',.4,'Curva cada 1 ft · 1 ft contour'),('#b9a784','-',6,'Caminos existentes · Existing roads'),(INK,(0,(7,2,1,2)),1.4,'Cerca del predio · Site fence')]
+    y=para(fig,0.78,y,'Fuente: datos públicos de elevación de 30 m; precisión vertical de un metro o más. Un levantamiento con dron la mejoraría.','Source: 30 m public elevation data; vertical accuracy of several feet. A drone survey would sharpen it.',w=40,fs=10.5)
+    items=[(INK,'-',.9,'Curva cada 1.5 m (5 pies) · 5 ft contour'),('#8a8478','-',.4,'Curva cada 0.3 m (1 pie) · 1 ft contour'),('#b9a784','-',6,'Caminos existentes · Existing roads'),(INK,(0,(7,2,1,2)),1.4,'Cerca del predio · Site fence')]
     ly=0.30
     for c,st,lw,t in items:
         fig.add_artist(matplotlib.lines.Line2D([0.78,0.81],[ly,ly],color=c,lw=lw,ls=st)); fig.text(0.818,ly-.005,t,fontsize=9.5,color=INK); ly-=.025
@@ -139,8 +139,8 @@ def grading():
         fig.text(0.78,y,lab,fontsize=9.5,color=INK); fig.text(0.95,y,lev,fontsize=9.5,color=INK,weight='bold',ha='right'); fig.text(0.985,y,g,fontsize=9.5,color=MUTED,ha='right'); y-=.021
     y-=.012
     fig.text(0.78,y,'Movimiento de tierra · Earthwork',fontsize=10,weight='bold',color=INK); y-=.024
-    fig.text(0.78,y,f'Corte · Cut   ≈ {cut:,.0f} yd³  ({cut*.7646:,.0f} m³)',fontsize=9.5,color=INK); y-=.021
-    fig.text(0.78,y,f'Relleno · Fill ≈ {fill:,.0f} yd³  ({fill*.7646:,.0f} m³)',fontsize=9.5,color=INK); y-=.029
+    fig.text(0.78,y,f'Corte · Cut   ≈ {cut*.7646:,.0f} m³  ({cut:,.0f} yd³)',fontsize=9.5,color=INK); y-=.021
+    fig.text(0.78,y,f'Relleno · Fill ≈ {fill*.7646:,.0f} m³  ({fill:,.0f} yd³)',fontsize=9.5,color=INK); y-=.029
     y=para(fig,0.78,y,'Taludes 3:1 con bordes suaves. Volúmenes ±30–50 % sobre terreno de 30 m.','3:1 side slopes with soft edges. Volumes ±30–50% on 30 m terrain.',w=40,fs=9.5)
     items=[(INK,'-',1.1,'Curva terminada · Finished contour'),('#9d978a',(0,(3,2)),.8,'Terreno existente · Existing ground'),(CLAY,'-',5,'Puerta · Gate'),(WATER,'-',5,'Agua · Water'),('#0b4f8a','--',2.2,'Zanja · Swale')]
     ly=0.235
@@ -179,7 +179,7 @@ def text_refs():
     fig=newpage(); heading(fig,'Texto y referencias','Text and references')
     y=0.85
     blocks=[('La idea','The idea','Un centro ecuestre sencillo y bien cuidado en el valle: un establo de piedra y varas bajo un techo oscuro con claraboya, 8 caballerizas techadas entre las palmas, gradas frente a la pista, una pista oval, un corral redondo y una pista de trote que aprovecha el camino existente. Todo acomodado a la pendiente natural, con el agua de lluvia guiada y guardada en lugar de dejarla correr.','A simple, well-kept equestrian centre in the valley: a stable of stone and sticks under a dark roof with a clerestory, 8 covered stalls among the palms, bleachers facing the arena, an oval arena, a round pen and a riding track that uses the existing road. Everything sits into the natural slope, and rainwater is guided and kept instead of left to run off.'),
-            ('Materiales','Materials','Cerchas de acero cada 12 ft sobre tubos de 12 in; piedra del lugar apilada hasta 5 ft; encima, hasta el alero, varas horizontales como nido de pájaro en marco de acero oscuro; lámina gris oscuro con claraboya abierta; cuartos de lavado y monturas en paca de paja o cob aplanado; cercas de tubo negro; piso de tierra y caminos de tierra compactada; arena rastrillada en pista y corral.','Steel trusses every 12 ft on 12 in tubes; local fieldstone stacked to 5 ft; on it, up to the eave, bird’s-nest horizontal sticks between dark steel verticals; dark grey sheet roof with an open clerestory; wash and tack rooms in straw bale or plastered cob; black pipe fences; dirt floor and compacted dirt roads; raked sand in the arena and round pen.'),
+            ('Materiales','Materials','Cerchas de acero cada 3.7 m sobre tubos de 300 mm; piedra del lugar apilada hasta 1.5 m; encima, hasta el alero, varas horizontales como nido de pájaro en marco de acero oscuro; lámina gris oscuro con claraboya abierta; cuartos de lavado y monturas en paca de paja o cob aplanado; cercas de tubo negro; piso de tierra y caminos de tierra compactada; arena rastrillada en pista y corral.','Steel trusses every 12 ft on 12 in tubes; local fieldstone stacked to 5 ft; on it, up to the eave, bird’s-nest horizontal sticks between dark steel verticals; dark grey sheet roof with an open clerestory; wash and tack rooms in straw bale or plastered cob; black pipe fences; dirt floor and compacted dirt roads; raked sand in the arena and round pen.'),
             ('Agua','Water','La mitad sur del techo del establo alimenta el bebedero largo y el de la losa, la mitad norte el bebedero de la cerca este, y el techo mariposa de las caballerizas llena un bebedero redondo; el agua del cerro se lleva por un canal empastado a un bajo natural abajo de la pista; el excedente sale al oeste.','The stable roof’s south half feeds the long trough and the pad trough, its north half the trough on the east run fence, and the stalls’ butterfly roof fills a round trough; hillside water runs down a grassed waterway to a natural low spot below the track; overflow leaves to the west.')]
     for tes,ten,bes,ben in blocks:
         fig.text(0.02,y,f'{tes} · {ten}',fontsize=13,weight='bold',color=INK); y-=.028
@@ -198,9 +198,9 @@ def barn_plan():
     Rect=matplotlib.patches.Rectangle
     L,D,RUN,ST,AI=72,40,40,12,14; HL,HD=L/2,D/2; RD=(D-AI)/2
     for k in range(6):
-        x=-HL+ST*k; ax.add_patch(Rect((x,HD),ST,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,HD+RUN/2,'corral\nrun\n12×40',ha='center',va='center',fontsize=6.5,color=MUTED)
+        x=-HL+ST*k; ax.add_patch(Rect((x,HD),ST,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,HD+RUN/2,'corral\nrun\n3.7×12.2 m\n(12×40 ft)',ha='center',va='center',fontsize=6.5,color=MUTED)
     for k in range(4):                     # 27 Sep: runs off the four south stalls too (climbing 5 %, low rock wall at the end)
-        x=-HL+ST*k; ax.add_patch(Rect((x,-HD-RUN),ST,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,-HD-RUN/2,'corral\nrun\n12×40',ha='center',va='center',fontsize=6.5,color=MUTED)
+        x=-HL+ST*k; ax.add_patch(Rect((x,-HD-RUN),ST,RUN,fc='#f1ead9',ec=INK,lw=.8)); ax.text(x+6,-HD-RUN/2,'corral\nrun\n3.7×12.2 m\n(12×40 ft)',ha='center',va='center',fontsize=6.5,color=MUTED)
     ax.plot([-HL,-HL+4*ST],[-HD-RUN,-HD-RUN],color='#8a7d66',lw=4,solid_capstyle='butt')
     ax.plot([-HL,HL,HL,-HL,-HL],[-HD-2,-HD-2,HD+2,HD+2,-HD-2],color=MUTED,lw=.7,ls=(0,(4,3)))        # roof edge, 2 ft overhang on the long sides
     ax.add_patch(Rect((-HL,-HD),L,D,fc='#b9ad97',ec=INK,lw=2.2))                                      # rock wall on the column lines
@@ -212,21 +212,21 @@ def barn_plan():
     for es,en,w in (('7 caballeriza','stall',12),('8 caballeriza','stall',12),('9 caballeriza','stall',12),('10 caballeriza','stall',12),('monturas y alimento','tack / feed',12),('lavado','wash',12)):
         ax.add_patch(Rect((x+(1.3 if x==-HL else 0),-HD+1.3),w-(1.3 if x==-HL or x+w==HL else 0),RD-1.3,fc='white',ec=INK,lw=.8)); ax.text(x+w/2,-HD+RD/2,f'{es}\n{en}',ha='center',va='center',fontsize=6.3)
         ax.add_patch(Rect((x+w/2-2,-HD-.7),4,1.4,fc=CLAY,ec='none')); x+=w
-    ax.text(0,0,'pasillo · aisle 14 ft',ha='center',va='center',fontsize=9,color=MUTED)
+    ax.text(0,0,'pasillo 4.3 m · aisle 14 ft',ha='center',va='center',fontsize=9,color=MUTED)
     for x in (-HL,HL): ax.add_patch(Rect((x-1,-AI/2),2,AI,fc='white',ec='none')); ax.plot([x,x],[-AI/2,AI/2],color=CLAY,lw=3,ls=(0,(2,1.5)))
     for sx in (-1,1): ax.text(sx*(HL+3),0,'entrada\nentry',ha='center',va='center',fontsize=7,color=CLAY,rotation=90)
     for x in (-36,-12,12,36):
         for y in (-HD,HD): ax.add_patch(matplotlib.patches.Circle((x,y),.9,fc='#6f7d86',ec=INK,lw=.6,zorder=5))
-    ax.annotate('',xy=(-HL+4*ST,-HD-4),xytext=(HL,-HD-4),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL-12,-HD-6,'72 ft (21.9 m) total',ha='center',va='top',fontsize=8)
-    ax.annotate('',xy=(HL+8,-HD),xytext=(HL+8,HD),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,0,'40 ft\n(12.2 m)',va='center',fontsize=9)
-    ax.annotate('',xy=(HL+8,HD),xytext=(HL+8,HD+RUN),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,HD+RUN/2,'40 ft\ncorrales\nruns',va='center',fontsize=8); ax.text(-HL+2*ST,-HD-RUN-3,'muro bajo de piedra · low rock wall',ha='center',va='top',fontsize=7,color=MUTED)
+    ax.annotate('',xy=(-HL+4*ST,-HD-4),xytext=(HL,-HD-4),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL-12,-HD-6,'21.9 m (72 ft) total',ha='center',va='top',fontsize=8)
+    ax.annotate('',xy=(HL+8,-HD),xytext=(HL+8,HD),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,0,'12.2 m\n(40 ft)',va='center',fontsize=9)
+    ax.annotate('',xy=(HL+8,HD),xytext=(HL+8,HD+RUN),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(HL+10,HD+RUN/2,'12.2 m\n(40 ft)\ncorrales\nruns',va='center',fontsize=8); ax.text(-HL+2*ST,-HD-RUN-3,'muro bajo de piedra · low rock wall',ha='center',va='top',fontsize=7,color=MUTED)
     ax.text(-HL,HD+RUN+3,'N ↑',fontsize=10,weight='bold')
     ax.set_xlim(-50,58); ax.set_ylim(-HD-RUN-8,HD+RUN+6)
     y=0.85
-    specs=[('Planta 72 × 40 ft a ejes, pasillo central de 14 ft abierto de punta a punta; una entrada grande en cada extremo, con el marco de tubo a la vista.','72 × 40 ft on the column lines, a 14 ft centre aisle open end to end; a large entry at each gable end, with the pipe frame exposed.'),
-           ('10 caballerizas de 12 × 13 ft, 6 al norte y 4 al sur, cada una con su corral de 12 × 40 ft y cerca de tubo negro a 5.5 ft; los corrales del sur suben 5 % con un muro bajo de piedra al final. En el extremo este del lado sur: monturas y alimento, y lavado. La alfalfa se guarda en las caballerizas techadas.','10 stalls of 12 × 13 ft, 6 north and 4 south, each with its own 12 × 40 ft run and a 5.5 ft black pipe fence; the south runs climb 5 % with a low rock wall at their end. At the east end of the south side: tack and feed, and wash. The alfalfa is kept at the covered stalls.'),
-           ('Piedra apilada, de grande a chica, hasta 4.5 ft en todo el perímetro; arriba varas de tomate horizontales, sueltas como nido de pájaro, que dejan pasar aire y luz.','Stacked rock, big to small, to 4.5 ft all the way round; above it horizontal tomato stakes, loose like a bird’s nest, that let air and light through.'),
-           ('Alero a 12 ft, cumbrera a 17 ft, 2 ft de alero en los lados largos. Techo metálico gris oscuro con una claraboya corrida de 60 × 10 ft sobre el pasillo: 2½ ft de vidrio a cada lado bajo su propio techo, luz y ventilación de cumbrera.','Eave 12 ft, ridge 17 ft, 2 ft overhang on the long sides. Dark grey metal roof with a 60 × 10 ft clerestory over the aisle: 2½ ft of glazing each side under its own roof, for light and ridge ventilation.'),
+    specs=[('Planta 21.9 × 12.2 m a ejes, pasillo central de 4.3 m abierto de punta a punta; una entrada grande en cada extremo, con el marco de tubo a la vista.','72 × 40 ft on the column lines, a 14 ft centre aisle open end to end; a large entry at each gable end, with the pipe frame exposed.'),
+           ('10 caballerizas de 3.7 × 4.0 m, 6 al norte y 4 al sur, cada una con su corral de 3.7 × 12.2 m y cerca de tubo negro a 1.7 m; los corrales del sur suben 5 % con un muro bajo de piedra al final. En el extremo este del lado sur: monturas y alimento, y lavado. La alfalfa se guarda en las caballerizas techadas.','10 stalls of 12 × 13 ft, 6 north and 4 south, each with its own 12 × 40 ft run and a 5.5 ft black pipe fence; the south runs climb 5 % with a low rock wall at their end. At the east end of the south side: tack and feed, and wash. The alfalfa is kept at the covered stalls.'),
+           ('Piedra apilada, de grande a chica, hasta 1.4 m en todo el perímetro; arriba varas de tomate horizontales, sueltas como nido de pájaro, que dejan pasar aire y luz.','Stacked rock, big to small, to 4.5 ft all the way round; above it horizontal tomato stakes, loose like a bird’s nest, that let air and light through.'),
+           ('Alero a 3.7 m, cumbrera a 5.2 m, 61 cm de alero en los lados largos. Techo metálico gris oscuro con una claraboya corrida de 18.3 × 3.0 m sobre el pasillo: 76 cm de vidrio a cada lado bajo su propio techo, luz y ventilación de cumbrera.','Eave 12 ft, ridge 17 ft, 2 ft overhang on the long sides. Dark grey metal roof with a 60 × 10 ft clerestory over the aisle: 2½ ft of glazing each side under its own roof, for light and ridge ventilation.'),
            ('Los corrales del norte quedan en plano sobre la plataforma; los del sur suben al cerro al 5 %.','The north runs sit flat on the pad; the south runs climb the hill at 5 %.')]
     for es,en in specs: y=para(fig,0.68,y,es,en,w=64,fs=7.3)
     # roof plan with the clerestory (27 Sep)
@@ -253,39 +253,39 @@ def posts_page():
     ax.add_patch(R((-.53,-7.9),1.06,19.9,fc='#6f7d86',ec=INK,lw=1))
     ax.add_patch(R((-.8,-8.0),1.6,.12,fc=INK))
     for x in (-.6,.6): ax.plot([x,x],[-8,-7.2],color=INK,lw=1.5)
-    ax.add_patch(R((-6,-.0),4.4,4.5,fc='#b9ad97',ec=INK,lw=.8)); ax.text(-3.8,2.2,'piedra\nstone\n4.5 ft',ha='center',va='center',fontsize=7)
+    ax.add_patch(R((-6,-.0),4.4,4.5,fc='#b9ad97',ec=INK,lw=.8)); ax.text(-3.8,2.2,'piedra\nstone\n1.4 m\n(4.5 ft)',ha='center',va='center',fontsize=7)
     for yy in np.arange(4.8,12,.45): ax.plot([-6,-1.6],[yy,yy],color='#8a6a42',lw=2.2,solid_capstyle='round')
     ax.text(-3.8,8.4,'varas · sticks',ha='center',fontsize=7,color='white',bbox=dict(fc='#8a6a42',ec='none',pad=1))
     ax.add_patch(R((-.8,12),1.6,.14,fc=INK)); ax.plot([-3,4],[12.15,13.9],color='#5d95c2',lw=3)
-    dims=[(12,0,'12 ft sobre terreno\nabove grade'),(0,-8,'≈ 8 ft empotrado\nembedded')]
+    dims=[(12,0,'3.7 m (12 ft) sobre terreno\nabove grade'),(0,-8,'≈ 2.4 m (8 ft) empotrado\nembedded')]
     for top,bot,t in dims:
         ax.annotate('',xy=(3.2,top),xytext=(3.2,bot),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(3.5,(top+bot)/2,t,fontsize=7.5,va='center')
-    ax.annotate('',xy=(-1.5,-9),xytext=(1.5,-9),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(0,-9.4,'pila Ø 3 ft · pier',ha='center',va='top',fontsize=7.5)
+    ax.annotate('',xy=(-1.5,-9),xytext=(1.5,-9),arrowprops=dict(arrowstyle='<->',lw=.8)); ax.text(0,-9.4,'pila Ø 0.9 m (3 ft) · pier',ha='center',va='top',fontsize=7.5)
     ax.text(1.2,-7.6,'placa ancla soldada\nwelded anchor plate',fontsize=6.5); ax.text(.7,13.2,'placa tapa\ncap plate',fontsize=6.5)
-    ax.text(0,14.3,'Tubo de 20 ft sin cortar · 20 ft tube, uncut',ha='center',fontsize=8.5,weight='bold')
+    ax.text(0,14.3,'Tubo de 6.1 m sin cortar · 20 ft tube, uncut',ha='center',fontsize=8.5,weight='bold')
     # --- post plan
     ax2=fig.add_axes([0.34,0.52,0.30,0.34]); ax2.set_aspect('equal'); ax2.axis('off'); ax2.set_xlim(-45,45); ax2.set_ylim(-30,30)
     ax2.add_patch(R((-38,-21),76,42,fc='none',ec='#999',lw=.8,ls='--'))
     for x in np.arange(-36,37,12):
         for y in (-21,21): ax2.add_patch(matplotlib.patches.Circle((x,y),1.4,fc='#6f7d86',ec=INK,lw=.6))
     for x in np.arange(-36,37,12): ax2.plot([x,x],[-21,21],color='#5d95c2',lw=.9)
-    ax2.text(0,-27,'14 postes a cada 12 ft · armaduras de 42 ft sin postes intermedios',ha='center',fontsize=7.5)
+    ax2.text(0,-27,'14 postes a cada 3.7 m · armaduras de 12.8 m sin postes intermedios',ha='center',fontsize=7.5)
     ax2.text(0,-30.5,'14 posts at 12 ft · 42 ft clear-span trusses, no centre posts',ha='center',fontsize=7.5,style='italic',color=MUTED)
     ax2.text(0,26,'Planta de postes · Post plan',ha='center',fontsize=9,weight='bold')
-    rows=[('Tubo · Tube','12 in, cédula 40 o más · Sch 40 or heavier','20–30 % de su capacidad · of its capacity'),
+    rows=[('Tubo · Tube','300 mm (12 in), cédula 40 o más · Sch 40 or heavier','20–30 % de su capacidad · of its capacity'),
           ('Viento de diseño · Design wind','150–180 km/h (verificar CFE MDOC Viento 2020)','check against CFE wind code'),
-          ('Succión del techo · Roof uplift','≈ 6–9 kip (2.7–4.2 t) por poste','per post · governs the footing'),
-          ('Pila · Pier','Ø 3 ft (0.9 m) × 8 ft (2.4 m), concreto','governs by uplift, not bending'),
-          ('Postes · Posts','14 tubos de 20 ft','14 tubes of 20 ft')]
+          ('Succión del techo · Roof uplift','≈ 2.7–4.2 t (6–9 kip) por poste','per post · governs the footing'),
+          ('Pila · Pier','Ø 0.9 m (3 ft) × 2.4 m (8 ft), concreto','governs by uplift, not bending'),
+          ('Postes · Posts','14 tubos de 6.1 m','14 tubes of 20 ft')]
     y=0.47
     for a,b_,c in rows:
         fig.text(0.34,y,a,fontsize=8.8,weight='bold',color=INK); fig.text(0.34,y-.018,b_,fontsize=8.3,color=INK); fig.text(0.34,y-.034,c,fontsize=8,color=MUTED,style='italic'); y-=.056
     y=0.86
-    notes=[('Por qué empotrar: un tubo de 20 ft da 12 ft al alero y 8 ft dentro de una pila de concreto. No hay que cortar, y la base empotrada resiste el momento sin una placa base crítica.','Why embed: a 20 ft tube gives 12 ft to the eave and 8 ft inside a concrete pier. No cutting, and the embedded base takes the bending without a critical base plate.'),
-           ('Placa ancla: placa de 16 × 16 × ¾ in soldada al pie del tubo con 4 barras o pernos de cortante, dentro de la pila; placa tapa de ½ in arriba con cartelas para la armadura.','Anchor plate: 16 × 16 × ¾ in plate welded to the tube foot with 4 bars or shear studs, inside the pier; ½ in cap plate on top with gussets for the truss.'),
-           ('Opción B: placa base de 20 × 20 × 1¼ in con 4 anclas de 1 in sobre zapata de 6 × 6 × 3 ft; el tubo se corta a 12 ft y el sobrante de 8 ft sirve para corrales y puertas.','Option B: 20 × 20 × 1¼ in base plate, 4 × 1 in anchor rods on a 6 × 6 × 3 ft footing; the tube is cut to 12 ft and the 8 ft offcut serves the runs and gates.'),
+    notes=[('Por qué empotrar: un tubo de 6.1 m da 3.7 m al alero y 2.4 m dentro de una pila de concreto. No hay que cortar, y la base empotrada resiste el momento sin una placa base crítica.','Why embed: a 20 ft tube gives 12 ft to the eave and 8 ft inside a concrete pier. No cutting, and the embedded base takes the bending without a critical base plate.'),
+           ('Placa ancla: placa de 41 × 41 × 1.9 cm soldada al pie del tubo con 4 barras o pernos de cortante, dentro de la pila; placa tapa de 1.3 cm arriba con cartelas para la armadura.','Anchor plate: 16 × 16 × ¾ in plate welded to the tube foot with 4 bars or shear studs, inside the pier; ½ in cap plate on top with gussets for the truss.'),
+           ('Opción B: placa base de 51 × 51 × 3.2 cm con 4 anclas de 2.5 cm sobre zapata de 1.8 × 1.8 × 0.9 m; el tubo se corta a 3.7 m y el sobrante de 2.4 m sirve para corrales y puertas.','Option B: 20 × 20 × 1¼ in base plate, 4 × 1 in anchor rods on a 6 × 6 × 3 ft footing; the tube is cut to 12 ft and the 8 ft offcut serves the runs and gates.'),
            ('Soldadura: si son tubos de pozo petrolero (probable), el acero puede tener más carbono: precalentar, electrodo E7018 bajo hidrógeno y probar una soldadura de muestra.','Welding: if these are oil-field casing (likely), the steel may be higher carbon: preheat, low-hydrogen E7018 rod, and test a sample weld.'),
-           ('Muros: la piedra lleva su propio cimiento corrido entre postes; las varas se amarran a largueros de ángulo soldados entre postes a 4.5 y 12 ft.','Walls: the stone gets its own strip footing between posts; the sticks tie to angle girts welded between posts at 4.5 and 12 ft.'),
+           ('Muros: la piedra lleva su propio cimiento corrido entre postes; las varas se amarran a largueros de ángulo soldados entre postes a 1.4 y 3.7 m.','Walls: the stone gets its own strip footing between posts; the sticks tie to angle girts welded between posts at 4.5 and 12 ft.'),
            ('Antes de construir: medir diámetro y espesor, estudio de suelo, y cálculo firmado por un ingeniero estructural (DRO / corresponsable en seguridad estructural).','Before building: measure diameter and wall, a soil test, and calculations signed by a structural engineer (DRO / structural co-responsible).')]
     for es,en in notes: y=para(fig,0.67,y,es,en,w=60,fs=7.9)
     fig.text(0.67,0.1,'Cálculo preliminar de viabilidad, no es diseño estructural.',fontsize=8.5,weight='bold',color=CLAY)
@@ -341,7 +341,7 @@ sheet('site_analysis.py','Lectura del sitio','Reading the site')   # 4 Oct (Will
 sheet('regen.py','Diseño regenerativo','Regenerative design')     # 4 Oct (Will): zones, no waste, vivero, biodynamics, horsemanship, community   # 4 Oct (Will): E-1, power, dark-sky lighting, solar, two render slots
 w_bio()   # 9 Oct (Walker): the last page is a bio of Walker and Will (was the Conversación / Discussion placeholder)
 
-out=os.path.join(OUTDIR,'Centro-Equino-pack-11x17-2026-10-11-v50.pdf')
+out=os.path.join(os.environ.get('EQUINO_OUT_DIR',OUTDIR),'Centro-Equino-pack-11x17-2026-10-11-v50.pdf')   # 11 Oct: EQUINO_OUT_DIR / EQUINO_WEB_DIR for a test build that publishes nothing
 tmp=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'_pack_vectors.pdf')
 LAYOUT_MAP=apply_layout(PAGES)                     # 4 Oct: editor overrides (text, drawing moves) + the map the editor reads
 with PdfPages(tmp) as pdf:
@@ -352,7 +352,7 @@ with open('pack_photo_report.txt','w',encoding='utf-8') as fh:
 for k,f in enumerate(PAGES): f.savefig(f'prev-{k+1:02d}.png',dpi=40)
 # web copy of the pack (4 Oct): page images for will.100xbtr.com/equino/pack/, refreshed on every build
 import pymupdf as _pm
-_web=os.path.join(os.path.dirname(os.path.abspath('pack.py')),'..','..','will-os','equino','pack'); os.makedirs(_web,exist_ok=True)
+_web=os.environ.get('EQUINO_WEB_DIR') or os.path.join(os.path.dirname(os.path.abspath('pack.py')),'..','..','will-os','equino','pack'); os.makedirs(_web,exist_ok=True)
 _doc=_pm.open(out); _n=len(_doc)
 for _k,_pg in enumerate(_doc):
     _pix=_pg.get_pixmap(matrix=_pm.Matrix(2200/_pg.rect.width,2200/_pg.rect.width)); Image.frombytes('RGB',(_pix.width,_pix.height),_pix.samples).save(os.path.join(_web,f'p{_k+1:02d}.jpg'),quality=82)

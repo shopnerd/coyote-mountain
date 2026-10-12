@@ -27,10 +27,10 @@ def posts_page():
     ax.plot([-4, 5], [12.3, 14.5], color='#5d95c2', lw=3)
     ax.text(-3.6, 2.2, 'piedra · stone', ha='center', fontsize=7)
     ax.text(3.6, 8.3, 'varas · sticks', ha='center', fontsize=7, color='white', bbox=dict(fc='#8a6a42', ec='none', pad=1))
-    ax.text(0, -3.2, 'trabe de liga · grade beam 24 × 24 in', ha='center', fontsize=7, bbox=dict(fc='white', ec='none', pad=1))
-    ax.text(0, -7.9, 'pila · pier Ø 30 in × 6 ft', ha='center', fontsize=7)
+    ax.text(0, -3.2, 'trabe de liga · grade beam 61 × 61 cm (24 × 24 in)', ha='center', fontsize=7, bbox=dict(fc='white', ec='none', pad=1))
+    ax.text(0, -7.9, 'pila · pier Ø 76 cm × 1.8 m (Ø 30 in × 6 ft)', ha='center', fontsize=7)
     ax.text(3.5, 12.6, 'canal de alero · eave channel', fontsize=6.5)
-    ax.annotate('', xy=(6.8, 12), xytext=(6.8, 0), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(6.95, 6, '12 ft', fontsize=7.5, rotation=90, va='center')
+    ax.annotate('', xy=(6.8, 12), xytext=(6.8, 0), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(6.95, 6, '3.7 m (12 ft)', fontsize=7.5, rotation=90, va='center')
     ax.text(0, 14.6, 'Corte por un poste · Section at a post', ha='center', fontsize=9, weight='bold')
     # ---------- foundation plan: 8 posts at 24 ft
     ax2 = fig.add_axes([0.34, 0.52, 0.30, 0.34]); ax2.set_aspect('equal'); ax2.axis('off'); ax2.set_xlim(-45, 45); ax2.set_ylim(-31, 30)
@@ -41,19 +41,19 @@ def posts_page():
         for y in (-21, 21): ax2.add_patch(R((x-1.8, y-1.8), 3.6, 3.6, fc='#6f7d86', ec=INK, lw=.6))
     for x in np.arange(-36, 37, 12): ax2.plot([x, x], [-22, -19], color='#999', lw=.5)
     ax2.text(0, 26, 'Planta de cimentación · Foundation plan', ha='center', fontsize=9, weight='bold')
-    ax2.text(0, -27, '8 postes a cada 24 ft (uno por cada dos caballerizas), 4 armaduras de 42 ft', ha='center', fontsize=7.5)
+    ax2.text(0, -27, '8 postes a cada 7.3 m (uno por cada dos caballerizas), 4 armaduras de 12.8 m', ha='center', fontsize=7.5)
     ax2.text(0, -30.5, '8 posts at 24 ft (one every two stalls), 4 trusses spanning 42 ft', ha='center', fontsize=7.5, style='italic', color=MUTED)
-    rows = [('Poste · Post', 'tubo de 12 in cortado a 12 ft; los sobrantes sirven para corrales y puertas', '12 in tube cut to 12 ft; offcuts serve runs and gates'),
-            ('Placa base · Base plate', '22 × 22 × 1¼ in, 4 cartelas; 4 anclas de 1¼ in grado 55', '22 × 22 × 1¼ in, 4 gussets; 4 × 1¼ in grade 55 anchor rods'),
-            ('Pila · Pier', 'Ø 30 in (0.75 m) × 6 ft (1.8 m) bajo cada poste', 'under each post'),
-            ('Trabe de liga · Grade beam', '24 × 24 in, 4 varillas #5 arriba y abajo, estribos #3 @ 12 in', '4 #5 bars top and bottom, #3 stirrups at 12 in'),
-            ('Viento · Wind (180 km/h)', 'succión ≈ 18 kip por poste; trabe, muro y pila detienen ≈ 20 kip', 'uplift ≈ 18 kip per post; beam, wall and pier hold ≈ 20 kip')]
+    rows = [('Poste · Post', 'tubo de 300 mm cortado a 3.7 m; los sobrantes sirven para corrales y puertas', '12 in tube cut to 12 ft; offcuts serve runs and gates'),
+            ('Placa base · Base plate', '559 × 559 × 32 mm, 4 cartelas; 4 anclas de 32 mm grado 55', '22 × 22 × 1¼ in, 4 gussets; 4 × 1¼ in grade 55 anchor rods'),
+            ('Pila · Pier', 'Ø 76 cm × 1.8 m bajo cada poste', 'under each post'),
+            ('Trabe de liga · Grade beam', '61 × 61 cm, 4 varillas #5 arriba y abajo, estribos #3 @ 30 cm', '4 #5 bars top and bottom, #3 stirrups at 12 in'),
+            ('Viento · Wind (180 km/h)', 'succión ≈ 8.2 t por poste; trabe, muro y pila detienen ≈ 9.1 t', 'uplift ≈ 18 kip per post; beam, wall and pier hold ≈ 20 kip')]
     y = 0.47
     for a, b_, c in rows:
         fig.text(0.34, y, a, fontsize=8.8, weight='bold', color=INK)
         fig.text(0.34, y-.018, b_, fontsize=8, color=INK)
         fig.text(0.34, y-.033, c, fontsize=7.8, color=MUTED, style='italic'); y -= .056
-    notes = [('Propuesta: 8 tubos, uno cada 24 ft, con placa base soldada y atornillada a una pila; una trabe de liga enterrada corre de pila en pila alrededor del establo.',
+    notes = [('Propuesta: 8 tubos, uno cada 7.3 m, con placa base soldada y atornillada a una pila; una trabe de liga enterrada corre de pila en pila alrededor del establo.',
               'Proposal: 8 tubes, one every 24 ft, each with a welded base plate bolted to a pier; a buried grade beam runs pier to pier around the stable.'),
              ('Menos postes, más carga por poste: cada tubo usa ≈ 46 % de su capacidad y cada ancla ≈ 60 %. Sigue sobrado.',
               'Fewer posts, more load on each: every tube uses ≈ 46% of its capacity and every anchor rod ≈ 60%. Still comfortable.'),
@@ -94,13 +94,13 @@ def roof_page():
         y_ = 12 + 5*(1 - abs(x)/21) + .25
         ax.add_patch(matplotlib.patches.Rectangle((x-.3, y_), .6, .7, fc='#9a9487', ec=INK, lw=.4))
     ax.plot([-22.5, 0, 22.5], [11.9+.9, 17+.95, 11.9+.9], color='#5d95c2', lw=2.2)
-    ax.annotate('', xy=(-21, -1.2), xytext=(21, -1.2), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(0, -1.9, '42 ft (12.8 m)', ha='center', va='top', fontsize=8.5)
-    ax.annotate('', xy=(24, 12), xytext=(24, 17), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(24.4, 14.5, '5 ft', fontsize=8.5, va='center')
-    ax.annotate('', xy=(-24, 0), xytext=(-24, 12), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(-24.4, 6, '12 ft', fontsize=8.5, va='center', ha='right')
+    ax.annotate('', xy=(-21, -1.2), xytext=(21, -1.2), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(0, -1.9, '12.8 m (42 ft)', ha='center', va='top', fontsize=8.5)
+    ax.annotate('', xy=(24, 12), xytext=(24, 17), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(24.4, 14.5, '1.5 m (5 ft)', fontsize=8.5, va='center')
+    ax.annotate('', xy=(-24, 0), xytext=(-24, 12), arrowprops=dict(arrowstyle='<->', lw=.8)); ax.text(-24.4, 6, '3.7 m (12 ft)', fontsize=8.5, va='center', ha='right')
     ax.text(0, 19.3, 'Armadura tipo · Typical truss', ha='center', fontsize=10, weight='bold')
-    ax.text(8, 9.6, 'cuerda inferior · bottom chord HSS 4×4×¼', fontsize=7.5)
-    ax.text(-19, 16.3, 'cuerda superior · top chord HSS 4×4×¼', fontsize=7.5)
-    ax.text(-4, 13.2, 'diagonales · webs HSS 2×2×³⁄₁₆', fontsize=7, color=MUTED)
+    ax.text(8, 9.6, 'cuerda inferior · bottom chord HSS 102×102×6.4 mm (4×4×¼)', fontsize=7.5)
+    ax.text(-19, 16.3, 'cuerda superior · top chord HSS 102×102×6.4 mm (4×4×¼)', fontsize=7.5)
+    ax.text(-4, 13.2, 'diagonales · webs HSS 51×51×4.8 mm (2×2×³⁄₁₆)', fontsize=7, color=MUTED)
     ax.text(10, 16.8, 'larguero Z · Z purlin', fontsize=7, color=MUTED)
     # ---------- roof framing plan
     ax2 = fig.add_axes([0.02, 0.09, 0.62, 0.36]); ax2.set_aspect('equal'); ax2.axis('off'); ax2.set_xlim(-45, 45); ax2.set_ylim(-26, 28)
@@ -116,19 +116,19 @@ def roof_page():
         ax2.plot([x0, x1], [-21, 21], color=CLAY, lw=.8); ax2.plot([x0, x1], [21, -21], color=CLAY, lw=.8)
     ax2.text(0, 25.5, 'Planta de techo · Roof framing plan', ha='center', fontsize=10, weight='bold')
     ax2.text(-24, 23, 'cumbrera · ridge', fontsize=7, color='#3d6a94')
-    ax2.text(0, -25, 'armaduras a cada 24 ft · largueros Z a cada 4 ft · contravientos en las crujías extremas · alero 2 ft',
+    ax2.text(0, -25, 'armaduras a cada 7.3 m · largueros Z a cada 1.2 m · contravientos en las crujías extremas · alero 61 cm',
              ha='center', fontsize=7.5)
     ax2.text(0, -27.7, 'trusses at 24 ft · Z purlins at 4 ft · rod bracing in the end bays · 2 ft eaves', ha='center', fontsize=7.5, style='italic', color=MUTED)
-    rows = [('Armaduras · Trusses', '4, de 42 ft de claro, 5 ft de peralte al centro, soldadas en taller de HSS; apoyan en la placa tapa de cada poste', '4, spanning 42 ft, 5 ft deep at the ridge, shop-welded HSS; bear on each post\'s cap plate'),
-            ('Largueros · Purlins', 'Z de 10 in, calibre 12, a cada 4 ft, traslapados sobre las armaduras (≈ 960 ft lineales)', '10 in Z, 12 ga, 4 ft apart, lapped over the trusses (≈ 960 linear ft)'),
+    rows = [('Armaduras · Trusses', '4, de 12.8 m de claro, 1.5 m de peralte al centro, soldadas en taller de HSS; apoyan en la placa tapa de cada poste', '4, spanning 42 ft, 5 ft deep at the ridge, shop-welded HSS; bear on each post\'s cap plate'),
+            ('Largueros · Purlins', 'Z de 254 mm, calibre 12, a cada 1.2 m, traslapados sobre las armaduras (≈ 292.6 m lineales)', '10 in Z, 12 ga, 4 ft apart, lapped over the trusses (≈ 960 linear ft)'),
             ('Canal de alero · Eave channel', 'C8 corrido de poste a poste en cada lado largo; amarra las armaduras y recibe las varas', 'C8 running post to post on each long side; ties the trusses and takes the sticks'),
             ('Contravientos · Bracing', 'varilla en X en las dos crujías extremas, techo y muros', 'X-rod bracing in both end bays, roof and walls'),
-            ('Lámina · Roofing', 'lámina metálica azul cielo, ≈ 3,500 ft² (325 m²)', 'sky-blue metal sheeting, ≈ 3,500 ft² (325 m²)')]
+            ('Lámina · Roofing', 'lámina metálica azul cielo, ≈ 325 m²', 'sky-blue metal sheeting, ≈ 3,500 ft² (325 m²)')]
     y = 0.86
     for a, b_, c in rows:
         fig.text(0.67, y, a, fontsize=9.5, weight='bold', color=INK); y -= .02
         y = para(fig, 0.67, y, b_, c, w=58, fs=8)
-    y = para(fig, 0.67, y - .01, 'La succión de diseño en los largueros es ≈ 150 lb/ft a 180 km/h; el proveedor de la nave debe confirmar calibres y conexiones.',
+    y = para(fig, 0.67, y - .01, 'La succión de diseño en los largueros es ≈ 223 kg/m a 180 km/h; el proveedor de la nave debe confirmar calibres y conexiones.',
              'Design uplift on the purlins is ≈ 150 lb/ft at 180 km/h; the building supplier should confirm gauges and connections.', w=58, fs=8)
     fig.text(0.67, 0.1, 'Esquema preliminar, no es diseño estructural.', fontsize=8.5, weight='bold', color=CLAY)
     fig.text(0.67, 0.085, 'Preliminary scheme, not a structural design.', fontsize=8.5, color=CLAY, style='italic')

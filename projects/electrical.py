@@ -95,7 +95,7 @@ CALLE=[((g[0]-4.2,g[1]+1.2),1),((erc[0]-3.6,erc[1]+2.6),2),((b2g(0,30)[0]+2.5,b2
 for xy,n in CALLE: callout(ax,xy,n)
 # legend (in the map's empty north-west corner)
 lg=[(POW,'-',2.4,'Alimentación del rancho, en la zanja del agua · Ranch feed, in the water-main trench'),(POW,'--',1.5,'Ramal enterrado · Buried branch'),
-    (AMBER,'o',0,'Bolardo ámbar 24 in / poste de puerta · Amber 24 in bollard / gate light'),(WARM,'>',0,'Poste de pista, apuntado hacia adentro · Arena pole, aimed in'),(POW,'s',0,'MD desconexión principal · SP subtablero · ER cuarto eléctrico')]
+    (AMBER,'o',0,'Bolardo ámbar 61 cm / poste de puerta · Amber 24 in bollard / gate light'),(WARM,'>',0,'Poste de pista, apuntado hacia adentro · Arena pole, aimed in'),(POW,'s',0,'MD desconexión principal · SP subtablero · ER cuarto eléctrico')]
 for k,(c,st,lw,tx) in enumerate(lg):
     yy=19.2+k*2.55; xx=26.5
     if lw: ax.plot([xx,xx+3.2],[yy,yy],color=c,lw=lw,ls=st,zorder=16)
@@ -117,7 +117,7 @@ sx.add_patch(MRect((-48,-21),12,6,fc='#e9e2f2',ec=POW,lw=1.6)); sx.text(-42,-20.
 sx.text(-30,-17.5,'lavado\nwash',fontsize=5.6,ha='center',va='center',color='#6a655a'); sx.text(-18,-17.5,'monturas\ntack/feed',fontsize=5.6,ha='center',va='center',color='#6a655a')
 for k in range(6): sx.text(-30+12*k,18.6,f'{k+1}',fontsize=5.6,ha='center',color='#6a655a')
 for k in range(4): sx.text(-6+12*k,-19.4,f'{k+7}',fontsize=5.6,ha='center',color='#6a655a')
-sx.add_patch(MRect((-48,-33.75),36,12,fc='#e4e1da',ec=INK,lw=.6)); sx.text(-24,-31.6,'losa · pad 12 × 36',fontsize=5.6,ha='center',color='#6a655a')
+sx.add_patch(MRect((-48,-33.75),36,12,fc='#e4e1da',ec=INK,lw=.6)); sx.text(-24,-31.6,'losa · pad 3.7 × 11.0 m (12 × 36 ft)',fontsize=5.6,ha='center',color='#6a655a')
 sx.add_patch(MRect((-51,-36.75),3,13.5,fc='#a9c6dc',ec=INK,lw=.5))
 sx.add_patch(MRect((-66.5,-41.5),13,13,fc='none',ec=WATER,lw=1,ls=(0,(3,2)))); sx.text(-60,-35,'C1',fontsize=6.5,color=WATER,ha='center',va='center',weight='bold')
 for (x,y,t) in ((-45.2,-17.6,'MP'),(-42,-17.6,'INV'),(-38.8,-17.6,'BAT')):
@@ -149,7 +149,7 @@ sx.text(5,-2.6,'pasillo · aisle',fontsize=5.6,color='#6a655a',ha='center')
 ly=-29.0
 for k,(fn,tx) in enumerate([(lambda x,y:L(x,y,'L1'),'L1 pasillo, regulable · aisle, dimmable'),(lambda x,y:L(x,y,'L2'),'L2 caballeriza + modo ámbar de ronda · stall + amber night-check'),
                             (lambda x,y:L(x,y,'L3',20),'L3 trabajo, mojado · work, wet-rated'),(lambda x,y:L(x,y,'L4',24),'L4 puerta, blindada, sensor · door, shielded, motion'),
-                            (lambda x,y:OUT(x,y),'contacto GFCI en caja de acero, 5 ft · GFCI outlet, steel box, 5 ft'),
+                            (lambda x,y:OUT(x,y),'contacto GFCI en caja de acero, 1.5 m · GFCI outlet, steel box, 5 ft'),
                             (lambda x,y:sx.scatter([x],[y],s=18,marker='D',c='#cfe3f3',edgecolors=WATER,linewidths=.8,zorder=8),'P bomba · pump   S apagadores · switches')]):
     yy=ly-k*3.2; fn(-5,yy); sx.text(-3,yy,tx,fontsize=5.0,va='center',color=INK)
 sx.text(-5,ly+3.6,'Luces y contactos · Lights and outlets',fontsize=5.8,weight='bold',color=INK)
@@ -170,7 +170,7 @@ for x in (-46.6,46.6): cx_.scatter([x],[3.5],s=22,marker='v',c=AMBER,edgecolors=
 cx_.add_patch(mpatches.Circle((-55,0),4,fc='#cfe3f3',ec=INK,lw=.8)); cx_.scatter([-55],[-5.5],s=16,marker='D',c='#cfe3f3',edgecolors=WATER,linewidths=.8,zorder=8)
 cx_.add_patch(MRect((-46.9,-8),1.8,1.8,fc='white',ec=POW,lw=1.2,zorder=9)); cx_.text(-48.5,-9.5,'SP-2',fontsize=5.4,weight='bold',color=POW,ha='right',va='top')
 cx_.text(XS+12,-RE-3,'nada eléctrico dentro de las bodegas de alfalfa\nnothing electrical inside the alfalfa bays',fontsize=4.9,ha='center',va='top',color='#b5602e')
-cx_.text(-HL+32,HD+1.2,'corredor 12 ft · corridor',fontsize=5.2,ha='center',color='#6a655a'); cx_.annotate('',xy=(46,21.5),xytext=(30,21.5),arrowprops=dict(arrowstyle='-|>',lw=.6)); cx_.text(38,22.5,'NE · establo',fontsize=4.8,ha='center',va='bottom')
+cx_.text(-HL+32,HD+1.2,'corredor 3.7 m (12 ft) · corridor',fontsize=5.2,ha='center',color='#6a655a'); cx_.annotate('',xy=(46,21.5),xytext=(30,21.5),arrowprops=dict(arrowstyle='-|>',lw=.6)); cx_.text(38,22.5,'NE · establo',fontsize=4.8,ha='center',va='bottom')
 
 # ---------------- roof plans: solar ----------------
 rx=fig.add_axes([0.252,0.302,0.258,0.228]); rx.set_aspect('equal'); rx.axis('off'); rx.set_xlim(-50,124); rx.set_ylim(-34,100)   # 4 Oct (Will): three roofs, all modelled panels shown
@@ -188,21 +188,21 @@ w0=-st_c*PANEL[0]/2
 panels(rx,w0,Y0+1.5,st_r,st_c,1,CS13); panels(rx,w0,Y0+44.5,st_r,st_c,-1,CS13)
 rx.add_patch(MRect((-38,Y0+18),76,10,fc='#f7f1e3',ec=INK,lw=.6)); rx.text(0,Y0+23,'claraboya abierta · open clerestory',fontsize=4.8,ha='center',va='center',color='#6a655a')
 p1x=w0+(st_c//2-2)*PANEL[0]; rx.add_patch(MRect((p1x,Y0+1.5),4*PANEL[0],4*PANEL[1]*CS13,fill=False,ec='#e8892c',lw=1.6))   # phase 1 outlined
-rx.text(50,Y0+40,'Establo · Stable',fontsize=6.4,weight='bold',va='center'); rx.text(50,Y0+34.5,'88 × 46 ft, 2 aguas · gable',fontsize=5.4,va='center')
+rx.text(50,Y0+40,'Establo · Stable',fontsize=6.4,weight='bold',va='center'); rx.text(50,Y0+34.5,'26.8 × 14.0 m (88 × 46 ft), 2 aguas · gable',fontsize=5.4,va='center')
 rx.text(50,Y0+29,f'2 × {st_r}×{st_c} = {2*N_ST} paneles · panels',fontsize=5.0,va='center')
 rx.text(50,Y0+15,'norte arriba, sur abajo (cae al SSO)'+chr(10)+'north up, south below (falls SSW)',fontsize=5.0,va='center',color='#6a655a')
 # covered stalls, butterfly
 rx.add_patch(MRect((-46,0),92,36,fc='#cfcac0',ec=INK,lw=.8))
 s0=-sl_c*PANEL[0]/2; panels(rx,s0,1.5,sl_r,sl_c,1); panels(rx,s0,36-1.5,sl_r,sl_c,-1)
 rx.plot([-46,46],[18,18],color='#1f78c8',lw=.8); rx.text(0,18,'valle · valley',fontsize=4.8,ha='center',va='center',color='#1f78c8',bbox=dict(fc='#cfcac0',ec='none',pad=.6))
-rx.text(52,28,'Caballerizas · Covered stalls',fontsize=6.4,weight='bold',va='center'); rx.text(52,22.5,'92 × 36 ft, techo mariposa · butterfly',fontsize=5.4,va='center')
+rx.text(52,28,'Caballerizas · Covered stalls',fontsize=6.4,weight='bold',va='center'); rx.text(52,22.5,'28.0 × 11.0 m (92 × 36 ft), techo mariposa · butterfly',fontsize=5.4,va='center')
 rx.text(52,17,f'2 × {sl_r}×{sl_c} = {N_SL} paneles · panels',fontsize=5.0,va='center')
 # café gable over the trailer and both decks: 46 x 26 ft, ridge on the trailer's centre line
 CW,CD=46,25.6
 rx.add_patch(MRect((-CW/2,-32),CW,CD,fc='#cfcac0',ec=INK,lw=.8))
 c0x=-8*PANEL[0]/2; panels(rx,c0x,-32+.6,3,8,1,math.cos(math.radians(20))); panels(rx,c0x,-32+CD-.6,3,8,-1,math.cos(math.radians(20)))
 rx.plot([-CW/2,CW/2],[-32+CD/2]*2,color=INK,lw=.5)
-rx.text(30,-9,'Café · Café',fontsize=6.4,weight='bold',va='center'); rx.text(30,-14.5,'46 × 26 ft, 2 aguas · gable',fontsize=5.4,va='center')
+rx.text(30,-9,'Café · Café',fontsize=6.4,weight='bold',va='center'); rx.text(30,-14.5,'14.0 × 7.9 m (46 × 26 ft), 2 aguas · gable',fontsize=5.4,va='center')
 rx.text(30,-20,f'2 × 3×8 = {2*N_CF} paneles · panels',fontsize=5.0,va='center')
 # legend
 rx.add_patch(MRect((50,Y0-4),5,3.4,fc=PV,ec=PVF,lw=.3)); rx.text(57,Y0-2.3,'paneles modelados · panels as modelled',fontsize=5.0,va='center')
@@ -249,14 +249,14 @@ for k,key in enumerate(R_SLOTS):
     fig.text(r_[0]/2550+.001,1-(r_[3]+24)/1650,R_CAP[k][0],fontsize=7.6,weight='bold',color=INK); fig.text(r_[0]/2550+.001,1-(r_[3]+46)/1650,R_CAP[k][1],fontsize=6.8,color='#6a655a',style='italic')
 
 # ---------------- fixture schedule ----------------
-FX=[('L1','Pasillos · Aisles','2700 K · 1,500 lm · regulable · dimmable','bajo la cuerda, 11 ft · under the chord',f'escena atardecer 30 % · dusk scene 30 %',11),
-    ('L2','Caballerizas · Stalls','2700 K · 1,000 lm + ámbar · amber','enrejada, 10 ft · caged','apagador por caballeriza · switch each',18),
+FX=[('L1','Pasillos · Aisles','2700 K · 1,500 lm · regulable · dimmable','bajo la cuerda, 3.4 m (11 ft) · under the chord',f'escena atardecer 30 % · dusk scene 30 %',11),
+    ('L2','Caballerizas · Stalls','2700 K · 1,000 lm + ámbar · amber','enrejada, 3.0 m (10 ft) · caged','apagador por caballeriza · switch each',18),
     ('L3','Lavado, monturas, cocina, baño, ER · Wash, tack, kitchen, bath, ER','3000 K · IRC/CRI 90 · 2,500 lm','techo, mojado · ceiling, wet','apagador · switch',8),
-    ('L4','Puertas, losa · Doors, pad','2200 K · 600 lm · blindada · full cutoff','muro 9 ft · wall 9 ft','sensor · motion',6),
-    ('L5','Senderos, estacionamiento · Paths, parking','ámbar · amber · 150 lm','bolardo 24 in · bollard','reloj hasta 22:00 · timer to 22:00',11),
+    ('L4','Puertas, losa · Doors, pad','2200 K · 600 lm · blindada · full cutoff','muro 2.7 m · wall 9 ft','sensor · motion',6),
+    ('L5','Senderos, estacionamiento · Paths, parking','ámbar · amber · 150 lm','bolardo 61 cm (24 in) · bollard','reloj hasta 22:00 · timer to 22:00',11),
     ('L6','Puertas del sitio · Site gates','2200 K · 400 lm','poste de la puerta · gate post','sensor · motion',2),
-    ('L7','Pista oval · Arena',f'3000 K · 15,000 lm · lente plana · flat lens','postes 18 ft, 2 c/u · poles, 2 each','llave + 2 h · key + 2 h',2*NARENA),
-    ('L8','Corral redondo · Round pen','3000 K · 15,000 lm · lente plana · flat lens','postes 16 ft · poles','llave + 2 h · key + 2 h',NRP),
+    ('L7','Pista oval · Arena',f'3000 K · 15,000 lm · lente plana · flat lens','postes 5.5 m (18 ft), 2 c/u · poles, 2 each','llave + 2 h · key + 2 h',2*NARENA),
+    ('L8','Corral redondo · Round pen','3000 K · 15,000 lm · lente plana · flat lens','postes 4.9 m (16 ft) · poles','llave + 2 h · key + 2 h',NRP),
     ('L9','Gradas · Bleachers','ámbar · amber · 50 lm','escalón · step riser','reloj · timer',8)]
 fx0=0.405; fy0=0.298
 fig.text(fx0,fy0,'Cuadro de luminarias · Fixture schedule',fontsize=8.6,weight='bold',color=INK); fy0-=.016
@@ -277,8 +277,8 @@ px=0.718
 fig.text(px,0.955,'PLAN ELÉCTRICO Y DE ILUMINACIÓN',fontsize=15.5,weight='bold',color=INK)
 fig.text(px,0.932,'Electrical, lighting and solar plan · Centro Equino, Chichihuas',fontsize=11,color='#555')
 NOTES_E=[
- ('Power in, main disconnect','Acometida y desconexión','Power comes from the ranch’s main group of buildings (Andrés) in its own buried conduit in the main-road trench, beside the 2 in water main (a foot apart, warning tape above). Where it enters the site, at the north-east gate, a small stone pillar holds a sub-meter and the MAIN DISCONNECT (MD, about 100 A, 127/220 V, lockable): one handle turns off the whole centre. Size and spare capacity at the ranch to confirm.','La luz viene del grupo principal de edificios del rancho (Andrés) en su propio tubo enterrado en la zanja del camino principal, junto a la línea de agua de 2 in (a 30 cm, cinta de aviso arriba). Donde entra al sitio, en la puerta noreste, un pilar de piedra lleva un submedidor y la DESCONEXIÓN PRINCIPAL (MD, unos 100 A, 127/220 V, con candado): una palanca apaga todo el centro. Capacidad y calibre por confirmar con el rancho.'),
- ('Electrical room','Cuarto eléctrico','In the stable’s new south-west corner bay (12 × 6 ft, beside the bathroom; Will, 4 Oct), away from all hay, with its own outside door in the west gable: main panel (MP), room for the solar inverter and battery (option b, note 5), C1’s pump control, the timers. Beside its door a second shut-off and the solar rapid-shutdown switch for the firefighters. It feeds the stable, SP-2 at the covered stalls and SP-3 at the bleachers.','En la nueva crujía suroeste del establo (12 × 6 ft, junto al baño; Will, 4 oct), lejos de toda la paja, con su propia puerta exterior en el hastial oeste: tablero principal (MP), lugar para el inversor y la batería solar (opción b, nota 5), control de la bomba de C1, los relojes. Junto a su puerta, una segunda desconexión y el paro rápido solar para los bomberos. Alimenta al establo, el SP-2 de las caballerizas y el SP-3 de las gradas.'),
+ ('Power in, main disconnect','Acometida y desconexión','Power comes from the ranch’s main group of buildings (Andrés) in its own buried conduit in the main-road trench, beside the 2 in water main (a foot apart, warning tape above). Where it enters the site, at the north-east gate, a small stone pillar holds a sub-meter and the MAIN DISCONNECT (MD, about 100 A, 127/220 V, lockable): one handle turns off the whole centre. Size and spare capacity at the ranch to confirm.','La luz viene del grupo principal de edificios del rancho (Andrés) en su propio tubo enterrado en la zanja del camino principal, junto a la línea de agua de 50 mm (a 30 cm, cinta de aviso arriba). Donde entra al sitio, en la puerta noreste, un pilar de piedra lleva un submedidor y la DESCONEXIÓN PRINCIPAL (MD, unos 100 A, 127/220 V, con candado): una palanca apaga todo el centro. Capacidad y calibre por confirmar con el rancho.'),
+ ('Electrical room','Cuarto eléctrico','In the stable’s new south-west corner bay (12 × 6 ft, beside the bathroom; Will, 4 Oct), away from all hay, with its own outside door in the west gable: main panel (MP), room for the solar inverter and battery (option b, note 5), C1’s pump control, the timers. Beside its door a second shut-off and the solar rapid-shutdown switch for the firefighters. It feeds the stable, SP-2 at the covered stalls and SP-3 at the bleachers.','En la nueva crujía suroeste del establo (3.7 × 1.8 m, junto al baño; Will, 4 oct), lejos de toda la paja, con su propia puerta exterior en el hastial oeste: tablero principal (MP), lugar para el inversor y la batería solar (opción b, nota 5), control de la bomba de C1, los relojes. Junto a su puerta, una segunda desconexión y el paro rápido solar para los bomberos. Alimenta al establo, el SP-2 de las caballerizas y el SP-3 de las gradas.'),
  ('Both stables','Los dos establos','One caged light in every stall on its own switch, with an amber setting for night checks that doesn’t blind the horses; dimmable lights along both aisles; work lights in wash and tack; a GFCI outlet in a steel box at each stall front, aisle side, 5 ft up, for fans and clippers. Wash and bathroom: GFCI outlets and the water heater; tack and feed: four outlets and the fridge; kitchen: counter outlets, induction top and fridge. All wiring in metal conduit out of reach of teeth; no extension cords. At the covered stalls, nothing electrical inside the alfalfa bays.','Una luz enrejada en cada caballeriza con su apagador y un modo ámbar para las rondas nocturnas que no deslumbra a los caballos; luces regulables en los dos pasillos; luces de trabajo en lavado y monturas; un contacto GFCI en caja de acero en cada frente, lado pasillo, a 1.5 m, para ventiladores y rasuradoras. Lavado y baño: contactos GFCI y calentador; monturas y alimento: cuatro contactos y el refri; cocina: contactos en la barra, parrilla de inducción y refri. Todo el cableado en tubo metálico fuera del alcance de los dientes; sin extensiones. En las caballerizas techadas, nada eléctrico dentro de las bodegas de alfalfa.'),
  ('Site lighting','Luz del sitio',f'Roads and the riding track stay dark (reflectors on fence posts). Knee-high amber bollards along the walking path and the parking edge; a motion light on the north-east and east gate posts. Arena: {NARENA} poles with two flat-lens heads each, round pen: {NRP}; aimed in with back shields, on a key switch at the gate that turns them off after 2 hours. Amber step lights on the bleachers; a 50 A pedestal for the café trailer. No light on trees, walls or water.',f'Los caminos y la pista de paseo quedan oscuros (reflejantes en los postes). Bolardos ámbar a la rodilla en el sendero y la orilla del estacionamiento; luz con sensor en los postes de las puertas noreste y este. Pista oval: {NARENA} postes con dos cabezas de lente plana; corral redondo: {NRP}; apuntados hacia adentro con pantalla trasera, con llave en la puerta y apagado a las 2 horas. Luces ámbar en los escalones de las gradas; un pedestal de 50 A para el café. Sin luz sobre árboles, muros o agua.'),
  ('Solar on the roofs','Solar en los techos',f'The stable’s south half (SSW, 13°) is the best plane. Full, the five roof planes (stable, covered stalls and café) hold {N_ST*2+N_SL+2*N_CF} panels, about {POT_KW:.0f} kWp and {POT_MWH:.0f} MWh a year, some {POT_MWH*1000/YEAR:.0f} times what the centre uses. Phase 1: {PH1} all-black panels ({PH1_KW:.1f} kWp) over the horses cover the year. The ranch already has a grid-tied system, so the ranch decides: (a) tie in through the ranch feed, simplest; or (b) the centre’s own hybrid inverter and a 15 kWh battery in the electrical room, for outages. The panels also shade the dark roof, with air under them: a cooler stable in summer. Frames checked for about 3 lb/ft².',f'La mitad sur del establo (SSO, 13°) es el mejor plano. Completos, los cinco planos (establo, caballerizas y café) llevan {N_ST*2+N_SL+2*N_CF} paneles, unos {POT_KW:.0f} kWp y {POT_MWH:.0f} MWh al año, unas {POT_MWH*1000/YEAR:.0f} veces lo que usa el centro. Fase 1: {PH1} paneles negros ({PH1_KW:.1f} kWp) sobre los caballos cubren el año. El rancho ya tiene un sistema interconectado, así que el rancho decide: (a) sumarlos por la alimentación del rancho, lo más sencillo; o (b) un inversor híbrido propio y una batería de 15 kWh en el cuarto eléctrico, para los apagones. Los paneles además dan sombra al techo oscuro, con aire por debajo: un establo más fresco en verano. Revisar estructuras para unos 15 kg/m².'),

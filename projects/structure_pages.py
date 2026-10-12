@@ -38,16 +38,16 @@ def portal_page():
         y_ = yy if yy else .6
         ax.add_patch(matplotlib.patches.Circle((y_, rz(y_) + off), PD / 2, fc=PIPE, ec=INK, lw=.5, zorder=7))  # 8 in pipe purlins
     ax.plot([-22.3, 0, 22.3], [rz(22.3) + off + PD / 2 + .1, 17 + off + PD / 2 + .1, rz(22.3) + off + PD / 2 + .1], color='#5d95c2', lw=3, zorder=8)   # roof sheet
-    _dim(ax, (-20, -10.3), (20, -10.3), '40 ft (12.2 m) a ejes · on centres', off=(0, -.6))
-    _dim(ax, (-22, 20), (-20, 20), '2 ft', off=(0, .7), fs=6.5)
-    _dim(ax, (24.5, 0), (24.5, 12), '12 ft', off=(1.3, 0)); _dim(ax, (24.5, 12), (24.5, 17), '5 ft', off=(1.3, 0))
+    _dim(ax, (-20, -10.3), (20, -10.3), '12.2 m (40 ft) a ejes · on centres', off=(0, -.6))
+    _dim(ax, (-22, 20), (-20, 20), '61 cm (2 ft)', off=(0, .7), fs=6.5)
+    _dim(ax, (24.5, 0), (24.5, 12), '3.7 m (12 ft)', off=(1.3, 0)); _dim(ax, (24.5, 12), (24.5, 17), '1.5 m (5 ft)', off=(1.3, 0))
     ax.text(0, 20.6, 'Corte por un marco · Section through a frame', ha='center', fontsize=9.5, weight='bold')
-    ax.text(-12, 8.2, 'columna tubo 12 in', fontsize=6.5); ax.text(-12, 7.3, '12 in pipe column', fontsize=6.5, style='italic', color=MUTED)
-    ax.text(-15.5, 18.9, 'largueros tubo 8 in · 8 in pipe purlins', fontsize=6.5)
+    ax.text(-12, 8.2, 'columna tubo 300 mm', fontsize=6.5); ax.text(-12, 7.3, '12 in pipe column', fontsize=6.5, style='italic', color=MUTED)
+    ax.text(-15.5, 18.9, 'largueros tubo 200 mm · 8 in pipe purlins', fontsize=6.5)
     ax.text(-18.5, 10.3, 'cartela · haunch', fontsize=6, color='white', zorder=8)
     ax.text(-17.3, 2, 'piedra', fontsize=6.3); ax.text(-17.3, 6.5, 'varas', fontsize=6.3, color=STICK)
     ax.text(0, -1.5, 'trabe de amarre · tie beam', fontsize=6.5, ha='center', zorder=8)
-    ax.text(20, -9.9, 'pila Ø 36 in', fontsize=6.5, ha='center')
+    ax.text(20, -9.9, 'pila Ø 91 cm', fontsize=6.5, ha='center')
     # ---------- 2 gable end: the big entry, frame exposed ----------
     ax3 = fig.add_axes([0.44, 0.47, 0.22, 0.40]); ax3.set_aspect('equal'); ax3.axis('off'); ax3.set_xlim(-24, 24); ax3.set_ylim(-3, 21)
     ax3.plot([-24, 24], [0, 0], color=INK, lw=1)
@@ -66,7 +66,7 @@ def portal_page():
             if xb - xa > .6: _wavy(ax3, xa, xb, yy, seed=k_ + 30 * (sx + 2), lw=1.2)
     for sx in (-1, 1): _pipe_seg(ax3, (sx * 20, 0), (sx * 20, 12)); _pipe_seg(ax3, (sx * 22, rz(22)), (0, 17))
     ax3.plot([-22.3, 0, 22.3], [rz(22.3) + 1.4, 18.4, rz(22.3) + 1.4], color='#5d95c2', lw=3)
-    _dim(ax3, (-7, -1.4), (7, -1.4), '14 ft', off=(0, -.8), fs=7)
+    _dim(ax3, (-7, -1.4), (7, -1.4), '4.3 m (14 ft)', off=(0, -.8), fs=7)
     ax3.text(0, 20.3, 'Extremo de acceso · Gable entry', ha='center', fontsize=9.5, weight='bold')
     ax3.text(0, 8, 'entrada abierta\nopen entry', ha='center', va='center', fontsize=7, color=MUTED)
     # ---------- 3 long wall elevation ----------
@@ -85,25 +85,25 @@ def portal_page():
     _pipe_seg(ax2, (-36.5, 11.8), (36.5, 11.8), d=PD)                                  # 8 in pipe eave beam
     ax2.plot([-37, 37], [12.9, 12.9], color='#5d95c2', lw=3)
     ax2.add_patch(Rt((-30, 13.6), 60, 2.5, fc='#e8f0f4', ec=INK, lw=.6, zorder=9)); ax2.plot([-30.8, 30.8], [16.3, 16.3], color='#4a4f55', lw=3, zorder=9)   # clerestory seen from the side (27 Sep)
-    for a_, b_ in zip(cols[:-1], cols[1:]): _dim(ax2, (a_, -2.6), (b_, -2.6), '24 ft', off=(0, -.7))
-    ax2.text(0, 14.6, 'Muro lateral · Long side wall (norte · north, 72 ft)', ha='center', fontsize=9.5, weight='bold')
-    ax2.text(-24, 2.0, 'piedra 4.5 ft · rock', ha='center', fontsize=6.5, zorder=9); ax2.text(-24, 9.7, 'varas de tomate · tomato stakes', ha='center', fontsize=6.5, color='white', zorder=9, bbox=dict(fc=STICK, ec='none', pad=1))
-    ax2.text(24, 10.4, 'viga de alero tubo 8 in · 8 in pipe eave beam', ha='center', fontsize=6.3, color='white', zorder=9, bbox=dict(fc='#4a4a4a', ec='none', pad=1))
+    for a_, b_ in zip(cols[:-1], cols[1:]): _dim(ax2, (a_, -2.6), (b_, -2.6), '7.3 m (24 ft)', off=(0, -.7))
+    ax2.text(0, 14.6, 'Muro lateral · Long side wall (norte · north) · 21.9 m · 72 ft', ha='center', fontsize=9.5, weight='bold')
+    ax2.text(-24, 2.0, 'piedra 1.4 m · rock', ha='center', fontsize=6.5, zorder=9); ax2.text(-24, 9.7, 'varas de tomate · tomato stakes', ha='center', fontsize=6.5, color='white', zorder=9, bbox=dict(fc=STICK, ec='none', pad=1))
+    ax2.text(24, 10.4, 'viga de alero tubo 200 mm · 8 in pipe eave beam', ha='center', fontsize=6.3, color='white', zorder=9, bbox=dict(fc='#4a4a4a', ec='none', pad=1))
     # ---------- notes ----------
-    rows = [('Marcos · Frames', '4 marcos rígidos, uno cada 24 ft (los dos extremos quedan a la vista en las entradas): 2 columnas y 2 vigas de tubo de 12 in, soldadas en la rodilla y atornilladas en la cumbrera; las vigas siguen 2 ft afuera para el alero', '4 rigid frames at 24 ft (the two end frames exposed at the entries): two 12 in pipe columns and two pipe rafters, welded at the knees, bolted at the ridge; rafters run 2 ft out for the overhang'),
-            ('Trabajo del tubo · Pipe use', 'carga máx. 68 % (cédula 40) · flecha en cumbrera ≈ ⅔ in', 'worst case 68% of capacity (Sch 40) · ridge deflection ≈ ⅔ in'),
-            ('Largueros y alero · Purlins, eave', 'tubo de 8 in cédula 40 a cada ≈ 5 ft, claro de 24 ft: 38–49 % y ≈ ½ in de flecha. El tubo de 6 in resiste pero rebota demasiado', '8 in Sch 40 pipe at about 5 ft, 24 ft span: 38–49% and ≈ ½ in sag. 6 in pipe is strong enough but too bouncy'),
-            ('Cimentación · Foundation', 'pila Ø 36 in × 9 ft por columna, trabe de amarre bajo el pasillo, trabe de liga perimetral bajo la piedra', '36 in × 9 ft pier per column, tie beam under the aisle, perimeter grade beam under the rock')]
+    rows = [('Marcos · Frames', '4 marcos rígidos, uno cada 7.3 m (los dos extremos quedan a la vista en las entradas): 2 columnas y 2 vigas de tubo de 300 mm, soldadas en la rodilla y atornilladas en la cumbrera; las vigas siguen 61 cm afuera para el alero', '4 rigid frames at 24 ft (the two end frames exposed at the entries): two 12 in pipe columns and two pipe rafters, welded at the knees, bolted at the ridge; rafters run 2 ft out for the overhang'),
+            ('Trabajo del tubo · Pipe use', 'carga máx. 68 % (cédula 40) · flecha en cumbrera ≈ 1.7 cm', 'worst case 68% of capacity (Sch 40) · ridge deflection ≈ ⅔ in'),
+            ('Largueros y alero · Purlins, eave', 'tubo de 200 mm cédula 40 a cada ≈ 1.5 m, claro de 7.3 m: 38–49 % y ≈ 1.3 cm de flecha. El tubo de 150 mm resiste pero rebota demasiado', '8 in Sch 40 pipe at about 5 ft, 24 ft span: 38–49% and ≈ ½ in sag. 6 in pipe is strong enough but too bouncy'),
+            ('Cimentación · Foundation', 'pila Ø 91 cm × 2.7 m por columna, trabe de amarre bajo el pasillo, trabe de liga perimetral bajo la piedra', '36 in × 9 ft pier per column, tie beam under the aisle, perimeter grade beam under the rock')]
     y = 0.875
     for a, b_, c in rows:
         fig.text(0.68, y, a, fontsize=9.3, weight='bold', color=INK); y -= .019
         y = para(fig, 0.68, y, b_, c, w=70, fs=7.2)
     fig.text(0.68, y, 'Por etapas · In stages', fontsize=9.3, weight='bold', color=INK); y -= .019
     for es, en in (('1 · Marcos, largueros y techo: el establo ya funciona con frentes de caballeriza de tubo. Las pilas se diseñan para sostener el techo SIN la piedra.', '1 · Frames, purlins and roof: the stable works with pipe stall fronts. Piers are sized to hold the roof down WITHOUT the rock.'),
-                   ('2 · Piedra a 4.5 ft en todo el perímetro, sobre la trabe de liga, con una cadena de concreto arriba y varillas de amarre a las columnas.', '2 · Rock to 4.5 ft all round on the grade beam, with a concrete cap on top and tie rods to the columns.'),
-                   ('3 · Varas de tomate horizontales, sueltas como nido de pájaro, sobre verticales de tubo de 2 in cada 4 ft, fijas a la cadena y a la viga de alero.', '3 · Horizontal tomato stakes, loose like a bird’s nest, on 2 in pipe verticals every 4 ft, fixed to the cap and the eave beam.')):
+                   ('2 · Piedra a 1.4 m en todo el perímetro, sobre la trabe de liga, con una cadena de concreto arriba y varillas de amarre a las columnas.', '2 · Rock to 4.5 ft all round on the grade beam, with a concrete cap on top and tie rods to the columns.'),
+                   ('3 · Varas de tomate horizontales, sueltas como nido de pájaro, sobre verticales de tubo de 50 mm cada 1.2 m, fijas a la cadena y a la viga de alero.', '3 · Horizontal tomato stakes, loose like a bird’s nest, on 2 in pipe verticals every 4 ft, fixed to the cap and the eave beam.')):
         y = para(fig, 0.68, y, es, en, w=70, fs=7.0)
-    y = para(fig, 0.68, y, 'Sismo: con la piedra sólo a 4.5 ft ya no hay fachadas altas de piedra; el muro bajo lleva castillos de varilla cada ~8 ft y la cadena arriba.',
+    y = para(fig, 0.68, y, 'Sismo: con la piedra sólo a 1.4 m ya no hay fachadas altas de piedra; el muro bajo lleva castillos de varilla cada ~2.4 m y la cadena arriba.',
              'Earthquakes: with rock only to 4.5 ft there are no tall stone facades any more; the low wall gets rebar cores every ~8 ft and the cap on top.', w=70, fs=7.0)
     fig.text(0.68, 0.1, 'Cálculo preliminar de viabilidad, no es diseño estructural.', fontsize=8.5, weight='bold', color=CLAY)
     fig.text(0.68, 0.085, 'Preliminary feasibility check, not a structural design.', fontsize=8.5, color=CLAY, style='italic')
@@ -124,7 +124,7 @@ def base_page():
         for sy in (-1, 1):
             ax.add_patch(Rt((sx * 8 - 1.75, sy * 8 - 1.75), 3.5, 3.5, fc='#c8cdd0', ec=INK, lw=.6))
             ax.add_patch(matplotlib.patches.Circle((sx * 8, sy * 8), 1.03, fc='white', ec=INK, lw=.7)); ax.add_patch(matplotlib.patches.Circle((sx * 8, sy * 8), .625, fc=INK))
-    _dim(ax, (-11, -13.5), (11, -13.5), '22 in', off=(0, -.9)); _dim(ax, (-8, 13.2), (8, 13.2), '16 in', off=(0, .9)); _dim(ax, (13.5, -11), (13.5, 11), '22 in', off=(1.3, 0))
+    _dim(ax, (-11, -13.5), (11, -13.5), '559 mm (22 in)', off=(0, -.9)); _dim(ax, (-8, 13.2), (8, 13.2), '406 mm (16 in)', off=(0, .9)); _dim(ax, (13.5, -11), (13.5, 11), '559 mm\n(22 in)', off=(1.3, 0))
     ax.text(0, 16.2, 'Planta · Plan', ha='center', fontsize=9.5, weight='bold')
     # section
     ax2 = fig.add_axes([0.31, 0.40, 0.30, 0.46]); ax2.set_aspect('equal'); ax2.axis('off'); ax2.set_xlim(-22, 22); ax2.set_ylim(-40, 26)
@@ -140,23 +140,23 @@ def base_page():
         ax2.add_patch(Rt((x - 1.1, 1.0), 2.2, .9, fc='#555')); ax2.add_patch(Rt((x - 1.75, 3.25), 3.5, .5, fc='#c8cdd0', ec=INK, lw=.5)); ax2.add_patch(Rt((x - 1.1, 3.75), 2.2, .9, fc='#555'))
     for y in (-34, -6): ax2.plot([-16, 16], [y, y], color='#8c3b1f', lw=1.2)
     for x in (-15, -8, 0, 8, 15): ax2.plot([x, x], [-36, -2], color='#8c3b1f', lw=.8)
-    _dim(ax2, (19.5, -30), (19.5, 2), '30 in', off=(1.8, 0)); _dim(ax2, (-18, -39.3), (18, -39.3), 'Ø 36 in', off=(0, -1.3)); _dim(ax2, (-20, 0), (-20, 2), '2 in', off=(-1.8, 0), fs=6.5)
+    _dim(ax2, (19.5, -30), (19.5, 2), '76 cm\n(30 in)', off=(1.8, 0)); _dim(ax2, (-18, -39.3), (18, -39.3), 'Ø 91 cm (36 in)', off=(0, -1.3)); _dim(ax2, (-20, 0), (-20, 2), '5 cm\n(2 in)', off=(-1.8, 0), fs=6.5)
     ax2.text(0, 24.3, 'Corte · Section', ha='center', fontsize=9.5, weight='bold')
-    for txt, xy in (('tubo 12¾ × 0.406 in', (7, 18)), ('cartela ¾ in', (11.5, 9)), ('placa 22×22×1¼', (12, 2.6)), ('grout 2 in', (12, .5)), ('tuerca niveladora', (12, -1.3)), ('ancla con cabeza', (10, -18)), ('placa + tuerca', (10, -30.5))):
+    for txt, xy in (('tubo 324 × 10.3 mm', (7, 18)), ('cartela 19 mm', (11.5, 9)), ('placa 559×559×32 mm', (12, 2.6)), ('grout 5 cm', (12, .5)), ('tuerca niveladora', (12, -1.3)), ('ancla con cabeza', (10, -18)), ('placa + tuerca', (10, -30.5))):
         ax2.text(*xy, txt, fontsize=6.5)
     # bolt schedule + steps
-    rows = [('Anclas · Anchor rods', '4 × 1¼ in ASTM F1554 grado 55, con cabeza (tuerca y placa al fondo), 30 in empotradas, 4 in de rosca arriba', '4 × 1¼ in F1554 Gr 55, headed (nut + plate at the bottom), 30 in embedment, 4 in of thread above'),
+    rows = [('Anclas · Anchor rods', '4 × 32 mm ASTM F1554 grado 55, con cabeza (tuerca y placa al fondo), 76 cm empotradas, 10 cm de rosca arriba', '4 × 1¼ in F1554 Gr 55, headed (nut + plate at the bottom), 30 in embedment, 4 in of thread above'),
             ('NO pernos en J · NO J-bolts', 'el gancho se endereza y se sale con la succión del viento', 'the hook straightens and pulls out under wind uplift'),
-            ('Placa base · Base plate', '22 × 22 × 1¼ in A36, agujeros de 2 1/16 in (holgura para ajuste), 4 cartelas ¾ in', '22 × 22 × 1¼ in A36, 2-1/16 in holes (oversize for fit-up), 4 gussets ¾ in'),
-            ('Rondanas · Plate washers', '3½ × 3½ × ½ in con agujero estándar, soldadas a la placa después de nivelar', '3½ × 3½ × ½ in, standard hole, welded to the plate after levelling'),
-            ('Soldadura · Welds', 'tubo a placa: filete de ½ in todo alrededor; cartelas: filete de ⅜ in, electrodo E7018, precalentar si es tubo de pozo', 'pipe to plate: ½ in fillet all round; gussets ⅜ in, E7018, preheat if oil-field casing'),
-            ('Nivelación · Levelling', 'tuercas niveladoras, luego grout sin contracción de 2 in bajo la placa', 'levelling nuts, then 2 in non-shrink grout under the plate'),
-            ('Momento en la base · Base moment', '≈ 44 kip-ft; tensión por ancla ≈ 15 kip de 27 kip admisibles', '≈ 44 kip-ft; tension per rod ≈ 15 kip of 27 kip allowable')]
+            ('Placa base · Base plate', '559 × 559 × 32 mm A36, agujeros de 52 mm (holgura para ajuste), 4 cartelas 19 mm', '22 × 22 × 1¼ in A36, 2-1/16 in holes (oversize for fit-up), 4 gussets ¾ in'),
+            ('Rondanas · Plate washers', '89 × 89 × 13 mm con agujero estándar, soldadas a la placa después de nivelar', '3½ × 3½ × ½ in, standard hole, welded to the plate after levelling'),
+            ('Soldadura · Welds', 'tubo a placa: filete de 13 mm todo alrededor; cartelas: filete de 10 mm, electrodo E7018, precalentar si es tubo de pozo', 'pipe to plate: ½ in fillet all round; gussets ⅜ in, E7018, preheat if oil-field casing'),
+            ('Nivelación · Levelling', 'tuercas niveladoras, luego grout sin contracción de 5 cm bajo la placa', 'levelling nuts, then 2 in non-shrink grout under the plate'),
+            ('Momento en la base · Base moment', '≈ 6.1 t·m; tensión por ancla ≈ 6.8 t de 12.2 t admisibles', '≈ 44 kip-ft; tension per rod ≈ 15 kip of 27 kip allowable')]
     y = 0.86
     for a, b_, c in rows:
         fig.text(0.64, y, a, fontsize=9.2, weight='bold', color=CLAY if 'J-' in a else INK); y -= .019
         y = para(fig, 0.64, y, b_, c, w=62, fs=7.9)
-    steps = [('1', 'Plantilla de triplay de 22 × 22 in con los 4 agujeros; colgar las anclas de la plantilla antes de colar.', 'A 22 × 22 in plywood template with the 4 holes; hang the rods from it before the pour.'),
+    steps = [('1', 'Plantilla de triplay de 56 × 56 cm con los 4 agujeros; colgar las anclas de la plantilla antes de colar.', 'A 22 × 22 in plywood template with the 4 holes; hang the rods from it before the pour.'),
              ('2', 'Colar la pila y la trabe juntas; revisar ejes y nivel de las anclas con cinta y nivel láser.', 'Pour the pier and beam together; check rod positions and levels with tape and laser.'),
              ('3', 'Soldar la placa al tubo en el taller, a escuadra; levantar el marco completo y asentarlo en las tuercas.', 'Weld the plate to the pipe in the shop, square; lift the whole frame and set it on the nuts.')]
     ax4 = fig.add_axes([0.02, 0.08, 0.59, 0.28]); ax4.axis('off')
@@ -178,22 +178,22 @@ def metal_page():
     for t_, x in hdr: fig.text(x, y, t_, fontsize=9, weight='bold', color=INK)
     fig.add_artist(matplotlib.lines.Line2D([0.02, 0.98], [y - .008, y - .008], color=INK, lw=.8))
     items = [
-        ('Columnas · Columns', 'tubo 12¾ × 0.406 in (o más grueso), 12 ft', '8', 'de los tubos de 20 ft de Andrés; sobrante 8 ft · from Andrés\' 20 ft tubes; 8 ft offcut'),
-        ('Vigas del marco · Rafters', 'tubo 12¾ in, 22.7 ft a lo largo de la pendiente con el alero de 2 ft', '8', '20 ft + 2.7 ft del sobrante, empalme soldado con camisa · 20 ft + 2.7 ft offcut, sleeved weld splice'),
-        ('Rodillas · Knee haunches', 'placa ¾ in, cartela triangular 5 × 3 ft', '8', 'donde el momento es mayor · where the moment peaks'),
-        ('Cumbrera · Ridge joint', 'dos placas ¾ in atornilladas, 4 × 1 in A325', '4', 'permite armar el marco en dos mitades · lets each frame go up in halves'),
-        ('Placas base · Base plates', '22 × 22 × 1¼ in + 4 cartelas', '8', 'ver detalle · see detail'),
-        ('Anclas · Anchor rods', '1¼ in F1554 gr. 55 con cabeza, 34 in', '32', 'sin pernos en J · no J-bolts'),
-        ('Viga de alero · Eave beams', 'tubo 8⅝ × 0.322 in (8 in céd. 40), 24 ft', '6', 'madera de Andrés después, si las medidas dan · Andrés\' timber later if sizes work'),
-        ('Largueros · Purlins', 'tubo 8 in céd. 40 a cada ≈ 5 ft, 24 ft', '30', '10 líneas × 3 crujías, ≈ 690 lb c/u · 10 lines × 3 bays, ≈ 690 lb each'),
-        ('Contravientos · Bracing', 'varilla ¾ in en X con tensor', '4 X', 'crujías extremas, techo y muros · end bays, roof and walls'),
-        ('Lámina · Roofing', 'Galvalume cal. 26 gris oscuro, 72 × 45.4 ft ≈ 3,270 ft² (304 m²)', '1 lote', 'tornillos autotaladrantes con rondana de neopreno · self-drilling screws, neoprene washers'),
-        ('Claraboya · Clerestory', 'marco de acero, vidrio o policarbonato de 2½ ft a cada lado, techo propio', '60 × 10 ft', 'sobre el pasillo, luz y ventilación de cumbrera · over the aisle, light and ridge ventilation'),
+        ('Columnas · Columns', 'tubo 324 × 10.3 mm (o más grueso), 3.7 m', '8', 'de los tubos de 6.1 m de Andrés; sobrante 2.4 m · from Andrés\' 20 ft tubes; 8 ft offcut'),
+        ('Vigas del marco · Rafters', 'tubo 324 mm, 6.9 m a lo largo de la pendiente con el alero de 61 cm', '8', '6.1 m + 82 cm del sobrante, empalme soldado con camisa · 20 ft + 2.7 ft offcut, sleeved weld splice'),
+        ('Rodillas · Knee haunches', 'placa 19 mm, cartela triangular 1.5 m × 91 cm', '8', 'donde el momento es mayor · where the moment peaks'),
+        ('Cumbrera · Ridge joint', 'dos placas 19 mm atornilladas, 4 × 25 mm A325', '4', 'permite armar el marco en dos mitades · lets each frame go up in halves'),
+        ('Placas base · Base plates', '559 × 559 × 32 mm + 4 cartelas', '8', 'ver detalle · see detail'),
+        ('Anclas · Anchor rods', '32 mm F1554 gr. 55 con cabeza, 86 cm', '32', 'sin pernos en J · no J-bolts'),
+        ('Viga de alero · Eave beams', 'tubo 219 × 8.2 mm (200 mm céd. 40), 7.3 m', '6', 'madera de Andrés después, si las medidas dan · Andrés\' timber later if sizes work'),
+        ('Largueros · Purlins', 'tubo 200 mm céd. 40 a cada ≈ 1.5 m, 7.3 m', '30', '10 líneas × 3 crujías, ≈ 313 kg c/u · 10 lines × 3 bays, ≈ 690 lb each'),
+        ('Contravientos · Bracing', 'varilla 19 mm en X con tensor', '4 X', 'crujías extremas, techo y muros · end bays, roof and walls'),
+        ('Lámina · Roofing', 'Galvalume cal. 26 gris oscuro, 21.9 × 13.8 m ≈ 304 m²', '1 lote', 'tornillos autotaladrantes con rondana de neopreno · self-drilling screws, neoprene washers'),
+        ('Claraboya · Clerestory', 'marco de acero, vidrio o policarbonato de 76 cm a cada lado, techo propio', '18.3 × 3.0 m (60 × 10 ft)', 'sobre el pasillo, luz y ventilación de cumbrera · over the aisle, light and ridge ventilation'),
         ('Remates · Trim', 'caballete, goteros, remates de hastial', '1 lote', 'mismo color · matching colour'),
-        ('Canal y bajada · Gutter', 'canal en ambos lados largos → bebedero de piedra', '2 × 72 ft', 'el techo da ≈ 7,500 L por cada 2.5 cm de lluvia · ≈ 2,000 gal per inch of rain'),
+        ('Canal y bajada · Gutter', 'canal en ambos lados largos → bebedero de piedra', '2 × 21.9 m (2 × 72 ft)', 'el techo da ≈ 7,500 L por cada 2.5 cm de lluvia · ≈ 2,000 gal per inch of rain'),
         ('Acabado · Finish', 'limpieza con chorro, primario rico en zinc, esmalte', '—', 'tubos, placas, varillas · pipes, plates, rods'),
-        ('Pilas · Piers', 'Ø 36 in × 9 ft, f\'c 3,000 psi, 8 varillas #6', '8', 'bajo cada columna · under each column'),
-        ('Trabes · Beams', 'de liga 24 × 24 in (perímetro) y de amarre bajo el pasillo', '≈ 385 ft', 'la piedra se apoya en la de liga · the rock sits on the grade beam'),
+        ('Pilas · Piers', 'Ø 91 cm × 2.7 m, f\'c 210 kg/cm², 8 varillas #6', '8', 'bajo cada columna · under each column'),
+        ('Trabes · Beams', 'de liga 61 × 61 cm (perímetro) y de amarre bajo el pasillo', '≈ 117.3 m (385 ft)', 'la piedra se apoya en la de liga · the rock sits on the grade beam'),
     ]
     y -= .03
     for a, b_, q_, n_ in items:
@@ -205,7 +205,7 @@ def metal_page():
         fig.add_artist(matplotlib.lines.Line2D([0.02, 0.98], [y + .014, y + .014], color='#ddd6c6', lw=.5))
     y -= .01
     fig.text(0.02, y, 'Tubos necesarios · Tubes needed:', fontsize=9, weight='bold', color=INK)
-    fig.text(0.19, y, '16 tubos de 12 in de 20 ft (8 columnas + 8 vigas); cada sobrante de 8 ft da 2.7 ft a una viga y deja 5 ft para postes. Más ≈ 865 ft de tubo de 8 in (44 tubos de 20 ft) para 10 líneas de largueros y 2 aleros.', fontsize=8.2, color=INK)
+    fig.text(0.19, y, '16 tubos de 300 mm de 6.1 m (8 columnas + 8 vigas); cada sobrante de 2.4 m da 82 cm a una viga y deja 1.5 m para postes. Más ≈ 263.7 m de tubo de 200 mm (44 tubos de 6.1 m) para 10 líneas de largueros y 2 aleros.', fontsize=8.2, color=INK)
     fig.text(0.19, y - .018, '16 × 20 ft 12 in tubes (8 columns + 8 rafters); each 8 ft offcut gives 2.7 ft to a rafter and leaves 5 ft for posts. Plus ≈ 865 ft of 8 in pipe (44 × 20 ft) for 10 purlin lines and 2 eave beams.', fontsize=8, color=MUTED, style='italic')
     fig.text(0.02, 0.1, 'Cantidades aproximadas para cotizar; confirmar con el ingeniero y el proveedor de la lámina.', fontsize=8.3, weight='bold', color=CLAY)
     fig.text(0.02, 0.085, 'Approximate quantities for pricing; confirm with the engineer and the roofing supplier.', fontsize=8.3, color=CLAY, style='italic')

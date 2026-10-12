@@ -60,7 +60,7 @@ for k,(key,lab) in enumerate(SEAS):
     pa.set_title(lab,fontsize=7.5,pad=4); pa.set_gid('skipzoom')
 _wr=fig.add_axes([0.012,0.068,0.672,0.232]); _wr.axis('off'); _wr.set_gid('windroses'); _wr.add_patch(matplotlib.patches.Rectangle((0,0),1,1,transform=_wr.transAxes,fc='none',ec='none'))   # 4 Oct (Will): the four roses enlarge as ONE graphic
 fig.text(0.02,0.282,'Rosas de viento por temporada · Seasonal wind roses',fontsize=8.6,weight='bold',color=INK)
-fig.text(0.02,0.268,'Horas por dirección (de donde viene el viento); azul claro < 8 mph, medio 8–16, oscuro ≥ 16. ERA5 2016–25 vía Open-Meteo · Hours by direction the wind comes from; light < 8 mph, mid 8–16, dark ≥ 16.',fontsize=5.4,color='#6a655a',style='italic')
+fig.text(0.02,0.268,'Horas por dirección (de donde viene el viento); azul claro < 13 km/h, medio 13–26, oscuro ≥ 26. ERA5 2016–25 vía Open-Meteo · Hours by direction the wind comes from; light < 8 mph, mid 8–16, dark ≥ 16.',fontsize=5.4,color='#6a655a',style='italic')
 # ---- sun path ----
 sp=fig.add_axes([0.725,0.072,0.255,0.15])
 for dec,col,lab in ((23.44,SUN,'21 jun'),(0,'#d9b65a','equinoccio'),(-23.44,'#b98a2a','21 dic')):

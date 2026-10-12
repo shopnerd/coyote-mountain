@@ -91,7 +91,7 @@ def north(ax,x,y,r=4):
     ax.text(x+vx*(r+2.2),y+vy*(r+2.2),'N',ha='center',va='center',fontsize=10,weight='bold',color=INK,zorder=20)
 def scalebar(ax,x,y):
     L=200/cf; ax.plot([x,x+L],[y,y],color=INK,lw=3,solid_capstyle='butt',zorder=20); ax.plot([x,x+L/2],[y,y],color='white',lw=1.4,zorder=21)
-    ax.text(x,y-1.4,'0',fontsize=7,ha='center'); ax.text(x+L,y-1.4,'200 ft · 61 m',fontsize=7,ha='center')
+    ax.text(x,y-1.4,'0',fontsize=7,ha='center'); ax.text(x+L,y-1.4,'61 m (200 ft)',fontsize=7,ha='center')
 def callout(ax,xy,n):
     ax.add_patch(matplotlib.patches.Circle(xy,2.2,facecolor='white',edgecolor='#b5602e',lw=1.6,zorder=22))
     ax.text(xy[0],xy[1],str(n),ha='center',va='center',fontsize=8.5,weight='bold',color='#b5602e',zorder=23)
