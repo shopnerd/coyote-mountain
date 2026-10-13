@@ -161,6 +161,9 @@ body.projector header,body.projector aside,body.projector .cmd,body.projector #p
 body.projector #app{grid-template-columns:1fr;grid-template-rows:1fr}
 body.projector main{background:#000;transform-origin:0 0}
 body.projector main::before{display:none}
+body.projector #u2head,body.projector #u2rail,body.projector #u2status,body.projector #u2park{display:none!important}   /* the newer rail and bars too: the projector throws the sheet alone */
+body.projector main{grid-row:1/-1!important;grid-column:1/-1!important}
+body.projector main>:not(#c):not(#scanPat){display:none!important}   /* nothing floats over the sand: no view switch, no layers button */
 .kst{position:fixed;z-index:70;width:22px;height:22px;margin:-11px 0 0 -11px;border:2px solid var(--accent);border-radius:50%;background:rgba(240,240,236,.85);cursor:move;display:none;touch-action:none}
 #aiPanel,#animPanel{position:absolute;z-index:40;right:14px;top:14px;width:min(52vw,760px);background:var(--paper);border:1px solid var(--accent);border-radius:3px;box-shadow:0 8px 28px rgba(0,0,0,.28);padding:8px}
 #aiPanel .aiTop,#animPanel .aiTop{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:11px;color:var(--ink2)}
@@ -358,13 +361,21 @@ html[data-depth="simple"] #png{grid-column:1/-1}
     <div class="params deep">
       <div class="seg" id="gridRow" style="padding:0;margin-bottom:6px"><button data-g="1" class="on">detail 1×</button><button data-g="2">detail 2×</button></div>
       <div class="p"><label>units</label><select id="unit"><option value="ft">imperial · ft, yd³, in</option><option value="m">metric · m, m³, mm</option></select></div>
-      <div class="seg" style="padding:0;margin-bottom:6px"><button id="sandBtn" style="flex:2" title="live sand: a depth camera over a sandbox feeds the ground here, ten times a second, through the little bridge script in the sandbox folder">sandbox · live</button><button id="sandProj" title="open the projector window: the plan view, full screen, with a four-corner keystone (press k there to adjust)">projector</button></div>
+      <div class="seg" style="padding:0;margin-bottom:6px"><button id="sandBtn" title="live sand: a depth camera over a sandbox feeds the ground here, ten times a second, through the little bridge script in the sandbox folder">sand · live</button><button id="scanBtn" title="scanned sand: the projector flashes stripes, one webcam reads how they bend over the sand, and the sand becomes the ground. no depth camera, no bridge">sand · scan</button><button id="sandProj" title="open the projector window: the plan view, full screen, with a four-corner keystone (press k there to adjust)">projector</button></div>
+      <div id="scanSec" style="display:none">
+        <div class="p"><label>camera</label><select id="scanCam"></select></div>
+        <video id="scanVid" muted playsinline style="width:100%;display:block;background:#000;border-radius:3px;margin-bottom:6px"></video>
+        <div class="seg" style="padding:0;margin-bottom:6px"><button id="scanFloor" title="step 1: smooth the sand flat (or lay a board), then press. the stripes on the flat floor are what every later scan is measured against">1 · flat floor</button><button id="scanHeight" title="step 2: set a block of known height on the flat floor, set its height below, then press. this teaches the scan how far the stripes move per millimetre">2 · block</button></div>
+        <div class="p" title="the height of the block for step 2: a book, a brick, anything flat-topped"><label>block height<output id="o_scanBlock">50 mm</output></label><input type="range" id="scanBlock" min="10" max="150" step="5" value="50"></div>
+        <button class="btn primary wide" id="scanGo" title="flash the stripes and turn the sand into the ground; five to ten seconds. keep hands out of the box">scan the sand</button>
+        <div class="desc" id="scanInfo" style="padding:6px 0 0"></div>
+      </div>
       <div id="sandSec" style="display:none">
         <div class="seg" id="sandModeRow" style="padding:0;margin-bottom:6px"><button data-sm="shape" class="on" title="the sand is the ground: contours, water and rain follow your hands">sand is the ground</button><button data-sm="match" title="the ground on screen becomes the design to build: ember means take sand away, grey means add sand">match the design</button></div>
         <div class="params" style="padding-top:0">
           <div class="p" title="the real width of the sand seen by the camera; the site width above is what it stands for"><label>box width<output id="o_boxW">1000 mm</output></label><input type="range" id="boxW" min="300" max="2500" step="50" value="1000"></div>
           <div class="p" title="multiply the sand heights: 1 is true to the box scale"><label>height gain<output id="o_sandGain">1×</output></label><input type="range" id="sandGain" min="0.25" max="4" step=".25" value="1"></div>
-          <div class="seg" style="padding:0"><button id="sandCal" title="flatten the sand, then press: that height becomes zero">calibrate floor</button><button id="sandFlipX" title="mirror left and right">flip x</button><button id="sandFlipY" title="mirror top and bottom">flip y</button></div>
+          <div class="seg" id="sandCamRow" style="padding:0"><button id="sandCal" title="flatten the sand, then press: that height becomes zero">calibrate floor</button><button id="sandFlipX" title="mirror left and right">flip x</button><button id="sandFlipY" title="mirror top and bottom">flip y</button></div>
         </div>
         <div class="desc" id="sandInfo" style="padding:0"></div>
       </div>
@@ -4508,10 +4519,10 @@ async function sandStart() {
   if (SAND.on) return; let info; try { info = await (await fetch(SAND.url + '/info', { cache: 'no-store' })).json(); } catch (_) { toast('no bridge at ' + SAND.url + ' · run: python sandbox/bridge.py'); return; }
   if (info.error) { toast(info.error); }
   SAND.w = info.w; SAND.h = info.h; SAND.on = true; SAND.floor = null; SAND.last = null; SAND.frames = 0; snapshot(); S.world = null; rawBase = null; S.coast = null; S.hasSea = S.seaClip = S.hasWater = false; waterMask = null; S.survey = null;
-  document.getElementById('sandSec').style.display = ''; document.getElementById('sandBtn').classList.add('on'); document.getElementById('sandBtn').textContent = 'sandbox · stop'; worldStatus('sandbox live · the sand is the ground');
+  document.getElementById('sandSec').style.display = ''; document.getElementById('sandBtn').classList.add('on'); document.getElementById('sandBtn').textContent = 'sand · stop'; worldStatus('sandbox live · the sand is the ground');
   SAND.timer = setInterval(sandTick, 1000 / Math.min(12, info.fps || 10)); sandTick();
 }
-function sandStop() { if (!SAND.on) return; SAND.on = false; clearInterval(SAND.timer); document.getElementById('sandSec').style.display = 'none'; document.getElementById('sandBtn').classList.remove('on'); document.getElementById('sandBtn').textContent = 'sandbox · live'; worldStatus('sandbox stopped · the last sand stays as the ground'); }
+function sandStop() { if (!SAND.on) return; SAND.on = false; clearInterval(SAND.timer); document.getElementById('sandSec').style.display = 'none'; document.getElementById('sandBtn').classList.remove('on'); document.getElementById('sandBtn').textContent = 'sand · live'; worldStatus('sandbox stopped · the last sand stays as the ground'); }
 async function sandTick() {
   if (!SAND.on || SAND.busy) return; SAND.busy = true;
   try { const r = await fetch(SAND.url + '/depth', { cache: 'no-store' }); if (!r.ok) { SAND.busy = false; return; } const d = new Uint16Array(await r.arrayBuffer()); if (d.length !== SAND.w * SAND.h) { SAND.busy = false; return; }
@@ -4529,14 +4540,14 @@ async function sandTick() {
     sandInfoText(`${SAND.w}×${SAND.h} depth frames · floor ${SAND.floor} mm · frame ${SAND.frames}${SAND.hand ? ' · hand' : ''}` + (SAND.mode === 'match' ? ' · ember: take sand away · grey: add sand' : '')); }
   catch (_) {} SAND.busy = false;
 }
-document.getElementById('sandBtn').onclick = () => SAND.on ? sandStop() : sandStart();
+document.getElementById('sandBtn').onclick = () => { if (SCAN.on) scanToggle(false); SAND.on ? sandStop() : sandStart(); };
 document.getElementById('sandCal').onclick = () => { SAND.floor = null; toast('floor recalibrated on the next frame: keep the sand flat for a moment'); };
 document.getElementById('sandFlipX').onclick = () => { SAND.flipX = !SAND.flipX; try { localStorage.setItem('coyote-sand', JSON.stringify({ flipX: SAND.flipX, flipY: SAND.flipY })); } catch (_) {} sandShare(); };
 document.getElementById('sandFlipY').onclick = () => { SAND.flipY = !SAND.flipY; try { localStorage.setItem('coyote-sand', JSON.stringify({ flipX: SAND.flipX, flipY: SAND.flipY })); } catch (_) {} sandShare(); };
 document.getElementById('sandModeRow').onclick = e => { const b = e.target.closest('button'); if (!b) return; SAND.mode = b.dataset.sm; b.parentElement.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
   if (SAND.mode === 'match') { SAND.design = z.slice(); base.set(SAND.design); S.showCF = true; cfUI(); toast('this ground is now the design: shape the sand until the wash goes clear'); } else { SAND.design = null; base.set(z); } S.terrainVer++; S.dirty = true; sandShare(); };
 document.getElementById('sandProj').onclick = () => { window.open('topo.html?projector=1', 'coyote-projector'); sandShare(); toast('projector window opened · drag it to the projector, press f for full screen, k to fit the corners to the box'); };
-if (sandBC) sandBC.onmessage = e => { if (!document.body.classList.contains('projector')) return; const m = e.data; SAND.mode = m.mode; SAND.floor = m.floor; SAND.flipX = m.flipX; SAND.flipY = m.flipY; SAND.design = m.design ? Float32Array.from(m.design) : null; document.getElementById('boxW').value = m.boxW; document.getElementById('sandGain').value = m.gain; if (m.siteW && m.siteW !== S.siteW) setSiteW(m.siteW, true); if (m.ivl !== undefined && m.ivl !== S.ivl) { const el = document.getElementById('interval'); el.value = m.ivl; el.dispatchEvent(new Event('input')); } if (SAND.design) { base.set(SAND.design); S.showCF = true; } };
+if (sandBC) sandBC.onmessage = e => { if (e.data && e.data.scan) { if (document.body.classList.contains('projector')) scanProjMsg(e.data); else if (e.data.scan === 'shown' && SCAN.wait.has(e.data.id)) SCAN.wait.get(e.data.id)(e.data); return; } if (!document.body.classList.contains('projector')) return; const m = e.data; SAND.mode = m.mode; SAND.floor = m.floor; SAND.flipX = m.flipX; SAND.flipY = m.flipY; SAND.design = m.design ? Float32Array.from(m.design) : null; document.getElementById('boxW').value = m.boxW; document.getElementById('sandGain').value = m.gain; if (m.siteW && m.siteW !== S.siteW) setSiteW(m.siteW, true); if (m.ivl !== undefined && m.ivl !== S.ivl) { const el = document.getElementById('interval'); el.value = m.ivl; el.dispatchEvent(new Event('input')); } if (SAND.design) { base.set(SAND.design); S.showCF = true; } };
 // the projector page: the sheet alone, full screen, warped to the four corners of the box
 function projectorBoot() {
   if (!new URLSearchParams(location.search).has('projector')) return; document.body.classList.add('projector'); document.title = 'coyote mountain · projector'; S.labels = false; setMode('plan'); resize();
@@ -4555,6 +4566,160 @@ function keystone(w, h, c) {              // css matrix3d that sends the element
   return `matrix3d(${n[0]},${n[3]},0,${n[6]},${n[1]},${n[4]},0,${n[7]},0,0,1,0,${n[2]},${n[5]},0,${n[8]})`;
 }
 projectorBoot();
+/* ---------- sandbox scan: the projector flashes stripes, one webcam reads how they bend, the sand becomes the ground ---------- */
+/* scan-core:start */
+const SCAN_P = 32;   // projector pixels per stripe period; the gray code counts half periods so a one-off read can't jump a whole period
+function scanPlan(w, h) {   // the pattern list for a projector surface w×h: four shifted sines then gray-code bits, across and then down
+  const P = SCAN_P, nx = Math.max(1, Math.ceil(Math.log2(w / (P / 2)))), ny = Math.max(1, Math.ceil(Math.log2(h / (P / 2)))), L = [];
+  for (const [ax, nb] of [['x', nx], ['y', ny]]) { for (let k = 0; k < 4; k++) L.push({ t: 'ph', ax, k }); for (let b = nb - 1; b >= 0; b--) L.push({ t: 'gc', ax, b }); }
+  return { w, h, P, nx, ny, L };
+}
+function scanValue(s, x, y) {   // brightness 0..1 of pattern s at projector point x,y
+  const u = s.ax === 'x' ? x : y;
+  if (s.t === 'ph') return .5 + .5 * Math.cos(2 * Math.PI * u / SCAN_P - s.k * Math.PI / 2);
+  const c = Math.floor(u / (SCAN_P / 2)); return ((c ^ (c >> 1)) >> s.b) & 1;
+}
+function scanDecode(F, plan, n, minMod) {   // camera frames in plan order → the projector point each camera pixel saw (NaN = unread)
+  const P = plan.P, X = new Float32Array(n), Y = new Float32Array(n);
+  const one = (off, nb, out) => { for (let q = 0; q < n; q++) {
+    const i0 = F[off][q], i1 = F[off + 1][q], i2 = F[off + 2][q], i3 = F[off + 3][q], A = (i0 + i1 + i2 + i3) / 4, s = i1 - i3, c = i0 - i2;
+    if (.5 * Math.sqrt(s * s + c * c) < minMod || Math.max(i0, i1, i2, i3) >= 254) { out[q] = NaN; continue; }   // too little stripe contrast, or burnt out
+    let ph = Math.atan2(s, c); if (ph < 0) ph += 2 * Math.PI; const xf = ph / (2 * Math.PI) * P;
+    let g = 0; for (let b = 0; b < nb; b++) g = (g << 1) | (F[off + 4 + b][q] > A ? 1 : 0);
+    let cb = g; for (let sh = g >> 1; sh; sh >>= 1) cb ^= sh;
+    out[q] = Math.round(((cb + .5) * P / 2 - xf) / P) * P + xf; } };   // the fine phase, unwrapped to the period the coarse code points at
+  one(0, plan.nx, X); one(4 + plan.nx, plan.ny, Y); return { X, Y };
+}
+function scanCalibrate(ref, cur, n, mm) {   // a block of known height on the flat floor: which way the stripes move, and how far per millimetre
+  const d = []; for (let q = 0; q < n; q++) { const dx = cur.X[q] - ref.X[q], dy = cur.Y[q] - ref.Y[q]; if (dx === dx && dy === dy) d.push([dx, dy, Math.hypot(dx, dy)]); }
+  if (d.length < 500) return { err: 'too little of the box was read' };
+  const moved = d.filter(v => v[2] > 1.5), bins = new Map(), key = (x, y) => x * 4096 + y; let best = null, bc = 0;   // the block top is one tight cluster of stripe shifts; stray misreads scatter, so take the densest one
+  for (const v of moved) { const kk = key(Math.round(v[0]), Math.round(v[1])); bins.set(kk, (bins.get(kk) || 0) + 1); }
+  for (const v of moved) { const bx = Math.round(v[0]), by = Math.round(v[1]); let c = 0; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) c += bins.get(key(bx + a, by + b)) || 0; if (c > bc) { bc = c; best = [bx, by]; } }
+  const sel = best ? moved.filter(v => Math.hypot(v[0] - best[0], v[1] - best[1]) < 1.5) : [];
+  if (sel.length < 50 || Math.hypot(best[0], best[1]) < 2) return { err: 'the block barely moved the stripes: use a taller block, or set the camera further from the projector' };
+  const med = a => a.sort((p, q) => p - q)[a.length >> 1], vx = med(sel.map(v => v[0])), vy = med(sel.map(v => v[1])), L = Math.hypot(vx, vy);
+  return { e: [vx / L, vy / L], k: mm / L, px: L, share: sel.length / d.length };
+}
+function scanHeights(ref, cur, cal, n) {   // millimetres above the flat floor for each camera pixel; sideways stripe motion means a bad read
+  const out = new Float32Array(n), [ex, ey] = cal.e;
+  for (let q = 0; q < n; q++) { const dx = cur.X[q] - ref.X[q], dy = cur.Y[q] - ref.Y[q], al = dx * ex + dy * ey, ac = dy * ex - dx * ey; out[q] = (al === al && Math.abs(ac) < 3) ? al * cal.k : NaN; }
+  return out;
+}
+function scanGrid(cur, hmm, n, sh, GW, GH) {   // each height lands where the projector lit it, which is where the sheet is drawn: no flips, no keystone maths
+  const sum = new Float32Array(GW * GH), cnt = new Uint16Array(GW * GH);
+  for (let q = 0; q < n; q++) { const h = hmm[q]; if (h !== h) continue; const i = Math.round((cur.X[q] - sh.x) / sh.k), j = Math.round((cur.Y[q] - sh.y) / sh.k); if (i < 0 || j < 0 || i >= GW || j >= GH) continue; sum[j * GW + i] += h; cnt[j * GW + i]++; }
+  let g = new Float32Array(GW * GH).fill(NaN), read = 0; for (let c = 0; c < GW * GH; c++) if (cnt[c]) { g[c] = sum[c] / cnt[c]; read++; }
+  const med = new Float32Array(g); for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const v = [];   // 3×3 median: a stripe read one period off is a spike, not a hill
+    for (let b = -1; b <= 1; b++) for (let a = -1; a <= 1; a++) { const x = i + a, y = j + b; if (x >= 0 && y >= 0 && x < GW && y < GH) { const w = g[y * GW + x]; if (w === w) v.push(w); } }
+    if (v.length >= 3 && g[j * GW + i] === g[j * GW + i]) { v.sort((p, q) => p - q); med[j * GW + i] = v[v.length >> 1]; } }
+  g = med; for (let pass = 0; pass < GW + GH; pass++) { let holes = 0; const nx = new Float32Array(g);   // holes (shadows, hands, off-camera) fill in from their edges
+    for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) { const c = j * GW + i; if (g[c] === g[c]) continue; let s = 0, k = 0;
+      for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const x = i + a, y = j + b; if (x >= 0 && y >= 0 && x < GW && y < GH && g[y * GW + x] === g[y * GW + x]) { s += g[y * GW + x]; k++; } }
+      if (k) nx[c] = s / k; else holes++; } g = nx; if (!holes) break; }
+  for (let c = 0; c < GW * GH; c++) if (g[c] !== g[c]) g[c] = 0;
+  return { g, read: read / (GW * GH) };
+}
+/* scan-core:end */
+const SCAN = { on: false, stream: null, ref: null, cal: null, busy: false, wait: new Map(), id: 0, locked: '', cv: null, cx: null };
+try { const c = JSON.parse(localStorage.getItem('coyote-scan') || 'null'); if (c && c.k) SCAN.cal = c; } catch (_) {}
+const scanVid = document.getElementById('scanVid'), scanInfo = msg => { document.getElementById('scanInfo').textContent = msg; };
+const scanSleep = ms => new Promise(r => setTimeout(r, ms));
+const scanFresh = () => new Promise(r => { const t = setTimeout(r, 120); if (scanVid.requestVideoFrameCallback) scanVid.requestVideoFrameCallback(() => { clearTimeout(t); r(); }); });   // a new camera frame, or give up after 120 ms if the video is off screen
+bind('scanBlock', v => v + ' mm · ' + (v / 25.4).toFixed(1) + ' in', () => {});
+function scanState() {   // what to do next, in the info line
+  scanInfo(!SCAN.stream ? 'no camera yet' : !SCAN.ref ? 'next: smooth the sand flat, open the projector window, press 1 · flat floor' : !SCAN.cal ? 'next: set a block of known height on the floor, press 2 · block' : `ready · ${SCAN.cal.k.toFixed(2)} mm per stripe pixel${SCAN.locked ? ' · ' + SCAN.locked + ' locked' : ''} · press scan the sand`);
+}
+async function scanCam(id) {
+  if (SCAN.stream) SCAN.stream.getTracks().forEach(t => t.stop());
+  try { SCAN.stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { deviceId: id ? { exact: id } : undefined, width: { ideal: 1920 }, height: { ideal: 1080 } } }); }
+  catch (e) { SCAN.stream = null; scanInfo('no camera: ' + (e.name === 'NotAllowedError' ? 'the browser was not allowed to use it' : e.message)); return; }
+  scanVid.srcObject = SCAN.stream; try { await scanVid.play(); } catch (_) {}
+  SCAN.ref = null; SCAN.locked = '';   // a different camera, or the same one re-opened, needs a fresh floor
+  const sel = document.getElementById('scanCam'), cur = SCAN.stream.getVideoTracks()[0].getSettings().deviceId;
+  try { const cams = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput'); sel.innerHTML = cams.map((d, i) => `<option value="${d.deviceId}"${d.deviceId === cur ? ' selected' : ''}>${(d.label || 'camera ' + (i + 1)).replace(/</g, '')}</option>`).join(''); } catch (_) {}
+  scanState();
+}
+document.getElementById('scanCam').onchange = e => scanCam(e.target.value);
+async function scanLock(auto) {   // auto on: let the camera find its exposure on white; off: hold it, so every stripe is read the same way
+  const t = SCAN.stream.getVideoTracks()[0], cap = t.getCapabilities ? t.getCapabilities() : {}, got = [];
+  for (const [mode, val] of [['exposureMode', 'exposureTime'], ['whiteBalanceMode', 'colorTemperature'], ['focusMode', 'focusDistance']]) {
+    if (!(cap[mode] || []).includes(auto ? 'continuous' : 'manual')) continue;
+    try { const c = { [mode]: auto ? 'continuous' : 'manual' }, v = t.getSettings()[val]; if (!auto && v !== undefined) c[val] = v; await t.applyConstraints({ advanced: [c] }); got.push(mode.replace('Mode', '')); } catch (_) {}
+  }
+  return got.join(', ');
+}
+function scanAsk(spec) {   // show a pattern in the projector window and wait until it is on screen there
+  return new Promise((res, rej) => { if (!sandBC) return rej(new Error('no projector'));
+    const id = ++SCAN.id, to = setTimeout(() => { SCAN.wait.delete(id); rej(new Error('no projector')); }, 2500);
+    SCAN.wait.set(id, m => { clearTimeout(to); SCAN.wait.delete(id); res(m); }); sandBC.postMessage({ scan: 'show', id, spec }); });
+}
+function scanGrab() {   // the camera frame as brightness, at most 1280 wide
+  const s = Math.min(1, 1280 / scanVid.videoWidth), w = Math.round(scanVid.videoWidth * s), h = Math.round(scanVid.videoHeight * s);
+  if (!SCAN.cv || SCAN.cv.width !== w || SCAN.cv.height !== h) { SCAN.cv = document.createElement('canvas'); SCAN.cv.width = w; SCAN.cv.height = h; SCAN.cx = SCAN.cv.getContext('2d', { willReadFrequently: true }); }
+  SCAN.cx.drawImage(scanVid, 0, 0, w, h); const d = SCAN.cx.getImageData(0, 0, w, h).data, o = new Uint8Array(w * h);
+  for (let q = 0; q < w * h; q++) o[q] = d[q * 4] * .3 + d[q * 4 + 1] * .59 + d[q * 4 + 2] * .11; return { w, h, px: o };
+}
+async function scanCapture() {   // wait out the projector and the camera's own buffer, then average two frames
+  await scanSleep(100); await scanFresh(); await scanFresh(); const a = scanGrab(); await scanFresh(); const b = scanGrab();
+  for (let q = 0; q < a.px.length; q++) a.px[q] = (a.px[q] + b.px[q] + 1) >> 1; return a;
+}
+async function scanRun(kind) {   // kind: floor | block | sand
+  if (SCAN.busy) return; if (!SCAN.stream) { toast('no camera'); return; }
+  if (kind !== 'floor' && !SCAN.ref) { toast('press 1 · flat floor first'); return; }
+  if (kind === 'sand' && !SCAN.cal) { toast('press 2 · block first'); return; }
+  SCAN.busy = true; document.getElementById('scanGo').disabled = true; const t0 = performance.now();
+  try {
+    const first = await scanAsk({ t: 'flat', v: 1 });
+    if (kind === 'floor' || !SCAN.locked) { scanInfo('letting the camera settle on white…'); await scanLock(true); await scanSleep(1500); SCAN.locked = await scanLock(false); }
+    if (kind !== 'floor' && (first.w !== SCAN.ref.w || first.h !== SCAN.ref.h)) throw new Error('the projector window changed size since the floor scan: press 1 · flat floor again');
+    const plan = scanPlan(first.w, first.h), F = [];
+    for (let i = 0; i < plan.L.length; i++) { scanInfo(`${kind} · stripes ${i + 1} of ${plan.L.length} · hands out of the box`); await scanAsk(plan.L[i]); F.push(await scanCapture()); }
+    await scanAsk(null);
+    const cw = F[0].w, ch = F[0].h, n = cw * ch, dec = scanDecode(F.map(f => f.px), plan, n, 6); dec.w = first.w; dec.h = first.h; dec.cw = cw; dec.ch = ch;
+    let ok = 0; for (let q = 0; q < n; q++) if (dec.X[q] === dec.X[q] && dec.Y[q] === dec.Y[q]) ok++;
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    if (ok < n * .05) throw new Error('the camera could not read the stripes: aim it at the box, dim the room, check the projector is on the box');
+    if (kind !== 'floor' && (cw !== SCAN.ref.cw || ch !== SCAN.ref.ch)) throw new Error('the camera picture changed size: press 1 · flat floor again');
+    if (kind === 'floor') { SCAN.ref = dec; scanState(); toast(`floor read · ${Math.round(ok / n * 100)}% of the camera picture · ${secs} s`); }
+    else if (kind === 'block') { const mm = +document.getElementById('scanBlock').value, c = scanCalibrate(SCAN.ref, dec, n, mm); if (c.err) throw new Error(c.err);
+      SCAN.cal = { e: c.e, k: c.k }; try { localStorage.setItem('coyote-scan', JSON.stringify(SCAN.cal)); } catch (_) {} scanState(); toast(`block read: ${mm} mm moved the stripes ${c.px.toFixed(1)} px · take it out, then scan`); }
+    else { const r = scanGrid(dec, scanHeights(SCAN.ref, dec, SCAN.cal, n), n, first.sheet, W, H); scanApply(r.g);
+      let lo = Infinity, hi = -Infinity; for (const v of r.g) { if (v < lo) lo = v; if (v > hi) hi = v; }
+      scanInfo(`scanned in ${secs} s · ${Math.round(r.read * 100)}% of the sheet read · sand ${Math.round(lo)} to ${Math.round(hi)} mm from the floor` + (SAND.mode === 'match' ? ' · ember: take sand away · grey: add sand' : '')); }
+  } catch (e) { scanAsk(null).catch(() => {}); const m = e.message === 'no projector' ? 'open the projector window first (the projector button), then try again' : e.message; scanInfo(m); toast(m); }
+  SCAN.busy = false; document.getElementById('scanGo').disabled = false;
+}
+function scanApply(gmm) {   // sand millimetres → the ground, at the same scale as live sand
+  const gain = (+document.getElementById('sandGain').value) * S.siteW * 1000 / (+document.getElementById('boxW').value);
+  snapshot(); if (S.world) { S.world = null; rawBase = null; S.coast = null; S.hasSea = S.seaClip = S.hasWater = false; waterMask = null; S.survey = null; worldStatus('scanned sand · the sand is the ground'); }
+  for (let c = 0; c < W * H; c++) z[c] = gmm[c] / 1000 * gain;
+  if (SAND.mode === 'shape') base.set(z); else if (SAND.design) base.set(SAND.design);
+  S.terrainVer++; contourCache.key = ''; S.dirty = true; updateStats(); if (sandBC) sandBC.postMessage({ scan: 'ground', z: Array.from(z) });
+}
+function scanProjMsg(m) {   // in the projector window: draw the asked-for stripes over the sheet, or take the scanned ground
+  if (m.scan === 'ground') { z.set(m.z); if (SAND.mode === 'shape') base.set(z); S.terrainVer++; contourCache.key = ''; S.dirty = true; return; }
+  if (m.scan !== 'show') return;
+  const main = document.querySelector('main'), w = main.clientWidth, h = main.clientHeight, d = devicePixelRatio || 1, cw = Math.round(w * d), ch = Math.round(h * d);   // clientWidth is the size before the keystone warp: stripes are laid out on the sheet, then warped with it
+  let c = document.getElementById('scanPat'); if (!c) { c = document.createElement('canvas'); c.id = 'scanPat'; c.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;z-index:50;pointer-events:none'; main.appendChild(c); }
+  const s = m.spec; c.style.display = s ? '' : 'none';
+  if (s) { if (c.width !== cw || c.height !== ch) { c.width = cw; c.height = ch; } const g = c.getContext('2d');
+    if (s.t === 'flat') { const v = Math.round(s.v * 255); g.fillStyle = `rgb(${v},${v},${v})`; g.fillRect(0, 0, cw, ch); }
+    else { const ax = s.ax === 'x', len = ax ? cw : ch, line = new ImageData(ax ? len : 1, ax ? 1 : len);   // one row (or column) of the pattern, stretched across
+      for (let p = 0; p < len; p++) { const u = (p + .5) / d, v = Math.round(255 * scanValue(s, u, u)); line.data[p * 4] = line.data[p * 4 + 1] = line.data[p * 4 + 2] = v; line.data[p * 4 + 3] = 255; }
+      const t = document.createElement('canvas'); t.width = line.width; t.height = line.height; t.getContext('2d').putImageData(line, 0, 0); g.imageSmoothingEnabled = false; g.drawImage(t, 0, 0, cw, ch); } }
+  requestAnimationFrame(() => requestAnimationFrame(() => sandBC.postMessage({ scan: 'shown', id: m.id, w, h, sheet: { x: sheet.x, y: sheet.y, k: sheet.k } })));
+}
+function scanToggle(on) {
+  SCAN.on = on; document.getElementById('scanSec').style.display = on ? '' : 'none'; document.getElementById('scanBtn').classList.toggle('on', on);
+  document.getElementById('sandCamRow').style.display = on ? 'none' : '';
+  if (on) { if (SAND.on) sandStop(); document.getElementById('sandSec').style.display = ''; document.getElementById('sandInfo').textContent = ''; scanCam(); }
+  else { document.getElementById('sandSec').style.display = SAND.on ? '' : 'none'; if (SCAN.stream) { SCAN.stream.getTracks().forEach(t => t.stop()); SCAN.stream = null; SCAN.ref = null; } }
+}
+document.getElementById('scanBtn').onclick = () => scanToggle(!SCAN.on);
+document.getElementById('scanFloor').onclick = () => scanRun('floor');
+document.getElementById('scanHeight').onclick = () => scanRun('block');
+document.getElementById('scanGo').onclick = () => scanRun('sand');
 document.getElementById('wipe').onclick = () => { snapshot(); S.strokes = []; S.strokeVer++; base.fill(0); S.world = null; rawBase = null; S.coast = null; S.boundary = null; boundaryCache.key = ''; S.trim = false; S.hasSea = S.seaClip = S.hasWater = false; waterMask = null; groundControls(); secSet([]); worldStatus('flat sheet. fetch real terrain or use new existing for rolling ground.'); resetGrading(); toast('deleted everything. flat sheet'); };
 document.getElementById('png').onclick = () => {
   const out = document.createElement('canvas'); out.width = cv.width; out.height = cv.height; const o = out.getContext('2d');
@@ -6079,7 +6244,7 @@ surveyStore.get().then(rec => { if (!rec || !rec.buf || S.survey) return; parseG
       { id: 'obs', name: 'field notes', view: 'plan', planLabel: 'see them in plan', panel: box => obsPanel(box), note: 'what you find on the land: notes, photos, soil and erosion checks, and sensor readings over time' },
       { id: 'bio', name: 'species surveys', view: 'plan', planLabel: 'see them in plan', panel: box => bioPanel(box), note: 'repeat surveys on fixed spots and routes: what was counted, for how long, in which season' },
       { id: 'nature', name: 'nature records', view: 'plan', planLabel: 'see them in plan', panel: box => naturePanel(box), note: 'plants and animals recorded on this ground, from iNaturalist, and your own bird lists' },
-      { id: 'sand', name: 'sandbox', rows: ['#sandBtn', '#sandSec'] },
+      { id: 'sand', name: 'sandbox', rows: ['#sandBtn', '#scanSec', '#sandSec'] },
     ] },
     { id: 'shape', name: 'Shape', tools: [
       { id: 'select', name: 'select', view: 'plan', panel: box => selectPanel(box), note: 'click a drawing, a plant or an object on the plan to pick it; drag to move it, turn or scale it in the panel' },

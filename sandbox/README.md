@@ -10,6 +10,29 @@ Two pieces:
 - The topo tool, served by the bridge at `http://localhost:8787/topo.html`, does everything else: floor
   calibration, contours, hydrology, the cut-and-fill wash, and the projector window with a four-corner keystone.
 
+## No depth camera: scan with the projector and a webcam
+
+The cheapest sandbox. `sand · scan` in the sandbox tool needs no bridge and no driver: it runs from the live site
+(https://coyotemountainfarm.com/topo.html) or any local copy. The projector flashes 21 stripe patterns over the sand
+(5–10 seconds), one webcam watches how the stripes bend, and the sand becomes the ground. It is not live: shape,
+scan, look, reshape, scan again. In `match the design` the wash shows where to add and remove sand after each scan.
+
+Hardware: a projector with a real 1280×800 or 1024×768 resolution (an LCD one such as an Epson avoids colour-wheel
+flicker on the webcam) and a webcam whose exposure can be held (a Logitech C920 can). Bolt the webcam 15–25 cm to the
+side of the projector lens, both looking down at the box. If either moves, redo steps 2 and 3.
+
+1. Open `topo.html`, tool **sandbox**, press **sand · scan**, allow the camera, and pick it in the list.
+2. Press **projector**, drag that window to the projector, press `f` for full screen and `k` to fit the corners
+   to the box (the same keystone as live sand).
+3. Smooth the sand flat and press **1 · flat floor**. Then set a flat-topped block of known height (a book, a brick) on
+   the sand, set **block height** to match, press **2 · block**, and take the block out. The block reading is
+   remembered in this browser; the flat floor is redone each time the camera opens.
+4. Shape the sand and press **scan the sand**. Keep hands out of the box while the stripes run. Dim the room if the
+   scan says it could not read the stripes.
+
+In simulation (pinhole projector and camera, camera noise, mismatched projector brightness curve) the scan comes
+back within about 1 mm on a 1 m box; real sand, lenses and room light will be somewhat worse.
+
 ## Camera: Orbbec Femto Bolt
 
 1. Download the Orbbec K4A wrapper for Windows from
