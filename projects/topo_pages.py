@@ -42,7 +42,7 @@ def min_rect(P):
 
 def operator_sheet():
     fig = newpage(); heading(fig, 'Plano de nivelación para el operador', 'Grading sheet for the machine operator')
-    ax = plain_axes(fig, [0.02, 0.075, 0.70, 0.82]); existing_trees(ax, z0=2.5)   # 11 Oct: existing trees, so the machine works around them
+    ax = plain_axes(fig, [0.02, 0.075, 0.70, 0.82]);   # 12 Oct (Walker): no plants on the operator's grading sheet (was existing_trees(ax, z0=2.5))
     dd = z - b
     ax.contour(X, Y, b, levels=np.arange(1050, 1125, 1), colors='#b5b0a5', linewidths=.35, linestyles='dashed', zorder=1)
     c5 = ax.contour(X, Y, z, levels=np.arange(1050, 1125, 1), colors=INK, linewidths=.4, zorder=2)
