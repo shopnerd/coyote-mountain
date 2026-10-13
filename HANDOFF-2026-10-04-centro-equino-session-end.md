@@ -68,6 +68,8 @@ github shopnerd/coyote-mountain, will-os = shopnerd/will-os); both repos were at
 | Shared PDF | Drive pack folder `Centro-Equino-pack-11x17-2026-09-23.pdf` (always the newest; dated copies beside it, last `...-2026-10-04-v42.pdf`) |
 | Drive pack folder | `G:/My Drive/MEXICO/Chichihaus/2026-09-23 Centro Equino pack/` (renderings/, sheets/, handoffs) |
 
+**PUBLISH = ONE COMMAND (13 Oct):** `cd projects && python publish_pack.py "what changed"` (add `--dry-run` to test). It fetches and merges both repos, stops if the other person published in the last 10 min (`--yes` overrides) or if pack sources have uncommitted edits (`--commit-all`), numbers one past the LIVE version, pulls the editor layout, builds, checks for missing photos, re-checks for new pushes, updates the shared PDF, pushes each repo once and waits until the site shows the new version. Whoever is in charge that day publishes; publish once or twice a day.
+
 Build chain (projects/): stable change -> `python centro-equino-barn.py && python swap_stable.py` -> copy the stable stroke into
 `_bak_0928/*.json` (snippet in §18) -> `cp _bak_0928/*.json . && python site_extras.py && python bleachers.py && python existing_trees.py && python narrow_trails.py` (11 Oct: the trees already on the site; 5 ft riding trails) -> `cd viewer &&
 python export.py . && cp data.json ../../../will-os/equino/model/` -> sheets (`sheet1.py`, `irrigation.py`) -> bump `out=` in
